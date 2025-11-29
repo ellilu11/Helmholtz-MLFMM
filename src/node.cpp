@@ -5,6 +5,7 @@ int Node::orderExp;
 int Node::maxNodeSrcs;
 int Node::maxLevel;
 double Node::rootLeng;
+int Node::L;
 std::vector<realVec> Node::thetas;
 std::vector<realVec> Node::thetaWeights;
 // Tables Node::tables;
@@ -20,6 +21,7 @@ void Node::setNodeParams(const Config& config) {
         }();
     maxNodeSrcs = config.maxNodeSrcs;
     rootLeng = config.L; // TODO: define from max l_infty norm of all rwg centers
+
 }
 
 /*
@@ -29,17 +31,17 @@ void Node::buildTables(const Config& config) {
 }*/
 
 /* setThetaSamples(config)
- * Compute theta samples at each level
- * config : Configuration parameters (need config.k)
+ * Compute L and theta samples at each level
+ * src : Source excitation (need src->k)
  */
-void Node::setThetaSamples(const Config& config) {
+void Node::setThetaSamples(const std::shared_ptr<Src>& src) {
 
     for (int lvl = maxLevel; lvl >= 0; --lvl) {
         const double nodeLeng = rootLeng / pow(2.0, lvl);
 
         // Use excess bandwidth formula
-        const int L = ceil(1.73*config.k*nodeLeng +
-            2.16*pow(orderExp, 2.0/3.0)*pow(config.k*nodeLeng, 1.0/3.0));
+        L = ceil(1.73*src->k*nodeLeng +
+            2.16*pow(orderExp, 2.0/3.0)*pow(src->k*nodeLeng, 1.0/3.0));
 
         auto [nodes, weights] = Math::gaussLegendreTheta(L+1, 1.0E-9);
 
@@ -54,10 +56,10 @@ void Node::setThetaSamples(const Config& config) {
  * base      : pointer to base node
  */
 Node::Node(
-    const RWGVec& rwg,
+    const RWGVec& rwgs,
     const int branchIdx,
     Node* const base)
-    : rwg(rwg), branchIdx(branchIdx), base(base),
+    : rwgs(rwgs), branchIdx(branchIdx), base(base),
     nodeLeng(base == nullptr ? rootLeng : base->nodeLeng / 2.0),
     level(base == nullptr ? 0 : base->level + 1),
     center(base == nullptr ? zeroVec :
@@ -134,7 +136,7 @@ void Node::evalLeafIlistSols() {
  * srcNode : source node
  */
 void Node::evalPairSols(const std::shared_ptr<Node>& srcNode) {
-    const int numObss = rwg.size(), numSrcs = srcNode->rwg.size();
+    const int numObss = rwgs.size(), numSrcs = srcNode->rwgs.size();
 }
 
 /* evalSelfSols()
@@ -142,7 +144,7 @@ void Node::evalPairSols(const std::shared_ptr<Node>& srcNode) {
  * in this node
  */
 void Node::evalSelfSols() {
-    const int numRWG = rwg.size();
+    const int numRWG = rwgs.size();
 
 }
 

@@ -127,6 +127,18 @@ namespace Math {
         return k == 0 ? 1 : x * fallingFactorial(x - 1, k - 1);
     }
 
+    inline vec3d toSph(const vec3d& X) {
+        auto x = X[0], y = X[1], z = X[2], r = X.norm();
+        assert(r != 0);
+
+        auto toPhi = [](double x, double y) {
+            if (x == 0 && y == 0) return 0.0; // pick phi = 0.0
+            return std::atan2(y, x);
+            };
+
+        return vec3d(r, std::acos(z/r), toPhi(x, y));
+    }
+
     inline vec3d fromSph(const vec3d& R) {
         auto r = R[0], th = R[1], ph = R[2];
         return vec3d(
@@ -143,16 +155,9 @@ namespace Math {
             z);
     }
 
-    inline vec3d toSph(const vec3d& X) {
-        auto x = X[0], y = X[1], z = X[2], r = X.norm();
-        assert(r != 0);
-
-        auto toPhi = [](double x, double y) {
-            if (x == 0 && y == 0) return 0.0; // pick phi = 0.0
-            return std::atan2(y, x);
-            };
-
-        return vec3d(r, std::acos(z/r), toPhi(x, y));
+    inline mat3d IminusRR(const double th, const double ph) {
+        auto rhat = fromSph(vec3d(1.0, th, ph));
+        return mat3d::Identity() - rhat * rhat.transpose();
     }
 
     inline double coeffYlm(int l, int abs_m) {

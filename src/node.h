@@ -30,17 +30,19 @@ public:
     static void setExpansionOrder(const int p) { order = p; }
     
     static const int getExponentialOrder() { return orderExp; }
+
+    static const int getMaxLvl() { return maxLevel; }
     
     static const int getNumNodes() { return numNodes; }
-    
+
     static void setNodeParams(const Config&);
 
-    static void setThetaSamples(const Config&);
+    static void setThetaSamples(const std::shared_ptr<Src>&);
 
-    static void buildTables(const Config&);
+    // static void buildTables(const Config&);
 
 public:
-    RWGVec getParticles() const { return rwg; }
+    RWGVec getRWGs() const { return rwgs; }
     
     const int getBranchIdx() const { return branchIdx; }
     
@@ -108,12 +110,13 @@ protected:
     static int maxNodeSrcs;
     static int maxLevel;
     static double rootLeng;
+    static int L;
     static std::vector<realVec> thetas;
     static std::vector<realVec> thetaWeights;
     // static Tables tables;
     inline static int numNodes = 0;
 
-    RWGVec rwg;
+    RWGVec rwgs;
     const int branchIdx;
     Node* const base;
     const double nodeLeng;

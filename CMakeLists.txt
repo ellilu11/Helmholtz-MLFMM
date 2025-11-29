@@ -12,7 +12,7 @@ endif()
 project ("MLFMA")
 
 # Add source to this project's executable.
-add_executable (MLFMA "MLFMA.cpp" "MLFMA.h")
+add_executable (MLFMA "src/MLFMA.cpp" "src/MLFMA.h")
 
 target_include_directories(MLFMA
     PRIVATE

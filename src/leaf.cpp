@@ -3,10 +3,10 @@
 LeafVec Leaf::leaves;
 
 Leaf::Leaf(
-    const RWGVec& rwg,
+    const RWGVec& rwgs,
     const int branchIdx,
     Stem* const base)
-    : Node(rwg, branchIdx, base)
+    : Node(rwgs, branchIdx, base)
 {
 }
 
@@ -49,9 +49,23 @@ void Leaf::buildLists() {
 }
 
 /* buildMpoleCoeffs()
- * (P2M) Build mpole expansions from RWG in this node  
+ * (S2M) Build mpole expansions from RWG in this node  
  */
 void Leaf::buildMpoleCoeffs() {
+
+    const int nth = thetas[level].size();
+    const int nph = 2*(L+1);
+
+    for (const auto& rwg : rwgs) {
+        for (int ith = 0; ith < nth; ++ith) {
+            const double th = thetas[level][ith];
+            for (int iph = 0; iph < nph; ++iph) {
+                const double ph = 2.0*PI*iph/static_cast<double>(nph);
+                auto ImRR = Math::IminusRR(th, ph); // precompute this
+
+            }
+        }
+    }
 
     // call rwg->getCurrent()
 }

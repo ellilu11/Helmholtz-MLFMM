@@ -9,15 +9,15 @@ using namespace std;
 int main() {
 
     // ===== Tests ===== //
-    for (int l = 1; l <= 5; ++l) {
-        auto [nodes, weights] = Math::gaussLegendreTheta(l, 1.0E-9);
-        cout << "l = " << l << " ";
-        for (int k = 0; k < l; ++k)
-            cout << '(' << nodes[k] << ',' << weights[k] << ") ";
-        cout << '\n';
-    }
+    //for (int l = 1; l <= 5; ++l) {
+    //    auto [nodes, weights] = Math::gaussLegendreTheta(l, 1.0E-9);
+    //    cout << "l = " << l << " ";
+    //    for (int k = 0; k < l; ++k)
+    //        cout << '(' << nodes[k] << ',' << weights[k] << ") ";
+    //    cout << '\n';
+    //}
 
-    return 0;
+    //return 0;
 
     // ==================== Import geometry ==================== //
     Config config("config/config.txt");
@@ -36,6 +36,13 @@ int main() {
 
     Node::setNodeParams(config);
 
+    // cout << " Source file:       " << fpath.generic_string() << '\n';
+    cout << " # Sources:         " << Nsrcs << '\n';
+    cout << " Root length:       " << config.L << '\n';
+    cout << " Expansion order:   " << config.order << '\n';
+    cout << " Exponential order: " << Node::getExponentialOrder() << '\n';
+    cout << " Max node RWGs:    "  << config.maxNodeSrcs << '\n' << '\n';
+
     return 0;
 
     // ==================== Set up domain ==================== //
@@ -48,6 +55,12 @@ int main() {
     else
         root = make_shared<Leaf>(srcs, 0, nullptr);
 
-    Node::setThetaSamples(config);
+    Node::setThetaSamples(Einc);
+
+    cout << "   # Nodes: " << Node::getNumNodes() << '\n';
+    cout << "   # Leaves: " << Leaf::getNumLeaves() << '\n';
+    cout << "   Max node level: " << Node::getMaxLvl << '\n' << '\n';
+
+    return 0;
 
 }
