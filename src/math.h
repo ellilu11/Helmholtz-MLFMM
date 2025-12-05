@@ -20,7 +20,7 @@ using vec3cd = Eigen::Vector3cd;
 // using vecXcd = Eigen::VectorXcd;
 
 using mat3d = Eigen::Matrix3d;
-using matXcd = Eigen::MatrixXcd;
+using mat23d = Eigen::Matrix<double,2,3>;
 
 constexpr cmplx iu(0, 1);
 const double PI = std::acos(-1.0);
@@ -124,10 +124,6 @@ namespace Math {
         }
     }
 
-    //const uint64_t factorial(int n) {
-    //    return n == 0 ? 1 : n * factorial(n-1);
-    //}
-
     double factorial(double n) {
         return n == 0 ? 1 : n * factorial(n-1);
     }
@@ -183,19 +179,18 @@ namespace Math {
             pm(abs_m) * std::pow(2.0, l); // legendreLM coeffs
     }
 
-    //inline mat3d matToSph(const double th, const double ph) {
-    //    return mat3d{
-    //        {  sin(th)*cos(ph),  cos(th)*cos(ph), -sin(ph)/sin(th) },
-    //        {  sin(th)*sin(ph),  cos(th)*sin(ph),  cos(ph)/sin(th) },
-    //        {  cos(th),         -sin(th),          0.0             }
-    //    };
-    //}
+    inline mat23d matToThPh(const double th, const double ph) {
+        return mat23d{
+            {  cos(th)*cos(ph),  cos(th)*sin(ph), -sin(th) },
+            { -sin(ph),          cos(ph),          0.0     }
+        };
+    }
 
     inline mat3d matFromSph(const double th, const double ph) {
         return mat3d{
-            {  sin(th)*cos(ph),  cos(th)*cos(ph), -sin(ph)/sin(th) },
-            {  sin(th)*sin(ph),  cos(th)*sin(ph),  cos(ph)/sin(th) },
-            {  cos(th),         -sin(th),          0.0             }
+            {  sin(th)*cos(ph),  cos(th)*cos(ph), -sin(ph) },
+            {  sin(th)*sin(ph),  cos(th)*sin(ph),  cos(ph) },
+            {  cos(th),         -sin(th),          0.0     }
         };
     }
 
@@ -205,6 +200,30 @@ namespace Math {
             { -sin(ph),          cos(ph),          0       },
             {  sin(th)*cos(ph),  sin(th)*sin(ph),  cos(th) }
         };
+    }
+
+    size_t flipIdxToRange(const int i, const int size) {
+        int uint_i = i;
+
+        if (i < 0)
+            uint_i = -i-1;
+        else if (i >= size)
+            uint_i = 2*size-i-1;
+
+        assert(uint_i >= 0 && uint_i < size);
+        return uint_i;
+    }
+
+    size_t wrapIdxToRange(const int i, const int size) {
+        int uint_i = i;
+
+        if (i < 0)
+            uint_i = i + size;
+        else if (i >= size)
+            uint_i = i - size;
+
+        assert(uint_i >= 0 && uint_i < size);
+        return uint_i;
     }
 
     /* legendreL(x,l)
@@ -299,14 +318,14 @@ namespace Math {
         return std::max(1, s);
     }
 
-    /* evalLagrangePoly(x, xs, k)
+    /* evalLagrangeBasis(x, xs, k)
     * Evaluate the Lagrange basis polynomial taking on 1 at xs[k]
     * and 0 at xs[j] for j \neq k, at the point x
     * x  : evaluation point
-    * xs : Lagrange nodes
-    * k  : index of Lagrange polynomial \in {0,1,...,order}
+    * xs : Interpolation nodes
+    * k  : index of basis function \in {0,1,...,order}
     */
-    double evalLagrangeBasisPoly(
+    double evalLagrangeBasis(
         const double x, const std::vector<double>& xs, const int k) {
 
         const int order = xs.size()-1;
@@ -320,6 +339,32 @@ namespace Math {
         }
 
         return product;
+    }
+
+    /* evalTrigBasis(x, xs, k)
+    * Evaluate the trigonometric basis function taking on 1 at xs[k]
+    * and 0 at xs[j] for j \neq k, at the point x
+    * x  : evaluation point
+    * xs : Interpolation nodes
+    * k  : index of basis function \in {0,1,...,order}
+    */
+    double evalTrigBasis(
+        const double x, const std::vector<double>& xs, const int k) {
+
+        const int order = xs.size()-1;
+        assert(k <= order);
+        
+        auto trigTerm = [x, xs](const int k) {
+            return pm(k) / (expI(x) - expI(xs[k]));
+        };
+
+        cmplx denom = 0.0;
+        for (int j = 0; j <= order; ++j) {
+            if (j == k) continue;
+            denom += trigTerm(j);
+        }
+
+        return (trigTerm(k)/denom).real();
     }
 
 } // close Math::

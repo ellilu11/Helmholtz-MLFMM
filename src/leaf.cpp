@@ -8,6 +8,7 @@ Leaf::Leaf(
     Stem* const base)
     : Node(rwgs, branchIdx, base)
 {
+    maxLevel = level;
 }
 
 /* buildNeighbors()
@@ -53,8 +54,8 @@ void Leaf::buildLists() {
  */
 void Leaf::buildMpoleCoeffs() {
     const int nth = thetas[level].size();
-    const int nph = 2*nth;
-    coeffs.resize(nth*nph, vec3cd::Zero());
+    const int nph = phis[level].size();
+    coeffs.resize(nth*nph, vec2cd::Zero());
 
     assert(tables.ImKK[level].size() == nth*nph);
     assert(tables.kvec[level].size() == nth*nph);
@@ -83,8 +84,9 @@ void Leaf::buildMpoleCoeffs() {
                 
                 dirCoeff = rwg->getCurrent() * rwg->getLeng() * dirCoeff;
             }
-            
-            coeffs[idx++] = dirCoeff;
+
+            // Get theta and phi components
+            coeffs[idx++] = tables.matToThPh[level][idx] * dirCoeff;
         }
     }
 }

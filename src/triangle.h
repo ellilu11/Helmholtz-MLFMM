@@ -21,7 +21,7 @@ public:
           vertices( { vList[vIdx[0]], vList[vIdx[1]], vList[vIdx[2]] } ),
           center( (vertices[0] + vertices[1] + vertices[2]) / 3.0 )
     {
-        buildQuadNodes(Precision::MEDIUM);
+        buildQuads(Precision::MEDIUM); // Fix later
     };
 
     vec3i getVidx() { return vIdx; }
@@ -32,7 +32,7 @@ public:
 
     double getArea() const { return area; }
 
-    void buildQuadNodes(const Precision);
+    void buildQuads(const Precision);
 
     std::pair<std::vector<vec3d>,double> getQuads() { 
         return std::make_pair(quadNodes,quadWeight); 

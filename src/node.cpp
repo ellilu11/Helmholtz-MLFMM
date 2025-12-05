@@ -1,7 +1,7 @@
 #include "node.h"
 
 int Node::order;
-int Node::orderExp;
+int Node::prec;
 int Node::maxNodeSrcs;
 int Node::maxLevel;
 double Node::rootLeng;
@@ -15,29 +15,29 @@ void Node::setNodeParams(
     const Config& config, const std::shared_ptr<Src>& Einc) {
 
     order = config.order; // ceil(-std::log(config.EPS) / std::log(2));
-    orderExp = [&]() -> std::size_t {
+    prec = [&]() -> std::size_t {
         switch (config.prec) {
-            case Precision::LOW:    return 8;
-            case Precision::MEDIUM: return 17;
-            case Precision::HIGH:   return 26;
+            case Precision::LOW:    return 3;
+            case Precision::MEDIUM: return 6;
+            case Precision::HIGH:   return 9;
         }
         }();
     maxNodeSrcs = config.maxNodeSrcs;
-    rootLeng = config.rootLeng; // TODO: define from max l_infty norm of all rwg centers
+    rootLeng = config.rootLeng;
     wavenum = Einc->wavenum;
 }
 
-/* buildThetaSamples(config)
+/* buildAngularSamples()
  * Compute theta and phi samples at each level
  */
-void Node::buildThetaSamples() {
+void Node::buildAngularSamples() {
 
-    for (int lvl = maxLevel; lvl >= 0; --lvl) {
+    for (int lvl = 0; lvl <= maxLevel; ++lvl) {
         const double nodeLeng = rootLeng / pow(2.0, lvl);
 
         // Use excess bandwidth formula
         const int L = ceil(1.73*wavenum*nodeLeng +
-            2.16*pow(orderExp, 2.0/3.0)*pow(wavenum*nodeLeng, 1.0/3.0));
+            2.16*pow(prec, 2.0/3.0)*pow(wavenum*nodeLeng, 1.0/3.0));
 
         const int nph = 2*(L+1);
         realVec nodesPhi;
@@ -45,8 +45,7 @@ void Node::buildThetaSamples() {
             nodesPhi.push_back(2.0*PI*iph/static_cast<double>(nph));
         phis.push_back(nodesPhi);
 
-        const auto [nodes, weights] = 
-            Math::gaussLegendre(L+1, 1.0E-9, 0.0, PI);
+        const auto [nodes, weights] = Math::gaussLegendre(L+1, 1.0E-9, 0.0, PI);
 
         thetas.push_back(nodes);
         thetaWeights.push_back(weights);
@@ -55,8 +54,8 @@ void Node::buildThetaSamples() {
 }
 
 void Node::buildTables(const Config& config) {
-    tables = Tables(maxLevel,wavenum,thetas);
-    // assert(orderExp == tables.quadCoeffs_.size());
+    tables = Tables(maxLevel, config.order, wavenum, thetas, phis);
+    // assert(prec == tables.quadCoeffs_.size());
 }
 
 /* Node(particles,branchIdx,base)
@@ -78,12 +77,11 @@ Node::Node(
     // for (int l = 0; l <= order; ++l) 
     //    localCoeffs.push_back(vec2cd::Zero(2*l+1));
 
-    maxLevel = level;
     numNodes++;
 }
 
 /* buildInteractionList()
- * Find interaction nodes, and assign each to a dirlist.
+ * Find interaction nodes
  */
 void Node::buildInteractionList() {
     assert(!isRoot());
@@ -149,7 +147,7 @@ void Node::evalPairSols(const std::shared_ptr<Node>& srcNode) {
  * in this node
  */
 void Node::evalSelfSols() {
-    const int numRWG = rwgs.size();
+    const int numRWGs = rwgs.size();
 
 }
 

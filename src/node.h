@@ -25,11 +25,11 @@ using NodeVec = std::vector<std::shared_ptr<Node>>;
 class Node {
 
 public:
-    static const int getExpansionOrder() { return order; }
+    // static const int getExpansionOrder() { return order; }
 
-    static void setExpansionOrder(const int p) { order = p; }
+    // static void setExpansionOrder(const int p) { order = p; }
     
-    static const int getExponentialOrder() { return orderExp; }
+    static const int getExponentialOrder() { return prec; }
 
     static const int getMaxLvl() { return maxLevel; }
     
@@ -37,7 +37,7 @@ public:
 
     static void setNodeParams(const Config&, const std::shared_ptr<Src>&);
 
-    static void buildThetaSamples();
+    static void buildAngularSamples();
 
     static void buildTables(const Config&);
 
@@ -60,9 +60,9 @@ public:
 
     NodeVec getLeafIlist() const { return leafIlist; }
     
-    std::vector<vec3cd> getMpoleCoeffs() const { return coeffs; }
+    std::vector<vec2cd> getMpoleCoeffs() const { return coeffs; }
     
-    std::vector<vec3cd> getLocalCoeffs() const { return localCoeffs; }
+    std::vector<vec2cd> getLocalCoeffs() const { return localCoeffs; }
 
     const bool isRoot() const { return base == nullptr; }
     
@@ -106,7 +106,7 @@ public:
 
 protected:
     static int order;
-    static int orderExp;
+    static int prec;
     static int maxNodeSrcs;
     static int maxLevel;
     static double rootLeng;
@@ -129,8 +129,8 @@ protected:
     std::array<NodeVec,6> dirList; // list 2, indexed by direction
     NodeVec leafIlist; // list 4
 
-    std::vector<vec3cd> coeffs;
-    std::vector<vec3cd> localCoeffs;
+    std::vector<vec2cd> coeffs;
+    std::vector<vec2cd> localCoeffs;
 
     int label;
 };

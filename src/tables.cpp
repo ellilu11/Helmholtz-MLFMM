@@ -1,7 +1,10 @@
 #include "tables.h"
 
-void Tables::buildDirTables(
-    const int maxLevel, const double wavenum, const std::vector<realVec>& thetas) {
+void Tables::buildAngularTables(
+    const int maxLevel, 
+    const double wavenum, 
+    const std::vector<realVec>& thetas,
+    const std::vector<realVec>& phis) {
     for (int level = 0; level <= maxLevel; ++level) {
 
         const int nth = thetas[level].size();
@@ -9,19 +12,22 @@ void Tables::buildDirTables(
 
         std::vector<mat3d> ImKK_lvl;
         std::vector<vec3d> kvec_lvl;
+        std::vector<mat23d> matToThPh_lvl;
 
         for (int ith = 0; ith < nth; ++ith) {
             const double th = thetas[level][ith];
             for (int iph = 0; iph < nph; ++iph) {
-                const double ph = 2.0*PI*iph/static_cast<double>(nph);
+                const double ph = phis[level][iph];
 
                 ImKK_lvl.push_back(Math::IminusRR(th, ph));
                 kvec_lvl.push_back(Math::vecSph(wavenum, th, ph));
+                matToThPh_lvl.push_back(Math::matToThPh(th, ph));
             }
         }
 
         ImKK.push_back(ImKK_lvl);
         kvec.push_back(kvec_lvl);
+        matToThPh.push_back(matToThPh_lvl);
     }
 }
 
@@ -34,6 +40,7 @@ void Tables::buildInterpThetaTable(
         std::vector<size_t> t_lvl;
 
         const int nth = thetas[level].size();
+        const int mth = thetas[level+1].size();
         realVec branchThetas;
 
         for (size_t ith = 0; ith < nth; ++ith) {
@@ -44,21 +51,35 @@ void Tables::buildInterpThetaTable(
             const size_t t = Math::getNearGLNodeIdx(theta, level+1, 0.0, PI);
 
             // Assemble child thetas interpolating parent theta
-            for (size_t k = t+1-order; k <= t+order; ++k)
-                branchThetas.push_back(thetas[level+1][k]);
+            for (int jth = t+1-order; jth <= t+order; ++jth) {
 
-            for (size_t k = t+1-order; k <= t+order; ++k) 
+                // Flip jth if not in [0, mth-1]
+                size_t jth_flipped = Math::flipIdxToRange(jth, mth);
+                auto branchTheta = thetas[level+1][jth_flipped];
+
+                // Extend interpolating thetas to outside [0, \pi] as needed
+                if (jth < 0)
+                    branchTheta *= -1.0;
+                else if (jth >= mth)
+                    branchTheta = 2.0*PI - branchTheta;
+
+                branchThetas.push_back(branchTheta);
+            }
+
+            for (int k = 0; k <= 2*order-1; ++k) 
                 interpTheta_lvl_th.push_back(
-                    Math::evalLagrangeBasisPoly(theta, branchThetas, k)
-                );
+                    Math::evalLagrangeBasis(theta, branchThetas, k));
 
             interpTheta_lvl.push_back(interpTheta_lvl_th);
             t_lvl.push_back(t);
         }
 
         interpTheta.push_back(interpTheta_lvl);
+
+        // std::cout << "T col size: " << t_lvl.size() << '\n';
         T.push_back(t_lvl);
     }
+    // std::cout << "T row size: " << T.size() << '\n';
 }
 
 void Tables::buildInterpPhiTable(
@@ -70,6 +91,7 @@ void Tables::buildInterpPhiTable(
         std::vector<size_t> s_lvl;
 
         const int nph = phis[level].size();
+        const int mph = phis[level+1].size();
         realVec branchPhis;
 
         for (size_t iph = 0; iph < nph; ++iph) {
@@ -77,16 +99,17 @@ void Tables::buildInterpPhiTable(
             const double phi = phis[level][iph];
 
             // Find idx of child phi nearest parent phi
-            const size_t s = std::floor(nph * phi / (2.0 * PI));
+            const size_t s = std::floor(mph * phi / (2.0 * PI));
 
             // Assemble child phis interpolating parent phi
-            for (size_t k = s+1-order; k <= s+order; ++k)
-                branchPhis.push_back(phis[level+1][k]);
+            for (int jph = s+1-order; jph <= s+order; ++jph)
+                // Wrap jph if not in [0, mph-1]
+                // size_t jph_wrapped = Math::wrapIdxToRange(jph, mph); 
+                branchPhis.push_back(2.0*PI*jph/static_cast<double>(mph));
 
-            for (size_t k = s+1-order; k <= s+order; ++k)
+            for (size_t k = 0; k <= 2*order-1; ++k)
                 interpPhi_lvl_ph.push_back(
-                    Math::evalLagrangeBasisPoly(phi, branchPhis, k)
-                );
+                    Math::evalTrigBasis(phi, branchPhis, k));
             
             interpPhi_lvl.push_back(interpPhi_lvl_ph);
             s_lvl.push_back(s);

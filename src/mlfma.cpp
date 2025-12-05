@@ -2,7 +2,7 @@
 #include <iostream>
 #include "clock.h"
 #include "config.h"
-#include "mlfma.h"
+#include "MLFMA.h"
 
 using namespace std;
 
@@ -21,28 +21,25 @@ int main() {
     // ==================== Import geometry ==================== //
     Config config("config/config.txt");
 
-    vector<vec3d> vertices = importVertices("config/vertices.txt");
+    auto vertices = importVertices("config/n120/vertices.txt");
 
-    // cout << vertices.size() << '\n';
-
-    TriVec tris = importTriangles("config/faces.txt", vertices);
+    auto tris = importTriangles("config/n120/faces.txt", vertices);
     int Ntris;
 
     shared_ptr<Src> Einc = make_shared<Src>(); // initialize incident field
 
-    RWGVec srcs = importRWG("config/rwgs.txt", vertices, tris, Einc);
+    auto srcs = importRWG("config/n120/rwgs.txt", vertices, tris, Einc);
     int Nsrcs = srcs.size();
 
     Node::setNodeParams(config,Einc);
 
-    // cout << " Source file:       " << fpath.generic_string() << '\n';
-    cout << " # Sources:         " << Nsrcs << '\n';
-    cout << " Root length:       " << config.rootLeng << '\n';
-    cout << " Expansion order:   " << config.order << '\n';
-    cout << " Exponential order: " << Node::getExponentialOrder() << '\n';
-    cout << " Max node RWGs:    "  << config.maxNodeSrcs << '\n' << '\n';
+    cout << " # Sources:           " << Nsrcs << '\n';
+    cout << " Root length:         " << config.rootLeng << '\n';
+    cout << " Interpolation order: " << config.order << '\n';
+    // cout << " Exponential order:   " << Node::getExponentialOrder() << '\n';
+    cout << " Max node RWGs:       " << config.maxNodeSrcs << "\n\n";
 
-    return 0;
+    // return 0;
 
     // ==================== Set up domain ==================== //
     cout << " Setting up domain...\n";
@@ -54,21 +51,40 @@ int main() {
     else
         root = make_shared<Leaf>(srcs, 0, nullptr);
 
+    root->buildLists();
+
+    auto end = Clock::now();
+    Time duration_ms = end - start;
+
     cout << "   # Nodes: " << Node::getNumNodes() << '\n';
     cout << "   # Leaves: " << Leaf::getNumLeaves() << '\n';
-    cout << "   Max node level: " << Node::getMaxLvl << '\n' << '\n';
+    cout << "   Max node level: " << Node::getMaxLvl() << '\n';
+    cout << "   Elapsed time: " << duration_ms.count() << " ms\n\n";
+    // return 0;
 
     // ============ Construct directional quantities ========= //
+    cout << " Building tables...\n";
 
-    Node::buildThetaSamples();
+    start = Clock::now();
+
+    Node::buildAngularSamples();
     Node::buildTables(config);
 
+    end = Clock::now();
+    duration_ms = end - start;
+    cout << "   Elapsed time: " << duration_ms.count() << " ms\n\n";
     return 0;
 
     // ==================== Upward pass ===================== //
     cout << " Computing upward pass...\n";
 
+    start = Clock::now();
+
     root->buildMpoleCoeffs();
+
+    end = Clock::now();
+    duration_ms = end - start;
+    cout << "   Elapsed time: " << duration_ms.count() << " ms\n\n";
 
     return 0;
 }

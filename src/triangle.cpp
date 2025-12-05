@@ -42,7 +42,7 @@ TriVec importTriangles(
     return triangles;
 }
 
-void Triangle::buildQuadNodes(const Precision prec) {
+void Triangle::buildQuads(const Precision prec) {
 
     switch (prec) {
         case Precision::LOW :
