@@ -35,23 +35,28 @@ RWG::RWG(const Eigen::Vector4i& idx,
       vCenter((v0+v1)/2.0),
       Einc(Einc)
 {
-    for (const auto& vIdx : triPlus->getVidx())
+    for (const auto& vIdx : triPlus->vIdx)
         if (vIdx != idx[0] && vIdx != idx[1])
             vPlus = vertices[vIdx];
 
-    for (const auto& vIdx : triMinus->getVidx())
+    for (const auto& vIdx : triMinus->vIdx)
         if (vIdx != idx[0] && vIdx != idx[1])
             vMinus = vertices[vIdx];
 
     leng = (v0-v1).norm();
+
+    buildCurrent();
+
+    // std::cout << '(' << v0 << ") (" << v1 << ") ("
+    //    << vPlus << ") (" << vMinus << ") " << leng << '\n';
 };
 
-cmplx RWG::buildRHS() {
+void RWG::buildRHS() {
 
     cmplx rhs(0,0);
 
-    // use 3-point quadrature rule (for now)
-    std::vector<vec3d> midPlus = { vCenter, (v0 + vPlus)/2.0, (v1 + vPlus)/2.0 };
+    // TODO: Rewrite this
+    /*std::vector<vec3d> midPlus = { vCenter, (v0 + vPlus)/2.0, (v1 + vPlus)/2.0 };
     std::vector<vec3d> midMinus = { vCenter, (v0 + vMinus)/2.0, (v1 + vMinus)/2.0 };
 
     for (const auto& node : midPlus)
@@ -63,10 +68,10 @@ cmplx RWG::buildRHS() {
         rhs -= -leng / (6.0 * triPlus->getArea()) *
             (node - vPlus).dot(Einc->amplitude * Einc->pol) *
             Math::expI(Einc->wavevec.dot(node));
-
-    return rhs;
+    */
+    
 }
 
-//cmplx RWG::buildCurrent() {
-//
-//}
+void RWG::buildCurrent() {
+    current = 1.0;
+}

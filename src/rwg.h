@@ -29,11 +29,13 @@ public:
 
     double getLeng() const { return leng; }
 
-    cmplx getCurrent() const { return current; }
+    double getCurrent() const { return current; }
 
-    cmplx buildRHS();
+    void buildRHS();
 
-    cmplx buildCurrent();
+    void buildCurrent();
+
+
 
 private:
     vec3d v0;
@@ -49,6 +51,6 @@ private:
 
     std::shared_ptr<Src> Einc;
     cmplx rhs;
-    cmplx current;
+    double current;
 
 };

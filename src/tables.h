@@ -1,6 +1,6 @@
 #pragma once
 
-#include "math.h"
+#include "interp.h"
 
 struct Tables {
     Tables() = default;
@@ -28,13 +28,14 @@ struct Tables {
     std::vector<std::vector<mat3d>> ImKK;
     std::vector<std::vector<vec3d>> kvec;
     std::vector<std::vector<mat23d>> matToThPh;
+    // std::vector<std::vector<mat3d>> matToThPh;
 
     // Lagrange interpolation tables
     std::vector<std::vector<realVec>> interpTheta;
-    std::vector<std::vector<size_t>> T;
+    std::vector<std::vector<size_t>> ts;
 
     std::vector<std::vector<realVec>> interpPhi;
-    std::vector<std::vector<size_t>> S;
+    std::vector<std::vector<size_t>> ss;
 
     // Ylm tables
     /*std::vector<realVec> coeffYlm_;

@@ -57,8 +57,14 @@ void Leaf::buildMpoleCoeffs() {
     const int nph = phis[level].size();
     coeffs.resize(nth*nph, vec2cd::Zero());
 
-    assert(tables.ImKK[level].size() == nth*nph);
-    assert(tables.kvec[level].size() == nth*nph);
+    /*auto triCoeff = [this](std::shared_ptr<Triangle> tri, mat3d ImKK, vec3d kvec, bool isPlus) {
+        auto [nodes, weight] = tri->getQuads();
+        auto coeff = vec3cd::Zero();
+
+        for (const auto& quadNode : nodes)
+            coeff += weight * ImKK * (rwg->getVplus() - quadNode)
+            * Math::expI(kvec.dot(center-quadNode));
+    }*/
 
     size_t idx = 0;
     for (int ith = 0; ith < nth; ++ith) {
@@ -68,27 +74,34 @@ void Leaf::buildMpoleCoeffs() {
             const auto kvec = tables.kvec[level][idx];
 
             vec3cd dirCoeff = vec3cd::Zero();
-            for (const auto& rwg : rwgs) {
+            for (const auto& rwg : rwgs) { // TODO: Optimize this loop
+                vec3cd rwgCoeff = vec3cd::Zero();
 
                 auto triPlus = rwg->getTriPlus();
+                auto vPlus = rwg->getVplus();
                 auto [nodesPlus,weightPlus] = triPlus->getQuads();
                 for (const auto& quadNode : nodesPlus)
-                    dirCoeff += weightPlus * ImKK * (rwg->getVplus() - quadNode)
-                        * Math::expI(kvec.dot(center-quadNode));
+                    rwgCoeff += weightPlus * Math::expI(kvec.dot(center-quadNode))
+                        * ImKK * (vPlus - quadNode);
                 
                 auto triMinus = rwg->getTriMinus();
+                auto vMinus = rwg->getVminus();
                 auto [nodesMinus, weightMinus] = triMinus->getQuads();
                 for (const auto& quadNode : nodesMinus)
-                    dirCoeff += weightMinus * ImKK * (quadNode - rwg->getVminus())
-                        * Math::expI(kvec.dot(center-quadNode));
+                    rwgCoeff += weightMinus * Math::expI(kvec.dot(center-quadNode)) 
+                        * ImKK * (quadNode - vMinus);
                 
-                dirCoeff = rwg->getCurrent() * rwg->getLeng() * dirCoeff;
+                dirCoeff += rwg->getCurrent() * rwg->getLeng() * rwgCoeff;
             }
 
             // Get theta and phi components
             coeffs[idx++] = tables.matToThPh[level][idx] * dirCoeff;
+            // dirCoeff = tables.matToThPh[level][idx] * dirCoeff;
+
+            // std::cout << '(' << ith << ',' << iph << ") " << coeffs[idx=1] << '\n';
         }
     }
+    // std::cout << '\n';
 }
 
 /* propagateExpCoeffs()

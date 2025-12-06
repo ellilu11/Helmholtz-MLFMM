@@ -11,16 +11,26 @@ endif()
 
 project ("MLFMA")
 
-# Add source to this project's executable.
-add_executable (MLFMA "src/MLFMA.cpp" "src/MLFMA.h")
-
-target_include_directories(MLFMA
-    PRIVATE
+# Add eigen library
+add_library(eigen INTERFACE)
+target_include_directories(eigen
+    INTERFACE
         ${CMAKE_CURRENT_SOURCE_DIR}/eigen-3.4.0
 )
 
+# Add source executable
+add_executable (MLFMA "src/MLFMA.cpp" "src/MLFMA.h")
+
+target_link_libraries(MLFMA PRIVATE eigen)
+
+# Add test executable
+# add_executable (test "test/tInterp.cpp" "src/MLFMA.h")
+# add_executable (test "test/tFarfield.cpp" "src/MLFMA.h")
+
+# target_link_libraries(test PRIVATE eigen)
+
+# Specify C++20 standard
 if (CMAKE_VERSION VERSION_GREATER 3.12)
   set_property(TARGET MLFMA PROPERTY CXX_STANDARD 20)
+  # set_property(TARGET test PROPERTY CXX_STANDARD 20)
 endif()
-
-# TODO: Add tests and install targets if needed.

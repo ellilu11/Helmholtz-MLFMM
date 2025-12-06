@@ -1,0 +1,109 @@
+#include "../src/interp.h"
+#include "../src/node.h"
+
+using namespace std;
+
+std::vector<realVec> testGaussLegendre(const int maxOrder, double a, double b) {
+    cout << "\nTesting Gauss-Legendre...\n";
+    std::vector<realVec> nodesVec;
+
+    for (int l = 1; l <= maxOrder; ++l) {
+        auto [nodes, weights] = Interp::gaussLegendre(l, 1.0E-9, a, b);
+        cout << "l = " << l << ": ";
+        for (int k = 0; k < l; ++k)
+            cout << '(' << nodes[k] << ',' << weights[k] << ") ";
+        cout << '\n';
+
+        nodesVec.push_back(nodes);
+    }
+
+    return nodesVec;
+}
+
+void testLagrangeInterp(const realVec& xs) {
+    cout << "\nTesting Lagrange interpolants...\n";
+
+    const int order = xs.size()-1;
+
+    for (int k = 0; k <= order; ++k) {
+        cout << "k = " << k << ": ";
+        for (int j = 0; j <= order; ++j)
+
+            cout << Interp::evalLagrangeBasis(xs[j], xs, k) << " ";
+        cout << '\n';
+    }
+}
+
+void testTrigInterp(const int N) {
+    cout << "\nTesting trigonometric interpolants...\n";
+
+    realVec xs;
+    for (int j = 0; j < N; ++j)
+        xs.push_back(2.0*PI*j/static_cast<double>(N));
+
+    for (int k = 0; k < N; ++k) {
+        cout << "k = " << k << ": ";
+        for (int j = 0; j < N; ++j) {
+            double x = xs[j];
+            if (j == k) x *= (1.0 + 1.0E-6);
+
+            cout << Interp::evalTrigBasis(x, xs, k) << " ";
+        }
+        cout << '\n';
+    }
+}
+
+void testNearGLNodeIdx(
+    const std::vector<realVec>& nodesVec, const int m, const int lIdx, double a, double b) {
+
+    cout << "\nTesting near node finding...\n";
+
+    double x = nodesVec[m][lIdx];
+
+    auto mIdx = Interp::getNearGLNodeIdx(x, m, a, b); // expression to test
+
+    double y = (mIdx >= 0 ? nodesVec[m-1][mIdx] : a);
+
+    cout << x << " is nearest and greater than "
+        << y << ", the l = " << m << " idx = " << mIdx << " node\n";
+}
+
+void testNearPhiIdx(const double phi, const int N) {
+
+    cout << "\nTesting near phi finding...\n";
+
+    auto phi_k = [N](const int k) {
+        return 2.0 * PI * k / N;
+    };
+
+    for (int i = 0; i < N; ++i)
+        cout << phi_k(i) << ' ';
+    cout << '\n';
+
+    auto idx = std::floor(N * phi / (2.0 * PI)); // expression to test
+
+    cout << phi << " is nearest and greater than "
+        << phi_k(idx) << ", node " << idx << "\n";
+}
+
+int main() {
+
+    const int maxOrder = 10;
+    const double a = 0.0;
+    const double b = PI;
+
+    auto nodesVec = testGaussLegendre(maxOrder, a, b);
+
+    // testLagrangeInterp(nodesVec[order-1]);
+
+    // testTrigInterp(9);
+    // testTrigInterp(10);
+    
+    const int m = 7;
+    for (int i = 0; i <=m; ++i)
+        testNearGLNodeIdx(nodesVec, m, i, a, b);
+
+    testNearPhiIdx(0, 10);
+
+    return 0;
+}

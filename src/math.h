@@ -39,6 +39,16 @@ std::ostream& operator<< (std::ostream& os, const vec3d& X) {
     return os;
 }
 
+std::ostream& operator<< (std::ostream& os, const vec2cd& X) {
+    os << X[0] << " " << X[1];
+    return os;
+}
+
+std::ostream& operator<< (std::ostream& os, const vec3cd& X) {
+    os << X[0] << " " << X[1] << " " << X[2];
+    return os;
+}
+
 std::istream& operator>>(std::istream& is, vec3d& X) {
     double x, y, z;
     if (is >> x >> y >> z)
@@ -186,6 +196,14 @@ namespace Math {
         };
     }
 
+    inline mat3d matToSph(const double th, const double ph) {
+        return mat3d{
+            {  sin(th)*cos(ph),  sin(th)*sin(ph),  cos(th) },
+            {  cos(th)*cos(ph),  cos(th)*sin(ph), -sin(th) },
+            { -sin(ph),          cos(ph),          0.0     }
+        };
+    }
+
     inline mat3d matFromSph(const double th, const double ph) {
         return mat3d{
             {  sin(th)*cos(ph),  cos(th)*cos(ph), -sin(ph) },
@@ -227,7 +245,7 @@ namespace Math {
     }
 
     /* legendreL(x,l)
-     * Recursively evaluate the lth order Legendre polynomial 
+     * Recursively evaluate the lth order Legendre polynomial
      * and its 1st derivative at the point x
      * x : evaluation point
      * l : order of Legendre polynomial
@@ -248,123 +266,5 @@ namespace Math {
         return pair2d(p, dp);
     }
 
-    /* gaussLegendreTheta(l)
-    * Return lth order Gauss-Legendre nodes and weights on the interval [a,b]
-    * l   : quadrature order
-    * EPS : minimum error to terminate Newton-Raphson
-    * a   : lower bound of interval (default -1.0)
-    * b   : upper bound of interval (default 1.0)
-    */
-    std::pair<realVec,realVec> gaussLegendre(
-        const int l, const double EPS, const double a = -1.0, const double b = 1.0) {
-
-        const double leng = b - a;
-        const double mid = (a + b)/2.0;
-        assert(leng > 0);
-
-        realVec nodes(l);
-        realVec weights(l);
-        const int kmax = l/2; // # positive nodes = integer part of l/2
-
-        if (l%2) { // if order is odd, middle node is at (a+b)/2
-            nodes[kmax] = mid;
-            auto [p, dp] = legendreL(0.0, l);
-            weights[kmax] = leng / (dp*dp);
-        }
-
-        for (int k = 0; k < kmax; ++k) {
-            double x_k = cos(PI * (4.0*(kmax-k)-1) / (4.0*l + 2.0));
-            double dp_k;
-            while (true) {
-                auto [p, dp] = legendreL(x_k, l);
-                x_k -= p/dp; // apply Newton-Raphson
-                if (abs(p/dp) <= EPS) {
-                    dp_k = dp;
-                    break;
-                }
-            }
-
-            const size_t kplus = l%2 ? kmax+1+k : kmax+k;
-            const size_t kminus = kmax-1-k;
-            
-            nodes[kplus] = leng/2.0*x_k + mid;
-            nodes[kminus] = -leng/2.0*x_k + mid;
-
-            weights[kplus] = leng / ((1.0-x_k*x_k) * dp_k*dp_k);
-            weights[kminus] = weights[kplus];
-        }
-
-        return std::pair<realVec,realVec>(nodes, weights);
-    }
-
-    /* getNearGLNodeIdx(x, m)
-    * Get the index of the Gauss-Legendre node of order m 
-    * nearest (and less than) the point x on the interval [a, b]
-    * x : evaluation point
-    * m : order of near nodes
-    * a : lower bound of interval
-    * b : upper bound of interval
-    */
-    size_t getNearGLNodeIdx(double xi, int m, double a = -1.0, double b = 1.0) {
- 
-        const double leng = b - a;
-        const double mid = (a + b)/2.0;
-        assert(leng > 0);
-
-        const double x = 2.0*(xi - mid) / leng; // Change to interval [-1,1]
-
-        const int s = m/2 - ((4*m+2) * acos(x) / PI + 1)/4;
-
-        return std::max(1, s);
-    }
-
-    /* evalLagrangeBasis(x, xs, k)
-    * Evaluate the Lagrange basis polynomial taking on 1 at xs[k]
-    * and 0 at xs[j] for j \neq k, at the point x
-    * x  : evaluation point
-    * xs : Interpolation nodes
-    * k  : index of basis function \in {0,1,...,order}
-    */
-    double evalLagrangeBasis(
-        const double x, const std::vector<double>& xs, const int k) {
-
-        const int order = xs.size()-1;
-        assert(k <= order);
-      
-        double product = 1.0;
-
-        for (int j = 0; j <= order; ++j) {
-            if (j == k) continue;
-            product *= (x - xs[j]) / (xs[k] - xs[j]);
-        }
-
-        return product;
-    }
-
-    /* evalTrigBasis(x, xs, k)
-    * Evaluate the trigonometric basis function taking on 1 at xs[k]
-    * and 0 at xs[j] for j \neq k, at the point x
-    * x  : evaluation point
-    * xs : Interpolation nodes
-    * k  : index of basis function \in {0,1,...,order}
-    */
-    double evalTrigBasis(
-        const double x, const std::vector<double>& xs, const int k) {
-
-        const int order = xs.size()-1;
-        assert(k <= order);
-        
-        auto trigTerm = [x, xs](const int k) {
-            return pm(k) / (expI(x) - expI(xs[k]));
-        };
-
-        cmplx denom = 0.0;
-        for (int j = 0; j <= order; ++j) {
-            if (j == k) continue;
-            denom += trigTerm(j);
-        }
-
-        return (trigTerm(k)/denom).real();
-    }
-
 } // close Math::
+

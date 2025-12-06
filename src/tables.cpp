@@ -13,6 +13,7 @@ void Tables::buildAngularTables(
         std::vector<mat3d> ImKK_lvl;
         std::vector<vec3d> kvec_lvl;
         std::vector<mat23d> matToThPh_lvl;
+        // std::vector<mat3d> matToThPh_lvl;
 
         for (int ith = 0; ith < nth; ++ith) {
             const double th = thetas[level][ith];
@@ -22,6 +23,7 @@ void Tables::buildAngularTables(
                 ImKK_lvl.push_back(Math::IminusRR(th, ph));
                 kvec_lvl.push_back(Math::vecSph(wavenum, th, ph));
                 matToThPh_lvl.push_back(Math::matToThPh(th, ph));
+                // matToThPh_lvl.push_back(Math::matToSph(th, ph));
             }
         }
 
@@ -41,16 +43,18 @@ void Tables::buildInterpThetaTable(
 
         const int nth = thetas[level].size();
         const int mth = thetas[level+1].size();
-        realVec branchThetas;
 
         for (size_t ith = 0; ith < nth; ++ith) {
             realVec interpTheta_lvl_th;
             const double theta = thetas[level][ith];
 
             // Find idx of child theta nearest parent theta
-            const size_t t = Math::getNearGLNodeIdx(theta, level+1, 0.0, PI);
+            const int t = Interp::getNearGLNodeIdx(theta, mth, 0.0, PI);
+
+            // if (level) std::cout << ith << ' ' << theta << ' ' << t << '\n';
 
             // Assemble child thetas interpolating parent theta
+            realVec branchThetas;
             for (int jth = t+1-order; jth <= t+order; ++jth) {
 
                 // Flip jth if not in [0, mth-1]
@@ -64,11 +68,17 @@ void Tables::buildInterpThetaTable(
                     branchTheta = 2.0*PI - branchTheta;
 
                 branchThetas.push_back(branchTheta);
-            }
 
-            for (int k = 0; k <= 2*order-1; ++k) 
+                // if (level) std::cout << ith << ' ' << jth << ' ' << branchTheta << '\n';
+            }
+            // if (level) std::cout << '\n';
+
+            for (int k = 0; k <= 2*order-1; ++k) {
                 interpTheta_lvl_th.push_back(
-                    Math::evalLagrangeBasis(theta, branchThetas, k));
+                    Interp::evalLagrangeBasis(theta, branchThetas, k));
+
+                // if (level) std::cout << ith << ' ' << k << ' ' << interpTheta_lvl_th[k] << '\n';
+            }
 
             interpTheta_lvl.push_back(interpTheta_lvl_th);
             t_lvl.push_back(t);
@@ -76,10 +86,8 @@ void Tables::buildInterpThetaTable(
 
         interpTheta.push_back(interpTheta_lvl);
 
-        // std::cout << "T col size: " << t_lvl.size() << '\n';
-        T.push_back(t_lvl);
+        ts.push_back(t_lvl);
     }
-    // std::cout << "T row size: " << T.size() << '\n';
 }
 
 void Tables::buildInterpPhiTable(
@@ -92,16 +100,16 @@ void Tables::buildInterpPhiTable(
 
         const int nph = phis[level].size();
         const int mph = phis[level+1].size();
-        realVec branchPhis;
 
         for (size_t iph = 0; iph < nph; ++iph) {
             realVec interpPhi_lvl_ph;
             const double phi = phis[level][iph];
 
             // Find idx of child phi nearest parent phi
-            const size_t s = std::floor(mph * phi / (2.0 * PI));
+            const int s = std::floor(mph * phi / (2.0 * PI));
 
             // Assemble child phis interpolating parent phi
+            realVec branchPhis;
             for (int jph = s+1-order; jph <= s+order; ++jph)
                 // Wrap jph if not in [0, mph-1]
                 // size_t jph_wrapped = Math::wrapIdxToRange(jph, mph); 
@@ -109,14 +117,14 @@ void Tables::buildInterpPhiTable(
 
             for (size_t k = 0; k <= 2*order-1; ++k)
                 interpPhi_lvl_ph.push_back(
-                    Math::evalTrigBasis(phi, branchPhis, k));
+                    Interp::evalTrigBasis(phi, branchPhis, k));
             
             interpPhi_lvl.push_back(interpPhi_lvl_ph);
             s_lvl.push_back(s);
         }
 
         interpPhi.push_back(interpPhi_lvl);
-        S.push_back(s_lvl);
+        ss.push_back(s_lvl);
     }
 }
 

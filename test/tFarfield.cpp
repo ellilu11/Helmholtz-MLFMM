@@ -1,12 +1,46 @@
-﻿#include <fstream>
-#include <iostream>
-#include "clock.h"
-#include "config.h"
-#include "MLFMA.h"
+#include "../src/interp.h"
+#include "../src/leaf.h"
+#include "../src/node.h"
+#include "../src/stem.h"
 
 using namespace std;
 
-extern auto t = ClockTimes();
+vec3cd Leaf::getLeafSols(const vec3d R) {
+    const int nth = thetas[level].size();
+    const int nph = phis[level].size();
+
+    vec3cd fld;
+
+    size_t idx = 0;
+    for (int ith = 0; ith < nth; ++ith) {
+        for (int iph = 0; iph < nph; ++iph) {
+            fld += thetaWeights[level][idx] * coeffs[idx];
+            idx++;
+        }
+    }
+
+    return fld;
+}
+
+void Node::testFarField(const int nth, const int nph) {
+
+    ofstream obsFile, outFile, outAnlFile
+    obsFile.open("config/obss.txt");
+    outFile.open("out/ff.txt");
+    outAnlFile.open("out/ffAnl.txt");
+
+    const double R = 50.0 * rootLeng;
+
+    for (int ith = 0; ith < nth; ++ith) {
+        double th = PI * ith / static_cast<double>(nth);
+        for (int iph = 0; iph < nph; ++iph) {
+            double ph = 2.0 * PI * iph / static_cast<double>(nph);
+            auto obs = vec3d(R, th, ph);
+            obss.push_back(obs);
+            obsFile << obs << '\n';
+        }
+    }
+}
 
 int main() {
     Config config("config/config.txt");
@@ -17,24 +51,18 @@ int main() {
     auto tris = importTriangles("config/n120/faces.txt", vertices);
     int Ntris;
 
-    shared_ptr<Src> Einc = make_shared<Src>(); // initialize incident field
-
     auto srcs = importRWG("config/n120/rwgs.txt", vertices, tris, Einc);
     int Nsrcs = srcs.size();
 
-    Node::setNodeParams(config,Einc);
+    Node::setNodeParams(config, Einc);
 
     cout << " # Sources:           " << Nsrcs << '\n';
     cout << " Root length:         " << config.rootLeng << '\n';
     cout << " Interpolation order: " << config.order << '\n';
-    // cout << " Exponential order:   " << Node::getExponentialOrder() << '\n';
     cout << " Max node RWGs:       " << config.maxNodeSrcs << "\n\n";
-
-    // return 0;
 
     // ==================== Set up domain ==================== //
     cout << " Setting up domain...\n";
-    auto start = Clock::now();
 
     shared_ptr<Node> root;
     if (Nsrcs > config.maxNodeSrcs)
@@ -44,40 +72,18 @@ int main() {
 
     root->buildLists();
 
-    auto end = Clock::now();
-    Time duration_ms = end - start;
-
     cout << "   # Nodes: " << Node::getNumNodes() << '\n';
     cout << "   # Leaves: " << Leaf::getNumLeaves() << '\n';
     cout << "   Max node level: " << Node::getMaxLvl() << '\n';
-    cout << "   Elapsed time: " << duration_ms.count() << " ms\n\n";
-    
-    // return 0;
 
     // ==================== Build tables ===================== //
     cout << " Building tables...\n";
 
-    start = Clock::now();
-
     Node::buildAngularSamples();
     Node::buildTables(config);
 
-    end = Clock::now();
-    duration_ms = end - start;
-    cout << "   Elapsed time: " << duration_ms.count() << " ms\n\n";
-    
-    // return 0;
+    // ==================== Test upward pass ===================== //
 
-    // ==================== Upward pass ===================== //
-    cout << " Computing upward pass...\n";
+    root->testFarField(10, 20);
 
-    start = Clock::now();
-
-    root->buildMpoleCoeffs();
-
-    end = Clock::now();
-    duration_ms = end - start;
-    cout << "   Elapsed time: " << duration_ms.count() << " ms\n\n";
-
-    return 0;
 }

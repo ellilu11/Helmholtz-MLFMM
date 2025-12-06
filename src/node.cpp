@@ -45,11 +45,10 @@ void Node::buildAngularSamples() {
             nodesPhi.push_back(2.0*PI*iph/static_cast<double>(nph));
         phis.push_back(nodesPhi);
 
-        const auto [nodes, weights] = Math::gaussLegendre(L+1, 1.0E-9, 0.0, PI);
+        const auto [nodes, weights] = Interp::gaussLegendre(L+1, 1.0E-9, 0.0, PI);
 
         thetas.push_back(nodes);
         thetaWeights.push_back(weights);
-
     }
 }
 
@@ -134,7 +133,7 @@ void Node::evalLeafIlistSols() {
 }
 
 /* evalPairSols(srcNode)
- * (P2P) Evaluate sols at particles in this node due to particles in srcNode
+ * (S2T) Evaluate sols at RWGs in this node due to RWGs in srcNode
  * and vice versa 
  * srcNode : source node
  */
@@ -143,7 +142,7 @@ void Node::evalPairSols(const std::shared_ptr<Node>& srcNode) {
 }
 
 /* evalSelfSols()
- * (P2P) Evaluate sols at all particles in this node due to all other particles
+ * (S2T) Evaluate sols at all RWGs in this node due to all other RWGs
  * in this node
  */
 void Node::evalSelfSols() {
@@ -151,3 +150,32 @@ void Node::evalSelfSols() {
 
 }
 
+/* getFarSols()
+ * Return sols at spherical point R due to all RWGs in this node
+ * using farfield approximation
+ */
+vec3cd Node::getFarSols(const vec3d R) {
+    auto r = R[0];
+    auto rhat = Math::fromSph(R) / r;
+
+    vec3cd fvec;
+
+    for (const auto& rwg : rwgs) {
+        auto triPlus = rwg->getTriPlus();
+        auto [nodesPlus, weightPlus] = triPlus->getQuads();
+        for (const auto& quadNode : nodesPlus)
+            fvec += weightPlus * (rwg->getVplus() - quadNode)
+                * Math::expI(-wavenum*rhat.dot(quadNode));
+
+        auto triMinus = rwg->getTriMinus();
+        auto [nodesMinus, weightMinus] = triMinus->getQuads();
+        for (const auto& quadNode : nodesMinus)
+            fvec += weightMinus * (quadNode - rwg->getVminus())
+                * Math::expI(-wavenum*rhat.dot(quadNode));
+        
+        fvec *= rwg->getCurrent() * rwg->getLeng();
+    }
+
+    return -iu * wavenum * Math::expI(wavenum*r) / (4.0*PI*r) 
+            * Math::IminusRR(R[1], R[2]) * fvec;
+}

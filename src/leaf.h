@@ -52,6 +52,9 @@ public:
 
     void buildLocalCoeffs() override;
 
+    // ========== Test methods ==========
+    vec3d getLeafSols(const vec3d);
+
 private:
     static LeafVec leaves;
 

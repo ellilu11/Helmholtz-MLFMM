@@ -6,6 +6,7 @@
 #include <queue>
 #include "clock.h"
 #include "config.h"
+#include "interp.h"
 #include "rwg.h"
 #include "tables.h"
 
@@ -89,6 +90,8 @@ public:
     void evalPairSols(const std::shared_ptr<Node>&);
 
     void evalSelfSols();
+
+    vec3cd getFarSols(const vec3d);
    
     virtual std::shared_ptr<Node> getSelf() = 0;
     
@@ -103,6 +106,9 @@ public:
     virtual void buildLocalCoeffs() = 0;
     
     virtual void printNode(std::ofstream&) = 0;
+
+    // ========== Test methods ==========
+    void testFarField(const int, const int);
 
 protected:
     static int order;

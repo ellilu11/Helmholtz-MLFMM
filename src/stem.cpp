@@ -68,12 +68,14 @@ void Stem::buildMpoleCoeffs() {
     const int mth = thetas[level+1].size();
     const int mph = phis[level+1].size();
 
+    // std::cout << level << ' ' << nth << ' ' << nph << ' ' << mth << ' ' << mph << '\n';
+
     for (const auto& branch : branches) {
         branch->buildMpoleCoeffs();
         auto branchCoeffs = branch->getMpoleCoeffs();
 
         // Shift branch coeffs to center of this box
-        const auto rvec = center - branch->getCenter();
+        const auto shift = center - branch->getCenter();
         size_t l = 0;
         std::vector<vec2cd> shiftedBranchCoeffs;
 
@@ -82,56 +84,60 @@ void Stem::buildMpoleCoeffs() {
 
                 const auto kvec = tables.kvec[level+1][l];
                 shiftedBranchCoeffs.push_back(
-                    Math::expI(kvec.dot(rvec)) * branchCoeffs[l++]
-                );
+                    Math::expI(kvec.dot(shift)) * branchCoeffs[l++]);
             }
         }
 
         // Interpolate over theta
         std::vector<vec2cd> interpedBranchCoeffs(nth*mph, vec2cd::Zero()); 
         size_t m = 0;
-        for (int ith = 0; ith < nth; ++ith) { // over parent theta to interpolate
-            auto t = tables.T[level][ith];
+        for (int ith = 0; ith < nth; ++ith) {
+            auto t = tables.ts[level][ith];
 
-            for (int jph = 0; jph < mph; ++jph) { // over child phi (uninterpolated)
+            for (int jph = 0; jph < mph; ++jph) {
 
-                for (int jth = t+1-order; jth <= t+order; ++jth) { // over child theta interpolating parent theta
-                    const size_t k = jth - (t+1-order);
+                size_t k = 0;
+                for (int jth = t+1-order; jth <= t+order; ++jth) { 
+                    // const int k = jth - (t+1-order);
 
                     // Flip jph if not in [0, mth-1]
-                    const size_t jth_flipped = Math::flipIdxToRange(jth, mth);
+                    const int jth_flipped = Math::flipIdxToRange(jth, mth);
 
                     bool outOfRange = jth != jth_flipped;// jth < 0 || jth >= mth;
 
-                    size_t m2 = jth_flipped*mph + jph;
+                    int m2 = jth_flipped*mph + jph;
                     if (outOfRange)
                         m2 += (jph < mph/2) ? mph/2 : -mph/2;
 
                     interpedBranchCoeffs[m] +=
-                        tables.interpTheta[level][ith][k]
+                        tables.interpTheta[level][ith][k++]
                         * shiftedBranchCoeffs[m2]
                         * Math::pm(outOfRange);
                 }   
 
+                // if (level)
+                //    std::cout << '(' << ith << ',' << jph << ") " << interpedBranchCoeffs[m] << '\n';
+
                 m++;
             }
         }
-
+        
         // Interpolate over phi
         size_t n = 0;
-        for (int ith = 0; ith < nth; ++ith) { // over parent theta (interpolated)
+        for (int ith = 0; ith < nth; ++ith) { 
 
-            for (int iph = 0; iph < nph; ++iph) { // over parent phi to interpolate
-                auto s = tables.S[level][iph]; // don't need to lookup for every ith
+            for (int iph = 0; iph < nph; ++iph) { 
+                auto s = tables.ss[level][iph]; // don't need to lookup for every ith
 
-                for (int jph = s+1-order; jph <= s+order; ++jph) { // over child phi interpolating parent phi
-                    const size_t k = jph - (s+1-order);
+                size_t k = 0;
+                for (int jph = s+1-order; jph <= s+order; ++jph) {
+                    // const int k = jph - (s+1-order);
 
                     // Wrap jph if not in [0, mph-1]
-                    size_t jph_wrapped = Math::wrapIdxToRange(jph, mph); 
+                    const int jph_wrapped = Math::wrapIdxToRange(jph, mph); 
 
                     coeffs[n] +=
-                        tables.interpPhi[level][iph][k]
+                        tables.interpPhi[level][iph][k++]
                         * interpedBranchCoeffs[ith*mph + jph_wrapped];
                 }
 
@@ -139,6 +145,10 @@ void Stem::buildMpoleCoeffs() {
             }
         }
     }
+
+    /*for (int ith = 0; ith < nth; ++ith)
+        for (int iph = 0; iph < nph; ++iph)
+            std::cout << '(' << level << ',' << ith << ',' << iph << ") " << coeffs[ith*nph+iph] << '\n';*/
 }
 
 /* propagateExpCoeffs()
