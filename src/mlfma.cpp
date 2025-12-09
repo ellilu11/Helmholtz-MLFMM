@@ -1,8 +1,7 @@
 ﻿#include <fstream>
-#include <iostream>
+#include "MLFMA.h"
 #include "clock.h"
 #include "config.h"
-#include "MLFMA.h"
 
 using namespace std;
 

@@ -59,18 +59,16 @@ void Leaf::buildMpoleCoeffs() {
 
     coeffs.resize(nth*nph, vec2cd::Zero());
 
-    /*auto triCoeff = [this](std::shared_ptr<Triangle> tri, mat3d ImKK, vec3d kvec, bool isPlus) {
-        auto [nodes, weight] = tri->getQuads();
-        auto coeff = vec3cd::Zero();
-
-        for (const auto& quadNode : nodes)
-            coeff += weight * ImKK * (rwg->getVplus() - quadNode)
-            * Math::expI(kvec.dot(center-quadNode));
-    }*/
-
     size_t idx = 0;
     for (int ith = 0; ith < nth; ++ith) {
+        const double th = thetas[level][ith]; // 
+
+        // std::cout << ith << ' ' << th << '\n';
+
         for (int iph = 0; iph < nph; ++iph) {
+            const double ph = phis[level][iph]; //
+
+            // if (ith == 0) std::cout << iph << ' ' << ph << '\n';
 
             const auto ImKK = tables.ImKK[level][idx];
             const auto kvec = tables.kvec[level][idx];
@@ -83,28 +81,28 @@ void Leaf::buildMpoleCoeffs() {
                 auto vPlus = rwg->getVplus();
                 auto [nodesPlus,weightPlus] = triPlus->getQuads();
                 for (const auto& quadNode : nodesPlus)
-                    rwgCoeff += weightPlus * Math::expI(kvec.dot(center-quadNode)) 
+                    rwgCoeff += weightPlus * std::exp(iu*kvec.dot(center-quadNode)) 
                                     * (vPlus - quadNode);
                 
                 auto triMinus = rwg->getTriMinus();
                 auto vMinus = rwg->getVminus();
                 auto [nodesMinus, weightMinus] = triMinus->getQuads();
                 for (const auto& quadNode : nodesMinus)
-                    rwgCoeff += weightMinus * Math::expI(kvec.dot(center-quadNode)) 
+                    rwgCoeff += weightMinus * std::exp(iu*kvec.dot(center-quadNode)) 
                                     * (quadNode - vMinus);
                 
                 dirCoeff += rwg->getCurrent() * rwg->getLeng() * rwgCoeff;
             }
 
-            // Get theta and phi components
             coeffs[idx] = tables.matToThPh[level][idx] * (ImKK * dirCoeff);
 
-            // std::cout << '(' << ith << ',' << iph << ") " << coeffs[idx] << '\n';
+            // coeffs in Cartesian coordinates
+            // auto coeffCart = ImKK * dirCoeff;
+            // coeffs[idx] = vec2cd(coeffCart[0], coeffCart[1]); //
 
             idx++;
         }
     }
-    // std::cout << '\n';
 }
 
 /* buildLocalCoeffs()
@@ -156,7 +154,7 @@ std::vector<LeafPair> Leaf::findNearNborPairs(){
 }
 
 /* evaluateSols()
- * Sum solutions at all particles in all leaves 
+ * Sum solutions at all RWGs in all leaves 
  */ 
 void Leaf::evaluateSols() {
 

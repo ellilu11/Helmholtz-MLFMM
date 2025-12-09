@@ -13,9 +13,12 @@ struct Tables {
         const double rootLeng)
     {
         buildAngularTables(maxLevel, thetas, phis, wavenum);
+        
         buildInterpThetaTable(maxLevel, order, thetas);
         buildInterpPhiTable(maxLevel, order, phis);
-        buildTranslationTable(maxLevel, order, Ls, wavenum, rootLeng);
+        
+        // buildTranslationTable(maxLevel, order, Ls, wavenum, rootLeng);
+        // buildInterpPsiTable(maxLevel, order, thetas, phis);
 
     }
 
@@ -29,10 +32,14 @@ struct Tables {
     void buildTranslationTable(
         const int, const int, const std::vector<int>&, const double, const double);
 
+    void buildInterpPsiTable(
+        int, int, const std::vector<realVec>&, const std::vector<realVec>&);
+
     // Angular tables
     std::vector<std::vector<mat3d>> ImKK;
     std::vector<std::vector<vec3d>> kvec;
-    std::vector<std::vector<mat23d>> matToThPh;
+    std::vector<std::vector<Eigen::Matrix<double,2,3>>> matToThPh;
+    std::vector<std::vector<Eigen::Matrix<double,3,2>>> matFromThPh;
     // std::vector<std::vector<mat3d>> matToThPh;
 
     // Lagrange interpolation tables
@@ -42,10 +49,11 @@ struct Tables {
     std::vector<std::vector<realVec>> interpPhi;
     std::vector<std::vector<size_t>> ss;
 
-    std::vector<std::vector<realVec>> interpPsi;
+    std::vector<realVec> interpPsi;
 
     // M2L translation tables
     std::vector<std::vector<cmplxVec>> transl;
-    realVec normedDists;
+    realVec iNodeDists;
+    std::vector<vec3d> iNodeDirs;
 
 };

@@ -1,0 +1,65 @@
+nth1 = 26;
+nth2 = 39;
+nph = 13;
+
+dir = "C:\Users\ellil\Documents\WORK\MLFMA\MLFMA\out\build\x64-debug\";
+coeffs1 = readmatrix(dir+"out\coeffs_nth"+string(nth1)+"_nph"+string(nph)+".txt");
+coeffs2 = readmatrix(dir+"out\coeffs_nth"+string(nth2)+"_nph"+string(nph)+".txt");
+
+thetas1 = readmatrix(dir+"out\nodes_nth"+string(nth1)+".txt");
+thetas2 = readmatrix(dir+"out\nodes_nth"+string(nth2)+".txt");
+
+coeffs1 = reshape(coeffs1, nth1*nph, 1);
+coeffs2 = reshape(coeffs2, nth2*nph, 1);
+
+% coeffsNew1 = reshape(permute(reshape(coeffs1, nph, nth1, 4), [2 1 3]), nth1*nph, 4);
+% coeffsNew2 = reshape(permute(reshape(coeffs2, nph, nth2, 4), [2 1 3]), nth2*nph, 4);
+
+%% Fixed nth
+phis1 = linspace(0,2*pi*(1-1/nph1),nph1);
+phis2 = linspace(0,2*pi*(1-1/nph2),nph2);
+
+longPhis1 = zeros(1,nth*nph1);
+longPhis2 = zeros(1,nth*nph2);
+
+for i=0:nth-1
+    longPhis1(i*nph1+1:(i+1)*nph1) = 2*pi*i + phis1;
+    longPhis2(i*nph2+1:(i+1)*nph2) = 2*pi*i + phis2;
+end
+
+close all;
+for i=1:4
+    figure(i);
+    hold on;
+    plot(longPhis1, coeffs1(:,i));
+    plot(longPhis2, coeffs2(:,i));
+    hold off;
+end
+
+%% Fixed nph
+% thetas1 = linspace(0,pi*(1-1/nth1),nth1);
+% thetas2 = linspace(0,pi*(1-1/nth2),nth2);
+
+longThetas1 = zeros(1,nth1*nph);
+longThetas2 = zeros(1,nth2*nph);
+
+for i=0:nph-1
+    longThetas1(i*nth1+1:(i+1)*nth1) = pi*i + thetas1;
+    longThetas2(i*nth2+1:(i+1)*nth2) = pi*i + thetas2;
+end
+
+close all;
+hold on;
+plot(longThetas1, coeffs1);
+plot(longThetas2, coeffs2);
+hold off;
+
+%{
+for i=1:4
+    figure(i);
+    hold on;
+    plot(longThetas1, coeffs1(:,i));
+    plot(longThetas2, coeffs2(:,i));
+    hold off;
+end
+%}

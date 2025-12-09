@@ -16,7 +16,6 @@ using vec3cd = Eigen::Vector3cd;
 // using vecXcd = Eigen::VectorXcd;
 
 using mat3d = Eigen::Matrix3d;
-using mat23d = Eigen::Matrix<double, 2, 3>;
 
 template <typename T>
 std::vector<T> operator+ (const std::vector<T>& zs, const std::vector<T>& ws) {
@@ -32,11 +31,19 @@ std::ostream& operator<< (std::ostream& os, const vec3d& X) {
 }
 
 std::ostream& operator<< (std::ostream& os, const vec2cd& X) {
-    os << X[0] << " " << X[1];
+    os << X[0].real() << " " << X[0].imag() << " " 
+       << X[1].real() << " " << X[1].imag();
     return os;
 }
 
 std::ostream& operator<< (std::ostream& os, const vec3cd& X) {
+    os << X[0].real() << " " << X[0].imag() << " "
+       << X[1].real() << " " << X[1].imag() << " "
+       << X[2].real() << " " << X[2].imag();
+    return os;
+}
+
+std::ostream& operator<< (std::ostream& os, const Eigen::Array3d& X) {
     os << X[0] << " " << X[1] << " " << X[2];
     return os;
 }

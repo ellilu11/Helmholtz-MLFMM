@@ -79,7 +79,7 @@ void Stem::buildMpoleCoeffs() {
         std::vector<vec2cd> shiftedBranchCoeffs;
 
         size_t l = 0;
-        for (int jth = 0; jth < mth; ++jth){
+        for (int jth = 0; jth < mth; ++jth) {
             for (int jph = 0; jph < mph; ++jph) {
 
                 const auto kvec = tables.kvec[level+1][l];
@@ -114,7 +114,7 @@ void Stem::buildMpoleCoeffs() {
                         tables.interpTheta[level][ith][k++]
                         * shiftedBranchCoeffs[m2]
                         * Math::pm(outOfRange);
-                }   
+                }
 
                 // if (level)
                 //    std::cout << '(' << ith << ',' << jph << ") " << interpedBranchCoeffs[m] << '\n';

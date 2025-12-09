@@ -8,11 +8,12 @@ void Tables::buildAngularTables(
     for (int level = 0; level <= maxLevel; ++level) {
 
         const int nth = thetas[level].size();
-        const int nph = 2*nth;
+        const int nph = phis[level].size();
 
         std::vector<mat3d> ImKK_lvl;
         std::vector<vec3d> kvec_lvl;
-        std::vector<mat23d> matToThPh_lvl;
+        std::vector<Eigen::Matrix<double,2,3>> matToThPh_lvl;
+        std::vector<Eigen::Matrix<double,3,2>> matFromThPh_lvl;
         // std::vector<mat3d> matToThPh_lvl;
 
         for (int ith = 0; ith < nth; ++ith) {
@@ -23,6 +24,7 @@ void Tables::buildAngularTables(
                 ImKK_lvl.push_back(Math::IminusRR(th, ph));
                 kvec_lvl.push_back(Math::vecSph(wavenum, th, ph));
                 matToThPh_lvl.push_back(Math::matToThPh(th, ph));
+                matFromThPh_lvl.push_back(Math::matFromThPh(th, ph));
                 // matToThPh_lvl.push_back(Math::matToSph(th, ph));
             }
         }
@@ -30,6 +32,7 @@ void Tables::buildAngularTables(
         ImKK.push_back(ImKK_lvl);
         kvec.push_back(kvec_lvl);
         matToThPh.push_back(matToThPh_lvl);
+        matFromThPh.push_back(matFromThPh_lvl);
     }
 }
 
@@ -138,19 +141,7 @@ void Tables::buildTranslationTable(
 
     constexpr double q = 3.5; // TODO: Optimize this
 
-    normedDists = []() {
-        realVec dists;
-
-        for (int dz = 2; dz <= 3; ++dz)
-            for (int dy = 0; dy <= 3; ++dy)
-                for (int dx = 0; dx <= 3; ++dx)
-                    dists.push_back(vec3d(dx, dy, dz).norm());
-
-        std::sort(dists.begin(), dists.end());
-        dists.erase(std::unique(dists.begin(), dists.end()), dists.end());
-
-        return dists;
-    } ();
+    iNodeDists = getINodeDistances();
 
     for (size_t level = 0; level <= maxLevel; ++level) {
         const auto L = Ls[level];
@@ -159,8 +150,8 @@ void Tables::buildTranslationTable(
 
         std::vector<cmplxVec> transl_lvl;
         
-        for (int iDist = 0; iDist < normedDists.size(); ++iDist) {
-            const auto dr = normedDists[iDist];
+        for (int iDist = 0; iDist < iNodeDists.size(); ++iDist) {
+            const auto dr = iNodeDists[iDist];
 
             cmplxVec transl_lvl_k;
 
@@ -184,3 +175,33 @@ void Tables::buildTranslationTable(
         transl.push_back(transl_lvl);
     }
 };
+
+void Tables::buildInterpPsiTable(
+    int maxLevel,
+    int order, 
+    const std::vector<realVec>& thetas,
+    const std::vector<realVec>& phis) {
+
+    iNodeDirs = Math::getINodeDirections();
+
+    /*for (size_t level = 0; level <= maxLevel; ++level) {
+        const int nth = thetas[level].size();
+        const int nph = phis[level].size();
+
+        size_t idx = 0;
+        for (size_t ith = 0; ith < nth; ++ith) {
+            for (size_t iph = 0; iph < nph; ++iph) {
+
+                auto kvec_ = kvec[level][idx];
+                auto uvec = kvec_ / kvec_.norm();
+
+                for (int iDir = 0; iDir < iNodeDirs.size(); ++iDir) {
+
+                    const double x = uvec.dot(iNodeDirs[iDir]);
+
+
+                }
+            }
+        }
+    }*/
+}

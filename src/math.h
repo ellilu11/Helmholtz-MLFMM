@@ -59,14 +59,6 @@ namespace Math {
         }
     }
 
-    inline double factorial(double n) {
-        return n == 0 ? 1 : n * factorial(n-1);
-    }
-
-    inline double fallingFactorial(double x, int k) {
-        return k == 0 ? 1 : x * fallingFactorial(x - 1, k - 1);
-    }
-
     inline vec3d toSph(const vec3d& X) {
         auto x = X[0], y = X[1], z = X[2], r = X.norm();
         assert(r != 0);
@@ -96,32 +88,33 @@ namespace Math {
     }
 
     inline vec3d vecSph(const double r, const double th, const double ph) {
-        return r * vec3d(
-            sin(th) * cos(ph),
-            sin(th) * sin(ph),
-            cos(th));
+        return vec3d(
+            r * sin(th) * cos(ph),
+            r * sin(th) * sin(ph),
+            r * cos(th));
     }
 
-    inline mat3d IminusRR(const double th, const double ph) {
+    inline mat3d IminusRR(double th, double ph) {
         auto rhat = fromSph(vec3d(1.0, th, ph));
         return mat3d::Identity() - rhat * rhat.transpose();
     }
 
-    inline double coeffYlm(int l, int abs_m) {
-        assert(abs_m <= l);
-        return
-            std::sqrt(factorial(l-abs_m) / static_cast<double>(factorial(l+abs_m))) * // Ylm coeffs
-            pm(abs_m) * std::pow(2.0, l); // legendreLM coeffs
-    }
-
-    inline mat23d matToThPh(const double th, const double ph) {
-        return mat23d{
+    inline Eigen::Matrix<double,2,3> matToThPh(double th, double ph) {
+        return Eigen::Matrix<double,2,3>{
             {  cos(th)*cos(ph),  cos(th)*sin(ph), -sin(th) },
             { -sin(ph),          cos(ph),          0.0     }
         };
     }
 
-    inline mat3d matToSph(const double th, const double ph) {
+    inline Eigen::Matrix<double,3,2> matFromThPh(double th, double ph) {
+        return Eigen::Matrix<double,3,2>{
+            {  cos(th)*cos(ph), -sin(ph) },
+            {  cos(th)*sin(ph),  cos(ph) },
+            { -sin(th),          0       }
+        };
+    }
+
+    inline mat3d matToSph(double th, double ph) {
         return mat3d{
             {  sin(th)*cos(ph),  sin(th)*sin(ph),  cos(th) },
             {  cos(th)*cos(ph),  cos(th)*sin(ph), -sin(th) },
@@ -129,7 +122,7 @@ namespace Math {
         };
     }
 
-    inline mat3d matFromSph(const double th, const double ph) {
+    inline mat3d matFromSph(double th, double ph) {
         return mat3d{
             {  sin(th)*cos(ph),  cos(th)*cos(ph), -sin(ph) },
             {  sin(th)*sin(ph),  cos(th)*sin(ph),  cos(ph) },
@@ -137,15 +130,7 @@ namespace Math {
         };
     }
 
-    inline mat3d rotationR(const double th, const double ph) {
-        return mat3d{
-            {  cos(th)*cos(ph),  cos(th)*sin(ph), -sin(th) },
-            { -sin(ph),          cos(ph),          0       },
-            {  sin(th)*cos(ph),  sin(th)*sin(ph),  cos(th) }
-        };
-    }
-
-    inline size_t flipIdxToRange(const int i, const int size) {
+    inline size_t flipIdxToRange(int i, int size) {
         int uint_i = i;
 
         if (i < 0)
@@ -157,7 +142,7 @@ namespace Math {
         return uint_i;
     }
 
-    inline size_t wrapIdxToRange(const int i, const int size) {
+    inline size_t wrapIdxToRange(int i, int size) {
         int uint_i = i;
 
         if (i < 0)
@@ -180,9 +165,13 @@ namespace Math {
     return idx;
     }*/
 
-    pair2d legendreL(const double, const int);
+    pair2d legendreL(double, int);
 
-    cmplx sphericalHankel1(const double, const int);
+    cmplx sphericalHankel1(double, int);
+
+    realVec getINodeDistances();
+
+    std::vector<vec3d> getINodeDirections();
 
 } // close Math::
 
@@ -192,7 +181,7 @@ namespace Math {
  * x : evaluation point
  * l : order of Legendre polynomial
  */
-pair2d Math::legendreL(const double x, const int l) {
+pair2d Math::legendreL(double x, int l) {
     double p;
     double pm2 = 1.0;
     double pmm = x;
@@ -214,7 +203,7 @@ pair2d Math::legendreL(const double x, const int l) {
      * x : evaluation point
      * n : order of Hankel function
      */
-cmplx Math::sphericalHankel1(const double x, const int n) {
+cmplx Math::sphericalHankel1(double x, int n) {
 
     cmplx H1_nmm = -iu*expI(x) / x;
 
@@ -239,4 +228,68 @@ cmplx Math::sphericalHankel1(const double x, const int n) {
             (2*n-1)/x * sphericalHankel1(x, n-1) -
             sphericalHankel1(x, n-2);
     }*/
+}
+
+realVec Math::getINodeDistances() {
+    realVec dists;
+
+    for (double dz = 0; dz <= 3; ++dz)
+        for (double dy = 0; dy <= 3; ++dy)
+            for (double dx = 0; dx <= 3; ++dx) {
+                auto dir = vec3d(dx, dy, dz);
+                auto dist = dir.norm();
+
+                if (dir.lpNorm<Eigen::Infinity>() > 1.0)
+                    dists.push_back(dist);
+
+            }
+
+    std::sort(dists.begin(), dists.end());
+
+    dists.erase(std::unique(dists.begin(), dists.end()), dists.end());
+
+    return dists;
+}
+
+std::vector<vec3d> Math::getINodeDirections() {
+    std::vector<vec3d> dirs;
+
+    for (double dz = -3; dz <= 3; ++dz)
+        for (double dy = -3; dy <= 3; ++dy)
+            for (double dx = -3; dx <= 3; ++dx) {
+                auto dir = vec3d(dx, dy, dz);
+                auto dist = dir.norm();
+
+                if (dir.lpNorm<Eigen::Infinity>() > 1.0) 
+                    dirs.push_back(dir/dist);
+            }
+
+    constexpr double EPS = 1.0E-6;
+
+    auto approxLess = [](double x, double y) {
+        if (abs(x-y) < EPS) return false;
+        return x < y;
+    };
+
+    auto vecLessThan = [&](const vec3d& X, const vec3d& Y) {
+        if (approxLess(X[0], Y[0])) return true;
+        if (approxLess(Y[0], X[0])) return false;
+
+        if (approxLess(X[1], Y[1])) return true;
+        if (approxLess(Y[1], X[1])) return false;
+
+        return X[2] < Y[2];
+    };
+
+    std::sort(dirs.begin(), dirs.end(), vecLessThan);
+
+    auto vecEquals = [](const vec3d X, const vec3d Y) {
+        return ((X-Y).norm()) < EPS;
+    };
+
+    dirs.erase(
+        std::unique(dirs.begin(), dirs.end(), vecEquals), 
+        dirs.end());
+
+    return dirs;
 }

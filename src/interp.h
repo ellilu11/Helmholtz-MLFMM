@@ -60,12 +60,12 @@ std::pair<realVec, realVec> Interp::gaussLegendre(
         weights[kminus] = weights[kplus];
     }
 
-    return std::pair<realVec, realVec>(nodes, weights);
+    return std::make_pair(nodes, weights);
 }
 
 /* getNearGLNodeIdx(x, m)
 * Get the index of the Gauss-Legendre node of order m
-* nearest (and less than) the point x on the interval [a, b]
+* nearest and less than the point x on the interval [a, b]
 * x : evaluation point
 * m : order of near nodes (less than order of x)
 * a : lower bound of interval

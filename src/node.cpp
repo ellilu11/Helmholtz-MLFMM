@@ -52,12 +52,16 @@ Node::Node(
  */
 void Node::buildAngularSamples() {
 
+    constexpr double EPS = 1.0E-9;
+
     for (int lvl = 0; lvl <= maxLevel; ++lvl) {
         const double nodeLeng = rootLeng / pow(2.0, lvl);
 
         // Use excess bandwidth formula
-        const int L = ceil(1.73*wavenum*nodeLeng +
-            2.16*pow(prec, 2.0/3.0)*pow(wavenum*nodeLeng, 1.0/3.0));
+        const int L = 
+            ceil(10.0*
+                (1.73*wavenum*nodeLeng +
+                2.16*pow(prec, 2.0/3.0)*pow(wavenum*nodeLeng, 1.0/3.0)));
 
         Ls.push_back(L);
 
@@ -67,7 +71,8 @@ void Node::buildAngularSamples() {
             nodesPhi.push_back(2.0*PI*iph/static_cast<double>(nph));
         phis.push_back(nodesPhi);
 
-        const auto [nodes, weights] = Interp::gaussLegendre(L+1, 1.0E-9, 0.0, PI);
+        const auto [nodes, weights] = Interp::gaussLegendre(L+1, EPS, 0.0, PI);
+            // Interp::gaussLegendre(26, EPS, 0.0, PI);
 
         thetas.push_back(nodes);
         thetaWeights.push_back(weights);
@@ -132,7 +137,7 @@ void Node::buildMpoleToLocalCoeffs() {
         const auto r = R.norm();
         const auto rhat = R / r;
         
-        const auto iDist = Math::getIdxOfVal(R, tables.normedDists);
+        const auto iDist = Math::getIdxOfVal(R/nodeLeng, tables.iNodeDists);
 
         const int t = 0; // std::floor()
 
@@ -142,16 +147,14 @@ void Node::buildMpoleToLocalCoeffs() {
 
                 const vec3d kvec = tables.kvec[level][idx];
 
-                const double psi = kvec.dot(rhat) / kvec.norm();
-
-                auto lagrangeCoeff = Interp::evalLagrangeBasis(psi, psis, i);
+                // const double psi = kvec.dot(rhat) / kvec.norm();
 
                 double translCoeff = 0.0;
 
                 for (int i = t+1-order; i <= t+order; ++i) {
                     translCoeff +=
                         tables.transl[level][iDist][i] *
-                        lagrangeCoeff;
+                        tables.interpPsi[iPsi][i];
                 }
 
                 localCoeffs[idx] += translCoeff * mpoleCoeffs[idx];
@@ -197,13 +200,14 @@ void Node::evalSelfSols() {
 
 }
 
-/* getFarSols()
- * Return sols at spherical point R due to all RWGs in this node
+/* getFarSol()
+ * Return sol at Cartesian point R due to all RWGs in this node
  * using farfield approximation
  */
-vec2cd Node::getFarSols(const vec3d R) {
+vec3cd Node::getFarSol(const vec3d& X) {
+    auto R = Math::toSph(X);
     auto r = R[0];
-    auto rhat = Math::fromSph(R) / r;
+    auto rhat = X / r;
     auto ImRR = Math::IminusRR(R[1], R[2]);
 
     vec3cd fvec = vec3cd::Zero();
@@ -226,7 +230,6 @@ vec2cd Node::getFarSols(const vec3d R) {
         fvec += rwg->getCurrent() * rwg->getLeng() * rwgCoeff;
     }
 
-    return -iu * wavenum 
-            * Math::expI(wavenum*r) / (4.0*PI*r) 
-            * Math::matToThPh(R[1], R[2]) * (ImRR * fvec);
+    return -iu * c0 * wavenum * mu0 * 
+            exp(iu*wavenum*r) / (4.0*PI*r) * ImRR * fvec;
 }

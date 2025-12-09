@@ -13,6 +13,10 @@
 constexpr int DIM = 3;
 constexpr int numDir = 26;
 
+// TODO: move into config
+constexpr double c0 = 299792458.0; 
+constexpr double mu0 = 1.256637E-6; 
+
 enum class Dir {
     W, E, S, N, D, U,
     SW, SE, NW, NE, DW, DE, UW, UE, DS, DN, US, UN,
@@ -24,6 +28,7 @@ class Node;
 using NodeVec = std::vector<std::shared_ptr<Node>>;
 
 class Node {
+    friend struct Tables;
 
 public:
     // static const int getExpansionOrder() { return order; }
@@ -97,7 +102,7 @@ public:
 
     void evalSelfSols();
 
-    vec2cd getFarSols(const vec3d);
+    vec3cd getFarSol(const vec3d&);
    
     virtual std::shared_ptr<Node> getSelf() = 0;
     
