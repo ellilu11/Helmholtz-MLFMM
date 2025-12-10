@@ -64,7 +64,7 @@ void Stem::buildMpoleCoeffs() {
     const auto [nth, nph] = getNumAngles(level);
     const auto [mth, mph] = getNumAngles(level+1);
 
-    coeffs.resize(nth*nph, vec2cd::Zero());
+    coeffs.resize(nth*nph, vec3cd::Zero());
 
     for (const auto& branch : branches) {
         if (branch->getRWGs().empty()) continue;
@@ -76,7 +76,7 @@ void Stem::buildMpoleCoeffs() {
         // Shift branch coeffs to center of this box
         const auto shift = center - branch->getCenter();
 
-        std::vector<vec2cd> shiftedBranchCoeffs;
+        std::vector<vec3cd> shiftedBranchCoeffs;
 
         size_t l = 0;
         for (int jth = 0; jth < mth; ++jth) {
@@ -89,7 +89,7 @@ void Stem::buildMpoleCoeffs() {
         }
 
         // Interpolate over theta
-        std::vector<vec2cd> interpedBranchCoeffs(nth*mph, vec2cd::Zero()); 
+        std::vector<vec3cd> interpedBranchCoeffs(nth*mph, vec3cd::Zero()); 
 
         size_t m = 0;
         for (int ith = 0; ith < nth; ++ith) {

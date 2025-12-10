@@ -2,8 +2,8 @@
 
 #include <Eigen/Dense>
 
-using realVec = std::vector<double>;
 using cmplx = std::complex<double>;
+using realVec = std::vector<double>;
 using cmplxVec = std::vector<cmplx>;
 
 using pair2i = std::pair<int, int>;
@@ -13,7 +13,6 @@ using vec3i = Eigen::Vector3i;
 using vec3d = Eigen::Vector3d;
 using vec2cd = Eigen::Vector2cd;
 using vec3cd = Eigen::Vector3cd;
-// using vecXcd = Eigen::VectorXcd;
 
 using mat3d = Eigen::Matrix3d;
 

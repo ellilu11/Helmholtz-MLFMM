@@ -7,209 +7,125 @@
 
 using namespace std;
 
-/* Return observers in Cartesian coordinates */
-vector<vec3d> buildObservers(double r, int nth, int nph) {
-    ofstream obsFile("config/obss.txt");
+/* Build observers on sphere at sampled directions */
+/*vector<vec3d> Node::getObssAtAngularSamples(double r) {
+
+    const auto [nth, nph] = getNumAngles(level);
 
     vector<vec3d> obss;
     for (int ith = 0; ith < nth; ++ith) {
-        double th = PI * ith / static_cast<double>(nth);
+        const auto theta = thetas[level][ith];
+
         for (int iph = 0; iph < nph; ++iph) {
-            double ph = 2.0 * PI * iph / static_cast<double>(nph);
-            auto obs = Math::fromSph(vec3d(r, th, ph));
+            const double phi = phis[level][iph];
+
+            auto obs = Math::fromSph(vec3d(r, theta, phi));
+
             obss.push_back(obs);
-            obsFile << obs << '\n';
         }
     }
+}*/
 
-    return obss;
-}
-
-vec3cd Leaf::getLeafSol(const vec3d& X) {
+std::vector<vec3cd> Leaf::getLeafSols(double r) {
     assert(!rwgs.empty());
 
+    const cmplx C = -iu * c0 * wavenum * mu0
+        * exp(iu*wavenum*r) / (4.0*PI*r);
+
     const auto [nth, nph] = getNumAngles(level);
-    const double phiWeight = 2.0*PI / static_cast<double>(nph);
 
-    const auto dist = X - center;
+    std::vector<vec3cd> sols(nth*nph, vec3cd::Zero());
 
-    // Do angular integral
-    vec3cd sol = vec3cd::Zero();
     size_t idx = 0;
     for (int ith = 0; ith < nth; ++ith) {
 
-        const auto theta = thetas[level][ith];
-        const auto thetaWeight = thetaWeights[level][ith];
-
-        vec3cd sol_ph = vec3cd::Zero();
         for (int iph = 0; iph < nph; ++iph) {
-            const double phi = phis[level][iph];
 
             const auto kvec = tables.kvec[level][idx];
-
-            sol_ph += exp(iu*kvec.dot(dist))
-                      * tables.matFromThPh[level][idx] 
-                      * coeffs[idx];
+            
+            sols[idx] = C * exp(-iu*kvec.dot(center)) * coeffs[idx];
 
             idx++;
         }
-
-        sol += thetaWeight * sin(theta) * sol_ph;
-    }
-
-    return c0 * mu0 / ( 8.0*PI*PI ) * sol * phiWeight;
-}
-
-/*
-std::vector<vec2cd> Leaf::getLeafSolsPerTheta(const vec3d& X) {
-    assert(!rwgs.empty());
-
-    const auto [nth, nph] = getNumAngles(level);
-    const double phiWeight = 2.0*PI / static_cast<double>(nph);
-
-    const vec3d dist = X - center;
-
-    // Do phi integral for each theta
-    std::vector<vec2cd> sols;
-    size_t idx = 0;
-    for (int ith = 0; ith < nth; ++ith) {
-
-        vec2cd sol_theta = vec2cd::Zero();
-        const double theta = thetas[level][ith];
-
-        for (int iph = 0; iph < nph; ++iph) {
-
-            const double phi = phis[level][iph];
-
-            const auto kvec = Math::fromSph(vec3d(wavenum, theta, phi)); // wavenum
-            // tables.kvec[level][idx];
-
-            sol_theta +=
-                phiWeight
-                * exp(iu*kvec.dot(dist))
-                * vec2cd(1, 0);// * coeffs[idx]
-                ;
-
-            sol_theta[0] +=
-                phiWeight * exp(iu*kvec.dot(dist))
-                * (coeffs[idx][0] * cos(theta) * cos(phi) - coeffs[idx][1] * sin(phi));
-
-            sol_theta[1] +=
-                phiWeight * exp(iu*kvec.dot(dist))
-                * (coeffs[idx][0] * cos(theta) * sin(phi) + coeffs[idx][1] * cos(phi));
-
-            idx++;
-        }
-
-        sols.push_back(sol_theta);
     }
 
     return sols;
-}*/
+}
 
-/* void Leaf::testFarfieldFromLeaves(const std::vector<vec3d>& obss) {
+/* testFarfieldFromLeaves(r)
+ * Print total farfield along leaf sampled directions at distance r,
+ * assuming all non-empty leaves are at same level
+ */ 
+void Leaf::testFarfieldFromLeaves(double r) {
 
-    const auto [nth, nph] = getNumAngles(0); // get Nth, Nph of root
-
-    string outStr = "out/ff_nl" 
-        + to_string(Leaf::getNumLeaves()) 
-        + "_nth" + to_string(nth) 
-        + "_nph" + to_string(nph)
-        + ".txt";
-
-    ofstream outFile(outStr);
+    ofstream outFile("out/ff_lvl" + to_string(maxLevel) + ".txt");
 
     outFile << setprecision(15) << scientific;
 
-    string coeffStr = "out/coeffs_nth" 
-        + to_string(nth)
-        + "_nph" + to_string(nph)
-        + ".txt";
+    const auto [nth, nph] = getNumAngles(maxLevel);
 
-    ofstream coeffFile(coeffStr);
-
-    coeffFile << setprecision(15) << scientific;
+    std::vector<vec3cd> sols(nth*nph, vec3cd::Zero());
 
     for (const auto& leaf : leaves) {
+        if (leaf->rwgs.empty()) continue;
+        
+        // only works if all non-empty leaves are at maxlevel
+        assert(leaf->level == maxLevel); 
+
         leaf->buildMpoleCoeffs();
 
-        for (int idx = 0; idx < nth*nph; ++idx)
-            coeffFile << leaf->coeffs[idx] << '\n';
-
-        size_t idx = 0;
-        for (int ith = 0; ith < nth; ++ith) {
-            for (int iph = 0; iph < nph; ++iph)
-                coeffFile << (leaf->coeffs[idx++])[0].real() << ' ';
-
-            coeffFile << '\n';
-        }
+        sols = sols + leaf->getLeafSols(r);
     }
 
-    for (const auto& obs : obss) {
-        vec2cd sol = vec2cd::Zero();
+    size_t idx = 0;
+    for (int ith = 0; ith < nth; ++ith) {
 
-        for (const auto& leaf : leaves) {
-            if (leaf->rwgs.empty()) continue;
-            sol = sol + leaf->getLeafSol(obs);
+        for (int iph = 0; iph < nph; ++iph) {
+
+            const vec3d solAbs = sols[idx].cwiseAbs();
+
+            outFile << solAbs << '\n';
+
+            idx++;
         }
-
-        outFile << sol[0].real() << ' ' << sol[1].real() << '\n';
-
-        std::vector<vec2cd> sols;
-        for (int i = 0; i < nth; ++i)
-            sols.push_back(vec2cd::Zero());
-
-        for (const auto& leaf : leaves) {
-            if (leaf->rwgs.empty()) continue;
-            sols = sols + leaf->getLeafSolsPerTheta(obs);
-        }
-
-        for (int i = 0; i < nth; ++i)
-            outFile << (sols[i])[0].real() << ' ';
-
-        outFile << '\n';
-
     }
+}
 
-    // Also write G-L theta nodes
-    ofstream nodeFile("out/nodes_nth" + to_string(nth)+ ".txt");
+void Node::testFarfieldDir(double r) {
 
-    for (int lvl = 0; lvl <= 0; ++lvl) {
-        for (int ith = 0; ith < nth; ++ith)
-            nodeFile << thetas[lvl][ith] << ' ';
-
-        nodeFile << '\n';
-    }
-
-}*/
-
-void Leaf::testFarfieldFromLeaves(const std::vector<vec3d>& obss) {
-
-    ofstream outFile("out/ff_nl" + to_string(Leaf::getNumLeaves()) + ".txt");
+    ofstream outFile("out/ffDir.txt");
 
     outFile << setprecision(15) << scientific;
 
-    for (const auto& leaf : leaves)
-        leaf->buildMpoleCoeffs();
+    const auto [nth, nph] = getNumAngles(level);
 
-    for (const auto& obs : obss) {
-        vec3cd sol = vec3cd::Zero();
+    auto sols = getFarSols(r);
 
-        for (const auto& leaf : leaves) {
-            if (leaf->rwgs.empty()) continue;
-            sol = sol + leaf->getLeafSol(obs);
+    size_t idx = 0;
+    for (int ith = 0; ith < nth; ++ith) {
+
+        for (int iph = 0; iph < nph; ++iph) {
+
+            const vec3d solAbs = sols[idx].cwiseAbs();
+
+            outFile << solAbs << '\n';
+
+            idx++;
         }
-
-        // Eigen::Array3d solAbs = sol.array().abs();
-        vec3d solAbs = sol.cwiseAbs();
-        outFile << solAbs << '\n';
-
-        /*outFile << sol[0].real() << ' ' 
-                << sol[1].real() << ' '
-                << sol[2].real() << '\n';
-                */
     }
+}
 
+void Node::printAngularSamples() {
+    ofstream thetaFile("out/thetas_lvl" + to_string(maxLevel) + ".txt");
+    ofstream phiFile("out/phis_lvl" + to_string(maxLevel) + ".txt");
+
+    const auto [nth, nph] = getNumAngles(maxLevel);
+
+    for (int ith = 0; ith < nth; ++ith)
+        thetaFile << thetas[maxLevel][ith] << '\n';
+
+    for (int iph = 0; iph < nph; ++iph)
+        phiFile << phis[maxLevel][iph] << '\n';
 }
 
 int main() {
@@ -255,43 +171,34 @@ int main() {
     Node::buildAngularSamples();
     Node::buildTables(config);
 
-    for (int lvl = 0; lvl <= Node::getMaxLvl(); ++lvl) {
+    const int maxLevel = Node::getMaxLvl();
+
+    for (int lvl = 0; lvl <= maxLevel; ++lvl) {
         auto [nth, nph] = Node::getNumAngles(lvl);
-        cout << " Level " << lvl << ", (Nth,Nph) = "
-            << "(" << nth << "," << nph << ")\n";
+        cout << "   (Lvl,Nth,Nph) = "
+            << "(" << lvl << "," << nth << "," << nph << ")\n";
     }
 
     // ==================== Test upward pass ===================== //
     cout << "\n Testing upward pass...\n";
 
-    // Set up observers
-    const double r = 10.0 * config.rootLeng;
-    constexpr int nth = 10;
-    constexpr int nph = 20;
+    const double r = 20.0*config.rootLeng; // pick r >> rootLeng
 
-    auto obss = buildObservers(r, nth, nph);
-
-    // Do upward pass
+    // Compute farfield from multipole coeffs
     auto start = Clock::now();
 
-    Leaf::testFarfieldFromLeaves(obss);
-
-    // root->testFarField(obss);
+    Leaf::testFarfieldFromLeaves(r);
+    // root->testFarField(r);
 
     auto end = Clock::now();
     Time duration_ms = end - start;
     cout << "   Elapsed time: " << duration_ms.count() << " ms\n\n";
 
-    // Print direct solution
-    ofstream outFile("out/ffDir.txt");
+    // Compute farfield directly
+    // root->testFarfieldDir(r);
 
-    outFile << setprecision(15) << scientific;
-
-    for (const auto& obs : obss) {
-        // Eigen::Array3d solAbs = root->getFarSol(obs).array().abs();
-        vec3d solAbs = root->getFarSol(obs).cwiseAbs();
-        outFile << solAbs << '\n';
-    }
+    // Print out theta and phi samples at max level
+    Node::printAngularSamples();
 
     return 0;
 }

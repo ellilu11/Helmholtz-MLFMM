@@ -70,7 +70,7 @@ public:
 
     NodeVec getLeafIlist() const { return leafIlist; }
     
-    std::vector<vec2cd> getMpoleCoeffs() const { return coeffs; }
+    std::vector<vec3cd> getMpoleCoeffs() const { return coeffs; }
     
     std::vector<vec2cd> getLocalCoeffs() const { return localCoeffs; }
 
@@ -102,7 +102,7 @@ public:
 
     void evalSelfSols();
 
-    vec3cd getFarSol(const vec3d&);
+    std::vector<vec3cd> getFarSols(double);
    
     virtual std::shared_ptr<Node> getSelf() = 0;
     
@@ -117,7 +117,11 @@ public:
     virtual void printNode(std::ofstream&) = 0;
 
     // ========== Test methods ==========
-    // void testFarField(const int, const int);
+    // std::vector<vec3d> getObssAtAngularSamples(double);
+
+    void testFarfieldDir(double);
+
+    static void printAngularSamples();
 
 protected:
     static int order;
@@ -145,7 +149,7 @@ protected:
     NodeVec iList; // list 2
     NodeVec leafIlist; // list 4
 
-    std::vector<vec2cd> coeffs;
+    std::vector<vec3cd> coeffs;
     std::vector<vec2cd> localCoeffs;
 
     int label;

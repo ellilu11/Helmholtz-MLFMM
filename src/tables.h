@@ -40,7 +40,9 @@ struct Tables {
     std::vector<std::vector<vec3d>> kvec;
     std::vector<std::vector<Eigen::Matrix<double,2,3>>> matToThPh;
     std::vector<std::vector<Eigen::Matrix<double,3,2>>> matFromThPh;
-    // std::vector<std::vector<mat3d>> matToThPh;
+    
+    std::vector<std::vector<mat3d>> matToSph;
+    std::vector<std::vector<mat3d>> matFromSph;
 
     // Lagrange interpolation tables
     std::vector<std::vector<realVec>> interpTheta;

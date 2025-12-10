@@ -57,17 +57,15 @@ void Leaf::buildMpoleCoeffs() {
 
     const auto [nth, nph] = getNumAngles(level);
 
-    coeffs.resize(nth*nph, vec2cd::Zero());
+    coeffs.resize(nth*nph, vec3cd::Zero());
 
     size_t idx = 0;
     for (int ith = 0; ith < nth; ++ith) {
-        const double th = thetas[level][ith]; // 
-
+        // const double th = thetas[level][ith];
         // std::cout << ith << ' ' << th << '\n';
 
         for (int iph = 0; iph < nph; ++iph) {
-            const double ph = phis[level][iph]; //
-
+            // const double ph = phis[level][iph];
             // if (ith == 0) std::cout << iph << ' ' << ph << '\n';
 
             const auto ImKK = tables.ImKK[level][idx];
@@ -94,12 +92,16 @@ void Leaf::buildMpoleCoeffs() {
                 dirCoeff += rwg->getCurrent() * rwg->getLeng() * rwgCoeff;
             }
 
-            coeffs[idx] = tables.matToThPh[level][idx] * (ImKK * dirCoeff);
+            // in spherical coordinates
+            // coeffs[idx] = tables.matToSph[level][idx] * (ImKK * dirCoeff);
 
-            // coeffs in Cartesian coordinates
-            // auto coeffCart = ImKK * dirCoeff;
-            // coeffs[idx] = vec2cd(coeffCart[0], coeffCart[1]); //
+            // in spherical coordinates, no radial component
+            // coeffs[idx] = tables.matToThPh[level][idx] * (ImKK * dirCoeff);
 
+            // in cartesian coordinates
+            coeffs[idx] = ImKK * dirCoeff;
+
+            // std::cout << coeffs[idx] << '\n';
             idx++;
         }
     }

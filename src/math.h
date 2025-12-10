@@ -110,7 +110,7 @@ namespace Math {
         return Eigen::Matrix<double,3,2>{
             {  cos(th)*cos(ph), -sin(ph) },
             {  cos(th)*sin(ph),  cos(ph) },
-            { -sin(th),          0       }
+            { -sin(th),          0.0     }
         };
     }
 

@@ -14,7 +14,9 @@ void Tables::buildAngularTables(
         std::vector<vec3d> kvec_lvl;
         std::vector<Eigen::Matrix<double,2,3>> matToThPh_lvl;
         std::vector<Eigen::Matrix<double,3,2>> matFromThPh_lvl;
-        // std::vector<mat3d> matToThPh_lvl;
+        
+        std::vector<mat3d> matToSph_lvl;
+        std::vector<mat3d> matFromSph_lvl;
 
         for (int ith = 0; ith < nth; ++ith) {
             const double th = thetas[level][ith];
@@ -25,7 +27,9 @@ void Tables::buildAngularTables(
                 kvec_lvl.push_back(Math::vecSph(wavenum, th, ph));
                 matToThPh_lvl.push_back(Math::matToThPh(th, ph));
                 matFromThPh_lvl.push_back(Math::matFromThPh(th, ph));
-                // matToThPh_lvl.push_back(Math::matToSph(th, ph));
+
+                matToSph_lvl.push_back(Math::matToSph(th, ph));
+                matFromSph_lvl.push_back(Math::matFromSph(th, ph));
             }
         }
 
@@ -33,6 +37,9 @@ void Tables::buildAngularTables(
         kvec.push_back(kvec_lvl);
         matToThPh.push_back(matToThPh_lvl);
         matFromThPh.push_back(matFromThPh_lvl);
+
+        matToSph.push_back(matToSph_lvl);
+        matFromSph.push_back(matFromSph_lvl);
     }
 }
 

@@ -201,35 +201,52 @@ void Node::evalSelfSols() {
 }
 
 /* getFarSol()
- * Return sol at Cartesian point R due to all RWGs in this node
- * using farfield approximation
+ * Return sols at all sampled directions at distance r 
+ * due to all RWGs in this node using farfield approximation
  */
-vec3cd Node::getFarSol(const vec3d& X) {
-    auto R = Math::toSph(X);
-    auto r = R[0];
-    auto rhat = X / r;
-    auto ImRR = Math::IminusRR(R[1], R[2]);
+std::vector<vec3cd> Node::getFarSols(double r) {
 
-    vec3cd fvec = vec3cd::Zero();
+    assert(r >= 10.0 * rootLeng); // verify farfield condition
 
-    for (const auto& rwg : rwgs) {
-        vec3cd rwgCoeff = vec3cd::Zero();
+    const cmplx C = -iu * c0 * wavenum * mu0
+        * exp(iu*wavenum*r) / (4.0*PI*r);
 
-        auto triPlus = rwg->getTriPlus();
-        auto [nodesPlus, weightPlus] = triPlus->getQuads();
-        for (const auto& quadNode : nodesPlus)
-            rwgCoeff += weightPlus * Math::expI(-wavenum*rhat.dot(quadNode)) 
-                        * (rwg->getVplus() - quadNode);
+    const auto [nth, nph] = getNumAngles(level);
 
-        auto triMinus = rwg->getTriMinus();
-        auto [nodesMinus, weightMinus] = triMinus->getQuads();
-        for (const auto& quadNode : nodesMinus)
-            rwgCoeff += weightMinus * Math::expI(-wavenum*rhat.dot(quadNode)) 
-                        * (quadNode - rwg->getVminus());
-        
-        fvec += rwg->getCurrent() * rwg->getLeng() * rwgCoeff;
+    std::vector<vec3cd> sols(nth*nph, vec3cd::Zero());
+
+    size_t idx = 0;
+    for (int ith = 0; ith < nth; ++ith) {
+
+        for (int iph = 0; iph < nph; ++iph) {
+
+            const auto ImKK = tables.ImKK[level][idx];
+            const auto kvec = tables.kvec[level][idx];
+
+            vec3cd dirCoeff = vec3cd::Zero();
+            for (const auto& rwg : rwgs) {
+                vec3cd rwgCoeff = vec3cd::Zero();
+
+                auto triPlus = rwg->getTriPlus();
+                auto [nodesPlus, weightPlus] = triPlus->getQuads();
+                for (const auto& quadNode : nodesPlus)
+                    rwgCoeff += weightPlus * exp(-iu*kvec.dot(quadNode))
+                    * (rwg->getVplus() - quadNode);
+
+                auto triMinus = rwg->getTriMinus();
+                auto [nodesMinus, weightMinus] = triMinus->getQuads();
+                for (const auto& quadNode : nodesMinus)
+                    rwgCoeff += weightMinus * exp(-iu*kvec.dot(quadNode))
+                    * (quadNode - rwg->getVminus());
+
+                dirCoeff += rwg->getCurrent() * rwg->getLeng() * rwgCoeff;
+            }
+
+            sols[idx] = C * ImKK * dirCoeff;
+
+            idx++;
+        }
     }
 
-    return -iu * c0 * wavenum * mu0 * 
-            exp(iu*wavenum*r) / (4.0*PI*r) * ImRR * fvec;
+    return sols;
 }
