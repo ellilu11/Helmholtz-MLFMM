@@ -102,6 +102,8 @@ public:
 
     void evalSelfSols();
 
+    std::vector<vec3cd> getFarSolsFromCoeffs(double);
+
     std::vector<vec3cd> getFarSols(double);
    
     virtual std::shared_ptr<Node> getSelf() = 0;
@@ -119,9 +121,11 @@ public:
     // ========== Test methods ==========
     // std::vector<vec3d> getObssAtAngularSamples(double);
 
+    void testFarfield(double);
+
     void testFarfieldDir(double);
 
-    static void printAngularSamples();
+    static void printAngularSamples(int);
 
 protected:
     static int order;

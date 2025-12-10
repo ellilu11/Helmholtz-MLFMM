@@ -46,10 +46,10 @@ struct Tables {
 
     // Lagrange interpolation tables
     std::vector<std::vector<realVec>> interpTheta;
-    std::vector<std::vector<size_t>> ts;
+    std::vector<std::vector<int>> ts;
 
     std::vector<std::vector<realVec>> interpPhi;
-    std::vector<std::vector<size_t>> ss;
+    std::vector<std::vector<int>> ss;
 
     std::vector<realVec> interpPsi;
 

@@ -51,8 +51,6 @@ public:
     void buildLocalCoeffs() override;
 
     // ========== Test methods ==========
-    std::vector<vec3cd> getLeafSols(double);
-
     // std::vector<vec2cd> getLeafSolsPerTheta(const vec3d&);
 
     static void testFarfieldFromLeaves(double);

@@ -58,8 +58,8 @@ void Node::buildAngularSamples() {
         const double nodeLeng = rootLeng / pow(2.0, lvl);
 
         // Use excess bandwidth formula
-        const int L = 
-            ceil(10.0*
+        const int L = // 24;
+            ceil(5.0*
                 (1.73*wavenum*nodeLeng +
                 2.16*pow(prec, 2.0/3.0)*pow(wavenum*nodeLeng, 1.0/3.0)));
 
@@ -198,6 +198,39 @@ void Node::evalPairSols(const std::shared_ptr<Node>& srcNode) {
 void Node::evalSelfSols() {
     const int numRWGs = rwgs.size();
 
+}
+
+/* getFarSolsFromCoeffs(r)
+ * Return sols at all sampled directions at distance r
+ * from mpole coefficients of this node
+ */
+std::vector<vec3cd> Node::getFarSolsFromCoeffs(double r) {
+    assert(!rwgs.empty());
+
+    const cmplx C = -iu * c0 * wavenum * mu0
+        * exp(iu*wavenum*r) / (4.0*PI*r);
+
+    const auto [nth, nph] = getNumAngles(level);
+
+    std::vector<vec3cd> sols(nth*nph, vec3cd::Zero());
+
+    size_t idx = 0;
+    for (int ith = 0; ith < nth; ++ith) {
+
+        for (int iph = 0; iph < nph; ++iph) {
+
+            const auto kvec = tables.kvec[level][idx];
+
+            sols[idx] = 
+                C * exp(-iu*kvec.dot(center)) 
+                // * tables.matFromSph[level][idx]
+                * coeffs[idx];
+
+            idx++;
+        }
+    }
+
+    return sols;
 }
 
 /* getFarSol()

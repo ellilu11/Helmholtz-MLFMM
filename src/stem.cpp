@@ -41,8 +41,8 @@ void Stem::buildNeighbors() {
 }
 
 /* buildLists()
- * Find neighbor and interaction lists
- * Add self as near non-neighbor (list 3 node) of any list 4 nodes
+ * Find neighbor and interaction lists.,tr1qsawxdc2qw3eryuiol;qwsxc 
+ * * Add self as near non-neighbor (list 3 node) of any list 4 nodes
  */
 void Stem::buildLists() {
     if (!isRoot()) {
@@ -79,17 +79,19 @@ void Stem::buildMpoleCoeffs() {
         std::vector<vec3cd> shiftedBranchCoeffs;
 
         size_t l = 0;
+  
         for (int jth = 0; jth < mth; ++jth) {
             for (int jph = 0; jph < mph; ++jph) {
 
                 const auto kvec = tables.kvec[level+1][l];
                 shiftedBranchCoeffs.push_back(
                     Math::expI(kvec.dot(shift)) * branchCoeffs[l++]);
+
             }
         }
 
         // Interpolate over theta
-        std::vector<vec3cd> interpedBranchCoeffs(nth*mph, vec3cd::Zero()); 
+        std::vector<vec3cd> interpedCoeffs(nth*mph, vec3cd::Zero()); 
 
         size_t m = 0;
         for (int ith = 0; ith < nth; ++ith) {
@@ -97,27 +99,26 @@ void Stem::buildMpoleCoeffs() {
 
             for (int jph = 0; jph < mph; ++jph) {
 
-                size_t k = 0;
-                for (int jth = t+1-order; jth <= t+order; ++jth) { 
-                    // const int k = jth - (t+1-order);
+                for (int jth = t+1-order, k = 0; jth <= t+order; ++jth, ++k) {
 
                     // Flip jph if not in [0, mth-1]
                     const int jth_flipped = Math::flipIdxToRange(jth, mth);
 
-                    bool outOfRange = jth != jth_flipped;// jth < 0 || jth >= mth;
+                    bool outOfRange = jth != jth_flipped; // jth < 0 || jth >= mth;
 
                     int m2 = jth_flipped*mph + jph;
-                    if (outOfRange)
-                        m2 += (jph < mph/2) ? mph/2 : -mph/2;
 
-                    interpedBranchCoeffs[m] +=
-                        tables.interpTheta[level][ith][k++]
+                    // if theta \notin [0, pi] then if:
+                    // phi \in (0, pi) add pi, phi \in (pi, 2pi) subtract pi
+                    if (outOfRange)
+                        m2 += ((jph < mph/2) ? mph/2 : -mph/2);
+
+                    interpedCoeffs[m] +=
+                        tables.interpTheta[level][ith][k]
                         * shiftedBranchCoeffs[m2]
                         * Math::pm(outOfRange);
-                }
 
-                // if (level)
-                //    std::cout << '(' << ith << ',' << jph << ") " << interpedBranchCoeffs[m] << '\n';
+                }
 
                 m++;
             }
@@ -130,22 +131,20 @@ void Stem::buildMpoleCoeffs() {
             for (int iph = 0; iph < nph; ++iph) { 
                 auto s = tables.ss[level][iph]; // don't need to lookup for every ith
 
-                size_t k = 0;
-                for (int jph = s+1-order; jph <= s+order; ++jph) {
-                    // const int k = jph - (s+1-order);
+                for (int jph = s+1-order, k = 0; jph <= s+order; ++jph, ++k) {
 
                     // Wrap jph if not in [0, mph-1]
                     const int jph_wrapped = Math::wrapIdxToRange(jph, mph); 
 
                     coeffs[n] +=
-                        tables.interpPhi[level][iph][k++]
-                        * interpedBranchCoeffs[ith*mph + jph_wrapped];
+                        tables.interpPhi[level][iph][k]
+                        * interpedCoeffs[ith*mph + jph_wrapped];
                 }
 
                 n++;
             }
         }
-    }
+    } // for (const auto& branch : branches)
 
     /*for (int ith = 0; ith < nth; ++ith)
         for (int iph = 0; iph < nph; ++iph)

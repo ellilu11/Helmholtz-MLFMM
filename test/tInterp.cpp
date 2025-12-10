@@ -1,3 +1,4 @@
+#include "../src/MLFMA.h"
 #include "../src/interp.h"
 #include "../src/node.h"
 
@@ -35,7 +36,7 @@ void testLagrangeInterp(const realVec& xs) {
 }
 
 void testTrigInterp(const int N) {
-    cout << "\nTesting trigonometric interpolants...\n";
+    cout << "\nTesting trigonometric interpolants (N = " << N << ") ...\n";
 
     realVec xs;
     for (int j = 0; j < N; ++j)
@@ -45,7 +46,7 @@ void testTrigInterp(const int N) {
         cout << "k = " << k << ": ";
         for (int j = 0; j < N; ++j) {
             double x = xs[j];
-            if (j == k) x *= (1.0 + 1.0E-6);
+            // if (j == k) x *= (1.0 + 1.0E-6);
 
             cout << Interp::evalTrigBasis(x, xs, k) << " ";
         }
@@ -88,22 +89,32 @@ void testNearPhiIdx(const double phi, const int N) {
 
 int main() {
 
-    const int maxOrder = 10;
+    /*const int maxOrder = 10;
     const double a = 0.0;
     const double b = PI;
-
     auto nodesVec = testGaussLegendre(maxOrder, a, b);
+    */
 
     // testLagrangeInterp(nodesVec[order-1]);
 
     // testTrigInterp(9);
     // testTrigInterp(10);
     
-    const int m = 7;
+    /*const int m = 7;
     for (int i = 0; i <=m; ++i)
         testNearGLNodeIdx(nodesVec, m, i, a, b);
 
-    testNearPhiIdx(0, 10);
+    testNearPhiIdx(0, 10);*/
+
+    realVec xs{ 0, 0.125664, 0.251327, 0.376991 };
+    
+    for (int k = 0; k < xs.size(); ++k) {
+        cout << "k = " << k << ": ";
+        for (int j = 0; j < xs.size(); ++j) {
+            cout << Interp::evalTrigBasis(xs[j], xs, k) << " ";
+        }
+        cout << '\n';
+    }
 
     return 0;
 }

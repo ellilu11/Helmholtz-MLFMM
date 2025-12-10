@@ -49,7 +49,7 @@ void Tables::buildInterpThetaTable(
     // Do not construct interp table for leaf level
     for (size_t level = 0; level < maxLevel; ++level) { 
         std::vector<realVec> interpTheta_lvl;
-        std::vector<size_t> t_lvl;
+        std::vector<int> t_lvl;
 
         const int nth = thetas[level].size();
         const int mth = thetas[level+1].size();
@@ -68,10 +68,11 @@ void Tables::buildInterpThetaTable(
             for (int jth = t+1-order; jth <= t+order; ++jth) {
 
                 // Flip jth if not in [0, mth-1]
-                size_t jth_flipped = Math::flipIdxToRange(jth, mth);
+                int jth_flipped = Math::flipIdxToRange(jth, mth);
+
                 auto branchTheta = thetas[level+1][jth_flipped];
 
-                // Extend interpolating thetas to outside [0, \pi] as needed
+                // Extend interpolating thetas to outside [0, 2pi] as needed
                 if (jth < 0)
                     branchTheta *= -1.0;
                 else if (jth >= mth)
@@ -79,16 +80,19 @@ void Tables::buildInterpThetaTable(
 
                 branchThetas.push_back(branchTheta);
 
-                // if (level) std::cout << ith << ' ' << jth << ' ' << branchTheta << '\n';
+                // if (!level) std::cout << ith << ' ' << jth << ' ' << branchTheta << '\n';
             }
-            // if (level) std::cout << '\n';
+
+            // if (!level) std::cout << '\n';
 
             for (int k = 0; k <= 2*order-1; ++k) {
                 interpTheta_lvl_th.push_back(
                     Interp::evalLagrangeBasis(theta, branchThetas, k));
 
-                // if (level) std::cout << ith << ' ' << k << ' ' << interpTheta_lvl_th[k] << '\n';
+                // if (!level) std::cout << ith << ' ' << k << ' ' << interpTheta_lvl_th[k] << '\n';
             }
+
+            // if (!level) std::cout << '\n';
 
             interpTheta_lvl.push_back(interpTheta_lvl_th);
             t_lvl.push_back(t);
@@ -98,6 +102,8 @@ void Tables::buildInterpThetaTable(
 
         ts.push_back(t_lvl);
     }
+
+    // for (int k = 0; k <= 2*order-1; ++k) std::cout << interpTheta[0][0][k] << '\n';
 }
 
 void Tables::buildInterpPhiTable(
@@ -106,7 +112,7 @@ void Tables::buildInterpPhiTable(
     // Do not construct interp table for leaf level
     for (size_t level = 0; level < maxLevel; ++level) {
         std::vector<realVec> interpPhi_lvl;
-        std::vector<size_t> s_lvl;
+        std::vector<int> s_lvl;
 
         const int nph = phis[level].size();
         const int mph = phis[level+1].size();
@@ -120,16 +126,32 @@ void Tables::buildInterpPhiTable(
 
             // Assemble child phis interpolating parent phi
             realVec branchPhis;
-            for (int jph = s+1-order; jph <= s+order; ++jph)
+            for (int jph = s+1-order; jph <= s+order; ++jph) {
 
                 // Wrap jph if not in [0, mph-1]
                 // size_t jph_wrapped = Math::wrapIdxToRange(jph, mph); 
-                
-                branchPhis.push_back(2.0*PI*jph/static_cast<double>(mph));
+                // auto branchPhi = phis[level+1][jph_wrapped];
 
-            for (size_t k = 0; k <= 2*order-1; ++k)
+                auto branchPhi = 2.0*PI*jph/static_cast<double>(mph);
+
+                // Extend interpolating phis to outside [0, 2pi] as needed
+
+                branchPhis.push_back(branchPhi);
+
+                // if (!level) std::cout << iph << ' ' << phi << ' ' << jph << ' ' << branchPhi << '\n';
+            }
+
+            // if (!level) std::cout << '\n';
+
+            for (size_t k = 0; k <= 2*order-1; ++k) {
                 interpPhi_lvl_ph.push_back(
-                    Interp::evalTrigBasis(phi, branchPhis, k));
+                    Interp::evalLagrangeBasis(phi, branchPhis, k));
+                    //Interp::evalTrigBasis(phi, branchPhis, k));
+
+                // if (!level) std::cout << iph << ' ' << phi << ' ' << k << ' ' << interpPhi_lvl_ph[k] << '\n';
+            }
+
+            // if (!level) std::cout << '\n';
             
             interpPhi_lvl.push_back(interpPhi_lvl_ph);
             s_lvl.push_back(s);
