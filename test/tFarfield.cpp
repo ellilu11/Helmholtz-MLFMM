@@ -118,6 +118,8 @@ int main() {
     Config config("config/config.txt");
 
     // ==================== Import geometry ==================== //
+    cout << " Constructing RWGs...\n";
+
     auto vertices = importVertices("config/n120/vertices.txt");
 
     auto tris = importTriangles("config/n120/faces.txt", vertices);
@@ -130,11 +132,11 @@ int main() {
 
     Node::setNodeParams(config, Einc);
 
-    cout << " # Sources:     " << Nsrcs << '\n';
-    cout << " Root length:   " << config.rootLeng << '\n';
-    cout << " Interp order:  " << config.order << '\n';
-    cout << " Max node RWGs: " << config.maxNodeSrcs << "\n";
-    cout << " Wave number:   " << Einc->wavenum << "\n\n";
+    cout << "   # Sources:     " << Nsrcs << '\n';
+    cout << "   Root length:   " << config.rootLeng << '\n';
+    cout << "   Interp order:  " << config.order << '\n';
+    cout << "   Max node RWGs: " << config.maxNodeSrcs << "\n";
+    cout << "   Wave number:   " << Einc->wavenum << "\n\n";
 
     // ==================== Set up domain ==================== //
     cout << " Setting up domain...\n";
@@ -154,25 +156,16 @@ int main() {
     cout << "   Max node level: " << maxLevel << '\n';
 
     // ==================== Build tables ===================== //
-    cout << "\n Building tables...\n";
+    cout << "\n Building angular samples...\n";
 
     Node::buildAngularSamples();
-
-    for (int lvl = 0; lvl <= maxLevel; ++lvl) {
-        auto [nth, nph] = Node::getNumAngles(lvl);
-        cout << "   (Lvl,Nth,Nph) = "
-            << "(" << lvl << "," << nth << "," << nph << ")\n";
-    }
-
-    cout << '\n';
-
     Node::buildTables(config);
 
     // ==================== Test upward pass ===================== //
     const double r = 20.0*config.rootLeng; // pick r >> rootLeng
 
     // Compute farfield from S2M + M2M
-    cout << " Computing fields...\n";
+    cout << "\n Computing fields...\n";
     auto start = Clock::now();
 
     root->testFarfield(r);

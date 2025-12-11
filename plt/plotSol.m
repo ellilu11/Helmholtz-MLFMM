@@ -1,6 +1,6 @@
 clear; clc;
 
-maxLvls = 0:2;
+maxLvls = 0:4;
 nLvls = size(maxLvls,2);
 
 flds = cell(nLvls,1);
@@ -26,7 +26,7 @@ end
 % nvec = 1:nangles;
 
 % Select levels and field components to plot
-lvl1 = 1; lvl2 = 3;
+lvl1 = 4; lvl2 = 5;
 comp = 1; % E_x = 1, E_y = 2, E_z = 3
 
 %% Reshape fld matrices

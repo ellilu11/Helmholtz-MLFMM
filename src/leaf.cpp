@@ -8,7 +8,7 @@ Leaf::Leaf(
     Stem* const base)
     : Node(rwgs, branchIdx, base)
 {
-    maxLevel = level;
+    maxLevel = std::max(level, maxLevel);
 }
 
 /* buildNeighbors()
@@ -66,6 +66,7 @@ void Leaf::buildMpoleCoeffs() {
             const auto& kvec = tables.kvec[level][idx];
 
             vec3cd dirCoeff = vec3cd::Zero();
+
             for (const auto& rwg : rwgs)
                 dirCoeff += rwg->getRadAlongDir(center, kvec);
 
@@ -85,12 +86,12 @@ void Leaf::buildMpoleCoeffs() {
     // Get polar coeffs in cartesian components
     vec3cd northCoeff = vec3cd::Zero();
     for (const auto& rwg : rwgs)
-        northCoeff += rwg->getRadAlongDir(center, vec3d(0,0,wavenum));
+        northCoeff += rwg->getRadAlongDir(center, wavenum*northPole);
     polarCoeffs.first = Math::IminusRR(0, 0) * northCoeff;
 
     vec3cd southCoeff = vec3cd::Zero();
     for (const auto& rwg : rwgs)
-        southCoeff += rwg->getRadAlongDir(center, vec3d(0,0,-wavenum));
+        southCoeff += rwg->getRadAlongDir(center, wavenum*southPole);
     polarCoeffs.second = Math::IminusRR(0, PI) * southCoeff;
 
 }
@@ -107,7 +108,9 @@ void Leaf::buildLocalCoeffs() {
     evalLeafIlistSols();
 
     if (!base->isRoot()) {
-        auto shiftedLocalCoeffs = base->getShiftedLocalCoeffs(branchIdx);
+        auto baseStem = static_cast<Stem*>(base);
+
+        auto shiftedLocalCoeffs = baseStem->getShiftedLocalCoeffs(branchIdx);
 
         for (int l = 0; l <= order; ++l)
             localCoeffs[l] += shiftedLocalCoeffs[l];

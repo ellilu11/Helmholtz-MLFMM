@@ -7,7 +7,10 @@
 
 constexpr cmplx iu(0, 1);
 const double PI = std::acos(-1.0);
+
 const vec3d zeroVec = vec3d::Zero();
+const vec3d northPole(0, 0, 1);
+const vec3d southPole(0, 0, -1);
 
 namespace Math {
 
@@ -198,11 +201,11 @@ pair2d Math::legendreL(double x, int l) {
 }
 
 /* sphericalHankel1(x,n)
-     * Recursively evaluate the spherical Hankel function
-     * of the 1st kind of order n at the point x
-     * x : evaluation point
-     * n : order of Hankel function
-     */
+ * Recursively evaluate the spherical Hankel function
+ * of the 1st kind of order n at the point x
+ * x : evaluation point
+ * n : order of Hankel function
+ */
 cmplx Math::sphericalHankel1(double x, int n) {
 
     cmplx H1_nmm = -iu*expI(x) / x;

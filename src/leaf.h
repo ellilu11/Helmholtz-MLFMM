@@ -53,6 +53,8 @@ public:
     // ========== Test methods ==========
     // std::vector<vec2cd> getLeafSolsPerTheta(const vec3d&);
 
+    static void printLeaves(std::ofstream&);
+
     static void testFarfieldFromLeaves(double);
 
 private:

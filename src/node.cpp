@@ -76,7 +76,11 @@ void Node::buildAngularSamples() {
 
         thetas.push_back(nodes);
         thetaWeights.push_back(weights);
+
+        std::cout << "   (Lvl,Nth,Nph) = "
+                  << "(" << lvl << "," << L+1 << "," << nph << ")\n";
     }
+
 }
 
 void Node::buildTables(const Config& config) {
@@ -91,15 +95,18 @@ void Node::buildInteractionList() {
     assert(!isRoot());
     assert(!nbors.empty());
 
-    auto notContains = [](const NodeVec& vec, const std::shared_ptr<Node>& val) {
+    auto notContains = 
+        [](const NodeVec& vec, const std::shared_ptr<Node>& val) {
         return std::find(vec.begin(), vec.end(), val) == vec.end();
     };
 
     for (const auto& baseNbor : base->nbors) {
+
         if (baseNbor->isNodeType<Leaf>() && notContains(nbors, baseNbor)) {
             leafIlist.push_back(baseNbor);
             continue;
         }
+
         for (const auto& branch : baseNbor->branches)
             if (notContains(nbors, branch))
                 iList.push_back(branch);
@@ -128,14 +135,14 @@ void Node::buildMpoleToLocalCoeffs() {
     if (isRoot()) return;
 
     const auto [nth, nph] = getNumAngles(level);
-    localCoeffs.resize(nth*nph, vec2cd::Zero());
+    localCoeffs.resize(nth*nph, vec3cd::Zero());
 
     /*for (const auto& node : iList) {
         const auto& mpoleCoeffs = node->getMpoleCoeffs();
 
         const auto& R = center - node->getCenter();
         const auto r = R.norm();
-        const auto rhat = R / r;
+        const auto& rhat = R / r;
         
         const auto iDist = Math::getIdxOfVal(R/nodeLeng, tables.iNodeDists);
 
@@ -164,16 +171,6 @@ void Node::buildMpoleToLocalCoeffs() {
             }
         }
     }*/
-}
-
-/* getShiftedLocalCoeffs(branchIdx)
- * (L2L) Return local coeffs shifted to center of branch labeled by branchIdx
- * branchIdx : index of branch \in {0, ..., 7}
- */
-std::vector<vec2cd> Node::getShiftedLocalCoeffs(const int branchIdx) const {
-    std::vector<vec2cd> shiftedLocalCoeffs;
-
-    return shiftedLocalCoeffs;
 }
 
 /* evalLeafIlistSols()

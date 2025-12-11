@@ -74,7 +74,7 @@ public:
 
     std::pair<vec3cd, vec3cd> getPolarCoeffs() const { return polarCoeffs; }
     
-    std::vector<vec2cd> getLocalCoeffs() const { return localCoeffs; }
+    std::vector<vec3cd> getLocalCoeffs() const { return localCoeffs; }
 
     const bool isRoot() const { return base == nullptr; }
     
@@ -95,8 +95,6 @@ public:
     void pushSelfToNearNonNbors();
 
     void buildMpoleToLocalCoeffs();
-   
-    std::vector<vec2cd> getShiftedLocalCoeffs(const int) const;
 
     void evalLeafIlistSols();
 
@@ -157,7 +155,7 @@ protected:
 
     std::vector<vec3cd> coeffs;
     std::pair<vec3cd, vec3cd> polarCoeffs;
-    std::vector<vec2cd> localCoeffs;
+    std::vector<vec3cd> localCoeffs;
 
     int label;
 };

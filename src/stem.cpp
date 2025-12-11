@@ -63,6 +63,7 @@ void Stem::buildLists() {
 void Stem::buildMpoleCoeffs() {
     const auto [nth, nph] = getNumAngles(level);
     const auto [mth, mph] = getNumAngles(level+1);
+
     assert(!(mph%2)); // mph needs to be even
 
     coeffs.resize(nth*nph, vec3cd::Zero());
@@ -75,6 +76,7 @@ void Stem::buildMpoleCoeffs() {
 
         // Shift branch coeffs to center of this box
         const auto& shift = center - branch->getCenter();
+
         std::vector<vec3cd> shiftedCoeffs;
         size_t l = 0;
   
@@ -117,14 +119,6 @@ void Stem::buildMpoleCoeffs() {
                     interpedCoeffs[m] +=
                         tables.interpTheta[level][ith][k] * shiftedCoeffs[m_shifted];
                         // * Math::pm(outOfRange); // only for spherical components!
-
-                    /*if (outOfRange && jph == mph-1)
-                        std::cout
-                            << ith << ' '
-                            << thetas[level+1][jth_flipped] << ' '
-                            << phis[level+1][jph_shifted] << ' '
-                            << tables.interpTheta[level][ith][k] << '\n';*/
-
                 }            
                 
                 m++;
@@ -153,10 +147,10 @@ void Stem::buildMpoleCoeffs() {
         }
 
         // Shift polar branch coeffs to center and merge (no interp)
-        polarCoeffs.first += exp(iu*vec3d(0, 0, 1).dot(shift)) 
+        polarCoeffs.first += exp(iu*northPole.dot(shift)) 
             * branch->getPolarCoeffs().first;
 
-        polarCoeffs.second += exp(iu*vec3d(0, 0, -1).dot(shift))
+        polarCoeffs.second += exp(iu*southPole.dot(shift))
             * branch->getPolarCoeffs().second;
 
     } // for (const auto& branch : branches)
@@ -164,6 +158,40 @@ void Stem::buildMpoleCoeffs() {
     /*for (int ith = 0; ith < nth; ++ith)
         for (int iph = 0; iph < nph; ++iph)
             std::cout << '(' << level << ',' << ith << ',' << iph << ") " << coeffs[ith*nph+iph] << '\n';*/
+}
+
+/* getShiftedLocalCoeffs(branchIdx)
+ * (L2L) Return local coeffs shifted to center of branch labeled by branchIdx
+ * branchIdx : index of branch \in {0, ..., 7}
+ */
+std::vector<vec3cd> Stem::getShiftedLocalCoeffs(const int branchIdx) const {
+
+    std::vector<vec3cd> outCoeffs;
+
+    const auto [nth, nph] = getNumAngles(level);
+    const auto [mth, mph] = getNumAngles(level+1);
+
+    const auto& shift = branches[branchIdx]->getCenter() - center;
+
+    std::vector<vec3cd> shiftedCoeffs;
+    size_t l = 0;
+
+    for (int ith = 0; ith < nth; ++ith) {
+        for (int iph = 0; iph < nph; ++iph) {
+
+            const auto& kvec = tables.kvec[level][l];
+
+            shiftedCoeffs.push_back(
+                exp(iu*kvec.dot(shift)) * localCoeffs[l++]);
+
+        }
+    }
+
+    // Anterpolate over phi
+
+    // Anterpolate over theta
+
+    return outCoeffs;
 }
 
 /* buildLocalCoeffs() 
@@ -178,7 +206,9 @@ void Stem::buildLocalCoeffs() {
         evalLeafIlistSols();
 
         if (!base->isRoot()) {
-            auto shiftedLocalCoeffs = base->getShiftedLocalCoeffs(branchIdx);
+            auto baseStem = static_cast<Stem*>(base);
+                
+            auto shiftedLocalCoeffs = baseStem->getShiftedLocalCoeffs(branchIdx);
 
             for (int l = 0; l <= order; ++l)
                 localCoeffs[l] += shiftedLocalCoeffs[l];

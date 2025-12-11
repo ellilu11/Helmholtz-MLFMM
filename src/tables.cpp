@@ -61,8 +61,6 @@ void Tables::buildInterpThetaTable(
             // Find idx of child theta nearest parent theta
             const int t = Interp::getNearGLNodeIdx(theta, mth, 0.0, PI);
 
-            // std::cout << ith << ' ' << theta << ' ' << t << '\n';
-
             // Assemble child thetas interpolating parent theta
             realVec branchThetas;
             for (int jth = t+1-order; jth <= t+order; ++jth) {

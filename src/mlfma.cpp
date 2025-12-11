@@ -11,6 +11,10 @@ int main() {
     Config config("config/config.txt");
 
     // ==================== Import geometry ==================== //
+    cout << " Constructing RWGs...\n";
+
+    auto start = Clock::now();
+
     auto vertices = importVertices("config/n120/vertices.txt");
 
     auto tris = importTriangles("config/n120/faces.txt", vertices);
@@ -23,18 +27,20 @@ int main() {
 
     Node::setNodeParams(config,Einc);
 
-    cout << " # Sources:           " << Nsrcs << '\n';
-    cout << " Root length:         " << config.rootLeng << '\n';
-    cout << " Interpolation order: " << config.order << '\n';
-    // cout << " Exponential order:   " << Node::getExponentialOrder() << '\n';
-    cout << " Max node RWGs:       " << config.maxNodeSrcs << "\n\n";
+    auto end = Clock::now();
+    Time duration_ms = end - start;
 
-    // return 0;
+    cout << "   # Sources:           " << Nsrcs << '\n';
+    cout << "   Root length:         " << config.rootLeng << '\n';
+    cout << "   Interpolation order: " << config.order << '\n';
+    // cout << " Exponential order:   " << Node::getExponentialOrder() << '\n';
+    cout << "   Max node RWGs:       " << config.maxNodeSrcs << "\n";
+    cout << "   Elapsed time: " << duration_ms.count() << " ms\n\n";
 
     // ==================== Set up domain ==================== //
     cout << " Setting up domain...\n";
     auto fmm_start = Clock::now();
-    auto start = Clock::now();
+    start = Clock::now();
 
     shared_ptr<Node> root;
     if (Nsrcs > config.maxNodeSrcs)
@@ -44,18 +50,16 @@ int main() {
 
     root->buildLists();
 
-    auto end = Clock::now();
-    Time duration_ms = end - start;
+    end = Clock::now();
+    duration_ms = end - start;
 
     cout << "   # Nodes: " << Node::getNumNodes() << '\n';
     cout << "   # Leaves: " << Leaf::getNumLeaves() << '\n';
     cout << "   Max node level: " << Node::getMaxLvl() << '\n';
     cout << "   Elapsed time: " << duration_ms.count() << " ms\n\n";
-    
-    // return 0;
 
     // ==================== Build tables ===================== //
-    cout << " Building tables...\n";
+    cout << " Building angular samples...\n";
 
     start = Clock::now();
 
@@ -65,8 +69,6 @@ int main() {
     end = Clock::now();
     duration_ms = end - start;
     cout << "   Elapsed time: " << duration_ms.count() << " ms\n\n";
-    
-    // return 0;
 
     // ==================== Upward pass ===================== //
     cout << " Computing upward pass...\n";
@@ -89,6 +91,9 @@ int main() {
 
     end = Clock::now();
     duration_ms = end - start;
+    cout << "   Elapsed time: " << duration_ms.count() << " ms\n\n";
+
+    return 0;
 
     // ================== Evaluate solutions ================= //
     cout << " Evaluating solutions...\n";
@@ -102,4 +107,5 @@ int main() {
 
     cout << " FMM total elapsed time: " << fmm_duration_ms.count() << " ms\n";
 
+    return 0;
 }
