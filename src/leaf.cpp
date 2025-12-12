@@ -47,6 +47,9 @@ void Leaf::buildLists() {
     buildInteractionList();
 
     pushSelfToNearNonNbors();
+
+    nodes.push_back(shared_from_this()); // 
+
 }
 
 /* buildMpoleCoeffs()
@@ -63,7 +66,7 @@ void Leaf::buildMpoleCoeffs() {
         for (int iph = 0; iph < nph; ++iph) {
 
             const auto& ImKK = tables.ImKK[level][idx];
-            const auto& kvec = tables.kvec[level][idx];
+            const auto& kvec = tables.khat[level][idx] * wavenum;
 
             vec3cd dirCoeff = vec3cd::Zero();
 

@@ -2,15 +2,16 @@
 
 Config Node::config;
 double Node::wavenum;
-int Node::maxLevel;
-std::vector<realVec> Node::phis;
 std::vector<realVec> Node::thetas;
 std::vector<realVec> Node::thetaWeights;
-std::vector<int> Node::Ls;
+std::vector<realVec> Node::phis;
+// std::vector<realVec> Node::psis;
 Tables Node::tables;
 
+NodeVec Node::nodes;
+
 void Node::setNodeParams(
-    const Config& config_, const std::shared_ptr<Src>& Einc) {
+    const Config& config_, const std::shared_ptr<Source>& Einc) {
 
     config = config_;
     wavenum = Einc->wavenum;
@@ -32,11 +33,11 @@ Node::Node(
         base->center + nodeLeng / 2.0 * Math::idx2pm(branchIdx)),
     label(0)
 {
-    numNodes++;
+    nodeIdx = numNodes++;
 }
 
 /* buildAngularSamples()
- * Compute theta and phi samples at each level
+ * Compute theta, phi, and psi samples at each level
  */
 void Node::buildAngularSamples() {
 
@@ -49,23 +50,34 @@ void Node::buildAngularSamples() {
         const int L = ceil(
                 (1.73*wavenum*nodeLeng +
                 2.16*pow(config.digits, 2.0/3.0)*pow(wavenum*nodeLeng, 1.0/3.0)));
-            
-        Ls.push_back(L);
 
-        const int nph = 2*(L+1);
-        realVec nodesPhi;
-        for (int iph = 0; iph < nph; ++iph)
-            nodesPhi.push_back(2.0*PI*iph/static_cast<double>(nph));
-        phis.push_back(nodesPhi);
-
-        const auto [nodes, weights] = Interp::gaussLegendre(L+1, EPS, 0.0, PI);
-            // Interp::gaussLegendre(26, EPS, 0.0, PI);
+        // Construct thetas
+        const int nth = L+1;
+        const auto [nodes, weights] = Interp::gaussLegendre(nth, EPS, 0.0, PI);
 
         thetas.push_back(nodes);
         thetaWeights.push_back(weights);
 
+        // Construct phis
+        const int nph = 2*(L+1);
+        realVec phis_lvl;
+
+        for (int iph = 0; iph < nph; ++iph)
+            phis_lvl.push_back(2.0*PI*iph/static_cast<double>(nph));
+
+        phis.push_back(phis_lvl);
+
+        // Construct psis
+        /*const int nps = std::floor(Q*L);
+        realVec psis_lvl;
+
+        for (int ips = 0; ips < nps; ++ips)
+            psis_lvl.push_back(PI*ips/static_cast<double>(nps-1));
+
+        psis.push_back(psis_lvl);*/
+
         std::cout << "   (Lvl,Nth,Nph) = "
-                  << "(" << lvl << "," << L+1 << "," << nph << ")\n";
+                  << "(" << lvl << "," << nth << "," << nph << ")\n";
     }
 
 }
@@ -109,6 +121,7 @@ void Node::pushSelfToNearNonNbors() {
 
     for (const auto& node : leafIlist) {
         auto leaf = dynamic_pointer_cast<Leaf>(node);
+
         leaf->pushToNearNonNbors(getSelf()); // call shared_from_this()
     }
 }
@@ -119,45 +132,72 @@ void Node::pushSelfToNearNonNbors() {
 void Node::buildMpoleToLocalCoeffs() {
     if (isRoot()) return;
 
-    const auto order = config.interpOrder;
+    const int order = config.interpOrder;
 
     const auto [nth, nph] = getNumAngles(level);
     localCoeffs.resize(nth*nph, vec3cd::Zero());
 
-    const int nps = std::floor(q*(nth-1));
+    const auto nps = std::floor(Q*(nth-1));
 
     for (const auto& node : iList) {
-        const auto& mpoleCoeffs = node->getMpoleCoeffs();
+        const auto& mpoleCoeffs = node->coeffs;
 
-        const auto& R = center - node->getCenter();
+        const auto& R = center - node->center;
         const auto r = R.norm();
         const auto& rhat = R / r;
-        
-        const double normedDist = r / nodeLeng;
+
+        assert(nodeLeng == node->nodeLeng);
+        const auto& translVec = tables.transl[level].at(r / nodeLeng);
 
         size_t idx = 0;
         for (int ith = 0; ith < nth; ++ith) {
 
             for (int iph = 0; iph < nph; ++iph) {
 
-                const auto& kvec = tables.kvec[level][idx];
+                const auto& khat = tables.khat[level][idx];
 
-                const double psi = kvec.dot(rhat) / wavenum;
+                const double xi = khat.dot(rhat);
 
-                const int s = std::floor(nps * psi / PI);
-
-                realVec psis;
-                for (int ips = s+1-order; ips <= s+order; ++ips)
-                    psis.push_back(PI*ips/static_cast<double>(nps));
+                const int s = std::floor((nps-1) * (xi + 1.0) / 2.0); // CONSIDER: lookup table
 
                 cmplx translCoeff = 0.0;
 
-                for (int k = 0; k < 2*order; ++k) {
+                //
+                realVec psis_;
+                for (int ips = s+1-order; ips <= s+order; ++ips)
+                    psis_.push_back(2.0*ips/static_cast<double>(nps-1))
+                    // psis_.push_back(PI*ips/static_cast<double>(nps-1));
+
+                /*
+                for (int ips = s+1-order, k = 0; k < 2*order; ++ips, ++k) {
+
+                    // using cos(-psi) = cos(psi), cos(2pi-psi) = cos(psi)
+                    const int ips_flipped = Math::flipIdxToRange(ips, nps);
+
                     translCoeff +=
-                        tables.transl[level].at(normedDist)[k]
-                        * Interp::evalLagrangeBasis(psi,psis,k);
-                        // * tables.interpPsi[level].at(psi)[k];
+                        translVec[ips_flipped]
+                        * Interp::evalLagrangeBasis(psi,psis_,k);
                 }
+                */
+
+                
+                const auto& interpVec = tables.interpPsi[level].at(psi);
+
+                for (int ips = s+1-order, k = 0; k < 2*order; ++ips, ++k) {
+
+                    // using cos(-psi) = cos(psi), cos(2pi-psi) = cos(psi)
+                    const int ips_flipped = Math::flipIdxToRange(ips, nps); 
+
+                    translCoeff +=
+                         translVec[ips_flipped] * interpVec[k];
+
+                    auto diff = interpVec[k] - Interp::evalLagrangeBasis(psi, psis_, k);
+
+                    if (fabs(diff) > 1.0E-3 && level == 2)
+                        std::cout << level << ' ' << ith << ' ' << iph << ' ' << diff << '\n';
+                    
+                }
+                
 
                 localCoeffs[idx] += translCoeff * mpoleCoeffs[idx];
 
@@ -211,7 +251,7 @@ std::vector<vec3cd> Node::getFarSolsFromCoeffs(double r) {
 
         for (int iph = 0; iph < nph; ++iph) {
 
-            const auto kvec = tables.kvec[level][idx];
+            const auto kvec = tables.khat[level][idx] * wavenum;
 
             sols[idx] = 
                 C * exp(-iu*kvec.dot(center)) 
@@ -246,7 +286,7 @@ std::vector<vec3cd> Node::getFarSols(double r) {
         for (int iph = 0; iph < nph; ++iph) {
 
             const auto& ImKK = tables.ImKK[level][idx];
-            const auto& kvec = tables.kvec[level][idx];
+            const auto& kvec = tables.khat[level][idx] * wavenum;
 
             vec3cd dirCoeff = vec3cd::Zero();
             for (const auto& rwg : rwgs)

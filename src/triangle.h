@@ -16,13 +16,10 @@ public:
           vertices( {zeroVec,zeroVec,zeroVec}), 
           center(zeroVec), area(0.0) { };
 
-    Triangle(const vec3i& vIdx, const std::vector<vec3d>& vList, const Config& config) 
-        : vIdx(vIdx),
-          vertices( { vList[vIdx[0]], vList[vIdx[1]], vList[vIdx[2]] } ),
-          center( (vertices[0] + vertices[1] + vertices[2]) / 3.0 )
-    {
-        buildQuads(config.quadPrec);
-    };
+    Triangle(
+        const vec3i&,
+        const std::vector<vec3d>&,
+        const Precision);
 
     vec3i getVidx() { return vIdx; }
 
@@ -35,6 +32,8 @@ public:
     std::pair<std::vector<vec3d>, double> getQuads() {
         return std::make_pair(quadNodes, quadWeight);
     }
+
+    static int quadPrec2Int(const Precision);
 
     void buildQuads(const Precision);
 

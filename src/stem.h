@@ -30,4 +30,9 @@ public:
 
     void buildLocalCoeffs() override;
 
+    // ========== Test methods ==========
+    std::shared_ptr<Node> getRandNode(int);
+
+    void printLocalCoeffs(std::ofstream& f);
+
 };

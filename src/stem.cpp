@@ -51,6 +51,8 @@ void Stem::buildLists() {
         buildInteractionList();
 
         pushSelfToNearNonNbors();
+
+        nodes.push_back(shared_from_this()); // 
     }
 
     for (const auto& branch : branches)
@@ -62,7 +64,7 @@ void Stem::buildLists() {
  */
 void Stem::buildMpoleCoeffs() {
 
-    const auto order = config.interpOrder;
+    const int order = config.interpOrder;
 
     const auto [nth, nph] = getNumAngles(level);
     const auto [mth, mph] = getNumAngles(level+1);
@@ -86,7 +88,7 @@ void Stem::buildMpoleCoeffs() {
         for (int ith = 0; ith < mth; ++ith) {
             for (int iph = 0; iph < mph; ++iph) {
 
-                const auto& kvec = tables.kvec[level+1][l];
+                const auto& kvec = tables.khat[level+1][l] * wavenum;
 
                 shiftedCoeffs.push_back(
                     exp(iu*kvec.dot(shift)) * branchCoeffs[l++]);
@@ -169,7 +171,7 @@ void Stem::buildMpoleCoeffs() {
  */
 std::vector<vec3cd> Stem::getShiftedLocalCoeffs(const int branchIdx) const {
 
-    const auto order = config.interpOrder;
+    const int order = config.interpOrder;
 
     const auto [nth, nph] = getNumAngles(level);
     const auto [mth, mph] = getNumAngles(level+1);
@@ -186,7 +188,7 @@ std::vector<vec3cd> Stem::getShiftedLocalCoeffs(const int branchIdx) const {
 
         for (int jph = 0; jph < nph; ++jph) {
 
-            const auto& kvec = tables.kvec[level][l];
+            const auto& kvec = tables.khat[level][l] * wavenum;
 
             shiftedCoeffs.push_back(
                 exp(iu*kvec.dot(shift)) * localCoeffs[l++]);

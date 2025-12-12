@@ -22,7 +22,7 @@ std::vector<vec3d> importVertices(const filesystem::path& fpath) {
 }
 
 TriVec importTriangles(
-    const filesystem::path& fpath, const std::vector<vec3d>& vList, const Config& config) 
+    const filesystem::path& fpath, const std::vector<vec3d>& vList, const Precision prec) 
 {
     ifstream file(fpath);
     string line;
@@ -34,7 +34,7 @@ TriVec importTriangles(
         vec3i vIdx;
 
         if (iss >> vIdx)
-            triangles.emplace_back(make_shared<Triangle>(vIdx,vList,config));
+            triangles.emplace_back(make_shared<Triangle>(vIdx,vList,prec));
         else
             throw std::runtime_error("Unable to parse line");
     }
@@ -42,9 +42,31 @@ TriVec importTriangles(
     return triangles;
 }
 
-void Triangle::buildQuads(const Precision prec) {
+int Triangle::quadPrec2Int(const Precision quadPrec) {
+    return
+        [&]() {
+        switch (quadPrec) {
+            case Precision::LOW:     return 1;
+            case Precision::MEDIUM:  return 3;
+            case Precision::HIGH:    return 7;
+        };
+        } ();
+}
 
-    switch (prec) {
+Triangle::Triangle(
+    const vec3i& vIdx,
+    const std::vector<vec3d>& vList,
+    const Precision quadPrec)
+    : vIdx(vIdx),
+    vertices({ vList[vIdx[0]], vList[vIdx[1]], vList[vIdx[2]] }),
+    center((vertices[0] + vertices[1] + vertices[2]) / 3.0)
+{
+    buildQuads(quadPrec);
+};
+
+void Triangle::buildQuads(const Precision quadPrec) {
+
+    switch (quadPrec) {
         case Precision::LOW :
             quadNodes.push_back(center);
             quadWeight = 1.0/2.0;

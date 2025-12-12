@@ -3,40 +3,49 @@
 #include <map>
 #include "interp.h"
 
-constexpr double EPS = 1.0E-2;
+constexpr double DistEPS = 1.0E-3;
+constexpr double PsiEPS = 1.0E-9;
 
-struct Comp {
+struct DistComp {
     bool operator()(double x, double y) const {
-        return x + EPS < y;
+        return x + DistEPS < y;
+    }
+};
+
+struct PsiComp {
+    bool operator()(double x, double y) const {
+        return x + PsiEPS < y;
     }
 };
 
 struct Tables {
     Tables() = default;
-    Tables(bool isDefault)
+    Tables(const Config& config)
     {
+        order = config.interpOrder;
+
         buildAngularTables();
         
         buildInterpThetaTable();
         buildInterpPhiTable();
         
         buildTranslationTable();
-        // buildInterpPsiTable();
+        buildInterpPsiTable();
     }
     
     void buildAngularTables();
 
     void buildInterpThetaTable();
-
     void buildInterpPhiTable();
 
     void buildTranslationTable();
-
     void buildInterpPsiTable();
+
+    int order;
 
     // Angular tables
     std::vector<std::vector<mat3d>> ImKK;
-    std::vector<std::vector<vec3d>> kvec;
+    std::vector<std::vector<vec3d>> khat;
 
     std::vector<std::vector<Eigen::Matrix<double,2,3>>> matToThPh;
     std::vector<std::vector<Eigen::Matrix<double,3,2>>> matFromThPh;
@@ -44,7 +53,7 @@ struct Tables {
     std::vector<std::vector<mat3d>> matToSph;
     std::vector<std::vector<mat3d>> matFromSph;
 
-    // Lagrange interpolation tables
+    // M2M and L2L interpolation tables
     std::vector<std::vector<realVec>> interpTheta;
     std::vector<std::vector<int>> ts;
 
@@ -52,8 +61,9 @@ struct Tables {
     std::vector<std::vector<int>> ss;
 
     // M2L translation tables
-    std::vector<std::map<double,cmplxVec,Comp>> transl;
-    std::vector<std::map<double,realVec,Comp>> interpPsi;
+    std::vector<std::map<double,cmplxVec,DistComp>> transl;
+    std::vector<std::map<double,vecXd,PsiComp>> interpPsi;
+    // std::vector<std::map<double,int>> ssps;
 
 };
 

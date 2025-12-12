@@ -2,8 +2,8 @@
 
 #include "math.h"
 
-struct Src {
-    Src()
+struct Source {
+    Source()
         : 
         amplitude(1.0), 
         wavenum(1.0),
@@ -11,6 +11,12 @@ struct Src {
         wavevec(vec3d{ 0,0,1 })
     {
     };
+
+    /* TODO: Read src params from file
+    Src(const std::string& fileName) {
+        std::ifstream is(fileName);
+        is >> amplitude >> wavenum >> pol >> wavevec;
+    }*/
 
     double amplitude;   // amplitude
     double wavenum;     // wavenumber

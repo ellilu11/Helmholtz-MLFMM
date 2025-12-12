@@ -57,6 +57,10 @@ public:
 
     static void testFarfieldFromLeaves(double);
 
+    std::shared_ptr<Node> getRandNode(int);
+
+    void printLocalCoeffs(std::ofstream& f);
+
 private:
     static LeafVec leaves;
 

@@ -120,25 +120,28 @@ int main() {
     // ==================== Import geometry ==================== //
     cout << " Constructing RWGs...\n";
 
-    auto vertices = importVertices("config/n120/vertices.txt");
+    const string nstr = "480";
 
-    auto tris = importTriangles("config/n120/faces.txt", vertices, config);
-    int Ntris;
+    auto vertices = importVertices("config/n"+nstr+"/vertices.txt");
 
-    shared_ptr<Src> Einc = make_shared<Src>(); // initialize incident field
+    auto tris = importTriangles("config/n"+nstr+"/faces.txt", vertices, config.quadPrec);
+    const int numQuads = Triangle::quadPrec2Int(config.quadPrec);
 
-    auto srcs = importRWG("config/n120/rwgs.txt", vertices, tris, Einc);
+    shared_ptr<Source> Einc = make_shared<Source>(); // initialize incident field
+
+    auto srcs = importRWG("config/n"+nstr+"/rwgs.txt", vertices, tris, Einc);
     int Nsrcs = srcs.size();
 
     Node::setNodeParams(config, Einc);
 
     cout << "   # Sources:       " << Nsrcs << '\n';
-    cout << "   Quad precision:  " << static_cast<int>(config.quadPrec) << '\n';
+    cout << "   RWG quad rule:   " << numQuads << "-point\n";
     cout << "   Digit precision: " << config.digits << '\n';
     cout << "   Interp order:    " << config.interpOrder << '\n';
-    cout << "   Root length:     " << config.rootLeng << '\n';
     cout << "   Max node RWGs:   " << config.maxNodeSrcs << '\n';
-    cout << "   Wave number:     " << Einc->wavenum << '\n';
+    cout << fixed << setprecision(3);
+    cout << "   Root length:     " << config.rootLeng << '\n';
+    cout << "   Wave number:     " << Einc->wavenum << "\n\n";
 
     // ==================== Set up domain ==================== //
     cout << " Setting up domain...\n";

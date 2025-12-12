@@ -16,7 +16,7 @@ constexpr int numDir = 26;
 // TODO: move into config
 constexpr double c0 = 299792458.0; 
 constexpr double mu0 = 1.256637E-6; 
-constexpr double q = 3.5; // TODO: pick an optimal value
+constexpr double Q = 3.5; // TODO: pick an optimal value
 
 enum class Dir {
     W, E, S, N, D, U,
@@ -40,11 +40,11 @@ public:
         return std::make_pair(thetas[level].size(), phis[level].size());
     }
 
-    static void setNodeParams(const Config&, const std::shared_ptr<Src>&);
+    static void setNodeParams(const Config&, const std::shared_ptr<Source>&);
 
     static void buildAngularSamples();
 
-    static void buildTables() { tables = Tables(0); }
+    static void buildTables() { tables = Tables(config); }
 
 public:
     RWGVec getRWGs() const { return rwgs; }
@@ -53,6 +53,8 @@ public:
     
     double getLeng() const { return nodeLeng; }
     
+    int getLevel() const { return level; }
+
     vec3d getCenter() const { return center; }
     
     Node* getBase() const { return base; }
@@ -118,24 +120,32 @@ public:
     // ========== Test methods ==========
     // std::vector<vec3d> getObssAtAngularSamples(double);
 
+    static Tables getTables() { return tables; }
+
     void testFarfield(double);
 
     void testFarfieldDir(double);
 
     static void printAngularSamples(int);
 
-    static Tables getTables(){ return tables; }
+    static std::shared_ptr<Node> getNode(int nodeIdx);
+
+    virtual std::shared_ptr<Node> getRandNode(int) = 0;
+
+    virtual void printLocalCoeffs(std::ofstream& f) = 0;
 
 protected:
     static Config config;
     static double wavenum;
-    static int maxLevel;
-    static std::vector<realVec> phis;
+    inline static int numNodes = 0;
+    inline static int maxLevel = 0;
+
     static std::vector<realVec> thetas;
     static std::vector<realVec> thetaWeights;
-    static std::vector<int> Ls;
+    static std::vector<realVec> phis;
+    // static std::vector<realVec> psis;
+    
     static Tables tables;
-    inline static int numNodes = 0;
 
     RWGVec rwgs;
     const int branchIdx;
@@ -154,5 +164,8 @@ protected:
     std::pair<vec3cd, vec3cd> polarCoeffs;
     std::vector<vec3cd> localCoeffs;
 
+    // Test members
+    static NodeVec nodes;
+    int nodeIdx;
     int label;
 };

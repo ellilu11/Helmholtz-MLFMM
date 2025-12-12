@@ -6,7 +6,7 @@ RWGVec importRWG(
     const filesystem::path& fpath, 
     const std::vector<vec3d>& vertices,
     const TriVec& triangles,
-    const shared_ptr<Src> Einc)
+    const shared_ptr<Source> Einc)
 {
     ifstream file(fpath);
     string line;
@@ -29,7 +29,7 @@ RWGVec importRWG(
 RWG::RWG(const Eigen::Vector4i& idx,
     const std::vector<vec3d>& vertices,
     const TriVec& triangles,
-    const std::shared_ptr<Src> Einc)
+    const std::shared_ptr<Source> Einc)
     : v0(vertices[idx[0]]), v1(vertices[idx[1]]),
       triPlus(triangles[idx[2]]), triMinus(triangles[idx[3]]),
       vCenter((v0+v1)/2.0),

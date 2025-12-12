@@ -307,5 +307,7 @@ std::vector<vec3d> Math::getINodeDirections() {
         std::unique(dirs.begin(), dirs.end(), vecEquals), 
         dirs.end());
 
+    // std::cout << "  # Directions: " << dirs.size() << '\n';
+
     return dirs;
 }

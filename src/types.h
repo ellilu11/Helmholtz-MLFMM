@@ -11,8 +11,11 @@ using pair2d = std::pair<double, double>;
 
 using vec3i = Eigen::Vector3i;
 using vec3d = Eigen::Vector3d;
+using vecXd = Eigen::VectorXd;
+
 using vec2cd = Eigen::Vector2cd;
 using vec3cd = Eigen::Vector3cd;
+using vecXcd = Eigen::VectorXcd;
 
 using mat3d = Eigen::Matrix3d;
 

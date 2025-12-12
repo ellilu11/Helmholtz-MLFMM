@@ -13,16 +13,18 @@ int main() {
     // ==================== Import geometry ==================== //
     cout << " Constructing RWGs...\n";
 
+    const string nstr = "480";
+
     auto start = Clock::now();
 
-    auto vertices = importVertices("config/n120/vertices.txt");
+    auto vertices = importVertices("config/n"+nstr+"/vertices.txt");
 
-    auto tris = importTriangles("config/n120/faces.txt", vertices, config);
-    int Ntris;
+    auto tris = importTriangles("config/n"+nstr+"/faces.txt", vertices, config.quadPrec);
+    const int numQuads = Triangle::quadPrec2Int(config.quadPrec);
 
-    shared_ptr<Src> Einc = make_shared<Src>(); // initialize incident field
+    shared_ptr<Source> Einc = make_shared<Source>(); // initialize incident field
 
-    auto srcs = importRWG("config/n120/rwgs.txt", vertices, tris, Einc);
+    auto srcs = importRWG("config/n"+nstr+"/rwgs.txt", vertices, tris, Einc);
     int Nsrcs = srcs.size();
 
     Node::setNodeParams(config, Einc);
@@ -31,11 +33,12 @@ int main() {
     Time duration_ms = end - start;
 
     cout << "   # Sources:       " << Nsrcs << '\n';
-    cout << "   Quad precision:  " << static_cast<int>(config.quadPrec) << '\n';
+    cout << "   RWG quad rule:   " << numQuads << "-point\n";
     cout << "   Digit precision: " << config.digits << '\n';
     cout << "   Interp order:    " << config.interpOrder << '\n';
-    cout << "   Root length:     " << config.rootLeng << '\n';
     cout << "   Max node RWGs:   " << config.maxNodeSrcs << '\n';
+    cout << fixed << setprecision(3);
+    cout << "   Root length:     " << config.rootLeng << '\n';
     cout << "   Wave number:     " << Einc->wavenum << '\n';
     cout << "   Elapsed time: " << duration_ms.count() << " ms\n\n";
 
@@ -61,7 +64,7 @@ int main() {
     cout << "   Elapsed time: " << duration_ms.count() << " ms\n\n";
 
     // ==================== Build tables ===================== //
-    cout << " Building angular samples...\n";
+    cout << " Building tables...\n";
 
     start = Clock::now();
 
@@ -82,8 +85,6 @@ int main() {
     end = Clock::now();
     duration_ms = end - start;
     cout << "   Elapsed time: " << duration_ms.count() << " ms\n\n";
-
-    // return 0;
 
     // ==================== Downward pass ==================== //
     cout << " Computing downward pass...\n";

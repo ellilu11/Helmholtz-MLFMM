@@ -4,7 +4,7 @@
 #include <filesystem>
 #include <random>
 #include "math.h"
-#include "src.h"
+#include "source.h"
 #include "triangle.h"
 
 class RWG;
@@ -16,7 +16,7 @@ public:
     RWG(const Eigen::Vector4i&, 
         const std::vector<vec3d>&,
         const TriVec&,
-        const std::shared_ptr<Src>);
+        const std::shared_ptr<Source>);
 
     std::shared_ptr<Triangle> getTriPlus() const { return triPlus; }
 
@@ -50,7 +50,7 @@ private:
 
     double leng;
 
-    std::shared_ptr<Src> Einc;
+    std::shared_ptr<Source> Einc;
     cmplx rhs;
     double current;
 
