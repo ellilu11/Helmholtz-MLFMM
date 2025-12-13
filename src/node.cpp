@@ -90,7 +90,7 @@ void Node::buildInteractionList() {
     assert(!nbors.empty());
 
     auto notContains = 
-        [](const NodeVec& vec, const std::shared_ptr<Node>& val) {
+        [](const NodeVec& vec, const std::shared_ptr<Node> val) {
         return std::find(vec.begin(), vec.end(), val) == vec.end();
     };
 
@@ -156,19 +156,18 @@ void Node::buildMpoleToLocalCoeffs() {
 
                 const auto& khat = tables.khat[level][idx];
 
-                const double xi = khat.dot(rhat);
+                const double psi = acos(khat.dot(rhat));
 
-                const int s = std::floor((nps-1) * (xi + 1.0) / 2.0); // CONSIDER: lookup table
+                const int s = tables.ssps[level].at(psi);
 
                 cmplx translCoeff = 0.0;
 
-                //
+                /*
                 realVec psis_;
                 for (int ips = s+1-order; ips <= s+order; ++ips)
-                    psis_.push_back(2.0*ips/static_cast<double>(nps-1))
-                    // psis_.push_back(PI*ips/static_cast<double>(nps-1));
+                    psis_.push_back(PI*ips/static_cast<double>(nps-1));
+                    // psis_.push_back(2.0*ips/static_cast<double>(nps-1)-1.0)
 
-                /*
                 for (int ips = s+1-order, k = 0; k < 2*order; ++ips, ++k) {
 
                     // using cos(-psi) = cos(psi), cos(2pi-psi) = cos(psi)
@@ -177,9 +176,7 @@ void Node::buildMpoleToLocalCoeffs() {
                     translCoeff +=
                         translVec[ips_flipped]
                         * Interp::evalLagrangeBasis(psi,psis_,k);
-                }
-                */
-
+                }*/
                 
                 const auto& interpVec = tables.interpPsi[level].at(psi);
 
@@ -190,14 +187,7 @@ void Node::buildMpoleToLocalCoeffs() {
 
                     translCoeff +=
                          translVec[ips_flipped] * interpVec[k];
-
-                    auto diff = interpVec[k] - Interp::evalLagrangeBasis(psi, psis_, k);
-
-                    if (fabs(diff) > 1.0E-3 && level == 2)
-                        std::cout << level << ' ' << ith << ' ' << iph << ' ' << diff << '\n';
-                    
                 }
-                
 
                 localCoeffs[idx] += translCoeff * mpoleCoeffs[idx];
 

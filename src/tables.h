@@ -7,14 +7,21 @@ constexpr double DistEPS = 1.0E-3;
 constexpr double PsiEPS = 1.0E-9;
 
 struct DistComp {
-    bool operator()(double x, double y) const {
+    bool operator()(double x, double y) const noexcept {
         return x + DistEPS < y;
     }
 };
 
-struct PsiComp {
-    bool operator()(double x, double y) const {
-        return x + PsiEPS < y;
+struct PsiHash {
+    std::size_t operator()(double x) const noexcept {
+        long long q = static_cast<long long>(std::llround(x / PsiEPS));
+        return std::hash<long long>{}(q);
+    }
+};
+
+struct PsiEq {
+    bool operator()(double x, double y) const noexcept {
+        return std::fabs(x - y) <= PsiEPS;
     }
 };
 
@@ -47,11 +54,11 @@ struct Tables {
     std::vector<std::vector<mat3d>> ImKK;
     std::vector<std::vector<vec3d>> khat;
 
-    std::vector<std::vector<Eigen::Matrix<double,2,3>>> matToThPh;
-    std::vector<std::vector<Eigen::Matrix<double,3,2>>> matFromThPh;
+    std::vector<std::vector<mat23d>> matToThPh;
+    std::vector<std::vector<mat32d>> matFromThPh;
     
-    std::vector<std::vector<mat3d>> matToSph;
-    std::vector<std::vector<mat3d>> matFromSph;
+    // std::vector<std::vector<mat3d>> matToSph;
+    // std::vector<std::vector<mat3d>> matFromSph;
 
     // M2M and L2L interpolation tables
     std::vector<std::vector<realVec>> interpTheta;
@@ -61,9 +68,9 @@ struct Tables {
     std::vector<std::vector<int>> ss;
 
     // M2L translation tables
-    std::vector<std::map<double,cmplxVec,DistComp>> transl;
-    std::vector<std::map<double,vecXd,PsiComp>> interpPsi;
-    // std::vector<std::map<double,int>> ssps;
+    std::vector<std::map<double,vecXcd,DistComp>> transl;
+    std::vector<std::unordered_map<double,vecXd,PsiHash,PsiEq>> interpPsi;
+    std::vector<std::unordered_map<double,int,PsiHash,PsiEq>> ssps;
 
 };
 

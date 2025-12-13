@@ -130,8 +130,6 @@ public:
 
     static std::shared_ptr<Node> getNode(int nodeIdx);
 
-    virtual std::shared_ptr<Node> getRandNode(int) = 0;
-
     virtual void printLocalCoeffs(std::ofstream& f) = 0;
 
 protected:
@@ -147,22 +145,22 @@ protected:
     
     static Tables tables;
 
-    RWGVec rwgs;
-    const int branchIdx;
-    Node* const base;
-    const double nodeLeng;
-    const int level;
-    const vec3d center;
+    // TODO: template the vec type
+    std::vector<vec3cd> coeffs;
+    std::pair<vec3cd, vec3cd> polarCoeffs;
+    std::vector<vec3cd> localCoeffs;
 
     NodeVec branches;
     NodeVec nbors; // list 1
     NodeVec iList; // list 2
     NodeVec leafIlist; // list 4
 
-    // TODO: template the vec type
-    std::vector<vec3cd> coeffs; 
-    std::pair<vec3cd, vec3cd> polarCoeffs;
-    std::vector<vec3cd> localCoeffs;
+    RWGVec rwgs;
+    const int branchIdx;
+    Node* const base;
+    const double nodeLeng;
+    const int level;
+    const vec3d center;
 
     // Test members
     static NodeVec nodes;

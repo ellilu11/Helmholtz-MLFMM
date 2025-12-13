@@ -9,31 +9,10 @@ shared_ptr<Node> Node::getNode(int nodeIdx) {
 
     auto node = nodes[nodeIdx];
 
-    cout << "  Selected node at level " << node->getLevel()
-         << " with " << node->getIlist().size() << " interaction nodes\n";
+    cout << "   Selected node at level " << node->getLevel()
+         << " with " << node->getIlist().size() << " interaction nodes\n\n";
 
     return node;
-}
-
-shared_ptr<Node> Stem::getRandNode(int maxLevel) {
-    random_device rd;
-    mt19937 gen(rd());
-    uniform_int_distribution branchIdx(0, 7);
-
-    shared_ptr<Node> node = make_shared<Stem>(*this);
-
-    while (node->getLevel() < maxLevel)
-    // while (node->isNodeType<Stem>())
-        node = (node->getBranches())[branchIdx(gen)];
-
-    cout << "  Selected node at level " << node->getLevel() 
-         << " with " << node->getIlist().size() << " interaction nodes\n";
-
-    return node;
-}
-
-shared_ptr<Node> Leaf::getRandNode(int maxLevel) {
-    return make_shared<Leaf>(*this);
 }
 
 void Stem::printLocalCoeffs(std::ofstream& f) {

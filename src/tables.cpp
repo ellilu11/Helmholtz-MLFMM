@@ -8,11 +8,11 @@ void Tables::buildAngularTables() {
 
         std::vector<mat3d> ImKK_lvl;
         std::vector<vec3d> khat_lvl;
-        std::vector<Eigen::Matrix<double,2,3>> matToThPh_lvl;
-        std::vector<Eigen::Matrix<double,3,2>> matFromThPh_lvl;
+        std::vector<mat23d> matToThPh_lvl;
+        std::vector<mat32d> matFromThPh_lvl;
         
-        std::vector<mat3d> matToSph_lvl;
-        std::vector<mat3d> matFromSph_lvl;
+        // std::vector<mat3d> matToSph_lvl;
+        // std::vector<mat3d> matFromSph_lvl;
 
         for (int ith = 0; ith < nth; ++ith) {
             const double th = Node::thetas[level][ith];
@@ -26,8 +26,8 @@ void Tables::buildAngularTables() {
                 matToThPh_lvl.push_back(Math::matToThPh(th, ph));
                 matFromThPh_lvl.push_back(Math::matFromThPh(th, ph));
 
-                matToSph_lvl.push_back(Math::matToSph(th, ph));
-                matFromSph_lvl.push_back(Math::matFromSph(th, ph));
+                // matToSph_lvl.push_back(Math::matToSph(th, ph));
+                // matFromSph_lvl.push_back(Math::matFromSph(th, ph));
             }
         }
 
@@ -36,8 +36,8 @@ void Tables::buildAngularTables() {
         matToThPh.push_back(matToThPh_lvl);
         matFromThPh.push_back(matFromThPh_lvl);
 
-        matToSph.push_back(matToSph_lvl);
-        matFromSph.push_back(matFromSph_lvl);
+        // matToSph.push_back(matToSph_lvl);
+        // matFromSph.push_back(matFromSph_lvl);
     }
 }
 
@@ -154,27 +154,27 @@ void Tables::buildTranslationTable() {
 
     for (size_t level = 0; level <= Node::maxLevel; ++level) {
 
-        const int nth = Node::getNumAngles(level).first;
-        const int nps = std::floor(Q*(nth-1));
+        const int L = Node::getNumAngles(level).first - 1;
+        const int nps = std::floor(Q*L);
 
         const double nodeLeng = rootLeng / pow(2.0, level);
 
-        std::map<double,cmplxVec,DistComp> transl_lvl;
+        std::map<double,vecXcd,DistComp> transl_lvl;
         
         for (const auto& dist : dists) {
 
             const double r = Node::wavenum*dist*nodeLeng;
 
-            std::cout << r << ' ';
+            // std::cout << r << ' ';
 
-            cmplxVec transl_dist;
+            vecXcd transl_dist(nps);
 
             for (int ips = 0; ips < nps; ++ips) {
 
                 const double x = cos(PI*ips / static_cast<double>(nps-1));
                 cmplx coeff = 0.0;
 
-                for (int l = 0; l <= nth-1; ++l) { // L = nth - 1
+                for (int l = 0; l <= L; ++l) {
 
                     coeff += powI(l) * (2.0*l+1.0)
                         * sphericalHankel1(r, l)
@@ -187,13 +187,11 @@ void Tables::buildTranslationTable() {
                      */
                 }
 
-                transl_dist.push_back(coeff);
+                transl_dist[ips] = coeff;
             }
 
             transl_lvl.emplace(dist, transl_dist);
         }
-
-        std::cout << '\n';
 
         transl.push_back(transl_lvl);
     }
@@ -201,13 +199,13 @@ void Tables::buildTranslationTable() {
 };
 
 
-void Tables::buildInterpPsiTable() {
+void Tables::buildInterpPsiTable() { // TODO: Interp over xi = cos(psi)
 
     const auto& rhats = Math::getINodeDirections();
 
     std::vector<realVec> psis;
 
-    // Find all possible psi = acos(khat.dot(rhat)) at each level
+    // Find all unique psi = acos(khat.dot(rhat)) at each level
     for (size_t level = 0; level <= Node::maxLevel; ++level) {
 
         const auto [nth, nph] = Node::getNumAngles(level);
@@ -224,13 +222,11 @@ void Tables::buildInterpPsiTable() {
                 for (const auto& rhat : rhats)
                     psis_lvl.push_back( acos(khat_.dot(rhat)) );
 
-                // idx++;
             }
         }
 
         // std::cout << "  # psis: " << psis_lvl.size() << '\n';
 
-        // Remove duplicate psis
         std::sort(psis_lvl.begin(), psis_lvl.end());
 
         psis_lvl.erase(
@@ -250,21 +246,22 @@ void Tables::buildInterpPsiTable() {
         const int nth = Node::getNumAngles(level).first;
         const int nps = std::floor(Q*(nth-1));
 
-        std::map<double, vecXd, PsiComp> interpPsi_lvl;
-
-        // std::map<double, int> s_lvl;
+        std::unordered_map<double,vecXd,PsiHash,PsiEq> interpPsi_lvl;
+        std::unordered_map<double,int,PsiHash,PsiEq> s_lvl;
 
         size_t idx = 0;
         for (auto psi : psis[level]) {
 
             // Find idx of psi node nearest this psi
             const int s = std::floor((nps-1) * psi / PI);
+            // const int s = std::floor((nps-1) * (xi + 1.0) / 2.0);
 
             // Assemble psis interpolating this psi
             // TODO: Use splicing with std::span
             realVec psis;
             for (int ips = s+1-order; ips <= s+order; ++ips)
                 psis.push_back(PI*ips/static_cast<double>(nps-1));
+                // psis_.push_back(2.0*ips/static_cast<double>(nps-1)-1.0)
 
             vecXd interpPsi_ps(2*order);
 
@@ -273,14 +270,12 @@ void Tables::buildInterpPsiTable() {
                      Interp::evalLagrangeBasis(psi, psis, k);
 
             interpPsi_lvl.emplace(psi, interpPsi_ps);
-
-            // s_lvl.emplace(psi, s);
+            s_lvl.emplace(psi, s);
 
         }
 
         interpPsi.push_back(interpPsi_lvl);
-
-        // ssps.push_back(s_lvl);
+        ssps.push_back(s_lvl);
     }
 
 }

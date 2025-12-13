@@ -18,6 +18,8 @@ using vec3cd = Eigen::Vector3cd;
 using vecXcd = Eigen::VectorXcd;
 
 using mat3d = Eigen::Matrix3d;
+using mat23d = Eigen::Matrix<double, 2, 3>;
+using mat32d = Eigen::Matrix<double, 3, 2>;
 
 template <typename T>
 std::vector<T> operator+ (const std::vector<T>& zs, const std::vector<T>& ws) {
@@ -80,7 +82,7 @@ std::istream& operator>>(std::istream& is, std::vector<T>& X) {
     return is;
 }*/
 
-std::array<bool, 3> operator> (const vec3d& x, const vec3d& y) {
-    std::array<bool, 3> bools{ x[0] > y[0], x[1] > y[1], x[2] > y[2] };
+std::array<bool,3> operator> (const vec3d& x, const vec3d& y) {
+    std::array<bool,3> bools{ x[0] > y[0], x[1] > y[1], x[2] > y[2] };
     return bools;
 }

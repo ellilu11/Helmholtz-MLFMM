@@ -1,4 +1,3 @@
-#include "../src/MLFMA.h"
 #include "../src/interp.h"
 #include "../src/node.h"
 
@@ -126,6 +125,10 @@ void testINodeFuncs() {
 }
 
 int main() {
+
+    std::cout << acos(-1.00001) << ' ' << acos(1.000001) << '\n';
+
+    return 0;
 
     realVec xs;
     const int nmax = 10;

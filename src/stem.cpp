@@ -260,12 +260,13 @@ void Stem::buildLocalCoeffs() {
 
         evalLeafIlistSols();
 
+        /*
         if (!base->isRoot()) {
-            auto baseStem = static_cast<Stem*>(base);
+            auto baseStem = dynamic_cast<Stem*>(base);
 
             localCoeffs = 
                 localCoeffs + baseStem->getShiftedLocalCoeffs(branchIdx);
-        }
+        }*/
     }
 
     for (const auto& branch : branches)

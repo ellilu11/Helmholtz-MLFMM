@@ -14,46 +14,15 @@ const vec3d southPole(0, 0, -1);
 
 namespace Math {
 
-    /* bools2Idx(x)
-     * Convert bools into branchIdx \in {0, ... ,7}
-     */
-    inline size_t bools2Idx(const std::array<bool, 3>& x) {
+    inline size_t bools2Idx(const std::array<bool,3>& x) noexcept {
         return x[0] + 2 * x[1] + 4 * x[2];
     }
 
-    /* idx2pm(x)
-     * Convert x to reverse binary, then replace each bit as 0 -> -1, 1 -> 1
-     * returning the result
-     * x : integer \in {0, ... , 7}
-     */
-    inline vec3d idx2pm(const int x) {
-        assert(x < 8);
-        auto xmod4 = x%4;
-        vec3d bits(xmod4%2, xmod4/2, x/4);
-
-        for (auto& bit : bits)
-            bit = (bit == 0 ? -1 : 1);
-
-        return bits;
-    }
-
-    inline size_t coord2Idx(size_t row, size_t col, int leng) {
-        return row*leng + col;
-    }
-
-    inline pair2i idx2Coord(size_t idx, int leng) {
-        return pair2i(idx/leng, idx%leng);
-    }
-
-    inline double pm(const int k) {
+    inline double pm(int k) noexcept {
         return k % 2 ? -1.0 : 1.0;
     }
 
-    inline cmplx expI(const double arg) {
-        return std::exp(iu*arg);
-    }
-
-    inline cmplx powI(const uint32_t m) {
+    inline cmplx powI(int m) noexcept {
         switch (m % 4) {
             case 0: return 1;
             case 1: return iu;
@@ -62,7 +31,7 @@ namespace Math {
         }
     }
 
-    inline vec3d toSph(const vec3d& X) {
+    inline vec3d toSph(const vec3d& X) noexcept {
         auto x = X[0], y = X[1], z = X[2], r = X.norm();
         assert(r != 0);
 
@@ -74,15 +43,15 @@ namespace Math {
         return vec3d(r, std::acos(z/r), toPhi(x, y));
     }
 
-    inline vec3d fromSph(const vec3d& R) {
+    inline vec3d fromSph(const vec3d& R) noexcept {
         auto r = R[0], th = R[1], ph = R[2];
-        return vec3d(
-            r * sin(th) * cos(ph),
-            r * sin(th) * sin(ph),
-            r * cos(th));
+        return r * vec3d(
+            sin(th) * cos(ph),
+            sin(th) * sin(ph),
+            cos(th));
     }
 
-    inline vec3d fromCyl(const vec3d& S) {
+    inline vec3d fromCyl(const vec3d& S) noexcept {
         auto r = S[0], ph = S[1], z = S[2];
         return vec3d(
             r * cos(ph),
@@ -90,34 +59,34 @@ namespace Math {
             z);
     }
 
-    inline vec3d vecSph(const double r, const double th, const double ph) {
-        return vec3d(
-            r * sin(th) * cos(ph),
-            r * sin(th) * sin(ph),
-            r * cos(th));
+    inline vec3d vecSph(double r, double th, double ph) noexcept {
+        return r * vec3d(
+            sin(th) * cos(ph),
+            sin(th) * sin(ph),
+            cos(th));
     }
 
-    inline mat3d IminusRR(double th, double ph) {
+    inline mat3d IminusRR(double th, double ph) noexcept {
         auto rhat = fromSph(vec3d(1.0, th, ph));
         return mat3d::Identity() - rhat * rhat.transpose();
     }
 
-    inline Eigen::Matrix<double,2,3> matToThPh(double th, double ph) {
-        return Eigen::Matrix<double,2,3>{
+    inline mat23d matToThPh(double th, double ph) noexcept {
+        return mat23d{
             {  cos(th)*cos(ph),  cos(th)*sin(ph), -sin(th) },
             { -sin(ph),          cos(ph),          0.0     }
         };
     }
 
-    inline Eigen::Matrix<double,3,2> matFromThPh(double th, double ph) {
-        return Eigen::Matrix<double,3,2>{
+    inline mat32d matFromThPh(double th, double ph) noexcept {
+        return mat32d{
             {  cos(th)*cos(ph), -sin(ph) },
             {  cos(th)*sin(ph),  cos(ph) },
             { -sin(th),          0.0     }
         };
     }
 
-    inline mat3d matToSph(double th, double ph) {
+    inline mat3d matToSph(double th, double ph) noexcept {
         return mat3d{
             {  sin(th)*cos(ph),  sin(th)*sin(ph),  cos(th) },
             {  cos(th)*cos(ph),  cos(th)*sin(ph), -sin(th) },
@@ -125,7 +94,7 @@ namespace Math {
         };
     }
 
-    inline mat3d matFromSph(double th, double ph) {
+    inline mat3d matFromSph(double th, double ph) noexcept {
         return mat3d{
             {  sin(th)*cos(ph),  cos(th)*cos(ph), -sin(ph) },
             {  sin(th)*sin(ph),  cos(th)*sin(ph),  cos(ph) },
@@ -133,7 +102,15 @@ namespace Math {
         };
     }
 
-    inline size_t flipIdxToRange(int i, int size) { // TODO: Debug
+    //inline size_t coord2Idx(size_t row, size_t col, int leng) {
+    //    return row*leng + col;
+    //}
+
+    //inline pair2i idx2Coord(size_t idx, int leng) {
+    //    return pair2i(idx/leng, idx%leng);
+    //}
+
+    inline size_t flipIdxToRange(int i, int size) {
         int uint_i = i;
 
         if (i < 0)
@@ -157,16 +134,7 @@ namespace Math {
         return uint_i;
     }
 
-    /*inline int getIdxOfVal(const double val, const realVec& list) {
-
-    auto idx = std::find_if( list.begin(), list.end(),
-        [val](double val0) {
-        return std::abs(val - val0) < 1.0E-6;
-        }
-    );
-
-    return idx;
-    }*/
+    vec3d idx2pm(int);
 
     pair2d legendreP(double, int);
 
@@ -176,7 +144,23 @@ namespace Math {
 
     std::vector<vec3d> getINodeDirections();
 
-} // close Math::
+} // namespace Math
+
+/* idx2pm(x)
+    * Convert x to reverse binary, then replace each bit as 0 -> -1, 1 -> 1
+    * returning the result
+    * x : integer \in {0, ... , 7}
+    */
+vec3d Math::idx2pm(int x) {
+    assert(x < 8);
+    auto xmod4 = x%4;
+    vec3d bits(xmod4%2, xmod4/2, x/4);
+
+    for (auto& bit : bits)
+        bit = (bit == 0 ? -1 : 1);
+
+    return bits;
+}
 
 /* legendreL(x,l)
  * Recursively evaluate the lth order Legendre polynomial

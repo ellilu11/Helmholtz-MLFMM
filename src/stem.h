@@ -14,12 +14,6 @@ public:
         return shared_from_this();
     }
 
-    void printNode(std::ofstream& f) override {
-        f << center << " " << nodeLeng << " " << label << '\n';
-        for (const auto& branch : branches)
-            branch->printNode(f);
-    }
-
     void buildNeighbors() override;
 
     void buildLists() override;
@@ -31,8 +25,12 @@ public:
     void buildLocalCoeffs() override;
 
     // ========== Test methods ==========
-    std::shared_ptr<Node> getRandNode(int);
+    void printNode(std::ofstream& f) override {
+        f << center << " " << nodeLeng << " " << label << '\n';
+        for (const auto& branch : branches)
+            branch->printNode(f);
+    }
 
-    void printLocalCoeffs(std::ofstream& f);
+    void printLocalCoeffs(std::ofstream& f) override;
 
 };

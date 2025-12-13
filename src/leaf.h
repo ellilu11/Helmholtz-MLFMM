@@ -24,10 +24,6 @@ public:
         nearNonNbors.push_back(node);
     }
 
-    void printNode(std::ofstream& f) {
-        f << center << " " << nodeLeng << " " << label << '\n';
-    }
-
     static int getNumLeaves() { return leaves.size(); }
 
     NodeVec getNearNonNbors() const { return nearNonNbors; }
@@ -51,15 +47,17 @@ public:
     void buildLocalCoeffs() override;
 
     // ========== Test methods ==========
+    void printNode(std::ofstream& f) {
+        f << center << " " << nodeLeng << " " << label << '\n';
+    }
+    
     // std::vector<vec2cd> getLeafSolsPerTheta(const vec3d&);
 
     static void printLeaves(std::ofstream&);
 
     static void testFarfieldFromLeaves(double);
 
-    std::shared_ptr<Node> getRandNode(int);
-
-    void printLocalCoeffs(std::ofstream& f);
+    void printLocalCoeffs(std::ofstream& f) override;
 
 private:
     static LeafVec leaves;

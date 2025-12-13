@@ -110,12 +110,12 @@ void Leaf::buildLocalCoeffs() {
 
     evalLeafIlistSols();
 
-    if (!base->isRoot()) {
+    /*if (!base->isRoot()) {
         auto baseStem = static_cast<Stem*>(base);
 
         localCoeffs = 
             localCoeffs + baseStem->getShiftedLocalCoeffs(branchIdx);
-    }
+    }*/
 }
 
 /* evalFarSols()
