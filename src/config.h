@@ -6,6 +6,18 @@
 #include <iostream>
 #include <type_traits>
 
+enum class Mode {
+    READ,
+    WRITE
+};
+
+enum class Dist {
+    UNIFORM,
+    GAUSSIAN,
+    SPHERE,
+    CYLINDER
+};
+
 enum class Precision {
     LOW,
     MEDIUM,
@@ -50,8 +62,10 @@ struct Config {
     Config() = default;
     Config(const std::string& fileName) {
         std::ifstream is(fileName);
-        is >> quadPrec
-           >> digits >> interpOrder >> rootLeng >> maxNodeSrcs  >> evalDirect;
+        is >> mode >> pdist >> quadPrec // enums first
+            >> digits >> interpOrder
+            >> rootLeng >> maxNodeSrcs  >> evalDirect
+            >> nsrcs;
     }
 
     Precision quadPrec;
@@ -60,32 +74,25 @@ struct Config {
     double rootLeng;
     int maxNodeSrcs;
     bool evalDirect;
+
+    // For point sources only
+    Mode mode;
+    Dist pdist;
+    int nsrcs;
 };
 
-/*
+
 std::filesystem::path makePath(const Config& config) {
     std::string distStr =
         [&]() -> std::string {
-        switch (config.dist) {
+        switch (config.pdist) {
             case Dist::UNIFORM:    return "uniform";
             case Dist::GAUSSIAN:   return "gauss";
             case Dist::SPHERE:     return "sphere";
             case Dist::CYLINDER:   return "cyl";
         }
         }();
-    std::string cdistStr =
-        [&]() -> std::string {
-        switch (config.qdist) {
-            case ChargeDist::PLUS:  return "plus";
-            case ChargeDist::MINUS: return "minus";
-            case ChargeDist::DIP:   return "dip";
-            case ChargeDist::QUAD:  return "quad";
-            case ChargeDist::OCT:   return "oct";
-            case ChargeDist::RAND:  return "rand";
-        }
-        }();
 
     return
-        std::filesystem::path("config") /
-        (distStr + "_" + cdistStr + ".txt");
-}*/
+        std::filesystem::path("config") / (distStr + ".txt");
+}

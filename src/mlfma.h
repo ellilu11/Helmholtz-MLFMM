@@ -10,12 +10,13 @@
 #include <vector>
 
 #include "leaf.cpp"
-#include "mfuncs.cpp"
+// #include "mfuncs.cpp"
 #include "nbor.cpp"
 #include "node.cpp"
-#include "rwg.cpp"
 #include "stem.cpp"
 #include "tables.cpp"
-#include "triangle.cpp"
+#include "sources/dipole.cpp"
+#include "sources/rwg.cpp"
+#include "sources/triangle.cpp"
 
 // TODO: Reference additional headers your program requires here.

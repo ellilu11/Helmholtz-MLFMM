@@ -173,7 +173,7 @@ void Tables::buildTranslationTable() {
 
             for (int ips = 0; ips < nps; ++ips) {
 
-                const double xi = cos(PI*ips / static_cast<double>(nps-1));
+                const double xi = cos(PI*ips/static_cast<double>(nps-1));
                 // const double xi = 2.0*ips/static_cast<double>(nps-1)-1.0;
                 // const double xi = -2.0*ips/static_cast<double>(nps-1)+1.0;
                 cmplx coeff = 0.0;
@@ -203,7 +203,7 @@ void Tables::buildTranslationTable() {
 };
 
 
-void Tables::buildInterpPsiTable() { // TODO: Interp over xi = cos(psi)
+void Tables::buildInterpPsiTable() { // CONSIDER: Interp over xi = cos(psi)
 
     const auto& rhats = Math::getINodeDirections();
 

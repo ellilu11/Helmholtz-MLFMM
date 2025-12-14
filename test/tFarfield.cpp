@@ -7,7 +7,39 @@
 
 using namespace std;
 
-/* testFarfieldFromLeaves(r)
+/* getFarSolsFromCoeffs(r)
+ * Return sols at all sampled directions at distance r
+ * from mpole coefficients of this node
+ */
+std::vector<vec3cd> Node::getFarSolsFromCoeffs(double r) {
+    assert(!srcs.empty());
+
+    const cmplx kernel = C * wavenum * exp(iu*wavenum*r) / r;
+
+    const auto [nth, nph] = getNumAngles(level);
+
+    std::vector<vec3cd> sols(nth*nph, vec3cd::Zero());
+
+    size_t idx = 0;
+    for (int ith = 0; ith < nth; ++ith) {
+
+        for (int iph = 0; iph < nph; ++iph) {
+
+            const auto kvec = tables.khat[level][idx] * wavenum;
+
+            sols[idx] =
+                kernel * exp(-iu*kvec.dot(center))
+                // * tables.matFromSph[level][idx]
+                * coeffs[idx];
+
+            idx++;
+        }
+    }
+
+    return sols;
+}
+
+/* testFarfield(r)
  * Print total farfield along sampled directions at distance r
  */
 void Node::testFarfield(double r) {
@@ -53,7 +85,7 @@ void Leaf::testFarfieldFromLeaves(double r) {
     std::vector<vec3cd> sols(nth*nph, vec3cd::Zero());
 
     for (const auto& leaf : leaves) {
-        if (leaf->rwgs.empty()) continue;
+        if (leaf->srcs.empty()) continue;
 
         // only works if all non-empty leaves are at maxlevel
         assert(leaf->level == maxLevel);
@@ -101,6 +133,7 @@ void Leaf::testFarfieldFromLeaves(double r) {
     }
 }*/
 
+
 void Node::printAngularSamples(int level) {
     ofstream thetaFile("out/thetas_lvl" + to_string(level) + ".txt");
     ofstream phiFile("out/phis_lvl" + to_string(level) + ".txt");
@@ -114,34 +147,54 @@ void Node::printAngularSamples(int level) {
         phiFile << phis[level][iph] << '\n';
 }
 
+extern auto t = ClockTimes();
+
 int main() {
     Config config("config/config.txt");
+    const string configPath = "config/n480/";
 
     // ==================== Import geometry ==================== //
-    cout << " Constructing RWGs...\n";
+    cout << " Importing config...\n";
 
-    const string nstr = "480";
+    const auto fpath = makePath(config);
 
-    auto vertices = importVertices("config/n"+nstr+"/vertices.txt");
+    shared_ptr<PlaneWave> Einc = make_shared<PlaneWave>();
 
-    auto tris = importTriangles("config/n"+nstr+"/faces.txt", vertices, config.quadPrec);
-    const int numQuads = Triangle::quadPrec2Int(config.quadPrec);
+    SrcVec srcs;
 
-    shared_ptr<Source> Einc = make_shared<Source>(); // initialize incident field
+    switch (config.mode) {
+        case Mode::READ:
+            srcs = importDipoles(fpath, Einc);
+            break;
 
-    auto srcs = importRWG("config/n"+nstr+"/rwgs.txt", vertices, tris, Einc);
-    int Nsrcs = srcs.size();
+        case Mode::WRITE: {
+            srcs = makeDipoles<uniform_real_distribution<double>>(config, Einc);
+
+            ofstream srcFile(fpath);
+            for (const auto& src : srcs) srcFile << *src;
+            break;
+        }
+    }
+
+    //const string configPath = "config/n480/";
+    //auto srcs = importRWG(configPath+"vertices.txt",
+    //                      configPath+"faces.txt",
+    //                      configPath+"rwgs.txt",
+    //                      config.quadPrec,
+    //                      Einc);
 
     Node::setNodeParams(config, Einc);
 
-    cout << "   # Sources:       " << Nsrcs << '\n';
-    cout << "   RWG quad rule:   " << numQuads << "-point\n";
+    cout << "   # Sources:       " << srcs.size() << '\n';
+    cout << "   RWG quad rule:   " << Triangle::prec2Int(config.quadPrec) << "-point\n";
     cout << "   Digit precision: " << config.digits << '\n';
     cout << "   Interp order:    " << config.interpOrder << '\n';
     cout << "   Max node RWGs:   " << config.maxNodeSrcs << '\n';
     cout << fixed << setprecision(3);
     cout << "   Root length:     " << config.rootLeng << '\n';
     cout << "   Wave number:     " << Einc->wavenum << "\n\n";
+
+    auto Nsrcs = srcs.size();
 
     // ==================== Set up domain ==================== //
     cout << " Setting up domain...\n";

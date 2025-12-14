@@ -59,13 +59,6 @@ namespace Math {
             z);
     }
 
- /*   inline vec3d vecSph(double r, double th, double ph) noexcept {
-        return r * vec3d(
-            sin(th) * cos(ph),
-            sin(th) * sin(ph),
-            cos(th));
-    }*/
-
     inline mat3d IminusRR(const vec3d& rhat) noexcept {
         // auto rhat = X / X.norm();
         return mat3d::Identity() - rhat * rhat.transpose();
@@ -163,10 +156,10 @@ namespace Math {
 } // namespace Math
 
 /* idx2pm(x)
-    * Convert x to reverse binary, then replace each bit as 0 -> -1, 1 -> 1
-    * returning the result
-    * x : integer \in {0, ... , 7}
-    */
+ * Convert x to reverse binary, then replace each bit as 0 -> -1, 1 -> 1
+ * returning the result
+ * x : integer \in {0, ... , 7}
+ */
 vec3d Math::idx2pm(int x) {
     assert(x < 8);
     auto xmod4 = x%4;

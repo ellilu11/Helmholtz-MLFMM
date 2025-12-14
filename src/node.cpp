@@ -7,11 +7,10 @@ std::vector<realVec> Node::thetaWeights;
 std::vector<realVec> Node::phis;
 // std::vector<realVec> Node::psis;
 Tables Node::tables;
-
 NodeVec Node::nodes;
 
 void Node::setNodeParams(
-    const Config& config_, const std::shared_ptr<Source>& Einc) {
+    const Config& config_, const std::shared_ptr<PlaneWave>& Einc) {
 
     config = config_;
     wavenum = Einc->wavenum;
@@ -23,10 +22,10 @@ void Node::setNodeParams(
  * base      : pointer to base node
  */
 Node::Node(
-    const RWGVec& rwgs,
+    const SrcVec& srcs,
     const int branchIdx,
     Node* const base)
-    : rwgs(rwgs), branchIdx(branchIdx), base(base),
+    : srcs(srcs), branchIdx(branchIdx), base(base),
     nodeLeng(base == nullptr ? config.rootLeng : base->nodeLeng / 2.0),
     level(base == nullptr ? 0 : base->level + 1),
     center(base == nullptr ? zeroVec :
@@ -139,8 +138,6 @@ void Node::buildMpoleToLocalCoeffs() {
 
     const auto nps = std::floor(Q*(nth-1));
 
-    // auto start = Clock::now();
-
     for (const auto& node : iList) {
         const auto& mpoleCoeffs = node->coeffs;
 
@@ -161,13 +158,11 @@ void Node::buildMpoleToLocalCoeffs() {
                 const double psi = acos(khat.dot(rhat));
                 // const double psi = khat.dot(rhat);
 
-                // start = Clock::now();
-
-                const int s = tables.ssps[level].at(psi);
-
                 cmplx translCoeff = 0.0;
 
                 /* No psi LUT
+                const int s = std::floor((nps-1) * psi / PI);
+
                 realVec psis_;
                 for (int ips = s+1-order; ips <= s+order; ++ips)
                     psis_.push_back(PI*ips/static_cast<double>(nps-1));
@@ -178,9 +173,15 @@ void Node::buildMpoleToLocalCoeffs() {
                     translCoeff +=
                         translVec[ips_flipped]
                         * Interp::evalLagrangeBasis(psi,psis_,k);
-                }*/
+                }
+                */
+                
+                // psi LUT
+                // auto start = Clock::now(); 
                 
                 const auto& interpVec = tables.interpPsi[level].at(psi);
+
+                const int s = tables.ssps[level].at(psi);
 
                 // t.M2L_lookup += Clock::now() - start;
 
@@ -190,8 +191,10 @@ void Node::buildMpoleToLocalCoeffs() {
                     const int ips_flipped = Math::flipIdxToRange(ips, nps); 
 
                     translCoeff +=
-                         translVec[ips_flipped] * interpVec[k];
+                         translVec[ips_flipped] // IN PROG: Check this
+                        * interpVec[k];
                 }
+                //
 
                 localCoeffs[idx] += translCoeff * mpoleCoeffs[idx];
 
@@ -214,9 +217,9 @@ void Node::evalLeafIlistSols() {
  */
 void Node::evalPairSols(const std::shared_ptr<Node> srcNode) {
 
-    const auto& srcs = srcNode->rwgs;
+    const auto& srcs = srcNode->srcs;
 
-    for (const auto& obs : rwgs) {
+    for (const auto& obs : srcs) {
         // Integrate E_rad over obs RWG
         cmplx sol = 0;
 
@@ -234,11 +237,11 @@ void Node::evalPairSols(const std::shared_ptr<Node> srcNode) {
  */
 void Node::evalSelfSols() {
 
-    for (const auto& obs : rwgs) {
+    for (const auto& obs : srcs) {
         // Integrate E_rad over obs RWG
         cmplx sol = 0;
 
-        for (const auto& src : rwgs) {
+        for (const auto& src : srcs) {
             if (src == obs) continue; // TODO: Use analytic expression
 
             // Integrate G \dot J over src RWG
@@ -258,8 +261,7 @@ std::vector<vec3cd> Node::getFarSols(double r) {
 
     assert(r >= 5.0 * config.rootLeng); // verify farfield condition
 
-    const cmplx C = -iu * c0 * wavenum * mu0
-        * exp(iu*wavenum*r) / (4.0*PI*r);
+    const cmplx kernel = C * wavenum * exp(iu*wavenum*r) / r;
 
     const auto [nth, nph] = getNumAngles(level);
 
@@ -274,43 +276,10 @@ std::vector<vec3cd> Node::getFarSols(double r) {
             const auto& kvec = tables.khat[level][idx] * wavenum;
 
             vec3cd dirCoeff = vec3cd::Zero();
-            for (const auto& rwg : rwgs)
-                dirCoeff += rwg->getRadAlongDir(center, kvec);
+            for (const auto& src : srcs)
+                dirCoeff += src->getRadAlongDir(center, kvec);
 
-            sols[idx] = C * ImKK * dirCoeff;
-
-            idx++;
-        }
-    }
-
-    return sols;
-}
-
-/* getFarSolsFromCoeffs(r)
- * Return sols at all sampled directions at distance r
- * from mpole coefficients of this node
- */
-std::vector<vec3cd> Node::getFarSolsFromCoeffs(double r) {
-    assert(!rwgs.empty());
-
-    const cmplx C = -iu * c0 * wavenum * mu0
-        * exp(iu*wavenum*r) / (4.0*PI*r);
-
-    const auto [nth, nph] = getNumAngles(level);
-
-    std::vector<vec3cd> sols(nth*nph, vec3cd::Zero());
-
-    size_t idx = 0;
-    for (int ith = 0; ith < nth; ++ith) {
-
-        for (int iph = 0; iph < nph; ++iph) {
-
-            const auto kvec = tables.khat[level][idx] * wavenum;
-
-            sols[idx] =
-                C * exp(-iu*kvec.dot(center))
-                // * tables.matFromSph[level][idx]
-                * coeffs[idx];
+            sols[idx] = kernel * ImKK * dirCoeff;
 
             idx++;
         }
@@ -318,3 +287,7 @@ std::vector<vec3cd> Node::getFarSolsFromCoeffs(double r) {
 
     return sols;
 }
+
+
+
+

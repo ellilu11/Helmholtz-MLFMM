@@ -6,7 +6,7 @@ class Stem final : public Node, public std::enable_shared_from_this<Stem> {
 
 public:
     Stem(
-        const RWGVec&,
+        const SrcVec&,
         const int,
         Stem* const);
 

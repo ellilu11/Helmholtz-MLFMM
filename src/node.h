@@ -7,8 +7,8 @@
 #include "clock.h"
 #include "config.h"
 #include "interp.h"
-#include "rwg.h"
 #include "tables.h"
+#include "sources/rwg.h"
 
 extern ClockTimes t;
 
@@ -20,7 +20,7 @@ constexpr double c0 = 299792458.0;
 constexpr double mu0 = 1.256637E-6;
 constexpr double Q = 3.5; // TODO: pick an optimal value
 
-const cmplx C = -iu * c0 * mu0 / (4.0 * PI); // TODO: Find a place to put this
+const cmplx C = -iu * c0 * mu0 / (4.0 * PI); // TODO: Find a better place to put this
 
 enum class Dir {
     W, E, S, N, D, U,
@@ -44,14 +44,14 @@ public:
         return std::make_pair(thetas[level].size(), phis[level].size());
     }
 
-    static void setNodeParams(const Config&, const std::shared_ptr<Source>&);
+    static void setNodeParams(const Config&, const std::shared_ptr<PlaneWave>&);
 
     static void buildAngularSamples();
 
     static void buildTables() { tables = Tables(config); }
 
 public:
-    RWGVec getRWGs() const { return rwgs; }
+    SrcVec getSrcs() const { return srcs; }
     
     int getBranchIdx() const { return branchIdx; }
     
@@ -82,12 +82,12 @@ public:
     template <typename T>
     bool isNodeType() const { return typeid(*this) == typeid(T); }
 
-    bool isSrcless() const { return rwgs.empty(); }
+    bool isSrcless() const { return srcs.empty(); }
 
-    void resetSols() { for (const auto& rwg : rwgs) rwg->resetSol(); }
+    void resetSols() { for (const auto& src : srcs) src->resetSol(); }
 
 public:
-    Node(const RWGVec&, const int, Node* const);
+    Node(const SrcVec&, const int, Node* const);
     
     std::shared_ptr<Node> getNeighborGeqSize(const Dir) const;
 
@@ -159,7 +159,7 @@ protected:
     NodeVec iList; // list 2
     NodeVec leafIlist; // list 4
 
-    RWGVec rwgs;
+    SrcVec srcs;
     const int branchIdx;
     Node* const base;
     const double nodeLeng;

@@ -3,10 +3,10 @@
 LeafVec Leaf::leaves;
 
 Leaf::Leaf(
-    const RWGVec& rwgs,
+    const SrcVec& srcs,
     const int branchIdx,
     Stem* const base)
-    : Node(rwgs, branchIdx, base)
+    : Node(srcs, branchIdx, base)
 {
     maxLevel = std::max(level, maxLevel);
 }
@@ -72,8 +72,8 @@ void Leaf::buildMpoleCoeffs() {
 
             vec3cd radPat = vec3cd::Zero();
 
-            for (const auto& rwg : rwgs)
-                radPat += rwg->getRadAlongDir(center, kvec);
+            for (const auto& src : srcs)
+                radPat += src->getRadAlongDir(center, kvec);
 
             // in spherical components
             // coeffs.push_back(tables.matToSph[level][idx] * (ImKK * dirCoeff));
@@ -144,7 +144,7 @@ void Leaf::evalFarSols() {
 
     // const double C = -wavenum * wavenum / (16.0*PI*PI);
 
-    for (const auto& rwg : rwgs) {
+    for (const auto& src : srcs) {
 
         size_t idx = 0;
 
@@ -162,7 +162,7 @@ void Leaf::evalFarSols() {
                 const auto& incPat =
                     tables.ImKK[level][idx] * // Tangential-T
                     // -khat.cross( // Tangential-K
-                    rwg->getIncAlongDir(center, wavenum*khat);
+                    src->getIncAlongDir(center, wavenum*khat);
 
                 // Do the angular integration
                 sol += thetaWeights[level][ith] 
@@ -174,7 +174,7 @@ void Leaf::evalFarSols() {
 
         }
 
-        rwg->addToSol(C * wavenum * phiWeight * sol); // TODO: Add const term 
+        src->addToSol(C * wavenum * phiWeight * sol);
     }
 
 }

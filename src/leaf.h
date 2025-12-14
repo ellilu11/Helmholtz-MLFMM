@@ -12,7 +12,7 @@ class Leaf final : public Node, public std::enable_shared_from_this<Leaf> {
 
 public:
     Leaf(
-        const RWGVec&,
+        const SrcVec&,
         const int,
         Stem* const);
 

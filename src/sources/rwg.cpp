@@ -1,24 +1,75 @@
 #include "rwg.h"
 
-using namespace std;
+std::vector<vec3d> importVertices(const std::filesystem::path& fpath) {
+    using namespace std;
 
-RWGVec importRWG(
-    const filesystem::path& fpath, 
-    const std::vector<vec3d>& vertices,
-    const TriVec& triangles,
-    const shared_ptr<Source> Einc)
+    ifstream file(fpath);
+    if (!file) throw std::runtime_error("Unable to find file");
+    string line;
+    vector<vec3d> vList;
+
+    while (getline(file, line)) {
+        istringstream iss(line);
+        vec3d vertex;
+
+        if (iss >> vertex)
+            vList.push_back(vertex);
+        else
+            throw std::runtime_error("Unable to parse line");
+    }
+
+    return vList;
+}
+
+TriVec importTriangles(
+    const std::filesystem::path& fpath, 
+    const std::vector<vec3d>& vList, 
+    const Precision prec)
 {
+    using namespace std;
+
     ifstream file(fpath);
     string line;
     if (!file) throw std::runtime_error("Unable to find file");
-    RWGVec rwgs;
+    TriVec triangles;
+
+    while (getline(file, line)) {
+        istringstream iss(line);
+        vec3i vIdx;
+
+        if (iss >> vIdx)
+            triangles.emplace_back(make_shared<Triangle>(vIdx, vList, prec));
+        else
+            throw std::runtime_error("Unable to parse line");
+    }
+
+    return triangles;
+}
+
+SrcVec importRWG(
+    const std::filesystem::path& vpath,
+    const std::filesystem::path& tpath,
+    const std::filesystem::path& rpath, 
+    const Precision quadPrec,
+    const std::shared_ptr<PlaneWave> Einc)
+{
+    using namespace std;
+
+    auto vertices = importVertices(vpath);
+
+    auto triangles = importTriangles(tpath, vertices, quadPrec);
+
+    ifstream file(rpath);
+    string line;
+    if (!file) throw std::runtime_error("Unable to find file");
+    SrcVec rwgs;
 
     while (getline(file, line)) {
         istringstream iss(line);
         Eigen::Vector4i idx;
 
         if (iss >> idx)
-            rwgs.emplace_back(make_shared<RWG>(idx, vertices, triangles, Einc));
+            rwgs.emplace_back(make_shared<RWG>(Einc, idx, vertices, triangles));
         else
             throw std::runtime_error("Unable to parse line");
     }
@@ -26,14 +77,15 @@ RWGVec importRWG(
     return rwgs;
 }
 
-RWG::RWG(const Eigen::Vector4i& idx,
+RWG::RWG(const std::shared_ptr<PlaneWave>& Einc,
+    const Eigen::Vector4i& idx,
     const std::vector<vec3d>& vertices,
-    const TriVec& triangles,
-    const std::shared_ptr<Source> Einc)
-    : v0(vertices[idx[0]]), v1(vertices[idx[1]]),
+    const TriVec& triangles)
+    : Source(Einc),
+      v0(vertices[idx[0]]), v1(vertices[idx[1]]),
       triPlus(triangles[idx[2]]), triMinus(triangles[idx[3]]),
-      vCenter((v0+v1)/2.0),
-      Einc(Einc)
+      center((v0+v1)/2.0)
+
 {
     for (const auto& vIdx : triPlus->getVidx())
         if (vIdx != idx[0] && vIdx != idx[1])
@@ -104,7 +156,7 @@ vec3cd RWG::getRadAlongDir(
     return current * leng * rad;
 }
 
-/* getRadAlongDir(X,kvec)
+/* getIncAlongDir(X,kvec)
  * Return the incoming radiated amplitude at this
  * RWG due to field at X along direction kvec
  * X    : source point (Cartesian)
@@ -155,7 +207,7 @@ vec3cd RWG::getRad(const vec3d& X, double wavenum) const {
     return current * leng * rad;
 }
 
-cmplx RWG::getIntegratedRad(const std::shared_ptr<RWG> src, double wavenum) const {
+cmplx RWG::getIntegratedRad(const std::shared_ptr<Source> src, double wavenum) const {
 
     cmplx integratedRad = 0.0;
 

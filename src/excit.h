@@ -2,8 +2,14 @@
 
 #include "math.h"
 
-struct Source {
-    Source()
+namespace Excitation {
+    struct PlaneWave;
+
+    // struct HertzDipole;
+}
+
+struct PlaneWave {
+    PlaneWave()
         : 
         amplitude(1.0), 
         wavenum(1.0),
@@ -12,8 +18,8 @@ struct Source {
     {
     };
 
-    /* TODO: Read src params from file
-    Src(const std::string& fileName) {
+    /* TODO: Read params from file
+    PlaneWave(const std::string& fileName) {
         std::ifstream is(fileName);
         is >> amplitude >> wavenum >> pol >> wavevec;
     }*/

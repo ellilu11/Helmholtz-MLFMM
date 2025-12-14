@@ -1,6 +1,6 @@
 clear; clc;
 
-maxLvls = 0:3;
+maxLvls = 1:3;
 nLvls = size(maxLvls,2);
 
 flds = cell(nLvls,1);
@@ -14,8 +14,8 @@ dir = "C:\Users\ellil\Documents\WORK\MLFMA\MLFMA\out\build\x64-debug\";
 
 for i=1:size(maxLvls,2)
     flds{i} = readmatrix(dir+"out\ff_maxlvl"+string(maxLvls(i))+".txt");
-    thetas{i} = readmatrix(dir+"out\thetas_lvl"+string(maxLvls(1))+".txt");
-    phis{i} = readmatrix(dir+"out\phis_lvl"+string(maxLvls(1))+".txt");
+    thetas{i} = readmatrix(dir+"out\thetas_lvl0.txt");
+    phis{i} = readmatrix(dir+"out\phis_lvl0.txt");
 
     nth(i) = length(thetas{i});
     nph(i) = length(phis{i});
@@ -26,7 +26,7 @@ end
 % nvec = 1:nangles;
 
 % Select levels and field components to plot
-lvl1 = 1; lvl2 = 4;
+lvl1 = 2; lvl2 = 3;
 comp = 1; % E_x = 1, E_y = 2, E_z = 3
 
 %% Reshape fld matrices

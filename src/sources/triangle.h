@@ -1,10 +1,5 @@
 #pragma once
 
-#include <filesystem>
-#include <random>
-#include "config.h"
-#include "math.h"
-
 class Triangle;
 
 using TriVec = std::vector<std::shared_ptr<Triangle>>;
@@ -33,7 +28,7 @@ public:
         return std::make_pair(quadNodes, quadWeight);
     }
 
-    static int quadPrec2Int(const Precision);
+    static int prec2Int(const Precision);
 
     void buildQuads(const Precision);
 

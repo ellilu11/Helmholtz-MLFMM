@@ -1,25 +1,25 @@
 #include "stem.h"
 
 Stem::Stem(
-    const RWGVec& rwgs,
+    const SrcVec& srcs,
     const int branchIdx,
     Stem* const base)
-    : Node(rwgs, branchIdx, base)
+    : Node(srcs, branchIdx, base)
 {
-    // Assign every RWG to a branch based on RWG center relative to node center
-    std::array<RWGVec,8> branchRWGs;
+    // Assign every src to a branch based on src center relative to node center
+    std::array<SrcVec,8> branchSrcs;
 
-    for (const auto& rwg : rwgs)
-        branchRWGs[Math::bools2Idx(rwg->getCenter() > center)].push_back(rwg);
+    for (const auto& src : srcs)
+        branchSrcs[Math::bools2Idx(src->getCenter() > center)].push_back(src);
  
     // Construct branch nodes
-    for (size_t k = 0; k < branchRWGs.size(); ++k) {
+    for (size_t k = 0; k < branchSrcs.size(); ++k) {
         std::shared_ptr<Node> branch;
 
-        if (branchRWGs[k].size() > config.maxNodeSrcs)
-            branch = std::make_shared<Stem>(branchRWGs[k], k, this);
+        if (branchSrcs[k].size() > config.maxNodeSrcs)
+            branch = std::make_shared<Stem>(branchSrcs[k], k, this);
         else
-            branch = std::make_shared<Leaf>(branchRWGs[k], k, this);
+            branch = std::make_shared<Leaf>(branchSrcs[k], k, this);
 
         branches.push_back(branch);
     }

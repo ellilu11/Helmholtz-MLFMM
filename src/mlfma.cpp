@@ -11,41 +11,54 @@ int main() {
     Config config("config/config.txt");
 
     // ==================== Import geometry ==================== //
-    cout << " Constructing RWGs...\n";
+    cout << " Importing config...\n";
 
-    const string nstr = "480";
+    const auto fpath = makePath(config);
 
-    auto start = Clock::now();
+    shared_ptr<PlaneWave> Einc = make_shared<PlaneWave>();
 
-    auto vertices = importVertices("config/n"+nstr+"/vertices.txt");
+    SrcVec srcs;
 
-    auto tris = importTriangles("config/n"+nstr+"/faces.txt", vertices, config.quadPrec);
-    const int numQuads = Triangle::quadPrec2Int(config.quadPrec);
+    switch (config.mode) {
+        case Mode::READ:
+            srcs = importDipoles(fpath, Einc);
+            break;
 
-    shared_ptr<Source> Einc = make_shared<Source>(); // initialize incident field
+        case Mode::WRITE: {
+            srcs = makeDipoles<uniform_real_distribution<double>>(config, Einc);
 
-    auto srcs = importRWG("config/n"+nstr+"/rwgs.txt", vertices, tris, Einc);
-    int Nsrcs = srcs.size();
+            ofstream srcFile(fpath);
+            for (const auto& src : srcs) srcFile << *src;
+            break;
+        }
+    }
+
+    //const string configPath = "config/n480/";
+    //auto srcs = importRWG(configPath+"vertices.txt",
+    //                      configPath+"faces.txt",
+    //                      configPath+"rwgs.txt",
+    //                      config.quadPrec,
+    //                      Einc);
 
     Node::setNodeParams(config, Einc);
 
-    auto end = Clock::now();
-    Time duration_ms = end - start;
-
-    cout << "   # Sources:       " << Nsrcs << '\n';
-    cout << "   RWG quad rule:   " << numQuads << "-point\n";
+    cout << "   # Sources:       " << srcs.size() << '\n';
+    cout << "   RWG quad rule:   " << Triangle::prec2Int(config.quadPrec) << "-point\n";
     cout << "   Digit precision: " << config.digits << '\n';
     cout << "   Interp order:    " << config.interpOrder << '\n';
     cout << "   Max node RWGs:   " << config.maxNodeSrcs << '\n';
     cout << fixed << setprecision(3);
     cout << "   Root length:     " << config.rootLeng << '\n';
-    cout << "   Wave number:     " << Einc->wavenum << '\n';
-    cout << "   Elapsed time: " << duration_ms.count() << " ms\n\n";
+    cout << "   Wave number:     " << Einc->wavenum << "\n\n";
+
+    auto Nsrcs = srcs.size();
+
+    Node::setNodeParams(config, Einc);
 
     // ==================== Set up domain ==================== //
     cout << " Setting up domain...\n";
     auto fmm_start = Clock::now();
-    start = Clock::now();
+    auto start = Clock::now();
 
     shared_ptr<Node> root;
     if (Nsrcs > config.maxNodeSrcs)
@@ -55,8 +68,8 @@ int main() {
 
     root->buildLists();
 
-    end = Clock::now();
-    duration_ms = end - start;
+    auto end = Clock::now();
+    auto duration_ms = end - start;
 
     cout << "   # Nodes: " << Node::getNumNodes() << '\n';
     cout << "   # Leaves: " << Leaf::getNumLeaves() << '\n';
