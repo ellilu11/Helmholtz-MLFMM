@@ -84,7 +84,9 @@ int main() {
 
     end = Clock::now();
     duration_ms = end - start;
-    cout << "   Elapsed time: " << duration_ms.count() << " ms\n\n";
+    cout << "   Elapsed time: " << duration_ms.count() << " ms\n";
+    cout << "   Elapsed time (S2M): " << t.S2M.count() << " ms\n";
+    cout << "   Elapsed time (M2M): " << t.M2M.count() << " ms\n\n";
 
     // ==================== Downward pass ==================== //
     cout << " Computing downward pass...\n";
@@ -94,9 +96,12 @@ int main() {
 
     end = Clock::now();
     duration_ms = end - start;
-    cout << "   Elapsed time: " << duration_ms.count() << " ms\n\n";
+    cout << "   Elapsed time: " << duration_ms.count() << " ms\n";
+    cout << "   Elapsed time (M2L): " << t.M2L.count() << " ms\n";
+    // cout << "   Elapsed time (M2L lookup): " << t.M2L_lookup.count() << " ms\n";
+    cout << "   Elapsed time (L2L): " << t.L2L.count() << " ms\n\n";
 
-    return 0;
+    // return 0;
 
     // ================== Evaluate solutions ================= //
     cout << " Evaluating solutions...\n";
@@ -108,7 +113,26 @@ int main() {
     duration_ms = end - start;
     Time fmm_duration_ms = end - fmm_start;
 
+    cout << "   Elapsed time: " << duration_ms.count() << " ms\n";
+    cout << "   Elapsed time (L2T): " << t.L2T.count() << " ms\n";
+    cout << "   Elapsed time (S2T): " << t.S2T.count() << " ms\n\n";
     cout << " FMM total elapsed time: " << fmm_duration_ms.count() << " ms\n";
+
+    // ================== Compute direct ===================== //
+    if (!config.evalDirect) return 0;
+
+    root->resetSols();
+
+    cout << "\n Computing direct...\n";
+    start = Clock::now();
+
+    root->evalSelfSols();
+
+    end = Clock::now();
+    duration_ms = end - start;
+    cout << "   Elapsed time: " << duration_ms.count() << " ms\n";
+
+    // printSols(srcs, "out/sols.txt");
 
     return 0;
 }

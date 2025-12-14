@@ -9,30 +9,39 @@ shared_ptr<Node> Node::getNode(int nodeIdx) {
 
     auto node = nodes[nodeIdx];
 
+    assert(node->isNodeType<Leaf>() && !node->isSrcless());
+
     cout << "   Selected node at level " << node->getLevel()
-         << " with " << node->getIlist().size() << " interaction nodes\n\n";
+         << " with " << node->iList.size() << " interaction nodes and "
+         << node->rwgs.size() << " RWGs\n\n";
 
     return node;
 }
 
-void Stem::printLocalCoeffs(std::ofstream& f) {
+void Leaf::testMpoleToLocalInLeaf() {
 
-    for (const auto& coeffs : localCoeffs)
-        f << coeffs << '\n';
+    // Get sols from local coeffs due to iList, assuming L2L is off
+    ofstream outFile("out/nf.txt");
 
-    /*
-    for (const auto& branch : branches)
-        branch->printLocalCoeffs(f);
-        */
+    evalFarSols();
+
+    for (const auto& rwg : rwgs)
+        outFile << rwg->getSol() << '\n';
+
+    // Get sols directly from iList
+    ofstream outDirFile("out/nf_dir.txt");
+
+    resetSols();
+
+    for (const auto& node : iList)
+        evalPairSols(node);
+
+    for (const auto& rwg : rwgs)
+        outDirFile << rwg->getSol() << '\n';
+
 }
 
-void Leaf::printLocalCoeffs(std::ofstream& f) {
-
-    for (const auto& coeffs : localCoeffs)
-        f << coeffs << '\n';
-}
-
-void testTransl() {
+/*void testTransl() {
     // ==================== Test translation ===================== //
     cout << " Testing M2L translations...\n";
 
@@ -44,7 +53,9 @@ void testTransl() {
 
     for (const auto& dist : testDists)
         cout << dist << ' ' << translTable[1].at(dist)[0] << '\n';
-}
+}*/
+
+extern auto t = ClockTimes();
 
 int main() {
 
@@ -138,10 +149,12 @@ int main() {
     duration_ms = end - start;
     cout << "   Elapsed time: " << duration_ms.count() << " ms\n\n";
 
-    // Do nearfield test
-    ofstream coeffFile("out/lcoeffs.txt");
+    // ==================== Nearfield test =================== //
+    // ofstream coeffFile("out/lcoeffs.txt");
+    // obsNode->printLocalCoeffs(coeffFile);
 
-    obsNode->printLocalCoeffs(coeffFile);
+    auto obsLeaf = dynamic_pointer_cast<Leaf>(obsNode);
+    obsLeaf->testMpoleToLocalInLeaf();
 
     return 0;
 

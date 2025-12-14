@@ -58,6 +58,8 @@ void Leaf::buildLists() {
 void Leaf::buildMpoleCoeffs() {
     if (isSrcless()) return;
 
+    auto start = Clock::now();
+
     const auto [nth, nph] = getNumAngles(level);
 
     size_t idx = 0;
@@ -65,13 +67,13 @@ void Leaf::buildMpoleCoeffs() {
 
         for (int iph = 0; iph < nph; ++iph) {
 
-            const auto& ImKK = tables.ImKK[level][idx];
             const auto& kvec = tables.khat[level][idx] * wavenum;
+            const auto& ImKK = tables.ImKK[level][idx];
 
-            vec3cd dirCoeff = vec3cd::Zero();
+            vec3cd radPat = vec3cd::Zero();
 
             for (const auto& rwg : rwgs)
-                dirCoeff += rwg->getRadAlongDir(center, kvec);
+                radPat += rwg->getRadAlongDir(center, kvec);
 
             // in spherical components
             // coeffs.push_back(tables.matToSph[level][idx] * (ImKK * dirCoeff));
@@ -80,13 +82,13 @@ void Leaf::buildMpoleCoeffs() {
             // coeffs.push_back(tables.matToThPh[level][idx] * (ImKK * dirCoeff));
 
             // in cartesian components
-            coeffs.push_back(ImKK * dirCoeff);
+            coeffs.push_back(ImKK * radPat);
 
             idx++;
         }
     }
 
-    // Get polar coeffs in cartesian components
+    /* Get polar coeffs in cartesian components
     vec3cd northCoeff = vec3cd::Zero();
     for (const auto& rwg : rwgs)
         northCoeff += rwg->getRadAlongDir(center, wavenum*northPole);
@@ -96,6 +98,9 @@ void Leaf::buildMpoleCoeffs() {
     for (const auto& rwg : rwgs)
         southCoeff += rwg->getRadAlongDir(center, wavenum*southPole);
     polarCoeffs.second = Math::IminusRR(0, PI) * southCoeff;
+    */
+
+    t.S2M += Clock::now() - start;
 
 }
 
@@ -106,22 +111,72 @@ void Leaf::buildMpoleCoeffs() {
 void Leaf::buildLocalCoeffs() {
     if (isRoot()) return;
 
+    auto start = Clock::now();
+
     buildMpoleToLocalCoeffs();
+
+    t.M2L += Clock::now() - start;
 
     evalLeafIlistSols();
 
-    /*if (!base->isRoot()) {
+    /*start = Clock::now();
+
+    if (!base->isRoot()) {
         auto baseStem = static_cast<Stem*>(base);
 
         localCoeffs = 
             localCoeffs + baseStem->getShiftedLocalCoeffs(branchIdx);
-    }*/
+    }
+
+    t.L2L += Clock::now() - start;
+    */
 }
 
 /* evalFarSols()
  * (L2T) Evaluate sols from local expansion due to far nodes
  */
 void Leaf::evalFarSols() {
+    if (isSrcless()) return;
+
+    const auto [nth, nph] = getNumAngles(level);
+
+    const double phiWeight = 2.0*PI / static_cast<double>(nph); // TODO: static member
+
+    // const double C = -wavenum * wavenum / (16.0*PI*PI);
+
+    for (const auto& rwg : rwgs) {
+
+        size_t idx = 0;
+
+        cmplx sol = 0;
+
+        for (int ith = 0; ith < nth; ++ith) {
+
+            const auto theta = thetas[level][ith];
+
+            for (int iph = 0; iph < nph; ++iph) {
+
+                const auto& khat = tables.khat[level][idx];
+
+                // Compute receiving pattern along \khat at this rwg
+                const auto& incPat =
+                    tables.ImKK[level][idx] * // Tangential-T
+                    // -khat.cross( // Tangential-K
+                    rwg->getIncAlongDir(center, wavenum*khat);
+
+                // Do the angular integration
+                sol += thetaWeights[level][ith] 
+                        * sin(theta) // TODO: Absorb into thetaWeights
+                        * incPat.dot(localCoeffs[idx]);
+
+                idx++;
+            }
+
+        }
+
+        rwg->addToSol(C * wavenum * phiWeight * sol); // TODO: Add const term 
+    }
+
 }
 
 /* evalNearNonNborSols()
@@ -152,17 +207,25 @@ std::vector<LeafPair> Leaf::findNearNborPairs(){
  */ 
 void Leaf::evaluateSols() {
 
-    for (const auto& leaf : leaves) {
+    auto start = Clock::now();
+
+    for (const auto& leaf : leaves)
         leaf->evalFarSols();
 
+    t.L2T += Clock::now() - start;
+
+    for (const auto& leaf : leaves)
         leaf->evalNearNonNborSols();
 
-        leaf->evalSelfSols();
-    }
+    start = Clock::now();
 
     for (const auto& pair : findNearNborPairs()) {
         auto [obsLeaf, srcLeaf] = pair;
         obsLeaf->evalPairSols(srcLeaf);
     }
 
+    for (const auto& leaf : leaves)
+        leaf->evalSelfSols();
+
+    t.S2T += Clock::now() - start;
 }

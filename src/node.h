@@ -10,13 +10,17 @@
 #include "rwg.h"
 #include "tables.h"
 
+extern ClockTimes t;
+
 constexpr int DIM = 3;
 constexpr int numDir = 26;
 
 // TODO: move into config
 constexpr double c0 = 299792458.0; 
-constexpr double mu0 = 1.256637E-6; 
+constexpr double mu0 = 1.256637E-6;
 constexpr double Q = 3.5; // TODO: pick an optimal value
+
+const cmplx C = -iu * c0 * mu0 / (4.0 * PI); // TODO: Find a place to put this
 
 enum class Dir {
     W, E, S, N, D, U,
@@ -80,14 +84,14 @@ public:
 
     bool isSrcless() const { return rwgs.empty(); }
 
-    // void resetSols() { for (const auto& p : rwg) p->resetSol(); }
+    void resetSols() { for (const auto& rwg : rwgs) rwg->resetSol(); }
 
 public:
     Node(const RWGVec&, const int, Node* const);
     
     std::shared_ptr<Node> getNeighborGeqSize(const Dir) const;
 
-    NodeVec getNeighborsLeqSize(const std::shared_ptr<Node>&, const Dir) const;
+    NodeVec getNeighborsLeqSize(const std::shared_ptr<Node>, const Dir) const;
     
     void buildInteractionList();
     
@@ -97,7 +101,7 @@ public:
 
     void evalLeafIlistSols();
 
-    void evalPairSols(const std::shared_ptr<Node>&);
+    void evalPairSols(const std::shared_ptr<Node>);
 
     void evalSelfSols();
 

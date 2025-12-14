@@ -32,11 +32,23 @@ public:
 
     double getCurrent() const { return current; }
 
+    cmplx getSol() const { return sol; }
+
+    void addToSol(cmplx sol_) { sol += sol_; }
+
+    void resetSol() { sol = 0.0; }
+
     void buildRHS();
 
     void buildCurrent();
 
     vec3cd getRadAlongDir(const vec3d&, const vec3d&) const;
+
+    vec3cd getIncAlongDir(const vec3d&, const vec3d&) const;
+
+    vec3cd getRad(const vec3d&, double) const;
+
+    cmplx getIntegratedRad(const std::shared_ptr<RWG>, double) const;
 
 private:
     vec3d v0;
@@ -48,10 +60,13 @@ private:
     vec3d vPlus;
     vec3d vMinus;
 
+    vec3d nhat; // unit vector normal to RWG surface
+
     double leng;
 
     std::shared_ptr<Source> Einc;
     cmplx rhs;
     double current;
+    cmplx sol;
 
 };

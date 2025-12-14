@@ -13,5 +13,9 @@ struct ClockTimes {
     Time M2L{ 0 };
     Time L2L{ 0 };
     Time L2T{ 0 };
+    Time S2T{ 0 };
+
+    Time M2L_lookup{ 0 };
+    Time M2L_arith{ 0 };
 };
 

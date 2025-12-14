@@ -1,29 +1,7 @@
 #pragma once
 
-#include <map>
 #include "interp.h"
-
-constexpr double DistEPS = 1.0E-3;
-constexpr double PsiEPS = 1.0E-9;
-
-struct DistComp {
-    bool operator()(double x, double y) const noexcept {
-        return x + DistEPS < y;
-    }
-};
-
-struct PsiHash {
-    std::size_t operator()(double x) const noexcept {
-        long long q = static_cast<long long>(std::llround(x / PsiEPS));
-        return std::hash<long long>{}(q);
-    }
-};
-
-struct PsiEq {
-    bool operator()(double x, double y) const noexcept {
-        return std::fabs(x - y) <= PsiEPS;
-    }
-};
+#include "map.h"
 
 struct Tables {
     Tables() = default;
@@ -68,9 +46,9 @@ struct Tables {
     std::vector<std::vector<int>> ss;
 
     // M2L translation tables
-    std::vector<std::map<double,vecXcd,DistComp>> transl;
-    std::vector<std::unordered_map<double,vecXd,PsiHash,PsiEq>> interpPsi;
-    std::vector<std::unordered_map<double,int,PsiHash,PsiEq>> ssps;
+    std::vector<Map<vecXcd>> transl;
+    std::vector<HashMap<vecXcd>> interpPsi;
+    std::vector<HashMap<int>> ssps;
 
 };
 

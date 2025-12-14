@@ -20,9 +20,11 @@ void Tables::buildAngularTables() {
             for (int iph = 0; iph < nph; ++iph) {
                 const double ph = Node::phis[level][iph];
 
-                ImKK_lvl.push_back(Math::IminusRR(th, ph));
-                khat_lvl.push_back(Math::vecSph(1.0, th, ph));
+                const auto& khat = Math::fromSph(vec3d(1.0,th,ph));
 
+                khat_lvl.push_back(khat);
+                ImKK_lvl.push_back(Math::IminusRR(khat));
+                
                 matToThPh_lvl.push_back(Math::matToThPh(th, ph));
                 matFromThPh_lvl.push_back(Math::matFromThPh(th, ph));
 
@@ -159,7 +161,7 @@ void Tables::buildTranslationTable() {
 
         const double nodeLeng = rootLeng / pow(2.0, level);
 
-        std::map<double,vecXcd,DistComp> transl_lvl;
+        Map<vecXcd> transl_lvl;
         
         for (const auto& dist : dists) {
 
@@ -171,14 +173,16 @@ void Tables::buildTranslationTable() {
 
             for (int ips = 0; ips < nps; ++ips) {
 
-                const double x = cos(PI*ips / static_cast<double>(nps-1));
+                const double xi = cos(PI*ips / static_cast<double>(nps-1));
+                // const double xi = 2.0*ips/static_cast<double>(nps-1)-1.0;
+                // const double xi = -2.0*ips/static_cast<double>(nps-1)+1.0;
                 cmplx coeff = 0.0;
 
                 for (int l = 0; l <= L; ++l) {
 
                     coeff += powI(l) * (2.0*l+1.0)
                         * sphericalHankel1(r, l)
-                        * legendreP(x, l).first
+                        * legendreP(xi, l).first
                         ;
 
                     /*if (level == 0 && iDist == 0 && ips == 0)
@@ -220,7 +224,8 @@ void Tables::buildInterpPsiTable() { // TODO: Interp over xi = cos(psi)
 
                 // Loop over all possible rhat
                 for (const auto& rhat : rhats)
-                    psis_lvl.push_back( acos(khat_.dot(rhat)) );
+                    psis_lvl.push_back(acos(khat_.dot(rhat)));
+                    // psis_lvl.push_back(khat_.dot(rhat));
 
             }
         }
@@ -246,22 +251,24 @@ void Tables::buildInterpPsiTable() { // TODO: Interp over xi = cos(psi)
         const int nth = Node::getNumAngles(level).first;
         const int nps = std::floor(Q*(nth-1));
 
-        std::unordered_map<double,vecXd,PsiHash,PsiEq> interpPsi_lvl;
-        std::unordered_map<double,int,PsiHash,PsiEq> s_lvl;
+        HashMap<vecXcd> interpPsi_lvl;
+        HashMap<int> s_lvl;
 
         size_t idx = 0;
         for (auto psi : psis[level]) {
 
             // Find idx of psi node nearest this psi
             const int s = std::floor((nps-1) * psi / PI);
-            // const int s = std::floor((nps-1) * (xi + 1.0) / 2.0);
+            // const int s = std::floor((nps-1) * (psi + 1.0) / 2.0);
+            // const int s = std::floor(-(nps-1) * (psi - 1.0) / 2.0);
 
             // Assemble psis interpolating this psi
             // TODO: Use splicing with std::span
             realVec psis;
             for (int ips = s+1-order; ips <= s+order; ++ips)
                 psis.push_back(PI*ips/static_cast<double>(nps-1));
-                // psis_.push_back(2.0*ips/static_cast<double>(nps-1)-1.0)
+                // psis.push_back(2.0*ips/static_cast<double>(nps-1)-1.0);
+                // psis.push_back(-2.0*ips/static_cast<double>(nps-1)+1.0);
 
             vecXd interpPsi_ps(2*order);
 

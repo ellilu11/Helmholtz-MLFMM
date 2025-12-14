@@ -59,17 +59,33 @@ namespace Math {
             z);
     }
 
-    inline vec3d vecSph(double r, double th, double ph) noexcept {
+ /*   inline vec3d vecSph(double r, double th, double ph) noexcept {
         return r * vec3d(
             sin(th) * cos(ph),
             sin(th) * sin(ph),
             cos(th));
-    }
+    }*/
 
-    inline mat3d IminusRR(double th, double ph) noexcept {
-        auto rhat = fromSph(vec3d(1.0, th, ph));
+    inline mat3d IminusRR(const vec3d& rhat) noexcept {
+        // auto rhat = X / X.norm();
         return mat3d::Identity() - rhat * rhat.transpose();
     }
+
+    inline mat3d Iminus3RR(const vec3d& rhat) noexcept {
+        // auto rhat = X / X.norm();
+        return mat3d::Identity() - 3.0 * rhat * rhat.transpose();
+    }
+
+    inline Eigen::Matrix3cd dyadicG(const vec3d& X, double k) noexcept {
+        double r = X.norm();
+        double kr = k * r;
+        const auto& rhat = X / r;
+
+        return
+            exp(iu*kr/r) * (
+                Math::IminusRR(rhat) - 
+                Math::Iminus3RR(rhat) * (-iu/kr + 1.0/(kr*kr)));
+    };
 
     inline mat23d matToThPh(double th, double ph) noexcept {
         return mat23d{
@@ -110,7 +126,7 @@ namespace Math {
     //    return pair2i(idx/leng, idx%leng);
     //}
 
-    inline size_t flipIdxToRange(int i, int size) {
+    inline size_t flipIdxToRange(int i, int size) noexcept {
         int uint_i = i;
 
         if (i < 0)
@@ -122,7 +138,7 @@ namespace Math {
         return uint_i;
     }
 
-    inline size_t wrapIdxToRange(int i, int size) {
+    inline size_t wrapIdxToRange(int i, int size) noexcept {
         int uint_i = i;
 
         if (i < 0)

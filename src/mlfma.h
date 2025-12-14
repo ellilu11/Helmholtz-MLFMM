@@ -10,6 +10,7 @@
 #include <vector>
 
 #include "leaf.cpp"
+#include "mfuncs.cpp"
 #include "nbor.cpp"
 #include "node.cpp"
 #include "rwg.cpp"

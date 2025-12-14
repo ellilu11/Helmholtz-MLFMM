@@ -14,12 +14,14 @@ namespace Interp {
     double evalTrigBasis(const double, const realVec&, const int);
 }
 
-/* gaussLegendreTheta(l)
+/* [nodes, weights] = gaussLegendreTheta(l, EPS, a, b)
     * Return lth order Gauss-Legendre nodes and weights on the interval [a,b]
     * l   : quadrature order
     * EPS : minimum error to terminate Newton-Raphson
     * a   : lower bound of interval (default -1.0)
     * b   : upper bound of interval (default 1.0)
+    * nodes   : Gauss-Legendre nodes
+    * weights : Gauss-Legendre weights
     */
 std::pair<realVec, realVec> Interp::gaussLegendre(
     const int l, const double EPS, const double a = -1.0, const double b = 1.0) {
@@ -56,20 +58,21 @@ std::pair<realVec, realVec> Interp::gaussLegendre(
         nodes[kplus] = leng/2.0*x_k + mid;
         nodes[kminus] = -leng/2.0*x_k + mid;
 
-        weights[kplus] = leng / ((1.0-x_k*x_k) * dp_k*dp_k);
+        weights[kplus] = leng / ((1.0-x_k*x_k) * dp_k*dp_k); 
         weights[kminus] = weights[kplus];
     }
 
     return std::make_pair(nodes, weights);
 }
 
-/* getNearGLNodeIdx(x, m)
+/* idx = getNearGLNodeIdx(x, m)
 * Get the index of the Gauss-Legendre node of order m
 * nearest and less than the point x on the interval [a, b]
 * x : evaluation point
 * m : order of near nodes (less than order of x)
 * a : lower bound of interval
 * b : upper bound of interval
+* idx : Index of nearest/less Gauss-Legendre node
 */
 int Interp::getNearGLNodeIdx(
     const double xi, const int m, const double a = -1.0, const double b = 1.0) {

@@ -488,7 +488,7 @@ std::shared_ptr<Node> Node::getNeighborGeqSize(const Dir dir) const {
  * dir         : direction (must be consistent with direction of nborGeqSize)
  */
 NodeVec Node::getNeighborsLeqSize(
-    const std::shared_ptr<Node>& nborGeqSize, const Dir dir) const
+    const std::shared_ptr<Node> nborGeqSize, const Dir dir) const
 {
     NodeVec nbors{};
     std::queue<std::shared_ptr<Node>> queue{ { nborGeqSize } };

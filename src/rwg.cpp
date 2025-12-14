@@ -81,25 +81,92 @@ void RWG::buildCurrent() {
 }
 
 /* getRadAlongDir(X,kvec)
- * Return the integrated radiated amplitude due to this
- * RWG at cartesian point X along direction kvec
- * X    : observation point
+ * Return the outgoing radiated amplitude due to this
+ * RWG at X along direction kvec
+ * X    : observation point (Cartesian)
  * kvec : wavevector 
  */ 
 vec3cd RWG::getRadAlongDir(
     const vec3d& X, const vec3d& kvec) const {
     
-    vec3cd coeff = vec3cd::Zero();
+    vec3cd rad = vec3cd::Zero();
 
     auto [nodesPlus, weightPlus] = triPlus->getQuads();
     for (const auto& quadNode : nodesPlus)
-        coeff += weightPlus * exp(iu*kvec.dot(X-quadNode))
-                    * (vPlus - quadNode);
+        rad += weightPlus * exp(iu*kvec.dot(X-quadNode))
+                * (vPlus - quadNode);
 
     auto [nodesMinus, weightMinus] = triMinus->getQuads();
     for (const auto& quadNode : nodesMinus)
-        coeff += weightMinus * exp(iu*kvec.dot(X-quadNode))
-                    * (quadNode - vMinus);
+        rad += weightMinus * exp(iu*kvec.dot(X-quadNode))
+                * (quadNode - vMinus);
 
-    return current * leng * coeff;
+    return current * leng * rad;
+}
+
+/* getRadAlongDir(X,kvec)
+ * Return the incoming radiated amplitude at this
+ * RWG due to field at X along direction kvec
+ * X    : source point (Cartesian)
+ * kvec : wavevector
+ */
+vec3cd RWG::getIncAlongDir(
+    const vec3d& X, const vec3d& kvec) const {
+
+    vec3cd inc = vec3cd::Zero();
+
+    auto [nodesPlus, weightPlus] = triPlus->getQuads();
+    for (const auto& quadNode : nodesPlus)
+        inc += weightPlus * exp(iu*kvec.dot(quadNode-X))
+                * (vPlus - quadNode);
+
+    auto [nodesMinus, weightMinus] = triMinus->getQuads();
+    for (const auto& quadNode : nodesMinus)
+        inc += weightMinus * exp(iu*kvec.dot(quadNode-X))
+                * (quadNode - vMinus);
+
+    return current * leng * inc;
+}
+
+/* getRad(X,k)
+ * Return the full radiated field with given wavenum
+ * due to this RWG at X
+ */
+vec3cd RWG::getRad(const vec3d& X, double wavenum) const {
+
+    vec3cd rad = vec3cd::Zero();
+   
+    auto [nodesPlus, weightPlus] = triPlus->getQuads();
+    for (const auto& quadNode : nodesPlus) {
+
+        const auto& dyadic = Math::dyadicG(X - quadNode, wavenum);
+
+        rad += weightPlus * dyadic * (vPlus - quadNode);
+    }
+
+    auto [nodesMinus, weightMinus] = triMinus->getQuads();
+    for (const auto& quadNode : nodesMinus) {
+    
+        const auto& dyadic = Math::dyadicG(X - quadNode, wavenum);
+        
+        rad += weightMinus * dyadic * (quadNode - vMinus);
+    }
+
+    return current * leng * rad;
+}
+
+cmplx RWG::getIntegratedRad(const std::shared_ptr<RWG> src, double wavenum) const {
+
+    cmplx integratedRad = 0.0;
+
+    auto [nodesPlus, weightPlus] = triPlus->getQuads();
+    for (const auto& quadNode : nodesPlus)
+        integratedRad += weightPlus * src->getRad(quadNode, wavenum).dot(vPlus - quadNode);
+
+    auto [nodesMinus, weightMinus] = triMinus->getQuads();
+    for (const auto& quadNode : nodesMinus)
+        integratedRad += weightMinus * src->getRad(quadNode, wavenum).dot(quadNode - vMinus);
+
+    return leng * integratedRad;
+    
 }

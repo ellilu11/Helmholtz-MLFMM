@@ -57,7 +57,13 @@ public:
 
     static void testFarfieldFromLeaves(double);
 
-    void printLocalCoeffs(std::ofstream& f) override;
+    void testMpoleToLocalInLeaf();
+
+    void printLocalCoeffs(std::ofstream& f) override {
+
+        for (const auto& coeffs : localCoeffs)
+            f << coeffs << '\n';
+    }
 
 private:
     static LeafVec leaves;

@@ -77,10 +77,13 @@ void Stem::buildMpoleCoeffs() {
         if (branch->isSrcless()) continue;
 
         branch->buildMpoleCoeffs();
+
+        auto start = Clock::now();
+
         const auto& branchCoeffs = branch->getMpoleCoeffs();
 
         // Shift branch coeffs to center of this box
-        const auto& shift = center - branch->getCenter();
+        const auto& dR = center - branch->getCenter();
 
         std::vector<vec3cd> shiftedCoeffs;
 
@@ -91,7 +94,7 @@ void Stem::buildMpoleCoeffs() {
                 const auto& kvec = tables.khat[level+1][l] * wavenum;
 
                 shiftedCoeffs.push_back(
-                    exp(iu*kvec.dot(shift)) * branchCoeffs[l++]);
+                    exp(iu*kvec.dot(dR)) * branchCoeffs[l++]);
 
             }
         }
@@ -151,12 +154,15 @@ void Stem::buildMpoleCoeffs() {
             }
         }
 
-        // Shift polar branch coeffs to center and merge (no interp)
-        polarCoeffs.first += exp(iu*northPole.dot(shift)) 
+        /* Shift polar branch coeffs to center and merge (no interp)
+        polarCoeffs.first += exp(iu*northPole.dot(dR)) 
             * branch->getPolarCoeffs().first;
 
-        polarCoeffs.second += exp(iu*southPole.dot(shift))
+        polarCoeffs.second += exp(iu*southPole.dot(dR))
             * branch->getPolarCoeffs().second;
+            */
+
+        t.M2M += Clock::now() - start;
 
     } // for (const auto& branch : branches)
 
@@ -179,7 +185,7 @@ std::vector<vec3cd> Stem::getShiftedLocalCoeffs(const int branchIdx) const {
     std::vector<vec3cd> outCoeffs(mth*mph, vec3cd::Zero());
 
     // Shift local coeffs to center of branch
-    const auto& shift = branches[branchIdx]->getCenter() - center;
+    const auto& dR = branches[branchIdx]->getCenter() - center;
 
     std::vector<vec3cd> shiftedCoeffs;
 
@@ -191,7 +197,7 @@ std::vector<vec3cd> Stem::getShiftedLocalCoeffs(const int branchIdx) const {
             const auto& kvec = tables.khat[level][l] * wavenum;
 
             shiftedCoeffs.push_back(
-                exp(iu*kvec.dot(shift)) * localCoeffs[l++]);
+                exp(iu*kvec.dot(dR)) * localCoeffs[l++]);
 
         }
     }
@@ -256,17 +262,25 @@ std::vector<vec3cd> Stem::getShiftedLocalCoeffs(const int branchIdx) const {
 void Stem::buildLocalCoeffs() {
     if (!isRoot()) {
 
+        auto start = Clock::now();
+
         buildMpoleToLocalCoeffs();
+
+        t.M2L += Clock::now() - start;
 
         evalLeafIlistSols();
 
-        /*
+        /*start = Clock::now();
+        
         if (!base->isRoot()) {
             auto baseStem = dynamic_cast<Stem*>(base);
 
             localCoeffs = 
                 localCoeffs + baseStem->getShiftedLocalCoeffs(branchIdx);
-        }*/
+        }
+
+        t.L2L += Clock::now() - start;
+        */
     }
 
     for (const auto& branch : branches)

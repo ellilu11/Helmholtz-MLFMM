@@ -31,6 +31,15 @@ public:
             branch->printNode(f);
     }
 
-    void printLocalCoeffs(std::ofstream& f) override;
+    void printLocalCoeffs(std::ofstream& f) override {
+
+        for (const auto& coeffs : localCoeffs)
+            f << coeffs << '\n';
+
+        /*
+        for (const auto& branch : branches)
+            branch->printLocalCoeffs(f);
+            */
+    }
 
 };
