@@ -4,7 +4,7 @@
 #include <unordered_map>
 
 constexpr double DistEPS = 1.0E-3;
-constexpr double PsiEPS = 1.0E-9;
+constexpr double PsiEPS = 1.0E-3; // Pick smallest value that avoids collisions
 
 struct Comp {
     bool operator()(double x, double y) const noexcept {

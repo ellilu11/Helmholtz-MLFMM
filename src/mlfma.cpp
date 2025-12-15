@@ -2,55 +2,17 @@
 #include "MLFMA.h"
 #include "clock.h"
 #include "config.h"
+#include "import.h"
 
 using namespace std;
 
 extern auto t = ClockTimes();
 
 int main() {
+    // ===================== Read config ==================== //
     Config config("config/config.txt");
 
-    // ==================== Import geometry ==================== //
-    cout << " Importing config...\n";
-
-    const auto fpath = makePath(config);
-
-    shared_ptr<PlaneWave> Einc = make_shared<PlaneWave>();
-
-    SrcVec srcs;
-
-    switch (config.mode) {
-        case Mode::READ:
-            srcs = importDipoles(fpath, Einc);
-            break;
-
-        case Mode::WRITE: {
-            srcs = makeDipoles<uniform_real_distribution<double>>(config, Einc);
-
-            ofstream srcFile(fpath);
-            for (const auto& src : srcs) srcFile << *src;
-            break;
-        }
-    }
-
-    //const string configPath = "config/n480/";
-    //auto srcs = importRWG(configPath+"vertices.txt",
-    //                      configPath+"faces.txt",
-    //                      configPath+"rwgs.txt",
-    //                      config.quadPrec,
-    //                      Einc);
-
-    Node::setNodeParams(config, Einc);
-
-    cout << "   # Sources:       " << srcs.size() << '\n';
-    cout << "   RWG quad rule:   " << Triangle::prec2Int(config.quadPrec) << "-point\n";
-    cout << "   Digit precision: " << config.digits << '\n';
-    cout << "   Interp order:    " << config.interpOrder << '\n';
-    cout << "   Max node RWGs:   " << config.maxNodeSrcs << '\n';
-    cout << fixed << setprecision(3);
-    cout << "   Root length:     " << config.rootLeng << '\n';
-    cout << "   Wave number:     " << Einc->wavenum << "\n\n";
-
+    auto [srcs, Einc] = importFromConfig(config);
     auto Nsrcs = srcs.size();
 
     Node::setNodeParams(config, Einc);
@@ -69,7 +31,7 @@ int main() {
     root->buildLists();
 
     auto end = Clock::now();
-    auto duration_ms = end - start;
+    Time duration_ms = end - start;
 
     cout << "   # Nodes: " << Node::getNumNodes() << '\n';
     cout << "   # Leaves: " << Leaf::getNumLeaves() << '\n';

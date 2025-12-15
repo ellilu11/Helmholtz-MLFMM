@@ -104,6 +104,7 @@ void Node::buildInteractionList() {
         for (const auto& branch : baseNbor->branches)
             if (notContains(nbors, branch) && !branch->isSrcless()) // TODO: double check
                 iList.push_back(branch);
+
     }
 
     assert(iList.size() <= pow(6, DIM) - pow(3, DIM));
@@ -136,16 +137,40 @@ void Node::buildMpoleToLocalCoeffs() {
     const auto [nth, nph] = getNumAngles(level);
     localCoeffs.resize(nth*nph, vec3cd::Zero());
 
-    const auto nps = std::floor(Q*(nth-1));
+    const int nps = std::floor(Q*(nth-1));
 
     for (const auto& node : iList) {
         const auto& mpoleCoeffs = node->coeffs;
 
         const auto& dR = center - node->center;
-        const auto r = dR.norm();
+        const double r = dR.norm();
         const auto& rhat = dR / r;
 
         assert(nodeLeng == node->nodeLeng);
+
+        /* 
+        const double kr = wavenum*r;
+
+        std::cout << kr << '\n';
+
+        vecXcd translVec(nps);
+        for (int ips = 0; ips < nps; ++ips) {
+
+            const double xi = cos(PI*ips/static_cast<double>(nps-1));
+            cmplx coeff = 0.0;
+
+            for (int l = 0; l <= nth-1; ++l) {
+
+                coeff += Math::powI(l) * (2.0*l+1.0)
+                    * Math::sphericalHankel1(kr, l)
+                    * Math::legendreP(xi, l).first
+                    ;
+            }
+
+            translVec[ips] = coeff;
+        }
+        */
+
         const auto& translVec = tables.transl[level].at(r / nodeLeng);
 
         size_t idx = 0;
@@ -208,44 +233,44 @@ void Node::buildMpoleToLocalCoeffs() {
  * (S2L) Add contribution from list 4 to local coeffs
  */
 void Node::evalLeafIlistSols() {
-
+    // for (const auto& node : leafIlist)
+    //    evalPairSols(node);
+    // return;
 }
 
 /* evalPairSols(srcNode)
- * (S2T) Evaluate sols at RWGs in this node due to RWGs in srcNode
+ * (S2T) Evaluate sols at sources in this node due to sources in srcNode
  * srcNode : source node
  */
 void Node::evalPairSols(const std::shared_ptr<Node> srcNode) {
 
-    const auto& srcs = srcNode->srcs;
+    assert(getSelf() != srcNode);
+
+    const auto& otherSrcs = srcNode->srcs;
 
     for (const auto& obs : srcs) {
-        // Integrate E_rad over obs RWG
         cmplx sol = 0;
 
-        for (const auto& src : srcs)
-            // Integrate G \dot J over src RWG
-             sol += obs->getIntegratedRad(src, wavenum);
+        for (const auto& src : otherSrcs)
+             sol += obs->getIntegratedRad(src);
 
         obs->addToSol(C * wavenum * sol);
     }
 }
 
 /* evalSelfSols()
- * (S2T) Evaluate sols at RWGs in this node due to other RWGs
+ * (S2T) Evaluate sols at sources in this node due to other sources
  * in this node
  */
 void Node::evalSelfSols() {
 
     for (const auto& obs : srcs) {
-        // Integrate E_rad over obs RWG
         cmplx sol = 0;
 
         for (const auto& src : srcs) {
             if (src == obs) continue; // TODO: Use analytic expression
 
-            // Integrate G \dot J over src RWG
-            sol += obs->getIntegratedRad(src, wavenum);
+            sol += obs->getIntegratedRad(src);
 
         }
 
@@ -255,7 +280,7 @@ void Node::evalSelfSols() {
 
 /* getFarSol()
  * Return sols at all sampled directions at distance r 
- * due to all RWGs in this node using farfield approximation
+ * due to all sources in this node using farfield approximation
  */
 std::vector<vec3cd> Node::getFarSols(double r) {
 

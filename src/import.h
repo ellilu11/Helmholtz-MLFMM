@@ -1,18 +1,77 @@
-#include "MLFMA.h"
+#include <random>
+#include "sources/dipole.h"
+#include "sources/rwg.h"
 
-using namespace std;
+using namespace std; // TODO: Remove
+
+template <class dist0, class dist1 = dist0, class dist2 = dist0>
+SrcVec makeDipoles(const Config& config, const shared_ptr<PlaneWave> Einc)
+{
+    SrcVec dipoles;
+
+    random_device rd;
+    mt19937 gen(rd());
+
+    dist0 rand0(0, 1);
+    dist1 rand1(0, 1);
+    dist2 rand2(0, 1);
+
+    if (config.pdist == Dist::UNIFORM) {
+        double lim = config.rootLeng/2.0;
+        rand0 = dist0(-lim, lim);
+        rand1 = dist1(-lim, lim);
+        rand2 = dist2(-lim, lim);
+    }
+
+    for (int n = 0; n < config.nsrcs; ++n) {
+        vec3d X = [&] {
+            double r, th, ph, z;
+
+            switch (config.pdist) {
+                case Dist::UNIFORM:
+                    return vec3d(rand0(gen), rand1(gen), rand2(gen));
+
+                    // 2D Gaussian at z = 0; TODO: 3D Gaussian
+                case Dist::GAUSSIAN: {
+                    r = sqrt(-2.0 * log(rand0(gen)));
+                    th = PI / 2.0;
+                    ph = 2.0 * PI * rand1(gen);
+                    return Math::fromSph(vec3d(r, th, ph));
+                }
+
+                case Dist::SPHERE: {
+                    r = 0.90 * (config.rootLeng / 2.0);
+                    th = acos(2.0*rand0(gen) - 1.0);
+                    ph = 2.0 * PI * rand1(gen);
+                    return Math::fromSph(vec3d(r, th, ph));
+                }
+
+                case Dist::CYLINDER: {
+                    r = 0.45 * (config.rootLeng / 2.0);
+                    ph = 2.0 * PI * rand1(gen);
+                    z = 0.90 * config.rootLeng * (rand1(gen) - 0.5);
+                    return Math::fromCyl(vec3d(r, ph, z));
+                }
+            }
+            }();
+
+        dipoles.push_back(make_shared<Dipole>(Einc, X));
+    }
+
+    return dipoles;
+}
 
 SrcVec importDipoles(
-    const std::filesystem::path& fpath,
-    const std::shared_ptr<PlaneWave>& Einc)
+    const filesystem::path& fpath,
+    const shared_ptr<PlaneWave>& Einc)
 {
-    std::ifstream inFile(fpath);
-    if (!inFile) throw std::runtime_error("Unable to find file");
-    std::string line;
+    ifstream inFile(fpath);
+    if (!inFile) throw runtime_error("Unable to find file");
+    string line;
     SrcVec dipoles;
 
     while (getline(inFile, line)) {
-        std::istringstream iss(line);
+        istringstream iss(line);
 
         vec3d pos;
         if (iss >> pos)
@@ -20,6 +79,7 @@ SrcVec importDipoles(
         else
             throw std::runtime_error("Unable to parse line");
     }
+
     return dipoles;
 }
 
@@ -43,7 +103,7 @@ vector<vec3d> importVertices(const filesystem::path& fpath) {
 }
 
 TriVec importTriangles(
-    const filesystem::path& fpath, const std::vector<vec3d>& vList, const Precision prec)
+    const filesystem::path& fpath, const vector<vec3d>& vList, const Precision prec)
 {
     ifstream file(fpath);
     string line;
@@ -92,18 +152,20 @@ SrcVec importRWG(
     return rwgs;
 }
 
-SrcVec importConfig(const Config& config, const string& configPath) {
+pair<SrcVec, shared_ptr<PlaneWave>> 
+    importFromConfig(const Config& config) 
+{
     cout << " Importing config...\n";
 
     const auto fpath = makePath(config);
 
     shared_ptr<PlaneWave> Einc = make_shared<PlaneWave>();
 
+    //
     SrcVec srcs;
-
     switch (config.mode) {
         case Mode::READ:
-            srcs = importDipoles(fpath);
+            srcs = importDipoles(fpath, Einc);
             break;
 
         case Mode::WRITE: {
@@ -113,22 +175,26 @@ SrcVec importConfig(const Config& config, const string& configPath) {
             for (const auto& src : srcs) srcFile << *src;
             break;
         }
+    }
 
+    //
     //const string configPath = "config/n480/";
     //auto srcs = importRWG(configPath+"vertices.txt",
     //                      configPath+"faces.txt",
     //                      configPath+"rwgs.txt",
     //                      config.quadPrec,
     //                      Einc);
+    //
 
+    cout << fixed << setprecision(3);
+    cout << "   Mode:            " << (config.mode == Mode::READ ? "READ" : "WRITE") << '\n';
     cout << "   # Sources:       " << srcs.size() << '\n';
-    cout << "   RWG quad rule:   " << Triangle::prec2Int(config.quadPrec) << "-point\n";
+    // cout << "   RWG quad rule:   " << Triangle::prec2Int(config.quadPrec) << "-point\n";
     cout << "   Digit precision: " << config.digits << '\n';
     cout << "   Interp order:    " << config.interpOrder << '\n';
     cout << "   Max node RWGs:   " << config.maxNodeSrcs << '\n';
-    cout << fixed << setprecision(3);
     cout << "   Root length:     " << config.rootLeng << '\n';
     cout << "   Wave number:     " << Einc->wavenum << "\n\n";
 
-    return srcs;
+    return make_pair(srcs, Einc);
 }

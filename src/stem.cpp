@@ -41,8 +41,8 @@ void Stem::buildNeighbors() {
 }
 
 /* buildLists()
- * Find neighbor and interaction lists.,tr1qsawxdc2qw3eryuiol;qwsxc 
- * * Add self as near non-neighbor (list 3 node) of any list 4 nodes
+ * Find neighbor and interaction lists.
+ * Add self as near non-neighbor (list 3 node) of any list 4 nodes
  */
 void Stem::buildLists() {
     if (!isRoot()) {

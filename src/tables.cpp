@@ -165,7 +165,7 @@ void Tables::buildTranslationTable() {
         
         for (const auto& dist : dists) {
 
-            const double r = Node::wavenum*dist*nodeLeng;
+            const double kr = Node::wavenum * dist * nodeLeng;
 
             // std::cout << r << ' ';
 
@@ -180,8 +180,8 @@ void Tables::buildTranslationTable() {
 
                 for (int l = 0; l <= L; ++l) {
 
-                    coeff += powI(l) * (2.0*l+1.0)
-                        * sphericalHankel1(r, l)
+                    coeff += powI(l) * (2.0*l+1.0) // (-i)^l ??
+                        * sphericalHankel1(kr, l) 
                         * legendreP(xi, l).first
                         ;
 

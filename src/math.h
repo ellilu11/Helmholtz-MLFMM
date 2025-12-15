@@ -218,7 +218,7 @@ pair2d Math::legendreP(double x, int n) {
  * x : evaluation point
  * n : order of Hankel function
  */
-cmplx Math::sphericalHankel1(double x, int n) {
+cmplx Math::sphericalHankel1(double x, int n) { // TODO: Double check
 
     cmplx H1_nmm = -iu*exp(iu*x) / x;
 

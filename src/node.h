@@ -132,7 +132,7 @@ public:
 
     static void printAngularSamples(int);
 
-    static std::shared_ptr<Node> getNode(int nodeIdx);
+    static std::shared_ptr<Node> getNode();
 
     virtual void printLocalCoeffs(std::ofstream& f) = 0;
 

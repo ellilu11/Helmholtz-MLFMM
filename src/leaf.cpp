@@ -53,7 +53,7 @@ void Leaf::buildLists() {
 }
 
 /* buildMpoleCoeffs()
- * (S2M) Build multipole coefficients from RWG in this node  
+ * (S2M) Build multipole coefficients from sources in this node  
  */
 void Leaf::buildMpoleCoeffs() {
     if (isSrcless()) return;
@@ -74,6 +74,8 @@ void Leaf::buildMpoleCoeffs() {
 
             for (const auto& src : srcs)
                 radPat += src->getRadAlongDir(center, kvec);
+
+            // std::cout << radPat << '\n';
 
             // in spherical components
             // coeffs.push_back(tables.matToSph[level][idx] * (ImKK * dirCoeff));
@@ -142,9 +144,7 @@ void Leaf::evalFarSols() {
 
     const double phiWeight = 2.0*PI / static_cast<double>(nph); // TODO: static member
 
-    // const double C = -wavenum * wavenum / (16.0*PI*PI);
-
-    for (const auto& src : srcs) {
+    for (const auto& obs : srcs) {
 
         size_t idx = 0;
 
@@ -162,7 +162,7 @@ void Leaf::evalFarSols() {
                 const auto& incPat =
                     tables.ImKK[level][idx] * // Tangential-T
                     // -khat.cross( // Tangential-K
-                    src->getIncAlongDir(center, wavenum*khat);
+                    obs->getIncAlongDir(center, wavenum*khat);
 
                 // Do the angular integration
                 sol += thetaWeights[level][ith] 
@@ -174,7 +174,7 @@ void Leaf::evalFarSols() {
 
         }
 
-        src->addToSol(C * wavenum * phiWeight * sol);
+        obs->addToSol(C * wavenum * phiWeight * sol);
     }
 
 }

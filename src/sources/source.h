@@ -2,7 +2,7 @@
 
 #include <algorithm>
 #include <filesystem>
-#include "../excit.h"
+#include "../excite.h"
 #include "../math.h"
 
 class Source;
@@ -14,8 +14,8 @@ class Source {
 public:
     Source() = default;
     
-    Source(const std::shared_ptr<PlaneWave>& Einc)
-        : Einc(Einc), rhs(0.0), current(0.0), sol(0.0) 
+    Source(std::shared_ptr<PlaneWave> Einc)
+        : Einc(std::move(Einc)), rhs(0.0), current(0.0), sol(0.0) 
     {};
 
     cmplx getCurrent() const { return current; }
@@ -36,9 +36,9 @@ public:
 
     virtual vec3cd getIncAlongDir(const vec3d&, const vec3d&) const = 0;
 
-    virtual vec3cd getRad(const vec3d&, double) const = 0;
+    virtual vec3cd getRadAtPoint(const vec3d&) const = 0;
 
-    virtual cmplx getIntegratedRad(const std::shared_ptr<Source>, double) const = 0;
+    virtual cmplx getIntegratedRad(const std::shared_ptr<Source>) const = 0;
 
     friend std::ostream& operator<<(std::ostream& os, Source& src) {
         os << src.getCenter() << '\n';

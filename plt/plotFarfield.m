@@ -1,6 +1,6 @@
 clear; clc;
 
-maxLvls = 1:3;
+maxLvls = 1:4;
 nLvls = size(maxLvls,2);
 
 flds = cell(nLvls,1);
@@ -26,8 +26,10 @@ end
 % nvec = 1:nangles;
 
 % Select levels and field components to plot
-lvl1 = 2; lvl2 = 3;
+lvl1 = 1; lvl2 = 4;
 comp = 1; % E_x = 1, E_y = 2, E_z = 3
+
+ymax = max([max(flds{lvl1}), max(flds{lvl2})]);
 
 %% Reshape fld matrices
 fldArr1 = reshape(flds{lvl1}(:,comp), nph(lvl1), nth(lvl1));
@@ -41,7 +43,6 @@ phis2 = phis{lvl2};
 
 %% Plot as function of theta
 close all;
-ymax = max([max(fldArr1), max(fldArr2)]);
 
 figure(1);
 for iph = 1:nph(lvl1)

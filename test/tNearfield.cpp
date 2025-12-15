@@ -1,27 +1,35 @@
 #include <random>
 #include "../src/MLFMA.h"
+#include "../src/import.h"
 #include "../src/math.h"
 #include "../src/node.h"
 
 using namespace std;
 
-shared_ptr<Node> Node::getNode(int nodeIdx) {
+shared_ptr<Node> Node::getNode() {
+
+    size_t nodeIdx = 0;
 
     auto node = nodes[nodeIdx];
 
-    assert(node->isNodeType<Leaf>() && !node->isSrcless());
+    while (node->isNodeType<Stem>() || node->iList.empty() || node->isSrcless())
+        node = nodes[++nodeIdx];
+
+    // assert(node->isNodeType<Leaf>() && !node->isSrcless());
 
     cout << "   Selected node at level " << node->getLevel()
          << " with " << node->iList.size() << " interaction nodes and "
-         << node->srcs.size() << " RWGs\n\n";
+         << node->srcs.size() << " srcs\n\n";
 
     return node;
 }
 
 void Leaf::testMpoleToLocalInLeaf() {
 
+    auto [nth, nph] = Node::getNumAngles(level);
+
     // Get sols from local coeffs due to iList (assuming L2L is off)
-    ofstream outFile("out/nf.txt");
+    ofstream outFile("out/nf/nf_nth"+to_string(nth)+".txt");
 
     evalFarSols();
 
@@ -29,7 +37,7 @@ void Leaf::testMpoleToLocalInLeaf() {
         outFile << src->getSol() << '\n';
 
     // Get sols directly from iList
-    ofstream outDirFile("out/nf_dir.txt");
+    ofstream outDirFile("out/nf/nf_dir.txt");
 
     resetSols();
 
@@ -44,8 +52,8 @@ void Leaf::testMpoleToLocalInLeaf() {
 void Node::printAngularSamples(int level) {
     const auto [nth, nph] = getNumAngles(level);
 
-    ofstream thetaFile("out/thetas_nth" + to_string(nth) + ".txt");
-    ofstream phiFile("out/phis_nth" + to_string(nth) + ".txt");
+    ofstream thetaFile("out/nf/thetas_nth" + to_string(nth) + ".txt");
+    ofstream phiFile("out/nf/phis_nth" + to_string(nth) + ".txt");
 
     for (int ith = 0; ith < nth; ++ith)
         thetaFile << thetas[level][ith] << '\n';
@@ -72,18 +80,18 @@ void Node::printAngularSamples(int level) {
 extern auto t = ClockTimes();
 
 int main() {
-
+    // ===================== Read config ==================== //
     Config config("config/config.txt");
-    const string configPath = "config/n480/";
 
-    // ==================== Import geometry ==================== //
-    auto srcs = importConfig(config, configPath);
+    auto [srcs, Einc] = importFromConfig(config);
     auto Nsrcs = srcs.size();
+
+    Node::setNodeParams(config, Einc);
 
     // ==================== Set up domain ==================== //
     cout << " Setting up domain...\n";
     auto fmm_start = Clock::now();
-    start = Clock::now();
+    auto start = Clock::now();
 
     shared_ptr<Node> root;
     if (Nsrcs > config.maxNodeSrcs)
@@ -93,15 +101,15 @@ int main() {
 
     root->buildLists();
 
-    end = Clock::now();
-    duration_ms = end - start;
+    auto end = Clock::now();
+    Time duration_ms = end - start;
 
     cout << "   # Nodes: " << Node::getNumNodes() << '\n';
     cout << "   # Leaves: " << Leaf::getNumLeaves() << '\n';
     cout << "   Max node level: " << Node::getMaxLvl() << '\n';
     cout << "   Elapsed time: " << duration_ms.count() << " ms\n\n";
 
-    auto obsNode = root->getNode(55);
+    auto obsNode = root->getNode();
 
     // ==================== Build tables ===================== //
     cout << " Building angular samples...\n";
@@ -141,13 +149,12 @@ int main() {
     auto obsLevel = obsNode->getLevel();
     auto [nth, nph] = Node::getNumAngles(obsLevel);
 
-    ofstream coeffFile("out/lcoeffs_nth"+to_string(nth)+".txt");
-    obsNode->printLocalCoeffs(coeffFile);
+    //ofstream coeffFile("out/nf/lcoeffs_nth"+to_string(nth)+".txt");
+    //obsNode->printLocalCoeffs(coeffFile);
+    //Node::printAngularSamples(obsLevel);
 
-    Node::printAngularSamples(obsLevel);
-
-    // auto obsLeaf = dynamic_pointer_cast<Leaf>(obsNode);
-    // obsLeaf->testMpoleToLocalInLeaf();
+     auto obsLeaf = dynamic_pointer_cast<Leaf>(obsNode);
+     obsLeaf->testMpoleToLocalInLeaf();
 
     return 0;
 

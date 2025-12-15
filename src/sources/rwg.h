@@ -5,7 +5,7 @@
 
 class RWG : public Source {
 public:
-    RWG(const std::shared_ptr<PlaneWave>&,
+    RWG(std::shared_ptr<PlaneWave>,
         const Eigen::Vector4i&, 
         const std::vector<vec3d>&,
         const TriVec&);
@@ -30,9 +30,9 @@ public:
 
     vec3cd getIncAlongDir(const vec3d&, const vec3d&) const override;
 
-    vec3cd getRad(const vec3d&, double) const override;
+    vec3cd getRadAtPoint(const vec3d&) const override;
 
-    cmplx getIntegratedRad(const std::shared_ptr<Source>, double) const override;
+    cmplx getIntegratedRad(const std::shared_ptr<Source>) const override;
 
 private:
     vec3d v0;

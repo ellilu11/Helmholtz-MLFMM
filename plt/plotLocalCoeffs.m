@@ -1,6 +1,6 @@
 clear; clc;
 
-nths = [30, 31];
+nths = [20, 20];
 nLvls = length(nths);
 
 coeffs = cell(nLvls,1);
@@ -10,16 +10,18 @@ phis = cell(nLvls,1);
 nth = zeros(nLvls,1);
 nph = zeros(nLvls,1);
 
-dir = "C:\Users\ellil\Documents\WORK\MLFMA\MLFMA\out\build\x64-debug\";
+dir = "C:\Users\ellil\Documents\WORK\MLFMA\MLFMA\out\build\x64-debug\out\nf\";
 
 for i=1:size(nths,2)
-    coeffs{i} = readmatrix(dir+"out\lcoeffs_nth"+string(nths(i))+".txt");
-    thetas{i} = readmatrix(dir+"out\thetas_nth"+string(nths(i))+".txt");
-    phis{i} = readmatrix(dir+"out\phis_nth"+string(nths(i))+".txt");
+    coeffs{i} = readmatrix(dir+"lcoeffs_nth"+string(nths(i))+".txt");
+    thetas{i} = readmatrix(dir+"thetas_nth"+string(nths(i))+".txt");
+    phis{i} = readmatrix(dir+"phis_nth"+string(nths(i))+".txt");
 
     nth(i) = length(thetas{i});
     nph(i) = length(phis{i});
 end
+
+% coeffs{2} = readmatrix(dir+"lcoeffs_nth20_nolut.txt");
 
 lvl1 = 1; lvl2 = 2;
 comp = 1;

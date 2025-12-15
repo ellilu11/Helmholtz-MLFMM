@@ -1,6 +1,7 @@
 #include <fstream>
 #include <iostream>
 #include "../src/MLFMA.h"
+#include "../src/import.h"
 #include "../src/interp.h"
 #include "../src/leaf.h"
 #include "../src/stem.h"
@@ -32,6 +33,8 @@ std::vector<vec3cd> Node::getFarSolsFromCoeffs(double r) {
                 // * tables.matFromSph[level][idx]
                 * coeffs[idx];
 
+            // std::cout << kernel << ' ' << exp(-iu*kvec.dot(center)) << ' ' << coeffs[idx] << '\n';
+
             idx++;
         }
     }
@@ -44,7 +47,7 @@ std::vector<vec3cd> Node::getFarSolsFromCoeffs(double r) {
  */
 void Node::testFarfield(double r) {
 
-    ofstream outFile("out/ff_maxlvl" + to_string(maxLevel) + ".txt");
+    ofstream outFile("out/ff/ff_maxlvl" + to_string(maxLevel) + ".txt");
 
     outFile << setprecision(15) << scientific;
 
@@ -63,7 +66,7 @@ void Node::testFarfield(double r) {
 
             outFile << solAbs << '\n';
 
-            // if (ith == 2) cout << solAbs << '\n';
+            // cout << solAbs << '\n';
 
             idx++;
         }
@@ -76,7 +79,7 @@ void Node::testFarfield(double r) {
  */
 void Leaf::testFarfieldFromLeaves(double r) {
 
-    ofstream outFile("out/ff_maxlvl" + to_string(maxLevel) + ".txt");
+    ofstream outFile("out/ff/ff_maxlvl" + to_string(maxLevel) + ".txt");
 
     outFile << setprecision(15) << scientific;
 
@@ -135,8 +138,8 @@ void Leaf::testFarfieldFromLeaves(double r) {
 
 
 void Node::printAngularSamples(int level) {
-    ofstream thetaFile("out/thetas_lvl" + to_string(level) + ".txt");
-    ofstream phiFile("out/phis_lvl" + to_string(level) + ".txt");
+    ofstream thetaFile("out/ff/thetas_lvl" + to_string(level) + ".txt");
+    ofstream phiFile("out/ff/phis_lvl" + to_string(level) + ".txt");
 
     const auto [nth, nph] = getNumAngles(level);
 
@@ -150,51 +153,14 @@ void Node::printAngularSamples(int level) {
 extern auto t = ClockTimes();
 
 int main() {
+    // ===================== Read config ==================== //
     Config config("config/config.txt");
-    const string configPath = "config/n480/";
 
-    // ==================== Import geometry ==================== //
-    cout << " Importing config...\n";
-
-    const auto fpath = makePath(config);
-
-    shared_ptr<PlaneWave> Einc = make_shared<PlaneWave>();
-
-    SrcVec srcs;
-
-    switch (config.mode) {
-        case Mode::READ:
-            srcs = importDipoles(fpath, Einc);
-            break;
-
-        case Mode::WRITE: {
-            srcs = makeDipoles<uniform_real_distribution<double>>(config, Einc);
-
-            ofstream srcFile(fpath);
-            for (const auto& src : srcs) srcFile << *src;
-            break;
-        }
-    }
-
-    //const string configPath = "config/n480/";
-    //auto srcs = importRWG(configPath+"vertices.txt",
-    //                      configPath+"faces.txt",
-    //                      configPath+"rwgs.txt",
-    //                      config.quadPrec,
-    //                      Einc);
-
-    Node::setNodeParams(config, Einc);
-
-    cout << "   # Sources:       " << srcs.size() << '\n';
-    cout << "   RWG quad rule:   " << Triangle::prec2Int(config.quadPrec) << "-point\n";
-    cout << "   Digit precision: " << config.digits << '\n';
-    cout << "   Interp order:    " << config.interpOrder << '\n';
-    cout << "   Max node RWGs:   " << config.maxNodeSrcs << '\n';
-    cout << fixed << setprecision(3);
-    cout << "   Root length:     " << config.rootLeng << '\n';
-    cout << "   Wave number:     " << Einc->wavenum << "\n\n";
+    auto [srcs, Einc] = importFromConfig(config);
 
     auto Nsrcs = srcs.size();
+
+    Node::setNodeParams(config, Einc);
 
     // ==================== Set up domain ==================== //
     cout << " Setting up domain...\n";
@@ -220,7 +186,7 @@ int main() {
     Node::buildTables();
 
     // ==================== Test upward pass ===================== //
-    const double r = 20.0*config.rootLeng; // pick r >> rootLeng
+    const double r = 10.0*config.rootLeng; // pick r >> rootLeng
 
     // Compute farfield from S2M + M2M
     cout << "\n Computing fields...\n";
