@@ -3,7 +3,7 @@
 #include <random>
 #include "source.h"
 
-class Dipole : public Source {
+class Dipole final : public Source {
 public:
     Dipole() = default;
 

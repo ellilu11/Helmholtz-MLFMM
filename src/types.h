@@ -52,6 +52,13 @@ std::ostream& operator<< (std::ostream& os, const Eigen::Array3d& X) {
     return os;
 }
 
+std::ostream& operator<< (std::ostream& os, const vecXcd& X) {
+    for (int i = 0; i < X.rows(); ++i)
+        os << X[i] << " ";
+
+    return os;
+}
+
 std::istream& operator>>(std::istream& is, vec3d& X) {
     double x, y, z;
     if (is >> x >> y >> z)

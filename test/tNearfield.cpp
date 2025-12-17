@@ -12,19 +12,20 @@ shared_ptr<Node> Node::getNode() {
 
     auto node = nodes[nodeIdx];
 
-    while (node->isNodeType<Stem>() || node->iList.empty() || node->isSrcless())
+    while (node->isNodeType<Stem>() || node->iList.empty() || node->srcs.size() < 10)
         node = nodes[++nodeIdx];
 
     // assert(node->isNodeType<Leaf>() && !node->isSrcless());
 
-    cout << "   Selected node at level " << node->getLevel()
+    cout << "   Selected node at level " << node->getLevel() 
+         << " of length " << node->getLeng()
          << " with " << node->iList.size() << " interaction nodes and "
          << node->srcs.size() << " srcs\n\n";
 
     return node;
 }
 
-void Leaf::testMpoleToLocalInLeaf() {
+/*void Leaf::testMpoleToLocalInLeaf() {
 
     auto [nth, nph] = Node::getNumAngles(level);
 
@@ -43,6 +44,33 @@ void Leaf::testMpoleToLocalInLeaf() {
 
     for (const auto& node : iList)
         evalPairSols(node);
+
+    for (const auto& src : srcs)
+        outDirFile << src->getSol() << '\n';
+
+}*/
+
+void Leaf::testMpoleToLocalInLeaf() {
+
+    auto [nth, nph] = Node::getNumAngles(level);
+
+    // Get sols from local coeffs due to iList (assuming L2L is off)
+    ofstream outFile("out/nf/nf_nth"+to_string(nth)+".txt");
+
+    evalFarSols();
+
+    for (const auto& src : srcs)
+        outFile << src->getSol() << '\n';
+
+    return;
+
+    // Get sols directly from iList
+    ofstream outDirFile("out/nf/nf_dir.txt");
+
+    resetSols();
+
+    // for (const auto& node : iList)
+    evalPairSols(iList[0]);
 
     for (const auto& src : srcs)
         outDirFile << src->getSol() << '\n';
@@ -84,7 +112,7 @@ int main() {
     Config config("config/config.txt");
 
     auto [srcs, Einc] = importFromConfig(config);
-    auto Nsrcs = srcs.size();
+    auto nsrcs = srcs.size();
 
     Node::setNodeParams(config, Einc);
 
@@ -94,7 +122,7 @@ int main() {
     auto start = Clock::now();
 
     shared_ptr<Node> root;
-    if (Nsrcs > config.maxNodeSrcs)
+    if (nsrcs > config.maxNodeSrcs)
         root = make_shared<Stem>(srcs, 0, nullptr);
     else
         root = make_shared<Leaf>(srcs, 0, nullptr);
@@ -153,8 +181,8 @@ int main() {
     //obsNode->printLocalCoeffs(coeffFile);
     //Node::printAngularSamples(obsLevel);
 
-     auto obsLeaf = dynamic_pointer_cast<Leaf>(obsNode);
-     obsLeaf->testMpoleToLocalInLeaf();
+    auto obsLeaf = dynamic_pointer_cast<Leaf>(obsNode);
+    obsLeaf->testMpoleToLocalInLeaf();
 
     return 0;
 

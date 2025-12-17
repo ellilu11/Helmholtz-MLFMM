@@ -46,9 +46,9 @@ struct Tables {
     std::vector<std::vector<int>> ss;
 
     // M2L translation tables
-    std::vector<Map<vecXcd>> transl;
-    std::vector<HashMap<vecXcd>> interpPsi;
-    std::vector<HashMap<int>> ssps;
+    std::vector<Map<double,vecXcd>> transl;
+    std::vector<HashMap<double,vecXcd>> interpPsi;
+    std::vector<HashMap<double,int>> ssps;
 
 };
 

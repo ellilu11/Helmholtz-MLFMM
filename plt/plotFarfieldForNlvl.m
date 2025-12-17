@@ -1,24 +1,20 @@
 clear; clc;
 
-maxLvls = 1:4;
+nth = 47;
+
+maxLvls = 0:3;
 nLvls = size(maxLvls,2);
 
 flds = cell(nLvls,1);
 thetas = cell(nLvls,1);
 phis = cell(nLvls,1);
 
-nth = zeros(nLvls,1);
-nph = zeros(nLvls,1);
-
-dir = "C:\Users\ellil\Documents\WORK\MLFMA\MLFMA\out\build\x64-debug\";
+dir = "C:\Users\ellil\Documents\WORK\MLFMA\MLFMA\out\build\x64-debug\out\ff\";
 
 for i=1:size(maxLvls,2)
-    flds{i} = readmatrix(dir+"out\ff_maxlvl"+string(maxLvls(i))+".txt");
-    thetas{i} = readmatrix(dir+"out\thetas_lvl0.txt");
-    phis{i} = readmatrix(dir+"out\phis_lvl0.txt");
-
-    nth(i) = length(thetas{i});
-    nph(i) = length(phis{i});
+    flds{i} = readmatrix(dir+"ff_maxlvl"+string(maxLvls(i))+"_nth"+string(nth)+".txt");
+    thetas{i} = readmatrix(dir+"thetas_nth"+string(nth)+".txt");
+    phis{i} = readmatrix(dir+"phis_nth"+string(nth)+".txt");
 end
 
 % fldDir = readmatrix(dir+"out\ffDir.txt");
@@ -26,8 +22,8 @@ end
 % nvec = 1:nangles;
 
 % Select levels and field components to plot
-lvl1 = 1; lvl2 = 4;
-comp = 1; % E_x = 1, E_y = 2, E_z = 3
+lvl1 = 1; lvl2 = 3;
+comp = 2; % E_x = 1, E_y = 2, E_z = 3
 
 ymax = max([max(flds{lvl1}), max(flds{lvl2})]);
 

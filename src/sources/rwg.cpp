@@ -133,6 +133,9 @@ vec3cd RWG::getRadAtPoint(const vec3d& X) const {
     return current * leng * rad;
 }
 
+/* getIntegratedRad(src)
+ * Return the radiated field due to src tested with this RWG
+ */
 cmplx RWG::getIntegratedRad(const std::shared_ptr<Source> src) const {
 
     cmplx integratedRad = 0.0;

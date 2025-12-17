@@ -45,7 +45,6 @@ void Tables::buildAngularTables() {
 
 void Tables::buildInterpThetaTable() {
 
-    // Do not construct interp table for leaf level
     for (size_t level = 0; level < Node::maxLevel; ++level) { 
         std::vector<realVec> interpTheta_lvl;
         std::vector<int> t_lvl;
@@ -57,7 +56,6 @@ void Tables::buildInterpThetaTable() {
             realVec interpTheta_lvl_th;
             const double theta = Node::thetas[level][jth];
 
-            // Find idx of child theta nearest parent theta
             const int t = Interp::getNearGLNodeIdx(theta, mth, 0.0, PI);
 
             // Assemble child thetas interpolating parent theta
@@ -77,20 +75,11 @@ void Tables::buildInterpThetaTable() {
                     branchTheta = 2.0*PI - branchTheta;
 
                 branchThetas.push_back(branchTheta);
-
-                // std::cout << jth << ' ' << ith << ' ' << branchTheta << '\n';
             }
 
-            // std::cout << '\n';
-
-            for (int k = 0; k < 2*order; ++k) {
+            for (int k = 0; k < 2*order; ++k)
                 interpTheta_lvl_th.push_back(
                     Interp::evalLagrangeBasis(theta, branchThetas, k));
-
-                // std::cout << ith << ' ' << k << ' ' << interpTheta_lvl_th[k] << '\n';
-            }
-
-            // std::cout << '\n';
 
             interpTheta_lvl.push_back(interpTheta_lvl_th);
             t_lvl.push_back(t);
@@ -104,7 +93,6 @@ void Tables::buildInterpThetaTable() {
 
 void Tables::buildInterpPhiTable() {
 
-    // Do not construct interp table for leaf level
     for (size_t level = 0; level < Node::maxLevel; ++level) {
         std::vector<realVec> interpPhi_lvl;
         std::vector<int> s_lvl;
@@ -116,17 +104,12 @@ void Tables::buildInterpPhiTable() {
             realVec interpPhi_lvl_ph;
             const double phi = Node::phis[level][jph];
 
-            // Find idx of child phi nearest parent phi
             const int s = std::floor(mph * phi / (2.0 * PI));
 
             // Assemble child phis interpolating parent phi
             // TODO: Use splicing with std::span
             realVec branchPhis;
             for (int iph = s+1-order; iph <= s+order; ++iph) {
-
-                // Wrap iph if not in [0, mph-1]
-                // size_t iph_wrapped = Math::wrapIdxToRange(iph, mph); 
-                // auto branchPhi = phis[level+1][iph_wrapped];
 
                 auto branchPhi = 2.0*PI*iph/static_cast<double>(mph);
 
@@ -151,45 +134,40 @@ void Tables::buildTranslationTable() {
     using namespace Math;
 
     const int rootLeng = Node::config.rootLeng;
+    const double wavenum = Node::wavenum;
 
     const auto& dists = getINodeDistances();
 
     for (size_t level = 0; level <= Node::maxLevel; ++level) {
 
-        const int L = Node::getNumAngles(level).first - 1;
+        // empirically this seems to be the best truncation value for the 
+        // series in the M2L operator
+        const int L = (Node::getNumAngles(level).first - 1)/2 + 1;
+
         const int nps = std::floor(Q*L);
 
         const double nodeLeng = rootLeng / pow(2.0, level);
 
-        Map<vecXcd> transl_lvl;
+        Map<double,vecXcd> transl_lvl;
         
         for (const auto& dist : dists) {
 
-            const double kr = Node::wavenum * dist * nodeLeng;
-
-            // std::cout << r << ' ';
+            const double kr = wavenum * dist * nodeLeng;
 
             vecXcd transl_dist(nps);
 
             for (int ips = 0; ips < nps; ++ips) {
 
-                const double xi = cos(PI*ips/static_cast<double>(nps-1));
+                const double psi = PI*ips/static_cast<double>(nps-1);
+                const double xi = cos(psi);
                 // const double xi = 2.0*ips/static_cast<double>(nps-1)-1.0;
                 // const double xi = -2.0*ips/static_cast<double>(nps-1)+1.0;
                 cmplx coeff = 0.0;
 
-                for (int l = 0; l <= L; ++l) {
-
-                    coeff += powI(l) * (2.0*l+1.0) // (-i)^l ??
+                for (int l = 0; l <= L; ++l)
+                    coeff += powI(l) * (2.0*l+1.0)
                         * sphericalHankel1(kr, l) 
-                        * legendreP(xi, l).first
-                        ;
-
-                    /*if (level == 0 && iDist == 0 && ips == 0)
-                        std::cout << l << ' ' << ' ' << 
-                        term << '\n';
-                     */
-                }
+                        * legendreP(xi, l).first;
 
                 transl_dist[ips] = coeff;
             }
@@ -230,14 +208,10 @@ void Tables::buildInterpPsiTable() { // CONSIDER: Interp over xi = cos(psi)
             }
         }
 
-        // std::cout << "  # psis: " << psis_lvl.size() << '\n';
-
         std::sort(psis_lvl.begin(), psis_lvl.end());
 
         psis_lvl.erase(
             std::unique(psis_lvl.begin(), psis_lvl.end()), psis_lvl.end());
-
-        // std::cout << "  # psis: " << psis_lvl.size() << "\n\n";
 
         // for (auto psi : psis_lvl) std::cout << psi << ' ';
 
@@ -248,11 +222,11 @@ void Tables::buildInterpPsiTable() { // CONSIDER: Interp over xi = cos(psi)
     // Compute Lagrange coefficients for each possible psi at each level
     for (size_t level = 0; level <= Node::maxLevel; ++level) {
 
-        const int nth = Node::getNumAngles(level).first;
-        const int nps = std::floor(Q*(nth-1));
+        const int L = (Node::getNumAngles(level).first - 1)/2 + 1;
+        const int nps = std::floor(Q*L);
 
-        HashMap<vecXcd> interpPsi_lvl;
-        HashMap<int> s_lvl;
+        HashMap<double,vecXcd> interpPsi_lvl;
+        HashMap<double,int> s_lvl;
 
         size_t idx = 0;
         for (auto psi : psis[level]) {

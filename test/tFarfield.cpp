@@ -33,8 +33,6 @@ std::vector<vec3cd> Node::getFarSolsFromCoeffs(double r) {
                 // * tables.matFromSph[level][idx]
                 * coeffs[idx];
 
-            // std::cout << kernel << ' ' << exp(-iu*kvec.dot(center)) << ' ' << coeffs[idx] << '\n';
-
             idx++;
         }
     }
@@ -47,7 +45,9 @@ std::vector<vec3cd> Node::getFarSolsFromCoeffs(double r) {
  */
 void Node::testFarfield(double r) {
 
-    ofstream outFile("out/ff/ff_maxlvl" + to_string(maxLevel) + ".txt");
+    const auto [nthRoot, nphRoot] = getNumAngles(0);
+
+    ofstream outFile("out/ff/ff_maxlvl" + to_string(maxLevel) + "_nth" + to_string(nthRoot) + ".txt");
 
     outFile << setprecision(15) << scientific;
 
@@ -62,13 +62,10 @@ void Node::testFarfield(double r) {
 
         for (int iph = 0; iph < nph; ++iph) {
 
-            const vec3d solAbs = sols[idx].cwiseAbs();
+            const vec3d solAbs = sols[idx++].cwiseAbs();
 
             outFile << solAbs << '\n';
 
-            // cout << solAbs << '\n';
-
-            idx++;
         }
     }
 }
@@ -77,7 +74,7 @@ void Node::testFarfield(double r) {
  * Print total farfield along leaf sampled directions at distance r,
  * assuming all non-empty leaves are at same level
  */
-void Leaf::testFarfieldFromLeaves(double r) {
+/*void Leaf::testFarfieldFromLeaves(double r) {
 
     ofstream outFile("out/ff/ff_maxlvl" + to_string(maxLevel) + ".txt");
 
@@ -110,7 +107,7 @@ void Leaf::testFarfieldFromLeaves(double r) {
             idx++;
         }
     }
-}
+}*/
 
 /*void Node::testFarfieldDir(double r) {
 
@@ -138,8 +135,11 @@ void Leaf::testFarfieldFromLeaves(double r) {
 
 
 void Node::printAngularSamples(int level) {
-    ofstream thetaFile("out/ff/thetas_lvl" + to_string(level) + ".txt");
-    ofstream phiFile("out/ff/phis_lvl" + to_string(level) + ".txt");
+
+    const auto [nthRoot, nphRoot] = getNumAngles(0);
+
+    ofstream thetaFile("out/ff/thetas_nth" + to_string(nthRoot) + ".txt");
+    ofstream phiFile("out/ff/phis_nph" + to_string(nthRoot) + ".txt");
 
     const auto [nth, nph] = getNumAngles(level);
 
@@ -158,7 +158,7 @@ int main() {
 
     auto [srcs, Einc] = importFromConfig(config);
 
-    auto Nsrcs = srcs.size();
+    auto nsrcs = srcs.size();
 
     Node::setNodeParams(config, Einc);
 
@@ -166,7 +166,7 @@ int main() {
     cout << " Setting up domain...\n";
 
     shared_ptr<Node> root;
-    if (Nsrcs > config.maxNodeSrcs)
+    if (nsrcs > config.maxNodeSrcs)
         root = make_shared<Stem>(srcs, 0, nullptr);
     else
         root = make_shared<Leaf>(srcs, 0, nullptr);

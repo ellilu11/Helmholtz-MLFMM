@@ -75,8 +75,6 @@ void Leaf::buildMpoleCoeffs() {
             for (const auto& src : srcs)
                 radPat += src->getRadAlongDir(center, kvec);
 
-            // std::cout << radPat << '\n';
-
             // in spherical components
             // coeffs.push_back(tables.matToSph[level][idx] * (ImKK * dirCoeff));
 

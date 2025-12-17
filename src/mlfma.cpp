@@ -13,7 +13,7 @@ int main() {
     Config config("config/config.txt");
 
     auto [srcs, Einc] = importFromConfig(config);
-    auto Nsrcs = srcs.size();
+    auto nsrcs = srcs.size();
 
     Node::setNodeParams(config, Einc);
 
@@ -23,7 +23,7 @@ int main() {
     auto start = Clock::now();
 
     shared_ptr<Node> root;
-    if (Nsrcs > config.maxNodeSrcs)
+    if (nsrcs > config.maxNodeSrcs)
         root = make_shared<Stem>(srcs, 0, nullptr);
     else
         root = make_shared<Leaf>(srcs, 0, nullptr);

@@ -5,6 +5,8 @@ Dipole::Dipole(
     const vec3d& X) // TODO: Pass in pol. density vector
     : Source(Einc), pos(X), phat(vec3d(1, 0, 0)), pol(1.0)
 {
+    // buildRHS();
+
     buildCurrent();
 };
 
@@ -66,9 +68,8 @@ vec3cd Dipole::getRadAtPoint(const vec3d& X) const {
     return current * dyadic * phat;
 }
 
-/* getIntegratedRad(X,k)
- * Return the radiated field with given wavenum
- * due to src tested at this dipole
+/* getIntegratedRad(src)
+ * Return the radiated field due to src tested with this dipole
  */
 cmplx Dipole::getIntegratedRad(const std::shared_ptr<Source> src) const {
 

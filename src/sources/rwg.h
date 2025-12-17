@@ -3,7 +3,7 @@
 #include "source.h"
 #include "triangle.h"
 
-class RWG : public Source {
+class RWG final : public Source {
 public:
     RWG(std::shared_ptr<PlaneWave>,
         const Eigen::Vector4i&, 

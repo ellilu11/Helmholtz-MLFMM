@@ -4,7 +4,7 @@
 #include <unordered_map>
 
 constexpr double DistEPS = 1.0E-3;
-constexpr double PsiEPS = 1.0E-3; // Pick smallest value that avoids collisions
+constexpr double PsiEPS = 1.0E-3; // Pick largest value that avoids collisions
 
 struct Comp {
     bool operator()(double x, double y) const noexcept {
@@ -25,8 +25,8 @@ struct HashEq {
     }
 };
 
-template <typename T>
-using Map = std::map<double, T, Comp>;
+template <typename T, typename U>
+using Map = std::map<T, U, Comp>;
 
-template <typename T>
-using HashMap = std::unordered_map<double, T, HashFunc, HashEq>;
+template <typename T, typename U>
+using HashMap = std::unordered_map<T, U, HashFunc, HashEq>;

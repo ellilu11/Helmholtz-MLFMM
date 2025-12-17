@@ -1,3 +1,4 @@
+#include <filesystem>
 #include <random>
 #include "sources/dipole.h"
 #include "sources/rwg.h"
@@ -188,6 +189,7 @@ pair<SrcVec, shared_ptr<PlaneWave>>
 
     cout << fixed << setprecision(3);
     cout << "   Mode:            " << (config.mode == Mode::READ ? "READ" : "WRITE") << '\n';
+    cout << "   Source file:     " << fpath.generic_string() << '\n';
     cout << "   # Sources:       " << srcs.size() << '\n';
     // cout << "   RWG quad rule:   " << Triangle::prec2Int(config.quadPrec) << "-point\n";
     cout << "   Digit precision: " << config.digits << '\n';

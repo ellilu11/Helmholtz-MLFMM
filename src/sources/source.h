@@ -1,7 +1,5 @@
 #pragma once
 
-#include <algorithm>
-#include <filesystem>
 #include "../excite.h"
 #include "../math.h"
 

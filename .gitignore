@@ -364,3 +364,6 @@ FodyWeavers.xsd
 /plt/plotFarfieldInterp.m
 /plt/plotLocalCoeffs.asv
 /plt/plotFarfield_1box.m
+/plt/plotFarfieldInterp_L.asv
+/plt/plotFarfield_interp.m
+/plt/plotFarfieldForBox.m

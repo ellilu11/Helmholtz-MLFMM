@@ -145,7 +145,6 @@ protected:
     static std::vector<realVec> thetas;
     static std::vector<realVec> thetaWeights;
     static std::vector<realVec> phis;
-    // static std::vector<realVec> psis;
     
     static Tables tables;
 

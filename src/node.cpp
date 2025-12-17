@@ -5,7 +5,6 @@ double Node::wavenum;
 std::vector<realVec> Node::thetas;
 std::vector<realVec> Node::thetaWeights;
 std::vector<realVec> Node::phis;
-// std::vector<realVec> Node::psis;
 Tables Node::tables;
 NodeVec Node::nodes;
 
@@ -40,19 +39,19 @@ Node::Node(
  */
 void Node::buildAngularSamples() {
 
-    constexpr double EPS = 1.0E-9;
+    constexpr double EPS_NR = 1.0E-9; // Newton-Raphson precision
 
     for (int lvl = 0; lvl <= maxLevel; ++lvl) {
         const double nodeLeng = config.rootLeng / pow(2.0, lvl);
 
         // Use excess bandwidth formula
-        const int L = ceil(
+        const int L = ceil( 
                 (1.73*wavenum*nodeLeng +
                 2.16*pow(config.digits, 2.0/3.0)*pow(wavenum*nodeLeng, 1.0/3.0)));
 
         // Construct thetas
         const int nth = L+1;
-        const auto [nodes, weights] = Interp::gaussLegendre(nth, EPS, 0.0, PI);
+        const auto [nodes, weights] = Interp::gaussLegendre(nth, EPS_NR, 0.0, PI);
 
         thetas.push_back(nodes);
         thetaWeights.push_back(weights);
@@ -65,15 +64,6 @@ void Node::buildAngularSamples() {
             phis_lvl.push_back(2.0*PI*iph/static_cast<double>(nph));
 
         phis.push_back(phis_lvl);
-
-        // Construct psis
-        /*const int nps = std::floor(Q*L);
-        realVec psis_lvl;
-
-        for (int ips = 0; ips < nps; ++ips)
-            psis_lvl.push_back(PI*ips/static_cast<double>(nps-1));
-
-        psis.push_back(psis_lvl);*/
 
         std::cout << "   (Lvl,Nth,Nph) = "
                   << "(" << lvl << "," << nth << "," << nph << ")\n";
@@ -130,14 +120,15 @@ void Node::pushSelfToNearNonNbors() {
  * (M2L) Translate mpole coeffs of interaction nodes into local coeffs at center
  */
 void Node::buildMpoleToLocalCoeffs() {
-    if (isRoot()) return;
+    if (iList.empty()) return;
 
     const int order = config.interpOrder;
 
     const auto [nth, nph] = getNumAngles(level);
     localCoeffs.resize(nth*nph, vec3cd::Zero());
 
-    const int nps = std::floor(Q*(nth-1));
+    const int L = (nth-1)/2+1;
+    const int nps = std::floor(Q*L);
 
     for (const auto& node : iList) {
         const auto& mpoleCoeffs = node->coeffs;
@@ -145,31 +136,6 @@ void Node::buildMpoleToLocalCoeffs() {
         const auto& dR = center - node->center;
         const double r = dR.norm();
         const auto& rhat = dR / r;
-
-        assert(nodeLeng == node->nodeLeng);
-
-        /* 
-        const double kr = wavenum*r;
-
-        std::cout << kr << '\n';
-
-        vecXcd translVec(nps);
-        for (int ips = 0; ips < nps; ++ips) {
-
-            const double xi = cos(PI*ips/static_cast<double>(nps-1));
-            cmplx coeff = 0.0;
-
-            for (int l = 0; l <= nth-1; ++l) {
-
-                coeff += Math::powI(l) * (2.0*l+1.0)
-                    * Math::sphericalHankel1(kr, l)
-                    * Math::legendreP(xi, l).first
-                    ;
-            }
-
-            translVec[ips] = coeff;
-        }
-        */
 
         const auto& translVec = tables.transl[level].at(r / nodeLeng);
 
@@ -181,34 +147,11 @@ void Node::buildMpoleToLocalCoeffs() {
                 const auto& khat = tables.khat[level][idx];
 
                 const double psi = acos(khat.dot(rhat));
-                // const double psi = khat.dot(rhat);
 
                 cmplx translCoeff = 0.0;
-
-                /* No psi LUT
-                const int s = std::floor((nps-1) * psi / PI);
-
-                realVec psis_;
-                for (int ips = s+1-order; ips <= s+order; ++ips)
-                    psis_.push_back(PI*ips/static_cast<double>(nps-1));
-
-                for (int ips = s+1-order, k = 0; k < 2*order; ++ips, ++k) {
-                    const int ips_flipped = Math::flipIdxToRange(ips, nps);
-
-                    translCoeff +=
-                        translVec[ips_flipped]
-                        * Interp::evalLagrangeBasis(psi,psis_,k);
-                }
-                */
-                
-                // psi LUT
-                // auto start = Clock::now(); 
-                
+               
                 const auto& interpVec = tables.interpPsi[level].at(psi);
-
                 const int s = tables.ssps[level].at(psi);
-
-                // t.M2L_lookup += Clock::now() - start;
 
                 for (int ips = s+1-order, k = 0; k < 2*order; ++ips, ++k) {
 
@@ -216,10 +159,9 @@ void Node::buildMpoleToLocalCoeffs() {
                     const int ips_flipped = Math::flipIdxToRange(ips, nps); 
 
                     translCoeff +=
-                         translVec[ips_flipped] // IN PROG: Check this
+                        translVec[ips_flipped]
                         * interpVec[k];
                 }
-                //
 
                 localCoeffs[idx] += translCoeff * mpoleCoeffs[idx];
 
@@ -228,6 +170,63 @@ void Node::buildMpoleToLocalCoeffs() {
         }
     }
 }
+
+
+// No psi interpolation
+/*void Node::buildMpoleToLocalCoeffs() {
+    if (iList.empty()) return;
+
+    const int order = config.interpOrder;
+
+    const auto [nth, nph] = getNumAngles(level);
+    localCoeffs.resize(nth*nph, vec3cd::Zero());
+
+    const int L = (nth-1)/2 + 1;
+
+    for (const auto& node : iList) {
+        // const auto& node = iList[0];
+
+        const auto& mpoleCoeffs = node->coeffs;
+
+        const auto& dR = center - node->center;
+        const double r = dR.norm();
+        const auto& rhat = dR / r;
+
+        const double kr = wavenum*r;
+        vecXcd radialCoeffs(L+1);
+
+        for (int l = 0; l <= L; ++l) {
+            radialCoeffs[l] =
+                Math::powI(l) * (2.0*l+1.0)
+                * Math::sphericalHankel1(kr, l);
+        }
+        // innerCoeffs *= iu * wavenum / (16.0*PI*PI);
+
+        size_t idx = 0;
+        for (int ith = 0; ith < nth; ++ith) {
+
+            for (int iph = 0; iph < nph; ++iph) {
+
+                const auto& khat = tables.khat[level][idx];
+
+                const double xi = khat.dot(rhat);
+
+                cmplx translCoeff = 0.0;
+
+                for (int l = 0; l <= L; ++l) {
+                    translCoeff +=
+                        radialCoeffs[l]
+                        * Math::legendreP(xi, l).first
+                        ;
+                }
+
+                localCoeffs[idx] += translCoeff * mpoleCoeffs[idx];
+
+                idx++;
+            }
+        }
+    } // for (const auto& node : iList)
+}*/
 
 /* evalLeafIlistSols()
  * (S2L) Add contribution from list 4 to local coeffs
@@ -246,12 +245,12 @@ void Node::evalPairSols(const std::shared_ptr<Node> srcNode) {
 
     assert(getSelf() != srcNode);
 
-    const auto& otherSrcs = srcNode->srcs;
+    const auto& srcSrcs = srcNode->srcs;
 
     for (const auto& obs : srcs) {
         cmplx sol = 0;
 
-        for (const auto& src : otherSrcs)
+        for (const auto& src : srcSrcs)
              sol += obs->getIntegratedRad(src);
 
         obs->addToSol(C * wavenum * sol);
