@@ -101,10 +101,10 @@ vec3cd RWG::getIncAlongDir(
         inc += weightMinus * exp(iu*kvec.dot(quadNode-X))
                 * (quadNode - vMinus);
 
-    return current * leng * inc;
+    return leng * inc; // no current term here!
 }
 
-/* getRadAtPoint(X,k)
+/* getRadAtPoint(X)
  * Return the full radiated field with given wavenum
  * due to this RWG at X
  */
@@ -150,6 +150,6 @@ cmplx RWG::getIntegratedRad(const std::shared_ptr<Source> src) const {
     for (const auto& quadNode : nodesMinus)
         integratedRad += weightMinus * src->getRadAtPoint(quadNode).dot(quadNode - vMinus);
 
-    return leng * integratedRad;
+    return leng * integratedRad; // TODO: Does this need conj as in Dipole?
     
 }

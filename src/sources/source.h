@@ -24,6 +24,10 @@ public:
 
     void resetSol() { sol = 0.0; }
 
+    void printSol(std::ofstream& f) const {
+        f << sol << '\n';
+    }
+
     virtual vec3d getCenter() const = 0;
 
     virtual void buildRHS() = 0;

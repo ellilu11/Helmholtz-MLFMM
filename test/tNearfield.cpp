@@ -12,69 +12,59 @@ shared_ptr<Node> Node::getNode() {
 
     auto node = nodes[nodeIdx];
 
-    while (node->isNodeType<Stem>() || node->iList.empty() || node->srcs.size() < 10)
+    while (node->isNodeType<Stem>() || node->iList.empty() || node->srcs.size() <= 5)
         node = nodes[++nodeIdx];
 
-    // assert(node->isNodeType<Leaf>() && !node->isSrcless());
-
-    cout << "   Selected node at level " << node->getLevel() 
-         << " of length " << node->getLeng()
+    cout << "   Selected node " << node->nodeIdx << " at level " << node->level 
+         << " of length " << node->nodeLeng
          << " with " << node->iList.size() << " interaction nodes and "
          << node->srcs.size() << " srcs\n\n";
 
     return node;
 }
 
-/*void Leaf::testMpoleToLocalInLeaf() {
-
-    auto [nth, nph] = Node::getNumAngles(level);
-
-    // Get sols from local coeffs due to iList (assuming L2L is off)
-    ofstream outFile("out/nf/nf_nth"+to_string(nth)+".txt");
-
-    evalFarSols();
-
-    for (const auto& src : srcs)
-        outFile << src->getSol() << '\n';
-
-    // Get sols directly from iList
-    ofstream outDirFile("out/nf/nf_dir.txt");
-
-    resetSols();
-
-    for (const auto& node : iList)
-        evalPairSols(node);
-
-    for (const auto& src : srcs)
-        outDirFile << src->getSol() << '\n';
-
-}*/
-
 void Leaf::testMpoleToLocalInLeaf() {
 
     auto [nth, nph] = Node::getNumAngles(level);
 
     // Get sols from local coeffs due to iList (assuming L2L is off)
-    ofstream outFile("out/nf/nf_nth"+to_string(nth)+".txt");
+    ofstream solFile("out/nf/nf_nth"+to_string(nth)+".txt");
 
     evalFarSols();
 
     for (const auto& src : srcs)
-        outFile << src->getSol() << '\n';
-
-    return;
+        solFile << src->getSol() << '\n';
 
     // Get sols directly from iList
-    ofstream outDirFile("out/nf/nf_dir.txt");
+    ofstream solDirFile("out/nf/nf_dir.txt");
 
     resetSols();
 
-    // for (const auto& node : iList)
-    evalPairSols(iList[0]);
+    for (const auto& node : iList)
+         evalPairSols(node);
 
     for (const auto& src : srcs)
-        outDirFile << src->getSol() << '\n';
+        solDirFile << src->getSol() << '\n';
 
+    /* 
+    // Print out norms of coeffs
+    ofstream coeffFile("out/nf/coeffs.txt");
+    for (int idx = 0; idx < nth*nph; ++idx)
+        coeffFile << getLocalCoeffs()[idx] << '\n';
+
+    // Print out positions of sources and observers
+    ofstream obsFile("out/nf/obss.txt");
+    for (const auto& src : srcs)
+        obsFile << src->getCenter() << '\n';
+
+    ofstream srcFile("out/nf/srcs.txt");
+    for (const auto& src : node->getSrcs())
+        srcFile << src->getCenter() << '\n';
+
+    // Print out centers of source and observer box
+    std::cout << "   Source box at: " << node->getCenter() << '\n';
+    std::cout << "   Target box at: " << center << '\n';
+    */
 }
 
 void Node::printAngularSamples(int level) {

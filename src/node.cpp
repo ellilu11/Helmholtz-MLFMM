@@ -5,12 +5,14 @@ double Node::wavenum;
 std::vector<realVec> Node::thetas;
 std::vector<realVec> Node::thetaWeights;
 std::vector<realVec> Node::phis;
+std::vector<int> Node::Ls;
+
 Tables Node::tables;
 NodeVec Node::nodes;
 
 void Node::setNodeParams(
-    const Config& config_, const std::shared_ptr<PlaneWave>& Einc) {
-
+    const Config& config_, const std::shared_ptr<PlaneWave>& Einc) 
+{
     config = config_;
     wavenum = Einc->wavenum;
 }
@@ -45,19 +47,22 @@ void Node::buildAngularSamples() {
         const double nodeLeng = config.rootLeng / pow(2.0, lvl);
 
         // Use excess bandwidth formula
-        const int L = ceil( 
+        const int tau = ceil(
                 (1.73*wavenum*nodeLeng +
                 2.16*pow(config.digits, 2.0/3.0)*pow(wavenum*nodeLeng, 1.0/3.0)));
 
+        // TODO: Find an optimal formula, possibly explicitly depending on level
+        Ls.push_back(tau/2 - 1); 
+
         // Construct thetas
-        const int nth = L+1;
+        const int nth = tau+1;
         const auto [nodes, weights] = Interp::gaussLegendre(nth, EPS_NR, 0.0, PI);
 
         thetas.push_back(nodes);
         thetaWeights.push_back(weights);
 
         // Construct phis
-        const int nph = 2*(L+1);
+        const int nph = 2*nth;
         realVec phis_lvl;
 
         for (int iph = 0; iph < nph; ++iph)
@@ -122,15 +127,15 @@ void Node::pushSelfToNearNonNbors() {
 void Node::buildMpoleToLocalCoeffs() {
     if (iList.empty()) return;
 
-    const int order = config.interpOrder;
-
     const auto [nth, nph] = getNumAngles(level);
     localCoeffs.resize(nth*nph, vec3cd::Zero());
 
-    const int L = (nth-1)/2+1;
-    const int nps = std::floor(Q*L);
+    const int order = config.interpOrder;
+
+    const int nps = std::floor(Q*(nth-1));
 
     for (const auto& node : iList) {
+
         const auto& mpoleCoeffs = node->coeffs;
 
         const auto& dR = center - node->center;
@@ -149,19 +154,36 @@ void Node::buildMpoleToLocalCoeffs() {
                 const double psi = acos(khat.dot(rhat));
 
                 cmplx translCoeff = 0.0;
-               
+
+                /* No psi LUT
+                const int s = std::floor((nps-1) * psi / PI);
+
+                realVec psis_;
+                for (int ips = s+1-order; ips <= s+order; ++ips)
+                    psis_.push_back(PI*ips/static_cast<double>(nps-1));
+
+                for (int ips = s+1-order, k = 0; k < 2*order; ++ips, ++k) {
+                    const int ips_flipped = Math::flipIdxToRange(ips, nps);
+
+                    translCoeff +=
+                        translVec[ips_flipped]
+                        * Interp::evalLagrangeBasis(psi,psis_,k);
+                }
+                */
+
+                // psi LUT
                 const auto& interpVec = tables.interpPsi[level].at(psi);
                 const int s = tables.ssps[level].at(psi);
 
                 for (int ips = s+1-order, k = 0; k < 2*order; ++ips, ++k) {
 
-                    // using cos(-psi) = cos(psi), cos(2pi-psi) = cos(psi)
                     const int ips_flipped = Math::flipIdxToRange(ips, nps); 
 
                     translCoeff +=
                         translVec[ips_flipped]
                         * interpVec[k];
                 }
+                //
 
                 localCoeffs[idx] += translCoeff * mpoleCoeffs[idx];
 
@@ -181,10 +203,10 @@ void Node::buildMpoleToLocalCoeffs() {
     const auto [nth, nph] = getNumAngles(level);
     localCoeffs.resize(nth*nph, vec3cd::Zero());
 
-    const int L = (nth-1)/2 + 1;
+    const int L = Ls[level];
 
-    for (const auto& node : iList) {
-        // const auto& node = iList[0];
+    // for (const auto& node : iList) {
+        const auto& node = iList[0];
 
         const auto& mpoleCoeffs = node->coeffs;
 
@@ -197,10 +219,10 @@ void Node::buildMpoleToLocalCoeffs() {
 
         for (int l = 0; l <= L; ++l) {
             radialCoeffs[l] =
-                Math::powI(l) * (2.0*l+1.0)
+                iu * wavenum / (4.0*PI)
+                * pow(iu,l) * (2.0*l+1.0)
                 * Math::sphericalHankel1(kr, l);
         }
-        // innerCoeffs *= iu * wavenum / (16.0*PI*PI);
 
         size_t idx = 0;
         for (int ith = 0; ith < nth; ++ith) {
@@ -225,7 +247,7 @@ void Node::buildMpoleToLocalCoeffs() {
                 idx++;
             }
         }
-    } // for (const auto& node : iList)
+    // } // for (const auto& node : iList)
 }*/
 
 /* evalLeafIlistSols()
@@ -311,7 +333,3 @@ std::vector<vec3cd> Node::getFarSols(double r) {
 
     return sols;
 }
-
-
-
-

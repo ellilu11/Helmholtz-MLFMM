@@ -56,7 +56,7 @@ void Leaf::buildLists() {
  * (S2M) Build multipole coefficients from sources in this node  
  */
 void Leaf::buildMpoleCoeffs() {
-    if (isSrcless()) return;
+    if (isSrcless() || isRoot()) return;
 
     auto start = Clock::now();
 
@@ -117,7 +117,7 @@ void Leaf::buildLocalCoeffs() {
 
     t.M2L += Clock::now() - start;
 
-    evalLeafIlistSols();
+    // evalLeafIlistSols();
 
     /*start = Clock::now();
 
@@ -136,7 +136,7 @@ void Leaf::buildLocalCoeffs() {
  * (L2T) Evaluate sols from local expansion due to far nodes
  */
 void Leaf::evalFarSols() {
-    if (isSrcless()) return;
+    if (isSrcless() || level <= 1) return;
 
     const auto [nth, nph] = getNumAngles(level);
 
@@ -158,18 +158,17 @@ void Leaf::evalFarSols() {
 
                 // Compute receiving pattern along \khat at this rwg
                 const auto& incPat =
-                    tables.ImKK[level][idx] * // Tangential-T
+                    // tables.ImKK[level][idx] * // Tangential-T
                     // -khat.cross( // Tangential-K
                     obs->getIncAlongDir(center, wavenum*khat);
 
                 // Do the angular integration
-                sol += thetaWeights[level][ith] 
+                sol += thetaWeights[level][ith]
                         * sin(theta) // TODO: Absorb into thetaWeights
                         * incPat.dot(localCoeffs[idx]);
 
                 idx++;
             }
-
         }
 
         obs->addToSol(C * wavenum * phiWeight * sol);
@@ -181,6 +180,7 @@ void Leaf::evalFarSols() {
  * (M2T) Evaluate sols from mpole expansion due to list 3 nodes
  */
 void Leaf::evalNearNonNborSols() {
+
 }
 
 /* findNearNborPairs()
@@ -217,10 +217,15 @@ void Leaf::evaluateSols() {
 
     start = Clock::now();
 
-    for (const auto& pair : findNearNborPairs()) {
-        auto [obsLeaf, srcLeaf] = pair;
-        obsLeaf->evalPairSols(srcLeaf);
-    }
+    // Using reciprocity
+    //for (const auto& pair : findNearNborPairs()) {
+    //    auto [obsLeaf, srcLeaf] = pair;
+    //    obsLeaf->evalPairSols(srcLeaf);
+    //}
+
+    for (const auto& obsLeaf : leaves)
+        for (const auto& srcLeaf : obsLeaf->nearNbors)
+            obsLeaf->evalPairSols(srcLeaf);
 
     for (const auto& leaf : leaves)
         leaf->evalSelfSols();

@@ -94,5 +94,6 @@ std::filesystem::path makePath(const Config& config) {
         }();
 
     return
-        std::filesystem::path("config") / (distStr + ".txt");
+        std::filesystem::path("config") / 
+        (distStr + "_n" + std::to_string(config.nsrcs) + ".txt");
 }

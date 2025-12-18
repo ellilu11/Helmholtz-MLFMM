@@ -73,6 +73,8 @@ public:
     
     std::vector<vec3cd> getMpoleCoeffs() const { return coeffs; }
 
+    // std::vector<vec3cd> getRadPats() const { return radPats; } //
+
     std::pair<vec3cd, vec3cd> getPolarCoeffs() const { return polarCoeffs; }
     
     std::vector<vec3cd> getLocalCoeffs() const { return localCoeffs; }
@@ -122,13 +124,11 @@ public:
     virtual void printNode(std::ofstream&) = 0;
 
     // ========== Test methods ==========
-    // std::vector<vec3d> getObssAtAngularSamples(double);
-
     static Tables getTables() { return tables; }
 
     void testFarfield(double);
 
-    void testFarfieldDir(double);
+    // void testFarfieldDir(double);
 
     static void printAngularSamples(int);
 
@@ -145,11 +145,13 @@ protected:
     static std::vector<realVec> thetas;
     static std::vector<realVec> thetaWeights;
     static std::vector<realVec> phis;
+    static std::vector<int> Ls;
     
     static Tables tables;
 
     // TODO: template the vec type
     std::vector<vec3cd> coeffs;
+    // std::vector<vec3cd> radPats; //
     std::pair<vec3cd, vec3cd> polarCoeffs;
     std::vector<vec3cd> localCoeffs;
 

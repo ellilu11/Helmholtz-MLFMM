@@ -93,9 +93,11 @@ int main() {
     cout << "   Elapsed time (S2T): " << t.S2T.count() << " ms\n\n";
     cout << " FMM total elapsed time: " << fmm_duration_ms.count() << " ms\n";
 
-    // ================== Compute direct ===================== //
+    printSols(srcs, "sols.txt");
+
     if (!config.evalDirect) return 0;
 
+    // ================== Compute direct ===================== //
     root->resetSols();
 
     cout << "\n Computing direct...\n";
@@ -107,7 +109,7 @@ int main() {
     duration_ms = end - start;
     cout << "   Elapsed time: " << duration_ms.count() << " ms\n";
 
-    // printSols(srcs, "out/sols.txt");
+    printSols(srcs, "solsDir.txt");
 
     return 0;
 }

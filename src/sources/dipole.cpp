@@ -3,7 +3,7 @@
 Dipole::Dipole(
     std::shared_ptr<PlaneWave> Einc, 
     const vec3d& X) // TODO: Pass in pol. density vector
-    : Source(Einc), pos(X), phat(vec3d(1, 0, 0)), pol(1.0)
+    : Source(Einc), pos(X), phat(vec3d(1, 0, 0)), pol(1.0E-8)
 {
     // buildRHS();
 
@@ -21,40 +21,36 @@ void Dipole::buildRHS() {
 
 void Dipole::buildCurrent() {
 
-    // current = iu * c0 * Einc->wavenum * pol; // |J| = i \omega |P|
-    current = pol;
+    current = iu * c0 * Einc->wavenum * pol; // |J| = i \omega |P|
 
-
-    // TODO: Predict current from rhs vector
+    // std::cout << current << '\n';
 }
 
 /* getRadAlongDir(X,kvec)
- * Return the outgoing radiated amplitude due to this
- * dipole at X along direction kvec
+ * Return the outgoing radiated amplitude at X along direction kvec 
+ * due to this dipole 
  * X    : observation point (Cartesian)
  * kvec : wavevector
  */
 vec3cd Dipole::getRadAlongDir(
     const vec3d& X, const vec3d& kvec) const {
 
-    // std::cout << current << ' ' << exp(iu*kvec.dot(X-pos)) << ' ' << phat << '\n';
-
     return current * exp(iu*kvec.dot(X-pos)) * phat;
 }
 
 /* getIncAlongDir(X,kvec)
- * Return the incoming radiated amplitude at this
- * dipole due to field at X along direction kvec
+ * Return the incoming radiated amplitude from X along direction kvec
+ * at this dipole 
  * X    : source point (Cartesian)
  * kvec : wavevector
  */
 vec3cd Dipole::getIncAlongDir(
     const vec3d& X, const vec3d& kvec) const {
 
-    return current * exp(iu*kvec.dot(pos-X)) * phat;
+    return conj(exp(iu*kvec.dot(pos-X))) * phat; // Eigen bug! Need conj
 }
 
-/* getRadAtPoint(X,k)
+/* getRadAtPoint(X)
  * Return the radiated field due to this dipole 
  * at field point X
  */
@@ -62,8 +58,6 @@ vec3cd Dipole::getRadAtPoint(const vec3d& X) const {
     assert(X != pos);
 
     const auto& dyadic = Math::dyadicG(X - pos, Einc->wavenum);
-
-    // std::cout << dyadic * phat << '\n';
 
     return current * dyadic * phat;
 }
@@ -75,8 +69,5 @@ cmplx Dipole::getIntegratedRad(const std::shared_ptr<Source> src) const {
 
     const auto srcDip = dynamic_pointer_cast<Dipole>(src);
 
-    return srcDip->getRadAtPoint(pos).dot(phat);
+    return conj(srcDip->getRadAtPoint(pos).dot(phat)); // Eigen bug! Need conj
 }
-
-
-

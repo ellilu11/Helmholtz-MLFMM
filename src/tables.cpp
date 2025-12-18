@@ -30,6 +30,10 @@ void Tables::buildAngularTables() {
 
                 // matToSph_lvl.push_back(Math::matToSph(th, ph));
                 // matFromSph_lvl.push_back(Math::matFromSph(th, ph));
+
+                // if (level == 2 && ith == 0) 
+                    // std::cout << std::setprecision(9) << th << ' ' << ph << ' ' << khat << "\n\n";
+                //    std::cout << std::setprecision(9) << Math::IminusRR(khat) << "\n\n";
             }
         }
 
@@ -140,11 +144,10 @@ void Tables::buildTranslationTable() {
 
     for (size_t level = 0; level <= Node::maxLevel; ++level) {
 
-        // empirically this seems to be the best truncation value for the 
-        // series in the M2L operator
-        const int L = (Node::getNumAngles(level).first - 1)/2 + 1;
+        const int L = Node::Ls[level];
 
-        const int nps = std::floor(Q*L);
+        const int nth = Node::getNumAngles(level).first;
+        const int nps = std::floor(Q*(nth-1));
 
         const double nodeLeng = rootLeng / pow(2.0, level);
 
@@ -165,11 +168,12 @@ void Tables::buildTranslationTable() {
                 cmplx coeff = 0.0;
 
                 for (int l = 0; l <= L; ++l)
-                    coeff += powI(l) * (2.0*l+1.0)
+                    coeff += 
+                        powI(l) * (2.0*l+1.0)
                         * sphericalHankel1(kr, l) 
                         * legendreP(xi, l).first;
 
-                transl_dist[ips] = coeff;
+                transl_dist[ips] = iu * wavenum / (4.0*PI) * coeff;
             }
 
             transl_lvl.emplace(dist, transl_dist);
@@ -182,6 +186,9 @@ void Tables::buildTranslationTable() {
 
 
 void Tables::buildInterpPsiTable() { // CONSIDER: Interp over xi = cos(psi)
+
+    //std::cout << "   Finding all psi\n";
+    //auto start = Clock::now();
 
     const auto& rhats = Math::getINodeDirections();
 
@@ -208,7 +215,7 @@ void Tables::buildInterpPsiTable() { // CONSIDER: Interp over xi = cos(psi)
             }
         }
 
-        std::sort(psis_lvl.begin(), psis_lvl.end());
+        std::sort(psis_lvl.begin(), psis_lvl.end()); 
 
         psis_lvl.erase(
             std::unique(psis_lvl.begin(), psis_lvl.end()), psis_lvl.end());
@@ -219,11 +226,18 @@ void Tables::buildInterpPsiTable() { // CONSIDER: Interp over xi = cos(psi)
 
     }
 
+    //auto end = Clock::now();
+    //Time duration_ms = end - start;
+    //std::cout << "   Elapsed time: " << duration_ms.count() << " ms\n\n";
+
+    //std::cout << "   Computing Lagrange coeffs for each psi\n";
+    //start = Clock::now();
+
     // Compute Lagrange coefficients for each possible psi at each level
     for (size_t level = 0; level <= Node::maxLevel; ++level) {
 
-        const int L = (Node::getNumAngles(level).first - 1)/2 + 1;
-        const int nps = std::floor(Q*L);
+        const int nth = Node::getNumAngles(level).first;
+        const int nps = std::floor(Q*(nth-1));
 
         HashMap<double,vecXcd> interpPsi_lvl;
         HashMap<double,int> s_lvl;
@@ -258,5 +272,9 @@ void Tables::buildInterpPsiTable() { // CONSIDER: Interp over xi = cos(psi)
         interpPsi.push_back(interpPsi_lvl);
         ssps.push_back(s_lvl);
     }
+
+    //end = Clock::now();
+    //duration_ms = end - start;
+    //std::cout << "   Elapsed time: " << duration_ms.count() << " ms\n\n";
 
 }

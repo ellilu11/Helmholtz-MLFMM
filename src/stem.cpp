@@ -268,7 +268,7 @@ void Stem::buildLocalCoeffs() {
 
         t.M2L += Clock::now() - start;
 
-        evalLeafIlistSols();
+        // evalLeafIlistSols();
 
         /*start = Clock::now();
         

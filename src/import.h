@@ -200,3 +200,23 @@ pair<SrcVec, shared_ptr<PlaneWave>>
 
     return make_pair(srcs, Einc);
 }
+
+void printSols(SrcVec& srcs, const std::string& fname)
+{
+    namespace fs = std::filesystem;
+    fs::path dir = "out";
+    std::error_code ec;
+
+    if (fs::create_directory(dir, ec))
+        std::cout << " Created directory " << dir.generic_string() << "/\n";
+    else if (ec)
+        std::cerr << " Error creating directory " << ec.message() << "\n";
+
+    ofstream file(dir/fname);
+
+    file << setprecision(15) << scientific;
+
+    for (const auto& src : srcs)
+        src->printSol(file);
+
+}

@@ -75,7 +75,7 @@ namespace Math {
         const auto& rhat = X / r;
 
         return
-            exp(iu*kr/r) * (
+            exp(iu*kr)/r * (
                 Math::IminusRR(rhat) - 
                 Math::Iminus3RR(rhat) * (-iu/kr + 1.0/(kr*kr)));
     };
