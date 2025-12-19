@@ -123,10 +123,10 @@ void Leaf::buildLocalCoeffs() {
     start = Clock::now();
 
     if (!base->isRoot()) {
-        auto baseStem = static_cast<Stem*>(base);
+        auto stemBase = static_cast<Stem*>(base);
 
         localCoeffs = 
-            localCoeffs + baseStem->getShiftedLocalCoeffs(branchIdx);
+            localCoeffs + stemBase->getShiftedLocalCoeffs(branchIdx);
     }
 
     t.L2L += Clock::now() - start;

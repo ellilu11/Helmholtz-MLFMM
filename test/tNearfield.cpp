@@ -12,8 +12,8 @@ shared_ptr<Node> Node::getNode() {
 
     auto node = nodes[nodeIdx];
 
-    // while (node->isNodeType<Stem>() || node->iList.empty() || node->srcs.size() <= 5)
-    while (node->isNodeType<Leaf>() || node->isRoot() || node->srcs.size() == 0)
+    while (node->isNodeType<Stem>() || node->iList.empty() || node->srcs.size() <= 5)
+    // while (node->isNodeType<Leaf>() || node->isRoot() || node->srcs.size() == 0)
         node = nodes[++nodeIdx];
 
     cout << "   Selected node " << node->nodeIdx << " at level " << node->level 
@@ -81,7 +81,7 @@ void Leaf::testMpoleToLocalInLeaf() {
     */
 }
 
-void Stem::testShiftedLocalCoeffs() {
+/*void Stem::testShiftedLocalCoeffs() {
 
     const auto [mth, mph] = getNumAngles(level+1);
 
@@ -97,7 +97,7 @@ void Stem::testShiftedLocalCoeffs() {
         coeffFile << setprecision(15) << inCoeffs[idx] << '\n';
         aCoeffFile << setprecision(15) << outCoeffs[idx] << '\n';
     }
-}
+}*/
 
 /*void testTransl() {
     // ==================== Test translation ===================== //
@@ -169,11 +169,9 @@ int main() {
     cout << "   Elapsed time: " << duration_ms.count() << " ms\n\n";
 
     // L2L test
-    auto obsNode = root->getNode();
+    /*auto obsNode = root->getNode();
     auto obsStem = dynamic_pointer_cast<Stem>(obsNode);
-    obsStem->testShiftedLocalCoeffs();
-
-    return 0;
+    obsStem->testShiftedLocalCoeffs();*/
 
     // ==================== Downward pass ==================== //
     cout << " Computing downward pass...\n";
@@ -186,14 +184,15 @@ int main() {
     cout << "   Elapsed time: " << duration_ms.count() << " ms\n\n";
 
     // ==================== Nearfield test =================== //
-    // auto obsLevel = obsNode->getLevel();
+    auto obsNode = root->getNode();
+    auto obsLevel = obsNode->getLevel();
     // auto [nth, nph] = Node::getNumAngles(obsLevel);
     //ofstream coeffFile("out/nf/lcoeffs_nth"+to_string(nth)+".txt");
     //obsNode->printLocalCoeffs(coeffFile);
     //Node::printAngularSamples(obsLevel);
 
-    // auto obsLeaf = dynamic_pointer_cast<Leaf>(obsNode);
-    // obsLeaf->testMpoleToLocalInLeaf();
+     auto obsLeaf = dynamic_pointer_cast<Leaf>(obsNode);
+     obsLeaf->testMpoleToLocalInLeaf();
 
     return 0;
 

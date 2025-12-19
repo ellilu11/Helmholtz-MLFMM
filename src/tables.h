@@ -12,8 +12,7 @@ struct Tables {
 
         buildAngularTables();
         
-        buildInterpThetaTable();
-        buildInterpPhiTable();
+        buildInterpTables();
         
         buildTranslationTable();
         buildInterpPsiTable();
@@ -21,8 +20,13 @@ struct Tables {
     
     void buildAngularTables();
 
-    void buildInterpThetaTable();
-    void buildInterpPhiTable();
+    std::pair<std::vector<realVec>, std::vector<int>> 
+        getInterpThetaAtLvl(int, int);
+
+    std::pair<std::vector<realVec>, std::vector<int>> 
+        getInterpPhiAtLvl(int, int);
+
+    void buildInterpTables();
 
     void buildTranslationTable();
     void buildInterpPsiTable();
@@ -35,21 +39,25 @@ struct Tables {
 
     std::vector<std::vector<mat23d>> matToThPh;
     std::vector<std::vector<mat32d>> matFromThPh;
-    
-    // std::vector<std::vector<mat3d>> matToSph;
-    // std::vector<std::vector<mat3d>> matFromSph;
 
-    // M2M and L2L interpolation tables
+    // M2M interpolation tables
     std::vector<std::vector<realVec>> interpTheta;
-    std::vector<std::vector<int>> ts;
+    std::vector<std::vector<int>> idxTheta;
 
     std::vector<std::vector<realVec>> interpPhi;
-    std::vector<std::vector<int>> ss;
+    std::vector<std::vector<int>> idxPhi;
 
     // M2L translation tables
     std::vector<Map<double,vecXcd>> transl;
     std::vector<HashMap<double,vecXcd>> interpPsi;
     std::vector<HashMap<double,int>> ssps;
+
+    // L2L interpolation tables
+    std::vector<std::vector<realVec>> invInterpTheta;
+    std::vector<std::vector<int>> invIdxTheta;
+
+    std::vector<std::vector<realVec>> invInterpPhi;
+    std::vector<std::vector<int>> invIdxPhi;
 
 };
 

@@ -1,8 +1,8 @@
 clear; clc;
 
-maxlvl = 0;
+maxlvl = 2;
 
-nths = [47,48];
+nths = [34,43];
 nphs = 2*nths;
 nLs = size(nths,2);
 

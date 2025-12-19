@@ -11,9 +11,6 @@ void Tables::buildAngularTables() {
         std::vector<mat23d> matToThPh_lvl;
         std::vector<mat32d> matFromThPh_lvl;
         
-        // std::vector<mat3d> matToSph_lvl;
-        // std::vector<mat3d> matFromSph_lvl;
-
         for (int ith = 0; ith < nth; ++ith) {
             const double th = Node::thetas[level][ith];
 
@@ -27,13 +24,6 @@ void Tables::buildAngularTables() {
                 
                 matToThPh_lvl.push_back(Math::matToThPh(th, ph));
                 matFromThPh_lvl.push_back(Math::matFromThPh(th, ph));
-
-                // matToSph_lvl.push_back(Math::matToSph(th, ph));
-                // matFromSph_lvl.push_back(Math::matFromSph(th, ph));
-
-                // if (level == 2 && ith == 0) 
-                    // std::cout << std::setprecision(9) << th << ' ' << ph << ' ' << khat << "\n\n";
-                //    std::cout << std::setprecision(9) << Math::IminusRR(khat) << "\n\n";
             }
         }
 
@@ -41,95 +31,126 @@ void Tables::buildAngularTables() {
         khat.push_back(khat_lvl);
         matToThPh.push_back(matToThPh_lvl);
         matFromThPh.push_back(matFromThPh_lvl);
-
-        // matToSph.push_back(matToSph_lvl);
-        // matFromSph.push_back(matFromSph_lvl);
     }
 }
 
-void Tables::buildInterpThetaTable() {
+std::pair<std::vector<realVec>, std::vector<int>> 
+Tables::getInterpThetaAtLvl(int srcLvl, int tgtLvl) {
 
-    for (size_t level = 0; level < Node::maxLevel; ++level) { 
-        std::vector<realVec> interpTheta_lvl;
-        std::vector<int> t_lvl;
+    assert(abs(srcLvl - tgtLvl) == 1); // don't interpolate across more than 1 level
 
-        const int nth = Node::getNumAngles(level).first;
-        const int mth = Node::getNumAngles(level+1).first;
+    const int srcNth = Node::getNumAngles(srcLvl).first;
+    const int tgtNth = Node::getNumAngles(tgtLvl).first;
 
-        for (size_t jth = 0; jth < nth; ++jth) {
-            realVec interpTheta_lvl_th;
-            const double theta = Node::thetas[level][jth];
+    const auto& srcThetas = Node::thetas[srcLvl];
+    const auto& tgtThetas = Node::thetas[tgtLvl];
 
-            const int t = Interp::getNearGLNodeIdx(theta, mth, 0.0, PI);
+    std::vector<realVec> coeffs;
+    std::vector<int> indices;
 
-            // Assemble child thetas interpolating parent theta
-            // TODO: Use splicing with std::span
-            realVec branchThetas;
-            for (int ith = t+1-order; ith <= t+order; ++ith) {
+    for (size_t jth = 0; jth < tgtNth; ++jth) {
+        realVec coeffs_jth;
+        const double tgtTheta = tgtThetas[jth];
 
-                // Flip ith if not in [0, mth-1]
-                int ith_flipped = Math::flipIdxToRange(ith, mth);
+        const int t = Interp::getNearGLNodeIdx(tgtTheta, srcNth, 0.0, PI);
 
-                auto branchTheta = Node::thetas[level+1][ith_flipped];
+        // Assemble source thetas interpolating target theta
+        // TODO: Use splicing with std::span
+        realVec interpThetas;
+        for (int ith = t+1-order; ith <= t+order; ++ith) {
 
-                // Extend interpolating thetas to outside [0, pi] as needed
-                if (ith < 0)
-                    branchTheta *= -1.0;
-                else if (ith >= mth)
-                    branchTheta = 2.0*PI - branchTheta;
+            // Flip ith if not in [0, mth-1]
+            int ith_flipped = Math::flipIdxToRange(ith, srcNth);
 
-                branchThetas.push_back(branchTheta);
-            }
+            double srcTheta = srcThetas[ith_flipped];
 
-            for (int k = 0; k < 2*order; ++k)
-                interpTheta_lvl_th.push_back(
-                    Interp::evalLagrangeBasis(theta, branchThetas, k));
+            // Extend source thetas to outside [0, pi] as needed
+            if (ith < 0)
+                srcTheta *= -1.0;
+            else if (ith >= srcNth)
+                srcTheta = 2.0*PI - srcTheta;
 
-            interpTheta_lvl.push_back(interpTheta_lvl_th);
-            t_lvl.push_back(t);
+            interpThetas.push_back(srcTheta);
         }
 
-        interpTheta.push_back(interpTheta_lvl);
+        for (int k = 0; k < 2*order; ++k)
+            coeffs_jth.push_back(
+                Interp::evalLagrangeBasis(tgtTheta, interpThetas, k));
 
-        ts.push_back(t_lvl);
+        coeffs.push_back(coeffs_jth);
+        indices.push_back(t);
     }
+
+    return std::make_pair(coeffs, indices);
 }
 
-void Tables::buildInterpPhiTable() {
+std::pair<std::vector<realVec>, std::vector<int>> 
+Tables::getInterpPhiAtLvl(int srcLvl, int tgtLvl) {
 
-    for (size_t level = 0; level < Node::maxLevel; ++level) {
-        std::vector<realVec> interpPhi_lvl;
-        std::vector<int> s_lvl;
+    assert(abs(srcLvl - tgtLvl) == 1); // don't interpolate across more than 1 level
 
-        const int nph = Node::getNumAngles(level).second;
-        const int mph = Node::getNumAngles(level+1).second;
+    const int srcNph = Node::getNumAngles(srcLvl).second;
+    const int tgtNph = Node::getNumAngles(tgtLvl).second;
 
-        for (size_t jph = 0; jph < nph; ++jph) {
-            realVec interpPhi_lvl_ph;
-            const double phi = Node::phis[level][jph];
+    const auto& srcPhis = Node::phis[srcLvl];
+    const auto& tgtPhis = Node::phis[tgtLvl];
 
-            const int s = std::floor(mph * phi / (2.0 * PI));
+    std::vector<realVec> coeffs;
+    std::vector<int> indices;
 
-            // Assemble child phis interpolating parent phi
-            // TODO: Use splicing with std::span
-            realVec branchPhis;
-            for (int iph = s+1-order; iph <= s+order; ++iph) {
+    for (size_t jph = 0; jph < tgtNph; ++jph) {
+        realVec coeffs_jph;
+        const double tgtPhi = tgtPhis[jph];
 
-                auto branchPhi = 2.0*PI*iph/static_cast<double>(mph);
+        const int s = std::floor(tgtPhi / (2.0 * PI) * srcNph);
 
-                branchPhis.push_back(branchPhi);
-            }
+        // Assemble source phis interpolating target phi
+        // TODO: Use splicing with std::span
+        realVec interpPhis;
+        for (int iph = s+1-order; iph <= s+order; ++iph) {
 
-            for (size_t k = 0; k < 2*order; ++k)
-                interpPhi_lvl_ph.push_back(
-                    Interp::evalLagrangeBasis(phi, branchPhis, k));
-            
-            interpPhi_lvl.push_back(interpPhi_lvl_ph);
-            s_lvl.push_back(s);
+            double srcPhi = 2.0*PI*iph/static_cast<double>(srcNph);
+
+            interpPhis.push_back(srcPhi);
         }
 
-        interpPhi.push_back(interpPhi_lvl);
-        ss.push_back(s_lvl);
+        for (int k = 0; k < 2*order; ++k)
+            coeffs_jph.push_back(
+                Interp::evalLagrangeBasis(tgtPhi, interpPhis, k));
+
+        coeffs.push_back(coeffs_jph);
+        indices.push_back(s);
+    }
+
+    return std::make_pair(coeffs, indices);
+}
+
+void Tables::buildInterpTables() {
+
+    // Build M2M interpolation tables
+    for (size_t lvl = 0; lvl < Node::maxLevel; ++lvl) {
+        const auto [thetaCoeffs, thetaIndices] = getInterpThetaAtLvl(lvl+1, lvl);
+
+        interpTheta.push_back(thetaCoeffs);
+        idxTheta.push_back(thetaIndices);
+
+        const auto [phiCoeffs, phiIndices] = getInterpPhiAtLvl(lvl+1, lvl);
+
+        interpPhi.push_back(phiCoeffs);
+        idxPhi.push_back(phiIndices);
+    }
+
+    // Build L2L interpolation tables
+    for (size_t lvl = 0; lvl < Node::maxLevel; ++lvl) {
+        const auto [thetaCoeffs, thetaIndices] = getInterpThetaAtLvl(lvl, lvl+1);
+
+        invInterpTheta.push_back(thetaCoeffs);
+        invIdxTheta.push_back(thetaIndices);
+
+        const auto [phiCoeffs, phiIndices] = getInterpPhiAtLvl(lvl, lvl+1);
+
+        invInterpPhi.push_back(phiCoeffs);
+        invIdxPhi.push_back(phiIndices);
     }
 }
 
