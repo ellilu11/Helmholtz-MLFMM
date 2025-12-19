@@ -12,6 +12,10 @@ close all;
 for i=1:2
     solSort = sortrows(sol,i);
     solDirSort = sortrows(solDir,i);
-    figure(i);
+    figure(2*i-1);
     plot(nvec, solSort(:,i), nvec, solDirSort(:,i));
+
+    relErr = abs(solSort(:,i)-solDirSort(:,i)) ./ abs(solDirSort(:,i));
+    figure(2*i);
+    semilogy(nvec, relErr)
 end

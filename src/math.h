@@ -74,7 +74,7 @@ namespace Math {
         double kr = k * r;
         const auto& rhat = X / r;
 
-        return
+        return // TODO: Simplify
             exp(iu*kr)/r * (
                 Math::IminusRR(rhat) - 
                 Math::Iminus3RR(rhat) * (-iu/kr + 1.0/(kr*kr)));
@@ -127,7 +127,7 @@ namespace Math {
         else if (i >= size)
             uint_i = 2*size-i-1;
 
-        assert(uint_i >= 0 && uint_i < size);
+        // assert(uint_i >= 0 && uint_i < size);
         return uint_i;
     }
 
@@ -139,7 +139,7 @@ namespace Math {
         else if (i >= size)
             uint_i = i - size;
 
-        assert(uint_i >= 0 && uint_i < size);
+        // assert(uint_i >= 0 && uint_i < size);
         return uint_i;
     }
 

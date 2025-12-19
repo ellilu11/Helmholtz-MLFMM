@@ -147,7 +147,7 @@ void Tables::buildTranslationTable() {
         const int L = Node::Ls[level];
 
         const int nth = Node::getNumAngles(level).first;
-        const int nps = std::floor(Q*(nth-1));
+        const int nps = std::floor(Node::config.overInterp*(nth-1));
 
         const double nodeLeng = rootLeng / pow(2.0, level);
 
@@ -237,7 +237,7 @@ void Tables::buildInterpPsiTable() { // CONSIDER: Interp over xi = cos(psi)
     for (size_t level = 0; level <= Node::maxLevel; ++level) {
 
         const int nth = Node::getNumAngles(level).first;
-        const int nps = std::floor(Q*(nth-1));
+        const int nps = std::floor(Node::config.overInterp*(nth-1));
 
         HashMap<double,vecXcd> interpPsi_lvl;
         HashMap<double,int> s_lvl;

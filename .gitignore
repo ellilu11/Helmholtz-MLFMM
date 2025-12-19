@@ -367,3 +367,5 @@ FodyWeavers.xsd
 /plt/plotFarfieldInterp_L.asv
 /plt/plotFarfield_interp.m
 /plt/plotFarfieldForBox.m
+/plt/plotSols.asv
+/plt/plotL2LCoeffs.m

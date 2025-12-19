@@ -140,8 +140,6 @@ void Leaf::evalFarSols() {
 
     const auto [nth, nph] = getNumAngles(level);
 
-    const double phiWeight = 2.0*PI / static_cast<double>(nph); // TODO: static member
-
     for (const auto& obs : srcs) {
 
         size_t idx = 0;
@@ -163,15 +161,13 @@ void Leaf::evalFarSols() {
                     obs->getIncAlongDir(center, wavenum*khat);
 
                 // Do the angular integration
-                sol += thetaWeights[level][ith]
-                        * sin(theta) // TODO: Absorb into thetaWeights
-                        * incPat.dot(localCoeffs[idx]);
+                sol += incPat.dot(localCoeffs[idx]);
 
                 idx++;
             }
         }
 
-        obs->addToSol(C * wavenum * phiWeight * sol);
+        obs->addToSol(C * wavenum * sol);
     }
 
 }

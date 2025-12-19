@@ -13,9 +13,7 @@ class Leaf final : public Node, public std::enable_shared_from_this<Leaf> {
 public:
     Leaf(const SrcVec&, const int, Stem* const);
 
-    std::shared_ptr<Node> getSelf() override {
-        return shared_from_this();
-    }
+    std::shared_ptr<Node> getSelf() override { return shared_from_this(); }
 
     void pushToNearNonNbors(const std::shared_ptr<Node>& node) {
         nearNonNbors.push_back(node);

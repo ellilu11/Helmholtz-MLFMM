@@ -169,8 +169,7 @@ std::filesystem::path makePath(const Config& config) {
         (distStr + "_n" + std::to_string(config.nsrcs) + ".txt");
 }
 
-pair<SrcVec, shared_ptr<PlaneWave>> 
-    importFromConfig(const Config& config) 
+pair<SrcVec, shared_ptr<PlaneWave>> importFromConfig(const Config& config) 
 {
     cout << " Importing config...\n";
 

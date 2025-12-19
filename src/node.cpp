@@ -134,7 +134,7 @@ void Node::buildMpoleToLocalCoeffs() {
 
     const int order = config.interpOrder;
 
-    const int nps = std::floor(Q*(nth-1));
+    const int nps = std::floor(config.overInterp*(nth-1));
 
     for (const auto& node : iList) {
 
@@ -146,12 +146,12 @@ void Node::buildMpoleToLocalCoeffs() {
 
         const auto& translVec = tables.transl[level].at(r / nodeLeng);
 
-        size_t idx = 0;
+        size_t l = 0;
         for (int ith = 0; ith < nth; ++ith) {
 
             for (int iph = 0; iph < nph; ++iph) {
 
-                const auto& khat = tables.khat[level][idx];
+                const auto& khat = tables.khat[level][l];
 
                 const double psi = acos(khat.dot(rhat));
 
@@ -187,13 +187,30 @@ void Node::buildMpoleToLocalCoeffs() {
                 }
                 //
 
-                localCoeffs[idx] += translCoeff * mpoleCoeffs[idx];
+                localCoeffs[l] += translCoeff * mpoleCoeffs[l];
 
-                idx++;
+                l++;
             }
         }
     }
+
+    // Apply integration weights
+    const double phiWeight = 2.0*PI / static_cast<double>(nph);
+
+    size_t m = 0;
+    for (int ith = 0; ith < nth; ++ith) {
+
+        const double theta = thetas[level][ith];
+        const double weight = thetaWeights[level][ith];
+
+        for (int iph = 0; iph < nph; ++iph) {
+
+            localCoeffs[m++] *= weight * sin(theta) * phiWeight; // TODO: Absorb into thetaWeights
+        }
+
+    }
 }
+
 
 
 // No psi interpolation

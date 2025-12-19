@@ -7,6 +7,7 @@
 #include "clock.h"
 #include "config.h"
 #include "interp.h"
+#include "phys.h"
 #include "tables.h"
 #include "sources/rwg.h"
 
@@ -14,13 +15,6 @@ extern ClockTimes t;
 
 constexpr int DIM = 3;
 constexpr int numDir = 26;
-
-// TODO: move into config
-constexpr double c0 = 299792458.0; 
-constexpr double mu0 = 1.256637E-6;
-constexpr double Q = 3.5; // TODO: pick an optimal value
-
-const cmplx C = -iu * c0 * mu0 / (4.0 * PI); // TODO: Find a better place to put this
 
 enum class Dir {
     W, E, S, N, D, U,
@@ -72,8 +66,6 @@ public:
     NodeVec getLeafIlist() const { return leafIlist; }
     
     std::vector<vec3cd> getMpoleCoeffs() const { return coeffs; }
-
-    // std::vector<vec3cd> getRadPats() const { return radPats; } //
 
     std::pair<vec3cd, vec3cd> getPolarCoeffs() const { return polarCoeffs; }
     

@@ -3,7 +3,7 @@
 #include "types.h"
 
 namespace Excitation {
-    struct PlaneWave;
+    // struct PlaneWave;
 
     // struct HertzDipole;
 }

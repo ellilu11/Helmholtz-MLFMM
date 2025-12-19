@@ -13,6 +13,6 @@ comp = 1;
 figure(1)
 plot(nvec, coeffs1(:,comp), nvec, coeffs2(:,comp));
 
-relErr = abs(coeffs1(:,comp)-coeffs2(:,comp)) ./ coeffs2(:,comp);
+relErr = abs(coeffs1(:,comp)-coeffs2(:,comp) ./ coeffs2(:,comp));
 figure(2)
 semilogy(nvec, relErr)

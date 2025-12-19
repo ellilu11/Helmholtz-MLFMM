@@ -1,7 +1,6 @@
 #pragma once
 
 #include <cctype>
-#include <filesystem>
 #include <fstream>
 #include <iostream>
 #include <type_traits>
@@ -63,7 +62,7 @@ struct Config {
     Config(const std::string& fileName) {
         std::ifstream is(fileName);
         is >> mode >> pdist >> quadPrec // enums first
-            >> digits >> interpOrder
+            >> digits >> interpOrder >> overInterp
             >> rootLeng >> maxNodeSrcs  >> evalDirect
             >> nsrcs;
     }
@@ -71,6 +70,7 @@ struct Config {
     Precision quadPrec;
     int digits;
     int interpOrder;
+    double overInterp;
     double rootLeng;
     int maxNodeSrcs;
     bool evalDirect;
