@@ -369,3 +369,10 @@ FodyWeavers.xsd
 /plt/plotFarfieldForBox.m
 /plt/plotSols.asv
 /plt/plotL2LCoeffs.m
+/plt/imag_l2lerr.fig
+/plt/plotCoeffs.m
+/plt/plotFarfieldFor1Box.m
+/plt/plotLocalCoeffs.m
+/plt/plotNodes.m
+/plt/testInterp.asv
+/plt/testInterp.m
