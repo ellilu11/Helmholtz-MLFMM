@@ -64,20 +64,17 @@ namespace Math {
         return mat3d::Identity() - rhat * rhat.transpose();
     }
 
-    inline mat3d Iminus3RR(const vec3d& rhat) noexcept {
-        // auto rhat = X / X.norm();
-        return mat3d::Identity() - 3.0 * rhat * rhat.transpose();
-    }
-
     inline Eigen::Matrix3cd dyadicG(const vec3d& X, double k) noexcept {
         double r = X.norm();
-        double kr = k * r;
+        double kr = k*r;
+        double krsq = kr*kr;
         const auto& rhat = X / r;
+        const auto& RR = rhat * rhat.transpose();
 
-        return // TODO: Simplify
+        return
             exp(iu*kr)/r * (
-                Math::IminusRR(rhat) - 
-                Math::Iminus3RR(rhat) * (-iu/kr + 1.0/(kr*kr)));
+                mat3d::Identity() * (1.0 + iu/kr - 1.0/krsq) -
+                RR * (1.0 + 3.0*iu/kr - 3.0/krsq));
     };
 
     inline mat23d matToThPh(double th, double ph) noexcept {

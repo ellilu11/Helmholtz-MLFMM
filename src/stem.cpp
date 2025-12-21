@@ -154,15 +154,10 @@ void Stem::addInterpCoeffs(
     assert(!(mph%2)); // mph needs to be even
 
     // Decide which interp tables to use
-    //const auto& interpTheta = tables.interpTheta;
-    //const auto& idxTheta = tables.idxTheta;
-    //const auto& interpPhi = tables.interpPhi;
-    //const auto& idxPhi = tables.idxPhi;
-
-    const auto& interpTheta = (srcLvl > tgtLvl) ? tables.interpTheta : tables.invInterpTheta;
-    const auto& idxTheta = (srcLvl > tgtLvl) ? tables.idxTheta : tables.invIdxTheta;
-    const auto& interpPhi = (srcLvl > tgtLvl) ? tables.interpPhi : tables.invInterpPhi;
-    const auto& idxPhi = (srcLvl > tgtLvl) ? tables.idxPhi : tables.invIdxPhi;
+    const auto& interpTheta = 
+        (srcLvl > tgtLvl) ? tables.interpTheta : tables.invInterpTheta;
+    const auto& interpPhi = 
+        (srcLvl > tgtLvl) ? tables.interpPhi : tables.invInterpPhi;
 
     const int tblLvl = std::min(srcLvl, tgtLvl);
 
@@ -171,11 +166,12 @@ void Stem::addInterpCoeffs(
 
     size_t m = 0;
     for (int jth = 0; jth < nth; ++jth) {
-        const int t = idxTheta[tblLvl][jth];
+        
+        const auto [interps, inear] = interpTheta[tblLvl][jth];
 
         for (int iph = 0; iph < mph; ++iph) {
 
-            for (int ith = t+1-order, k = 0; ith <= t+order; ++ith, ++k) {
+            for (int ith = inear+1-order, k = 0; ith <= inear+order; ++ith, ++k) {
 
                 // Flip ith if not in [0, mth-1]
                 const int ith_flipped = Math::flipIdxToRange(ith, mth);
@@ -191,8 +187,7 @@ void Stem::addInterpCoeffs(
 
                 const int m_shifted = ith_flipped*mph + iph_shifted;
 
-                innerCoeffs[m] +=
-                    interpTheta[tblLvl][jth][k] * inCoeffs[m_shifted];
+                innerCoeffs[m] += interps[k] * inCoeffs[m_shifted];
                 // * Math::pm(outOfRange); // only for spherical components!
             }
 
@@ -205,15 +200,15 @@ void Stem::addInterpCoeffs(
     for (int jth = 0; jth < nth; ++jth) {
 
         for (int jph = 0; jph < nph; ++jph) {
-            const int s = idxPhi[tblLvl][jph]; // TODO: don't need to lookup for every jth
+            const auto [interps, inear] = interpPhi[tblLvl][jph]; // TODO: don't need to lookup for every jth
 
-            for (int iph = s+1-order, k = 0; iph <= s+order; ++iph, ++k) {
+            for (int iph = inear+1-order, k = 0; iph <= inear+order; ++iph, ++k) {
 
                 // Wrap iph if not in [0, mph-1]
                 const int iph_wrapped = Math::wrapIdxToRange(iph, mph);
 
-                outCoeffs[n] +=
-                    interpPhi[tblLvl][jph][k]
+                outCoeffs[n] += 
+                    interps[k]
                     * innerCoeffs[jth*mph + iph_wrapped];
             }
 

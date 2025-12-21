@@ -157,5 +157,4 @@ protected:
     // Test members
     static NodeVec nodes;
     int nodeIdx;
-    int label;
 };

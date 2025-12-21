@@ -42,15 +42,7 @@ public:
     void buildLocalCoeffs() override;
 
     void printNode(std::ofstream& f) {
-        f << center << " " << nodeLeng << " " << label << '\n';
-    }
-
-    static void printLeaves(std::ofstream& f) {
-        for (const auto& leaf : leaves) {
-            if (leaf->getSrcs().empty()) continue;
-
-            f << leaf->getCenter() << " " << leaf->getLeng() << " " << leaf->getLevel() << '\n';
-        }
+        f << center << " " << nodeLeng << " " << '\n';
     }
 
 protected:

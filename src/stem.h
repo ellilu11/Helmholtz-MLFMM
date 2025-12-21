@@ -24,11 +24,8 @@ public:
     void buildLocalCoeffs() override;
 
     void printNode(std::ofstream& f) {
-        f << center << " " << nodeLeng << " " << label << '\n';
+        f << center << " " << nodeLeng << '\n';
     }
 
     static void testInvInterp(int);
-
-// protected:
-    // TODO: Add branches
 };

@@ -4,6 +4,8 @@
 #include "interp.h"
 #include "map.h"
 
+using interpPair = std::pair<realVec, int>;
+
 struct Tables {
     Tables() = default;
     Tables(const Config& config)
@@ -19,15 +21,14 @@ struct Tables {
     
     void buildAngularTables();
 
-    std::pair<std::vector<realVec>, std::vector<int>> 
-        getInterpThetaAtLvl(int, int);
+    std::vector<interpPair> getInterpThetaAtLvl(int, int);
 
-    std::pair<std::vector<realVec>, std::vector<int>> 
-        getInterpPhiAtLvl(int, int);
+    std::vector<interpPair> getInterpPhiAtLvl(int, int);
 
     void buildInterpTables();
 
     void buildTranslationTable();
+
     void buildInterpPsiTable();
 
     int order;
@@ -40,18 +41,12 @@ struct Tables {
     std::vector<std::vector<mat32d>> matFromThPh;
 
     // M2M interpolation tables
-    std::vector<std::vector<realVec>> interpTheta;
-    std::vector<std::vector<int>> idxTheta;
-
-    std::vector<std::vector<realVec>> interpPhi;
-    std::vector<std::vector<int>> idxPhi;
+    std::vector<std::vector<interpPair>> interpTheta;
+    std::vector<std::vector<interpPair>> interpPhi;
 
     // L2L interpolation tables
-    std::vector<std::vector<realVec>> invInterpTheta;
-    std::vector<std::vector<int>> invIdxTheta;
-
-    std::vector<std::vector<realVec>> invInterpPhi;
-    std::vector<std::vector<int>> invIdxPhi;
+    std::vector<std::vector<interpPair>> invInterpTheta;
+    std::vector<std::vector<interpPair>> invInterpPhi;
 
     // M2L translation tables
     std::vector<Map<double,vecXcd>> transl;

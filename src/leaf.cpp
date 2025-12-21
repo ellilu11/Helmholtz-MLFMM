@@ -49,7 +49,6 @@ void Leaf::buildLists() {
     pushSelfToNearNonNbors();
 
     nodes.push_back(shared_from_this()); // 
-
 }
 
 /* buildMpoleCoeffs()
@@ -76,11 +75,8 @@ void Leaf::buildMpoleCoeffs() {
             for (const auto& src : srcs)
                 radPat += src->getRadAlongDir(center, kvec);
 
-            // in spherical components
-            // coeffs.push_back(tables.matToSph[level][idx] * (ImKK * dirCoeff));
-
             // in spherical (no radial) components
-            // coeffs.push_back(tables.matToThPh[level][idx] * (ImKK * dirCoeff));
+            // coeffs.push_back(tables.matToThPh[level][idx] * (ImKK * radPat));
 
             // in cartesian components
             coeffs.push_back(ImKK * radPat);
@@ -174,7 +170,6 @@ void Leaf::evalFarSols() {
 
         obs->addToSol(C * wavenum * phiWeight * sol);
     }
-
 }
 
 /* evalNearNonNborSols()

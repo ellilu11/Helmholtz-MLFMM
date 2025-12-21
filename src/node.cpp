@@ -30,8 +30,7 @@ Node::Node(
     nodeLeng(base == nullptr ? config.rootLeng : base->nodeLeng / 2.0),
     level(base == nullptr ? 0 : base->level + 1),
     center(base == nullptr ? zeroVec :
-        base->center + nodeLeng / 2.0 * Math::idx2pm(branchIdx)),
-    label(0)
+        base->center + nodeLeng / 2.0 * Math::idx2pm(branchIdx))
 {
     nodeIdx = numNodes++;
 }
