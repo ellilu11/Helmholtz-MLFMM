@@ -127,7 +127,7 @@ void Node::pushSelfToNearNonNbors() {
 void Node::buildMpoleToLocalCoeffs() {
 
     const auto [nth, nph] = getNumAngles(level); 
-    localCoeffs.resize(nth*nph, vec3cd::Zero()); // TODO: Allocate elsewhere
+    localCoeffs.resize(nth*nph, vec2cd::Zero()); // TODO: Allocate elsewhere
 
     if (iList.empty()) return;
 
@@ -180,9 +180,7 @@ void Node::buildMpoleToLocalCoeffs() {
 
                     const int ips_flipped = Math::flipIdxToRange(ips, nps); 
 
-                    translCoeff +=
-                        translVec[ips_flipped]
-                        * interpVec[k];
+                    translCoeff += translVec[ips_flipped] * interpVec[k];
                 }
                 //
 
@@ -203,7 +201,7 @@ void Node::buildMpoleToLocalCoeffs() {
     const int order = config.interpOrder;
 
     const auto [nth, nph] = getNumAngles(level);
-    localCoeffs.resize(nth*nph, vec3cd::Zero());
+    localCoeffs.resize(nth*nph, vec2cd::Zero());
 
     const int L = Ls[level];
 
@@ -304,7 +302,7 @@ void Node::evalSelfSols() {
  * Return sols at all sampled directions at distance r 
  * due to all sources in this node using farfield approximation
  */
-std::vector<vec3cd> Node::getFarSols(double r) {
+/*std::vector<vec3cd> Node::getFarSols(double r) {
 
     assert(r >= 5.0 * config.rootLeng); // verify farfield condition
 
@@ -333,4 +331,4 @@ std::vector<vec3cd> Node::getFarSols(double r) {
     }
 
     return sols;
-}
+}*/

@@ -48,6 +48,8 @@ public:
 protected:
     static LeafVec leaves;
 
+    static 
+
     NodeVec nearNbors; // list 1
     NodeVec nearNonNbors; // list 3
 };

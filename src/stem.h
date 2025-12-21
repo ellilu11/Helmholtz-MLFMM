@@ -15,11 +15,11 @@ public:
 
     void buildMpoleCoeffs() override;
 
-    std::vector<vec3cd> getShiftedLocalCoeffs(int) const;
+    std::vector<vec2cd> getShiftedLocalCoeffs(int) const;
 
-    static void addInterpCoeffs(const std::vector<vec3cd>&, std::vector<vec3cd>&, int, int);
+    static void addInterpCoeffs(const std::vector<vec2cd>&, std::vector<vec2cd>&, int, int);
 
-    // static void addAnterpCoeffs(const std::vector<vec3cd>&, std::vector<vec3cd>&, int);
+    // static void addAnterpCoeffs(const std::vector<vec2cd>&, std::vector<vec2cd>&, int);
 
     void buildLocalCoeffs() override;
 

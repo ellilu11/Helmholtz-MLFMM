@@ -75,23 +75,20 @@ void Leaf::buildMpoleCoeffs() {
             for (const auto& src : srcs)
                 radPat += src->getRadAlongDir(center, kvec);
 
-            // in spherical (no radial) components
-            // coeffs.push_back(tables.matToThPh[level][idx] * (ImKK * radPat));
-
-            // in cartesian components
-            coeffs.push_back(ImKK * radPat);
+            // Convert to spherical (no radial) components
+            coeffs.push_back(tables.matToThPh[level][idx] * (ImKK * radPat));
 
             idx++;
         }
     }
 
     /* Get polar coeffs in cartesian components
-    vec3cd northCoeff = vec3cd::Zero();
+    vec2cd northCoeff = vec2cd::Zero();
     for (const auto& rwg : rwgs)
         northCoeff += rwg->getRadAlongDir(center, wavenum*northPole);
     polarCoeffs.first = Math::IminusRR(0, 0) * northCoeff;
 
-    vec3cd southCoeff = vec3cd::Zero();
+    vec2cd southCoeff = vec2cd::Zero();
     for (const auto& rwg : rwgs)
         southCoeff += rwg->getRadAlongDir(center, wavenum*southPole);
     polarCoeffs.second = Math::IminusRR(0, PI) * southCoeff;
@@ -154,9 +151,10 @@ void Leaf::evalFarSols() {
                 const auto& khat = tables.khat[level][idx];
 
                 // Compute incoming pattern along khat at this source
-                const auto& incPat =
+                const vec2cd& incPat =
                     // tables.ImKK[level][idx] * // Tangential-T
                     // -khat.cross( // Tangential-K
+                    tables.matToThPh[level][idx] *
                     obs->getIncAlongDir(center, wavenum*khat);
 
                 // Do the angular integration

@@ -65,11 +65,11 @@ public:
 
     NodeVec getLeafIlist() const { return leafIlist; }
     
-    std::vector<vec3cd> getMpoleCoeffs() const { return coeffs; }
+    std::vector<vec2cd> getMpoleCoeffs() const { return coeffs; }
 
-    std::pair<vec3cd, vec3cd> getPolarCoeffs() const { return polarCoeffs; }
+    std::pair<vec2cd, vec2cd> getPolarCoeffs() const { return polarCoeffs; }
     
-    std::vector<vec3cd> getLocalCoeffs() const { return localCoeffs; }
+    std::vector<vec2cd> getLocalCoeffs() const { return localCoeffs; }
 
     bool isRoot() const { return base == nullptr; }
     
@@ -138,9 +138,9 @@ protected:
     static Tables tables;
 
     // TODO: template the vec type
-    std::vector<vec3cd> coeffs;
-    std::pair<vec3cd, vec3cd> polarCoeffs;
-    std::vector<vec3cd> localCoeffs;
+    std::vector<vec2cd> coeffs;
+    std::pair<vec2cd, vec2cd> polarCoeffs;
+    std::vector<vec2cd> localCoeffs;
 
     NodeVec branches;
     NodeVec nbors; // list 1
