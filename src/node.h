@@ -99,9 +99,13 @@ public:
 
     void evalSelfSols();
 
+    // void evalPairSolsNoRecip(const std::shared_ptr<Node>);
+
+    // void evalSelfSolsNoRecip();
+
     std::vector<vec3cd> getFarSolsFromCoeffs(double);
 
-    std::vector<vec3cd> getFarSols(double);
+    // std::vector<vec3cd> getFarSols(double);
    
     virtual std::shared_ptr<Node> getSelf() = 0;
     

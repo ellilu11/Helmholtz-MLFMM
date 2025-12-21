@@ -72,7 +72,7 @@ void Leaf::buildMpoleCoeffs() {
             vec3cd radPat = vec3cd::Zero();
 
             for (const auto& src : srcs)
-                radPat += src->getRadAlongDir(center, kvec);
+                radPat += src->getCurrent() * src->getRadAlongDir(center, kvec);
 
             // Get spherical (no radial) components
             coeffs.push_back(tables.toSphKK[level][idx] * radPat);
@@ -168,9 +168,8 @@ void Leaf::evalFarSols() {
  * (M2T) Evaluate sols from mpole expansion due to list 3 nodes
  */
 void Leaf::evalNearNonNborSols() {
-    for (const auto& node : nearNonNbors)
-        evalPairSols(node);
-    return;
+    // Do nothing! Contribution from list 3 node was 
+    // already evaluated by Node::evalLeafIlistSols()
 }
 
 /* findNearNborPairs()
@@ -207,15 +206,15 @@ void Leaf::evaluateSols() {
 
     start = Clock::now();
 
-    // Using reciprocity
-    //for (const auto& pair : findNearNborPairs()) {
-    //    auto [obsLeaf, srcLeaf] = pair;
-    //    obsLeaf->evalPairSols(srcLeaf);
-    //}
+    for (const auto& pair : findNearNborPairs()) {
+        auto [obsLeaf, srcLeaf] = pair;
+        obsLeaf->evalPairSols(srcLeaf);
+    }
 
-    for (const auto& obsLeaf : leaves)
-        for (const auto& srcLeaf : obsLeaf->nearNbors)
-            obsLeaf->evalPairSols(srcLeaf);
+    // No reciprocity
+    //for (const auto& obsLeaf : leaves)
+    //    for (const auto& srcLeaf : obsLeaf->nearNbors)
+    //        obsLeaf->evalPairSols(srcLeaf);
 
     for (const auto& leaf : leaves)
         leaf->evalSelfSols();

@@ -139,9 +139,9 @@ void Node::buildMpoleToLocalCoeffs() {
 
         const auto& mpoleCoeffs = node->coeffs;
 
-        const auto& dR = center - node->center;
-        const double r = dR.norm();
-        const auto& rhat = dR / r;
+        const auto& dX = center - node->center;
+        const double r = dX.norm();
+        const auto& rhat = dX / r;
 
         const auto& translVec = tables.transl[level].at(r / nodeLeng);
 
@@ -192,63 +192,6 @@ void Node::buildMpoleToLocalCoeffs() {
     }
 }
 
-
-
-// No psi interpolation
-/*void Node::buildMpoleToLocalCoeffs() {
-    if (iList.empty()) return;
-
-    const int order = config.interpOrder;
-
-    const auto [nth, nph] = getNumAngles(level);
-    localCoeffs.resize(nth*nph, vec2cd::Zero());
-
-    const int L = Ls[level];
-
-    for (const auto& node : iList) {
-
-        const auto& mpoleCoeffs = node->coeffs;
-
-        const auto& dR = center - node->center;
-        const double r = dR.norm();
-        const auto& rhat = dR / r;
-
-        const double kr = wavenum*r;
-        vecXcd radialCoeffs(L+1);
-
-        for (int l = 0; l <= L; ++l) {
-            radialCoeffs[l] =
-                iu * wavenum / (4.0*PI)
-                * pow(iu,l) * (2.0*l+1.0)
-                * Math::sphericalHankel1(kr, l);
-        }
-
-        size_t idx = 0;
-        for (int ith = 0; ith < nth; ++ith) {
-
-            for (int iph = 0; iph < nph; ++iph) {
-
-                const auto& khat = tables.khat[level][idx];
-
-                const double xi = khat.dot(rhat);
-
-                cmplx translCoeff = 0.0;
-
-                for (int l = 0; l <= L; ++l) {
-                    translCoeff +=
-                        radialCoeffs[l]
-                        * Math::legendreP(xi, l).first
-                        ;
-                }
-
-                localCoeffs[idx] += translCoeff * mpoleCoeffs[idx];
-
-                idx++;
-            }
-        }
-    } // for (const auto& node : iList)
-}*/
-
 /* evalLeafIlistSols()
  * (S2L) Add contribution from list 4 to local coeffs
  */
@@ -260,9 +203,62 @@ void Node::evalLeafIlistSols() {
 
 /* evalPairSols(srcNode)
  * (S2T) Evaluate sols at sources in this node due to sources in srcNode
+ * and vice versa
  * srcNode : source node
  */
 void Node::evalPairSols(const std::shared_ptr<Node> srcNode) {
+
+    const int numObss = srcs.size(), numSrcs = srcNode->srcs.size();
+
+    cmplxVec solAtObss(numObss, 0.0);
+    cmplxVec solAtSrcs(numSrcs, 0.0);
+
+    for (size_t obsIdx = 0; obsIdx < numObss; ++obsIdx) {
+        for (size_t srcIdx = 0; srcIdx < numSrcs; ++srcIdx) {
+            const auto obs = srcs[obsIdx], src = srcNode->srcs[srcIdx];
+
+            const cmplx rad = obs->getIntegratedRad(src);
+
+            // Assume phat is same for all sources
+            solAtObss[obsIdx] += src->getCurrent() * rad;
+            solAtSrcs[srcIdx] += obs->getCurrent() * rad;
+        }
+    }
+
+    for (int n = 0; n < numObss; ++n)
+        srcs[n]->addToSol(C * wavenum * solAtObss[n]);
+
+    for (int n = 0; n < numSrcs; ++n)
+        (srcNode->srcs[n])->addToSol(C * wavenum * solAtSrcs[n]);
+}
+
+/* evalSelfSols()
+ * (S2T) Evaluate sols at sources in this node due to other sources
+ * in this node
+ */
+void Node::evalSelfSols() {
+
+    const int numSrcs = srcs.size();
+
+    cmplxVec sols(numSrcs, 0.0);
+
+    for (size_t obsIdx = 1; obsIdx < numSrcs; ++obsIdx) { // obsIdx = 0 to include self-interactions
+        for (size_t srcIdx = 0; srcIdx < obsIdx; ++srcIdx) {
+            auto obs = srcs[obsIdx], src = srcs[srcIdx];
+
+            const cmplx rad = obs->getIntegratedRad(src);
+
+            // Assume phat is same for all sources
+            sols[obsIdx] += src->getCurrent() * rad;
+            sols[srcIdx] += obs->getCurrent() * rad;
+        }
+    }
+
+    for (int n = 0; n < numSrcs; ++n)
+        srcs[n]->addToSol(C * wavenum * sols[n]);
+}
+
+/*void Node::evalPairSolsNoRecip(const std::shared_ptr<Node> srcNode) {
 
     assert(getSelf() != srcNode);
 
@@ -272,17 +268,13 @@ void Node::evalPairSols(const std::shared_ptr<Node> srcNode) {
         cmplx sol = 0;
 
         for (const auto& src : srcSrcs)
-             sol += obs->getIntegratedRad(src);
+            sol += src->getCurrent() * obs->getIntegratedRad(src);
 
         obs->addToSol(C * wavenum * sol);
     }
-}
+}*/
 
-/* evalSelfSols()
- * (S2T) Evaluate sols at sources in this node due to other sources
- * in this node
- */
-void Node::evalSelfSols() {
+/*void Node::evalSelfSolsNoRecip() {
 
     for (const auto& obs : srcs) {
         cmplx sol = 0;
@@ -290,13 +282,13 @@ void Node::evalSelfSols() {
         for (const auto& src : srcs) {
             if (src == obs) continue; // TODO: Use analytic expression
 
-            sol += obs->getIntegratedRad(src);
+            sol += src->getCurrent() * obs->getIntegratedRad(src);
 
         }
 
         obs->addToSol(C * wavenum * sol);
     }
-}
+}*/
 
 /* getFarSol()
  * Return sols at all sampled directions at distance r 

@@ -81,7 +81,7 @@ void Stem::buildMpoleCoeffs() {
         const auto& branchCoeffs = branch->getMpoleCoeffs();
 
         // Shift branch coeffs to center of this node
-        const auto& dR = center - branch->getCenter();
+        const auto& dX = center - branch->getCenter();
 
         std::vector<vec2cd> shiftedCoeffs(mth*mph, vec2cd::Zero());
 
@@ -91,7 +91,7 @@ void Stem::buildMpoleCoeffs() {
 
                 const auto& kvec = tables.khat[level+1][l] * wavenum;
 
-                shiftedCoeffs[l] = exp(iu*kvec.dot(dR)) * branchCoeffs[l];
+                shiftedCoeffs[l] = exp(iu*kvec.dot(dX)) * branchCoeffs[l];
 
                 l++;
 
@@ -119,7 +119,7 @@ std::vector<vec2cd> Stem::getShiftedLocalCoeffs(int branchIdx) const {
     if (iList.empty()) return outCoeffs;
 
     // Shift local coeffs to center of branch
-    const auto& dR = branches[branchIdx]->getCenter() - center;
+    const auto& dX = branches[branchIdx]->getCenter() - center;
 
     std::vector<vec2cd> shiftedCoeffs(mth*mph, vec2cd::Zero());
 
@@ -129,7 +129,7 @@ std::vector<vec2cd> Stem::getShiftedLocalCoeffs(int branchIdx) const {
 
             const auto& kvec = tables.khat[level][l] * wavenum;
 
-            shiftedCoeffs[l] = exp(iu*kvec.dot(dR)) * localCoeffs[l];
+            shiftedCoeffs[l] = exp(iu*kvec.dot(dX)) * localCoeffs[l];
 
             l++;
         }
