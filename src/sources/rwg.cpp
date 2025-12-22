@@ -77,7 +77,7 @@ vec3cd RWG::getRadAlongDir(
         rad += weightMinus * exp(iu*kvec.dot(X-quadNode))
                 * (quadNode - vMinus);
 
-    return current * leng * rad; // TODO: Multiply in current later
+    return leng * rad;
 }
 
 /* getIncAlongDir(X,kvec)
@@ -86,7 +86,7 @@ vec3cd RWG::getRadAlongDir(
  * X    : source point (Cartesian)
  * kvec : wavevector
  */
-vec3cd RWG::getIncAlongDir(
+/*vec3cd RWG::getIncAlongDir(
     const vec3d& X, const vec3d& kvec) const {
 
     vec3cd inc = vec3cd::Zero();
@@ -101,8 +101,8 @@ vec3cd RWG::getIncAlongDir(
         inc += weightMinus * exp(iu*kvec.dot(quadNode-X))
                 * (quadNode - vMinus);
 
-    return leng * inc; // no current term here!
-}
+    return leng * inc;
+}*/
 
 /* getRadAtPoint(X)
  * Return the full radiated field with given wavenum
@@ -130,7 +130,7 @@ vec3cd RWG::getRadAtPoint(const vec3d& X) const {
         rad += weightMinus * dyadic * (quadNode - vMinus);
     }
 
-    return current * leng * rad; // TODO: Multiply in current later
+    return leng * rad;
 }
 
 /* getIntegratedRad(src)

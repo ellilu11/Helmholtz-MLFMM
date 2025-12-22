@@ -59,11 +59,9 @@ namespace Math {
             z);
     }
 
-    inline Eigen::Matrix3cd dyadicG(const vec3d& X, double k) noexcept {
-        double r = X.norm();
-        double kr = k*r;
-        double krsq = kr*kr;
-        const auto& rhat = X / r;
+    inline Eigen::Matrix3cd dyadicG(const vec3d& dX, double k) noexcept {
+        const double r = dX.norm(), kr = k*r, krsq = kr*kr;
+        const auto& rhat = dX / r;
         const auto& RR = rhat * rhat.transpose();
 
         return

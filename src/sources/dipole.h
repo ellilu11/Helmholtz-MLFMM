@@ -31,9 +31,9 @@ public:
      * X    : source point (Cartesian)
      * kvec : wavevector
      */
-    vec3cd getIncAlongDir(const vec3d& X, const vec3d& kvec) const override {
-        return conj(exp(iu*kvec.dot(pos-X))) * phat;
-    }
+    //vec3cd getIncAlongDir(const vec3d& X, const vec3d& kvec) const override {
+    //    return conj(exp(iu*kvec.dot(pos-X))) * phat;
+    //}
 
     /* getRadAtPoint(X)
      * Return the radiated field due to this dipole

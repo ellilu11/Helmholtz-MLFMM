@@ -51,31 +51,33 @@ void Node::buildAngularSamples() {
                 (1.73*wavenum*nodeLeng +
                 2.16*pow(config.digits, 2.0/3.0)*pow(wavenum*nodeLeng, 1.0/3.0)));
                 
-        // TODO: Find an optimal formula, possibly explicitly depending on level
-        Ls.push_back(tau/2 - 1);
+        Ls.push_back(tau/2 - 1); // TODO: Find an optimal formula
 
         // Construct thetas
         const int nth = tau+1;
-        const auto [nodes, weights] = Interp::gaussLegendre(nth, EPS_NR, 0.0, PI);
+        auto [nodes, weights] = Interp::gaussLegendre(nth, EPS_NR, 0.0, PI);
 
-
+        // Absorb sin(theta) into weights
+        std::transform(weights.begin(), weights.end(), nodes.begin(), weights.begin(),
+            [](double weight, double theta) {
+                return weight * sin(theta);
+            });
 
         thetas.push_back(nodes);
         thetaWeights.push_back(weights);
 
         // Construct phis
         const int nph = 2*nth;
-        realVec phis_lvl;
+        realVec phis_lvl(nph);
 
         for (int iph = 0; iph < nph; ++iph)
-            phis_lvl.push_back(2.0*PI*iph/static_cast<double>(nph));
+            phis_lvl[iph] = 2.0*PI*iph/static_cast<double>(nph);
 
         phis.push_back(phis_lvl);
 
         std::cout << "   (Lvl,Nth,Nph) = "
                   << "(" << lvl << "," << nth << "," << nph << ")\n";
     }
-
 }
 
 /* buildInteractionList()
@@ -147,48 +149,41 @@ void Node::buildMpoleToLocalCoeffs() {
 
         const auto& transls = tables.transl[level].at(r/nodeLeng);
 
-        size_t l = 0;
-        for (int ith = 0; ith < nth; ++ith) {
+        for (int idx = 0; idx < nth*nph; ++idx) {
+            const auto& khat = tables.khat[level][idx];
 
-            for (int iph = 0; iph < nph; ++iph) {
+            const double psi = acos(khat.dot(rhat));
 
-                const auto& khat = tables.khat[level][l];
+            cmplx translCoeff = 0.0;
 
-                const double psi = acos(khat.dot(rhat));
+            // psi LUT
+            const auto [interps, nearIdx] = tables.interpPsi[level].at(psi);
 
-                cmplx translCoeff = 0.0;
+            for (int ips = nearIdx+1-order, k = 0; k < 2*order; ++ips, ++k) {
 
-                // psi LUT
-                const auto [interps, nearIdx] = tables.interpPsi[level].at(psi);
+                const int ips_flipped = Math::flipIdxToRange(ips, nps); 
 
-                for (int ips = nearIdx+1-order, k = 0; k < 2*order; ++ips, ++k) {
-
-                    const int ips_flipped = Math::flipIdxToRange(ips, nps); 
-
-                    translCoeff += transls[ips_flipped] * interps[k];
-                }
-                //
-
-                /* No psi LUT
-                const int nearIdx = std::floor((nps-1) * psi / PI);
-
-                realVec psis_;
-                for (int ips = nearIdx+1-order; ips <= nearIdx+order; ++ips)
-                    psis_.push_back(PI*ips/static_cast<double>(nps-1));
-
-                for (int ips = nearIdx+1-order, k = 0; k < 2*order; ++ips, ++k) {
-                    const int ips_flipped = Math::flipIdxToRange(ips, nps);
-
-                    translCoeff +=
-                        transls[ips_flipped]
-                        * Interp::evalLagrangeBasis(psi,psis_,k);
-                }
-                */
-
-                localCoeffs[l] += translCoeff * mpoleCoeffs[l];
-
-                ++l;
+                translCoeff += transls[ips_flipped] * interps[k];
             }
+            //
+
+            /* No psi LUT
+            const int nearIdx = std::floor((nps-1) * psi / PI);
+
+            realVec psis_;
+            for (int ips = nearIdx+1-order; ips <= nearIdx+order; ++ips)
+                psis_.push_back(PI*ips/static_cast<double>(nps-1));
+
+            for (int ips = nearIdx+1-order, k = 0; k < 2*order; ++ips, ++k) {
+                const int ips_flipped = Math::flipIdxToRange(ips, nps);
+
+                translCoeff +=
+                    transls[ips_flipped]
+                    * Interp::evalLagrangeBasis(psi,psis_,k);
+            }
+            */
+
+            localCoeffs[idx] += translCoeff * mpoleCoeffs[idx];
         }
     }
 }
@@ -259,7 +254,8 @@ void Node::evalSelfSols() {
         srcs[n]->addToSol(C * wavenum * sols[n]);
 }
 
-/*void Node::evalPairSolsNoRecip(const std::shared_ptr<Node> srcNode) {
+/*
+void Node::evalPairSols(const std::shared_ptr<Node> srcNode) {
 
     assert(getSelf() != srcNode);
 
@@ -273,9 +269,9 @@ void Node::evalSelfSols() {
 
         obs->addToSol(C * wavenum * sol);
     }
-}*/
+}
 
-/*void Node::evalSelfSolsNoRecip() {
+void Node::evalSelfSols() {
 
     for (const auto& obs : srcs) {
         cmplx sol = 0;

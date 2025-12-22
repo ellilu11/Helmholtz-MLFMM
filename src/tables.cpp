@@ -7,8 +7,7 @@ void Tables::buildAngularTables() {
         const auto [nth, nph] = Node::getNumAngles(level);
 
         std::vector<vec3d> khat_lvl(nth*nph);
-        std::vector<mat23d> toSphK_lvl(nth*nph);
-        std::vector<mat23d> toSphKK_lvl(nth*nph);
+        std::vector<mat23d> toThPh_lvl(nth*nph);
 
         size_t idx = 0;
         for (int ith = 0; ith < nth; ++ith) {
@@ -18,14 +17,12 @@ void Tables::buildAngularTables() {
                 const double ph = Node::phis[level][iph];
 
                 khat_lvl[idx] = Math::fromSph(vec3d(1.0, th, ph));
-                toSphK_lvl[idx] = Math::toSphR(th, ph);
-                toSphKK_lvl[idx++] = Math::toSphRR(th, ph);
+                toThPh_lvl[idx++] = Math::toSphRR(th, ph);
             }
         }
 
         khat.push_back(khat_lvl);
-        toSphK.push_back(toSphK_lvl);
-        toSphKK.push_back(toSphK_lvl);
+        toThPh.push_back(toThPh_lvl);
     }
 }
 

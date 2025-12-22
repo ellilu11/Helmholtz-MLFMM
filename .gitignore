@@ -376,3 +376,5 @@ FodyWeavers.xsd
 /plt/plotNodes.m
 /plt/testInterp.asv
 /plt/testInterp.m
+/plt/plotVals.m
+/plt/plotSols.m

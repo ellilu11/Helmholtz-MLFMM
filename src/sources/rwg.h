@@ -28,7 +28,7 @@ public:
 
     vec3cd getRadAlongDir(const vec3d&, const vec3d&) const override;
 
-    vec3cd getIncAlongDir(const vec3d&, const vec3d&) const override;
+    // vec3cd getIncAlongDir(const vec3d&, const vec3d&) const override;
 
     vec3cd getRadAtPoint(const vec3d&) const override;
 

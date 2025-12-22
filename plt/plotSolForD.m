@@ -6,18 +6,19 @@ solDir = readmatrix(dir+"solDir.txt");
 nvec = 1:length(solDir);
 
 %% 
-digits = 2*(1:8);
+digits = 2*(2:6);
 ndigits = length(digits);
 
-meanErr = zeros(ndigits,2);
+meanRelErr = zeros(ndigits,2);
 
 for id = 1:ndigits
     sol = readmatrix(dir+"sol_d" + digits(id)+".txt");
-    for comp = 1:1
-        meanRelErr(id,comp) = mean(sol(:,comp)-solDir(:,comp));
+    
+    for comp = 1:2
+        meanRelErr(id,comp) = mean(abs(sol(:,comp)-solDir(:,comp))./abs(solDir(:,comp)));
     end
 end
 
 close all;
 figure(1);
-semilogy(digits, abs(meanErr))
+semilogy(digits, meanRelErr)

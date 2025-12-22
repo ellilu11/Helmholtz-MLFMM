@@ -192,16 +192,17 @@ pair<SrcVec, shared_ptr<PlaneWave>> importFromConfig(const Config& config)
             break;
         }
     }
-
-    //
-    //const string configPath = "config/n480/";
-    //auto srcs = importRWG(configPath+"vertices.txt",
-    //                      configPath+"faces.txt",
-    //                      configPath+"rwgs.txt",
-    //                      config.quadPrec,
-    //                      Einc);
     //
 
+    /*
+    const string configPath = "config/n480/";
+    auto srcs = importRWG(configPath+"vertices.txt",
+                          configPath+"faces.txt",
+                          configPath+"rwgs.txt",
+                          config.quadPrec,
+                          Einc);
+    */
+    
     cout << fixed << setprecision(3);
     cout << "   Mode:            " << (config.mode == Mode::READ ? "READ" : "WRITE") << '\n';
     cout << "   Source file:     " << fpath.generic_string() << '\n';
@@ -219,7 +220,7 @@ pair<SrcVec, shared_ptr<PlaneWave>> importFromConfig(const Config& config)
 void printSols(SrcVec& srcs, const std::string& fname)
 {
     namespace fs = std::filesystem;
-    fs::path dir = "out";
+    fs::path dir = "out/sol";
     std::error_code ec;
 
     if (fs::create_directory(dir, ec))

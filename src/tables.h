@@ -33,9 +33,7 @@ struct Tables {
 
     // Angular tables
     std::vector<std::vector<vec3d>> khat;
-
-    std::vector<std::vector<mat23d>> toSphK;
-    std::vector<std::vector<mat23d>> toSphKK;
+    std::vector<std::vector<mat23d>> toThPh;
 
     // M2M interpolation tables
     std::vector<std::vector<interpPair>> interpTheta;

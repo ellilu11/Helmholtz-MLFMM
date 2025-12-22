@@ -50,6 +50,17 @@ int main() {
     duration_ms = end - start;
     cout << "   Elapsed time: " << duration_ms.count() << " ms\n\n";
 
+    // ==================== Build radpats ===================== //
+    cout << " Building radiation patterns...\n";
+
+    start = Clock::now();
+
+    Leaf::buildRadPats();
+
+    end = Clock::now();
+    duration_ms = end - start;
+    cout << "   Elapsed time: " << duration_ms.count() << " ms\n\n";
+
     // ==================== Upward pass ===================== //
     cout << " Computing upward pass...\n";
 
@@ -93,7 +104,7 @@ int main() {
     cout << "   Elapsed time (S2T): " << t.S2T.count() << " ms\n\n";
     cout << " FMM total elapsed time: " << fmm_duration_ms.count() << " ms\n";
 
-    printSols(srcs, "sol.txt");
+    printSols(srcs, "sol_d" + to_string(config.digits) + ".txt");
 
     if (!config.evalDirect) return 0;
 

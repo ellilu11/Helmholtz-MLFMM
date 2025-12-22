@@ -51,6 +51,34 @@ void Leaf::buildLists() {
     nodes.push_back(shared_from_this()); // 
 }
 
+/* buildRadPats()
+ * Build radiation patterns due to sources in all leaves
+ */
+void Leaf::buildRadPats() {
+
+    for (const auto& leaf : leaves) {
+
+        const int level = leaf->level;
+        const auto& center = leaf->center;
+
+        const auto [nth, nph] = getNumAngles(level);
+
+        for (int angIdx = 0; angIdx < nth*nph; ++angIdx) {
+
+            const auto& kvec = tables.khat[level][angIdx] * wavenum;
+            const auto& toThPh = tables.toThPh[level][angIdx];
+
+            std::vector<vec2cd> radPat(leaf->srcs.size(), vec2cd::Zero());
+
+            int srcIdx = 0;
+            for (const auto& src : leaf->srcs)
+                radPat[srcIdx++] = toThPh * src->getRadAlongDir(center, kvec);
+
+            leaf->radPats.push_back(radPat);
+        }
+    }
+}
+
 /* buildMpoleCoeffs()
  * (S2M) Build multipole coefficients from sources in this node  
  */
@@ -62,23 +90,17 @@ void Leaf::buildMpoleCoeffs() {
 
     auto start = Clock::now();
 
-    size_t idx = 0;
-    for (int ith = 0; ith < nth; ++ith) {
+    for (int angIdx = 0; angIdx < nth*nph; ++angIdx) {
 
-        for (int iph = 0; iph < nph; ++iph) {
+        vec2cd coeff = vec2cd::Zero();
 
-            const auto& kvec = tables.khat[level][idx] * wavenum;
+        int srcIdx = 0;
+        for (const auto& src : srcs)
+            coeff += src->getCurrent() * radPats[angIdx][srcIdx++];
 
-            vec3cd radPat = vec3cd::Zero();
+        // Get spherical (no radial) components
+        coeffs.push_back(coeff);
 
-            for (const auto& src : srcs)
-                radPat += src->getCurrent() * src->getRadAlongDir(center, kvec);
-
-            // Get spherical (no radial) components
-            coeffs.push_back(tables.toSphKK[level][idx] * radPat);
-
-            idx++;
-        }
     }
 
     /* Get polar coeffs in cartesian components
@@ -135,32 +157,27 @@ void Leaf::evalFarSols() {
 
     const double phiWeight = 2.0*PI / static_cast<double>(nph); // TODO: static member
 
+    int obsIdx = 0;
     for (const auto& obs : srcs) {
 
         size_t idx = 0;
         cmplx sol = 0;
 
         for (int ith = 0; ith < nth; ++ith) {
-            const auto theta = thetas[level][ith];
+            const double weight = thetaWeights[level][ith];
 
             for (int iph = 0; iph < nph; ++iph) {
-                const auto& khat = tables.khat[level][idx];
-
-                // Compute incoming pattern along khat at this source
-                const vec2cd& incPat =
-                    tables.toSphKK[level][idx] *
-                    obs->getIncAlongDir(center, wavenum*khat);
 
                 // Do the angular integration
-                sol += thetaWeights[level][ith]
-                        * sin(theta) // TODO: Absorb into thetaWeights
-                        * incPat.dot(localCoeffs[idx]);
+                sol += weight * radPats[idx][obsIdx].dot(localCoeffs[idx]); // Hermitian dot!
 
                 idx++;
             }
         }
 
         obs->addToSol(C * wavenum * phiWeight * sol);
+
+        obsIdx++;
     }
 }
 
@@ -168,6 +185,10 @@ void Leaf::evalFarSols() {
  * (M2T) Evaluate sols from mpole expansion due to list 3 nodes
  */
 void Leaf::evalNearNonNborSols() {
+    //for (const auto& node : leafIlist)
+    //    evalPairSols(node);
+    //return;
+
     // Do nothing! Contribution from list 3 node was 
     // already evaluated by Node::evalLeafIlistSols()
 }
@@ -201,10 +222,10 @@ void Leaf::evaluateSols() {
 
     t.L2T += Clock::now() - start;
 
+    start = Clock::now();
+
     for (const auto& leaf : leaves)
         leaf->evalNearNonNborSols();
-
-    start = Clock::now();
 
     for (const auto& pair : findNearNborPairs()) {
         auto [obsLeaf, srcLeaf] = pair;

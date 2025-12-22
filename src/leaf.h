@@ -25,6 +25,8 @@ public:
 
     NodeVec getNearNbors() const { return nearNbors; }
 
+    static void buildRadPats();
+
     void evalFarSols();
 
     void evalNearNonNborSols();
@@ -47,6 +49,8 @@ public:
 
 protected:
     static LeafVec leaves;
+
+    std::vector<std::vector<vec2cd>> radPats;
 
     NodeVec nearNbors; // list 1
     NodeVec nearNonNbors; // list 3
