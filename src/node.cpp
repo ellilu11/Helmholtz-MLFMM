@@ -42,16 +42,18 @@ void Node::buildAngularSamples() {
 
     constexpr double EPS_NR = 1.0E-9; // Newton-Raphson precision
 
+    std::cout << "   (Lvl,Nth,Nph) =\n";
+
     for (int lvl = 0; lvl <= maxLevel; ++lvl) {
         const double nodeLeng = config.rootLeng / pow(2.0, lvl);
 
         // Use excess bandwidth formula
-        const int tau = // 33; 
+        const int tau = 
             ceil(
                 (1.73*wavenum*nodeLeng +
                 2.16*pow(config.digits, 2.0/3.0)*pow(wavenum*nodeLeng, 1.0/3.0)));
                 
-        Ls.push_back(tau/2 - 1); // TODO: Find an optimal formula
+        Ls.push_back(floor(0.50*tau)); // TODO: Find optimal formula
 
         // Construct thetas
         const int nth = tau+1;
@@ -75,8 +77,8 @@ void Node::buildAngularSamples() {
 
         phis.push_back(phis_lvl);
 
-        std::cout << "   (Lvl,Nth,Nph) = "
-                  << "(" << lvl << "," << nth << "," << nph << ")\n";
+
+        std::cout << "   (" << lvl << "," << nth << "," << nph << ")\n";
     }
 }
 
@@ -147,7 +149,7 @@ void Node::buildMpoleToLocalCoeffs() {
         const double r = dX.norm();
         const auto& rhat = dX / r;
 
-        const auto& transls = tables.transl[level].at(r/nodeLeng);
+        const auto& transl_dX = tables.transl[level].at(r/nodeLeng);
 
         for (int idx = 0; idx < nth*nph; ++idx) {
             const auto& khat = tables.khat[level][idx];
@@ -157,31 +159,15 @@ void Node::buildMpoleToLocalCoeffs() {
             cmplx translCoeff = 0.0;
 
             // psi LUT
-            const auto [interps, nearIdx] = tables.interpPsi[level].at(psi);
+            const auto [interp, nearIdx] = tables.interpPsi[level].at(psi);
 
             for (int ips = nearIdx+1-order, k = 0; k < 2*order; ++ips, ++k) {
 
                 const int ips_flipped = Math::flipIdxToRange(ips, nps); 
 
-                translCoeff += transls[ips_flipped] * interps[k];
+                translCoeff += transl_dX[ips_flipped] * interp[k];
             }
             //
-
-            /* No psi LUT
-            const int nearIdx = std::floor((nps-1) * psi / PI);
-
-            realVec psis_;
-            for (int ips = nearIdx+1-order; ips <= nearIdx+order; ++ips)
-                psis_.push_back(PI*ips/static_cast<double>(nps-1));
-
-            for (int ips = nearIdx+1-order, k = 0; k < 2*order; ++ips, ++k) {
-                const int ips_flipped = Math::flipIdxToRange(ips, nps);
-
-                translCoeff +=
-                    transls[ips_flipped]
-                    * Interp::evalLagrangeBasis(psi,psis_,k);
-            }
-            */
 
             localCoeffs[idx] += translCoeff * mpoleCoeffs[idx];
         }
@@ -189,12 +175,28 @@ void Node::buildMpoleToLocalCoeffs() {
 }
 
 /* evalLeafIlistSols()
- * (S2L) Add contribution from list 4 to local coeffs
+ * (S2L/S2T) Add contribution from list 4 to local coeffs
  */
 void Node::evalLeafIlistSols() {
      for (const auto& node : leafIlist)
         evalPairSols(node);
      return;
+
+    /* No psi LUT
+    const int nearIdx = std::floor((nps-1) * psi / PI);
+
+    realVec psis_;
+    for (int ips = nearIdx+1-order; ips <= nearIdx+order; ++ips)
+        psis_.push_back(PI*ips/static_cast<double>(nps-1));
+
+    for (int ips = nearIdx+1-order, k = 0; k < 2*order; ++ips, ++k) {
+        const int ips_flipped = Math::flipIdxToRange(ips, nps);
+
+        translCoeff +=
+            transls[ips_flipped]
+            * Interp::evalLagrangeBasis(psi,psis_,k);
+    }
+    */
 }
 
 /* evalPairSols(srcNode)

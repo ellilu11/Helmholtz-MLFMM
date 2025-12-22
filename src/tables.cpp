@@ -17,7 +17,7 @@ void Tables::buildAngularTables() {
                 const double ph = Node::phis[level][iph];
 
                 khat_lvl[idx] = Math::fromSph(vec3d(1.0, th, ph));
-                toThPh_lvl[idx++] = Math::toSphRR(th, ph);
+                toThPh_lvl[idx++] = Math::toThPh(th, ph);
             }
         }
 

@@ -34,9 +34,10 @@ void Stem::buildNeighbors() {
     for (int i = 0; i < numDir; ++i) {
         Dir dir = static_cast<Dir>(i);
         auto nbor = getNeighborGeqSize(dir);
-        if (nbor != nullptr)
-            nbors.push_back(nbor);
+
+        if (nbor != nullptr) nbors.push_back(nbor);
     }
+
     assert(nbors.size() <= numDir);
 }
 
@@ -85,17 +86,10 @@ void Stem::buildMpoleCoeffs() {
 
         std::vector<vec2cd> shiftedCoeffs(mth*mph, vec2cd::Zero());
 
-        size_t l = 0;
-        for (int ith = 0; ith < mth; ++ith) {
-            for (int iph = 0; iph < mph; ++iph) {
+        for (int idx = 0; idx < mth*mph; ++idx) {
+            const auto& kvec = tables.khat[level+1][idx] * wavenum;
 
-                const auto& kvec = tables.khat[level+1][l] * wavenum;
-
-                shiftedCoeffs[l] = exp(iu*kvec.dot(dX)) * branchCoeffs[l];
-
-                ++l;
-
-            }
+            shiftedCoeffs[idx] = exp(iu*kvec.dot(dX)) * branchCoeffs[idx];
         }
 
         // Interpolate shifted coeffs to this node's angular grid
@@ -123,16 +117,10 @@ std::vector<vec2cd> Stem::getShiftedLocalCoeffs(int branchIdx) const {
 
     std::vector<vec2cd> shiftedCoeffs(mth*mph, vec2cd::Zero());
 
-    size_t l = 0;
-    for (int ith = 0; ith < mth; ++ith) {
-        for (int iph = 0; iph < mph; ++iph) {
+    for (int idx = 0; idx < mth*mph; ++idx) {
+        const auto& kvec = tables.khat[level][idx] * wavenum;
 
-            const auto& kvec = tables.khat[level][l] * wavenum;
-
-            shiftedCoeffs[l] = exp(iu*kvec.dot(dX)) * localCoeffs[l];
-
-            ++l;
-        }
+        shiftedCoeffs[idx] = exp(iu*kvec.dot(dX)) * localCoeffs[idx];
     }
 
     // Interpolate shifted coeffs to branch's angular grid
@@ -167,7 +155,7 @@ void Stem::addInterpCoeffs(
     size_t m = 0;
     for (int jth = 0; jth < nth; ++jth) {
         
-        const auto [interps, nearIdx] = interpTheta[tblLvl][jth];
+        const auto [interp, nearIdx] = interpTheta[tblLvl][jth];
 
         for (int iph = 0; iph < mph; ++iph) {
 
@@ -188,7 +176,7 @@ void Stem::addInterpCoeffs(
                 const int m_shifted = ith_flipped*mph + iph_shifted;
 
                 innerCoeffs[m] += 
-                    interps[k] * inCoeffs[m_shifted]
+                    interp[k] * inCoeffs[m_shifted]
                     * Math::pm(outOfRange); // only for spherical components!
             }
 
@@ -201,7 +189,7 @@ void Stem::addInterpCoeffs(
     for (int jth = 0; jth < nth; ++jth) {
 
         for (int jph = 0; jph < nph; ++jph) {
-            const auto [interps, nearIdx] = interpPhi[tblLvl][jph]; // TODO: don't need to lookup for every jth
+            const auto [interp, nearIdx] = interpPhi[tblLvl][jph]; // TODO: don't need to lookup for every jth
 
             for (int iph = nearIdx+1-order, k = 0; iph <= nearIdx+order; ++iph, ++k) {
 
@@ -209,7 +197,7 @@ void Stem::addInterpCoeffs(
                 const int iph_wrapped = Math::wrapIdxToRange(iph, mph);
 
                 outCoeffs[n] += 
-                    interps[k]
+                    interp[k]
                     * innerCoeffs[jth*mph + iph_wrapped];
             }
 
@@ -299,22 +287,18 @@ void Stem::buildLocalCoeffs() {
     if (!isRoot()) {
 
         auto start = Clock::now();
-
         buildMpoleToLocalCoeffs();
-
         t.M2L += Clock::now() - start;
 
         evalLeafIlistSols();
 
         start = Clock::now();
-
         if (!base->isRoot()) {
             auto stemBase = dynamic_cast<Stem*>(base);
 
             localCoeffs =
                 localCoeffs + stemBase->getShiftedLocalCoeffs(branchIdx);
         }
-
         t.L2L += Clock::now() - start;
         
     }

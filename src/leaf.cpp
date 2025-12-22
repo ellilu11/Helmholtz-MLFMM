@@ -127,22 +127,18 @@ void Leaf::buildLocalCoeffs() {
     if (isRoot()) return;
 
     auto start = Clock::now();
-
     buildMpoleToLocalCoeffs();
-
     t.M2L += Clock::now() - start;
 
     evalLeafIlistSols();
 
     start = Clock::now();
-
     if (!base->isRoot()) {
         auto stemBase = static_cast<Stem*>(base);
 
         localCoeffs =
             localCoeffs + stemBase->getShiftedLocalCoeffs(branchIdx);
     }
-
     t.L2L += Clock::now() - start;
     
 }
@@ -160,18 +156,18 @@ void Leaf::evalFarSols() {
     int obsIdx = 0;
     for (const auto& obs : srcs) {
 
-        size_t idx = 0;
+        size_t angIdx = 0;
         cmplx sol = 0;
 
         for (int ith = 0; ith < nth; ++ith) {
             const double weight = thetaWeights[level][ith];
 
             for (int iph = 0; iph < nph; ++iph) {
-
                 // Do the angular integration
-                sol += weight * radPats[idx][obsIdx].dot(localCoeffs[idx]); // Hermitian dot!
+                sol += weight 
+                    * radPats[angIdx][obsIdx].dot(localCoeffs[angIdx]); // Hermitian dot!
 
-                idx++;
+                angIdx++;
             }
         }
 
@@ -182,7 +178,7 @@ void Leaf::evalFarSols() {
 }
 
 /* evalNearNonNborSols()
- * (M2T) Evaluate sols from mpole expansion due to list 3 nodes
+ * (M2T/S2T) Evaluate sols from mpole expansion due to list 3 nodes
  */
 void Leaf::evalNearNonNborSols() {
     //for (const auto& node : leafIlist)
@@ -216,10 +212,8 @@ std::vector<LeafPair> Leaf::findNearNborPairs(){
 void Leaf::evaluateSols() {
 
     auto start = Clock::now();
-
     for (const auto& leaf : leaves)
         leaf->evalFarSols();
-
     t.L2T += Clock::now() - start;
 
     start = Clock::now();
@@ -239,6 +233,6 @@ void Leaf::evaluateSols() {
 
     for (const auto& leaf : leaves)
         leaf->evalSelfSols();
-
+    
     t.S2T += Clock::now() - start;
 }

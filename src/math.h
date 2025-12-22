@@ -59,6 +59,11 @@ namespace Math {
             z);
     }
 
+    //inline mat3d IminusRR(const vec3d& rhat) noexcept {
+    //    // auto rhat = X / X.norm();
+    //    return mat3d::Identity() - rhat * rhat.transpose();
+    //}
+
     inline Eigen::Matrix3cd dyadicG(const vec3d& dX, double k) noexcept {
         const double r = dX.norm(), kr = k*r, krsq = kr*kr;
         const auto& rhat = dX / r;
@@ -70,23 +75,18 @@ namespace Math {
                 RR * (1.0 + 3.0*iu/kr - 3.0/krsq));
     };
 
-    inline mat23d toSphR(double th, double ph) noexcept {
-        return mat23d{
-            { -sin(ph),          cos(ph),          0.0     },
-            { -cos(th)*cos(ph), -cos(th)*sin(ph),  sin(th) }
-        };
-    }
-
-    inline mat23d toSphRR(double th, double ph) noexcept {
+    inline mat23d toThPh(double th, double ph) noexcept {
         return mat23d{
             {  cos(th)*cos(ph),  cos(th)*sin(ph), -sin(th) },
             { -sin(ph),          cos(ph),          0.0     }
         };
     }
 
-    //inline mat3d IminusRR(const vec3d& rhat) noexcept {
-    //    // auto rhat = X / X.norm();
-    //    return mat3d::Identity() - rhat * rhat.transpose();
+    //inline mat23d crossToThPh(double th, double ph) noexcept {
+    //    return mat23d{
+    //        { -sin(ph),          cos(ph),          0.0     },
+    //        { -cos(th)*cos(ph), -cos(th)*sin(ph),  sin(th) }
+    //    };
     //}
 
     //inline mat32d matFromThPh(double th, double ph) noexcept {
