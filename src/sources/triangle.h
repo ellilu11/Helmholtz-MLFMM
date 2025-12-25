@@ -34,8 +34,8 @@ public:
 
 private:
     std::array<vec3d,3> Xs; // vertices
-    std::array<vec3d,3> Dps; // Dps[i] = Xs[i+1] - Xs[i]
-    std::array<vec3d,3> Dms; // Dms[i] = Xs[i] - Xs[i-1]
+    std::array<vec3d,3> Ds; // Ds[i] = Xs[i+1] - Xs[i]
+    // std::array<vec3d,3> Dms; // Dms[i] = Xs[i] - Xs[i-1]
 
     vec3i vIdx;
 

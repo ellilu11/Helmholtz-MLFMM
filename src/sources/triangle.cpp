@@ -15,10 +15,10 @@ Triangle::Triangle(
 
     for (int i = 0; i < 3; ++i) {
         const int ipp = Math::wrapIdxToRange(i+1, 3);
-        const int imm = Math::wrapIdxToRange(i-1, 3);
+        Ds[i] = Xs[ipp] - Xs[i];
 
-        Dps[i] = Xs[ipp] - Xs[i];
-        Dms[i] = Xs[i] - Xs[imm];
+        // const int imm = Math::wrapIdxToRange(i-1, 3);
+        // Dms[i] = Xs[i] - Xs[imm];
     }
 
     buildQuads(quadPrec);

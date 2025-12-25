@@ -74,12 +74,12 @@ vec3cd RWG::getRadAlongDir(
     // const auto& tri = tris[triIdx];
 
         const auto& Xs = tri->Xs;
-        const auto& Dps = tri->Dps;
+        const auto& Ds = tri->Ds;
 
         const auto& dX = X - Xs[0];
 
-        const double alpha = -kvec.dot(Dps[0]);
-        const double beta = kvec.dot(Dps[2]);
+        const double alpha = -kvec.dot(Ds[0]);
+        const double beta = kvec.dot(Ds[2]);
 
         const cmplx expI_alpha = exp(iu*alpha);
         const cmplx expI_beta = exp(iu*beta);
@@ -89,7 +89,7 @@ vec3cd RWG::getRadAlongDir(
         const cmplx I2 = -iu * (-Ipart - (1.0 - (1.0 - iu*alpha) * expI_alpha) / (alpha*alpha) );
         const cmplx I3 = -iu * (Ipart + (1.0 - (1.0 - iu*beta) * expI_beta) / (beta*beta));
 
-        rad += exp(iu*kvec.dot(dX)) / (alpha-beta) * (I1 * (Xs[0] - Xpm[triIdx]) + I2*Dps[0] - I3*Dps[2]);
+        rad += exp(iu*kvec.dot(dX)) / (alpha-beta) * (I1 * (Xs[0] - Xpm[triIdx]) + I2*Ds[0] - I3*Ds[2]);
 
         if (triIdx++) rad *= -1.0;
     }
