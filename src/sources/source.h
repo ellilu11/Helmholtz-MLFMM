@@ -12,7 +12,7 @@ class Source {
 public:
     Source() = default;
     
-    Source(std::shared_ptr<PlaneWave> Einc)
+    Source(std::shared_ptr<Excitation::PlaneWave> Einc)
         : Einc(std::move(Einc)), voltage(0.0), current(0.0), sol(0.0) 
     {};
 
@@ -34,14 +34,14 @@ public:
 
     virtual void buildCurrent() = 0;
 
-    virtual vec3cd getRadAlongDir(const vec3d&, const vec3d&, bool = 0) const = 0;
+    virtual vec3cd getRadAlongDir(const vec3d&, const vec3d&) const = 0;
 
     // virtual vec3cd getRadAtPoint(const vec3d&) const = 0;
 
     virtual cmplx getIntegratedRad(const std::shared_ptr<Source>) const = 0;
 
 protected:
-    std::shared_ptr<PlaneWave> Einc;
+    std::shared_ptr<Excitation::PlaneWave> Einc;
     cmplx voltage;
     cmplx current;
     cmplx sol;

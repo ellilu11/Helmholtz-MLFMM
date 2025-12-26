@@ -1,16 +1,16 @@
 #include "dipole.h"
 
 Dipole::Dipole(
-    std::shared_ptr<PlaneWave> Einc, const vec3d& X)
+    std::shared_ptr<Excitation::PlaneWave> Einc, const vec3d& X)
     : Source(Einc), pos(X), pmag(Phys::p0), pol(vec3d(pmag, 0, 0)), phat(pol/pmag)
 {
-    // buildVoltage();
+    buildVoltage();
 
     buildCurrent();
 };
 
 Dipole::Dipole(
-    std::shared_ptr<PlaneWave> Einc, const vec3d& X, const vec3d& P)
+    std::shared_ptr<Excitation::PlaneWave> Einc, const vec3d& X, const vec3d& P)
     : Dipole(Einc, X)
 {
     pol = P;
@@ -22,9 +22,7 @@ Dipole::Dipole(
 
 void Dipole::buildVoltage() {
 
-    const auto& kvec = Einc->wavenum * Einc->wavevec;
-
-    voltage = -Einc->amplitude * exp(iu*kvec.dot(pos)) 
+    voltage = -Einc->amplitude * exp(iu*Einc->wavevec.dot(pos)) 
                 * pol.dot(Einc->pol);
 
 }

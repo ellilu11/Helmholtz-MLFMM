@@ -56,8 +56,6 @@ void Leaf::buildLists() {
  */
 void Leaf::buildRadPats() {
 
-    constexpr bool doNumeric = false;
-
     for (const auto& leaf : leaves) {
 
         const int level = leaf->level;
@@ -74,7 +72,7 @@ void Leaf::buildRadPats() {
 
             int srcIdx = 0;
             for (const auto& src : leaf->srcs)
-                radPat[srcIdx++] = toThPh * src->getRadAlongDir(center, kvec, doNumeric);
+                radPat[srcIdx++] = toThPh * src->getRadAlongDir(center, kvec);
 
             leaf->radPats.push_back(radPat);
         }

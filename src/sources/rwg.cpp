@@ -1,7 +1,7 @@
 #include "rwg.h"
 
 RWG::RWG(
-    std::shared_ptr<PlaneWave> Einc,
+    std::shared_ptr<Excitation::PlaneWave> Einc,
     const Eigen::Vector4i& idx,
     const std::vector<vec3d>& vertices,
     const TriVec& triangles)
@@ -19,34 +19,13 @@ RWG::RWG(
             if (vIdx != idx[0] && vIdx != idx[1])
                 Xpm[i] = vertices[vIdx];
 
-    // buildVoltage();
+    buildVoltage();
 
     buildCurrent();
 
     //std::cout << '(' << X0 << ") (" << X1 << ") ("
     //    << Xpm[0] << ") (" << Xpm[1] << ") " << leng << '\n';
 };
-
-void RWG::buildVoltage() {
-
-    cmplx voltage(0,0);
-
-    const auto& kvec = Einc->wavenum * Einc->wavevec;
-
-    /*auto [nodesPlus, weightPlus] = triPlus->getQuads();
-    for (const auto& quadNode : nodesPlus)
-        rhs += weightPlus * exp(iu*kvec.dot(quadNode)) 
-                    * (quadNode - vPlus).dot(Einc->pol);
-
-    auto [nodesMinus, weightMinus] = triMinus->getQuads();
-    for (const auto& quadNode : nodesMinus)
-        rhs += weightMinus * exp(iu*kvec.dot(quadNode))
-                    * (vMinus - quadNode).dot(Einc->pol);
-    */
-
-    voltage *= -Einc->amplitude * leng;
-    
-}
 
 void RWG::buildCurrent() {
     current = 1.0;
@@ -55,15 +34,7 @@ void RWG::buildCurrent() {
 
 }
 
-/* getRadAlongDir(X,kvec)
- * Return the outgoing radiated amplitude due to this
- * RWG at X along direction kvec
- * X    : observation point (Cartesian)
- * kvec : wavevector 
- */ 
-vec3cd RWG::getRadAlongDir(
-    const vec3d& X, const vec3d& kvec, bool doNumeric) const {
-
+vec3cd RWG::getIntegratedPlaneWave(const vec3d& kvec, bool doNumeric) const {
     using namespace Math;
 
     vec3cd rad = vec3cd::Zero();
@@ -74,7 +45,7 @@ vec3cd RWG::getRadAlongDir(
 
             auto [nodes, weight] = tri->getQuads();
             for (const auto& node : nodes)
-                rad += weight * exp(iu*kvec.dot(X-node))
+                rad += weight * exp(iu*kvec.dot(node))
                         * (node - Xpm[triIdx])
                         * sign(triIdx);
             ++triIdx;
@@ -86,17 +57,17 @@ vec3cd RWG::getRadAlongDir(
     for (const auto& tri : tris) {
         const auto& Xs = tri->Xs, Ds = tri->Ds;
 
-        const double alpha = -kvec.dot(Ds[0]), beta = kvec.dot(Ds[2]), gamma = alpha-beta;
+        const double alpha = kvec.dot(Ds[0]), beta = -kvec.dot(Ds[2]), gamma = alpha-beta;
 
         const double alphasq = alpha*alpha, betasq = beta*beta;
 
         const cmplx expI_alpha = exp(iu*alpha), expI_beta = exp(iu*beta);
 
-        const cmplx 
+        const cmplx // TODO: Needed only if gamma != 0
             f0_alpha = (approxZero(alpha) ? -iu : (1.0 - expI_alpha) / alpha),
             f0_beta = (approxZero(beta) ? -iu : (1.0 - expI_beta) / beta);
 
-        const cmplx 
+        const cmplx
             f1_alpha = (approxZero(alpha) ? -0.5 : (1.0 - (1.0 - iu*alpha) * expI_alpha) / alphasq),
             f1_beta = (approxZero(beta) ? -0.5 : (1.0 - (1.0 - iu*beta) * expI_beta) / betasq);
 
@@ -105,11 +76,11 @@ vec3cd RWG::getRadAlongDir(
         if (approxZero(gamma)) {
             const cmplx
                 f2 = (expI_alpha*(alphasq + 2.0*iu*alpha - 2.0) + 2.0) / (2.0*alpha*alphasq);
-            
+
             radVec = -f1_alpha * (Xs[0] - Xpm[triIdx]) - iu*f2 * (Ds[0] - Ds[2]);
 
         } else {
-            const cmplx 
+            const cmplx
                 I0 = (f0_alpha - f0_beta) / gamma,
                 I1 = iu * (I0 + f1_alpha),
                 I2 = -iu * (I0 + f1_beta);
@@ -117,9 +88,7 @@ vec3cd RWG::getRadAlongDir(
             radVec = I0 * (Xs[0] - Xpm[triIdx]) + (I1*Ds[0] - I2*Ds[2]) / gamma;
         }
 
-        rad += exp(iu*kvec.dot(X-Xs[0])) * radVec * sign(triIdx);
-    
-        ++triIdx;
+        rad += exp(iu*kvec.dot(Xs[0])) * radVec * sign(triIdx++);
 
         //if (rad.norm() > 1.0E3)
         //    std::cout << alpha << ' ' << beta << ' ' << gamma << ' ' << rad.norm() << '\n';

@@ -5,8 +5,29 @@
 
 using namespace std; // TODO: Remove
 
+shared_ptr<Excitation::PlaneWave> importPlaneWave(const filesystem::path& fpath)
+{
+    ifstream inFile(fpath);
+    if (!inFile) throw runtime_error("Unable to find file");
+
+    string line;
+    getline(inFile, line);
+    istringstream iss(line);
+
+    shared_ptr<Excitation::PlaneWave> Einc;
+
+    vec3d pol, wavehat;
+    double wavenum, amplitude;
+    if (iss >> amplitude >> pol >> wavehat >> wavenum)
+        Einc = make_shared<Excitation::PlaneWave>(pol, wavehat, wavenum, amplitude);
+    else
+        throw std::runtime_error("Unable to parse line");
+
+    return Einc;
+}
+
 template <class dist0, class dist1 = dist0, class dist2 = dist0>
-SrcVec makeDipoles(const Config& config, const shared_ptr<PlaneWave> Einc)
+SrcVec makeDipoles(const Config& config, const shared_ptr<Excitation::PlaneWave> Einc)
 {
 
     SrcVec dipoles;
@@ -88,7 +109,7 @@ SrcVec makeDipoles(const Config& config, const shared_ptr<PlaneWave> Einc)
 
 SrcVec importDipoles(
     const filesystem::path& fpath,
-    const shared_ptr<PlaneWave>& Einc)
+    const shared_ptr<Excitation::PlaneWave>& Einc)
 {
     ifstream inFile(fpath);
     if (!inFile) throw runtime_error("Unable to find file");
@@ -153,7 +174,7 @@ SrcVec importRWG(
     const filesystem::path& tpath,
     const filesystem::path& rpath,
     const Precision quadPrec,
-    const shared_ptr<PlaneWave> Einc)
+    const shared_ptr<Excitation::PlaneWave> Einc)
 {
     auto vertices = importVertices(vpath);
 
@@ -189,17 +210,17 @@ std::filesystem::path makePath(const Config& config) {
         }();
 
     return
-        std::filesystem::path("config") /
+        std::filesystem::path("config") / "dipole" /
         (distStr + "_n" + std::to_string(config.nsrcs) + ".txt");
 }
 
-pair<SrcVec, shared_ptr<PlaneWave>> importFromConfig(const Config& config) 
+pair<SrcVec, shared_ptr<Excitation::PlaneWave>> importFromConfig(const Config& config) 
 {
     cout << " Importing config...\n";
 
     const auto fpath = makePath(config);
 
-    shared_ptr<PlaneWave> Einc = make_shared<PlaneWave>();
+    auto Einc = importPlaneWave("config/pwave.txt");
 
     /* Dipole sources
     SrcVec srcs;
@@ -220,7 +241,7 @@ pair<SrcVec, shared_ptr<PlaneWave>> importFromConfig(const Config& config)
     */
 
     // RWG sources
-    const string configPath = "config/n"+to_string(config.nsrcs)+"/";
+    const string configPath = "config/rwg/n"+to_string(config.nsrcs)+"/";
     auto srcs = importRWG(configPath+"vertices.txt",
                           configPath+"faces.txt",
                           configPath+"rwgs.txt",

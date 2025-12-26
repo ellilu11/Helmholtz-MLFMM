@@ -11,7 +11,7 @@ Tables Node::tables;
 NodeVec Node::nodes;
 
 void Node::setNodeParams(
-    const Config& config_, const std::shared_ptr<PlaneWave>& Einc) 
+    const Config& config_, const std::shared_ptr<Excitation::PlaneWave>& Einc) 
 {
     config = config_;
     wavenum = Einc->wavenum;
@@ -238,8 +238,9 @@ void Node::evalSelfSols() {
 
     cmplxVec sols(numSrcs, 0.0);
 
-    for (size_t obsIdx = 1; obsIdx < numSrcs; ++obsIdx) { // obsIdx = 0 to include self-interactions
-        for (size_t srcIdx = 0; srcIdx < obsIdx; ++srcIdx) {
+    // TODO: Handle self-interactions
+    for (size_t obsIdx = 1; obsIdx < numSrcs; ++obsIdx) { // obsIdx = 0
+        for (size_t srcIdx = 0; srcIdx < obsIdx; ++srcIdx) { // srcIdx <= obsIdx 
             auto obs = srcs[obsIdx], src = srcs[srcIdx];
 
             const cmplx rad = obs->getIntegratedRad(src);

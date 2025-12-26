@@ -38,7 +38,7 @@ public:
         return std::make_pair(thetas[level].size(), phis[level].size());
     }
 
-    static void setNodeParams(const Config&, const std::shared_ptr<PlaneWave>&);
+    static void setNodeParams(const Config&, const std::shared_ptr<Excitation::PlaneWave>&);
 
     static void buildAngularSamples();
 

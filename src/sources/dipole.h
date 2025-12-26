@@ -7,9 +7,9 @@ class Dipole final : public Source {
 public:
     Dipole() = default;
 
-    Dipole(std::shared_ptr<PlaneWave>, const vec3d&);
+    Dipole(std::shared_ptr<Excitation::PlaneWave>, const vec3d&);
 
-    Dipole(std::shared_ptr<PlaneWave>, const vec3d&, const vec3d&);
+    Dipole(std::shared_ptr<Excitation::PlaneWave>, const vec3d&, const vec3d&);
 
     void buildVoltage() override;
 
@@ -29,7 +29,7 @@ public:
      * kvec : wavevector
      */
     vec3cd getRadAlongDir(
-        const vec3d& X, const vec3d& kvec, bool doNumeric = 0) const override 
+        const vec3d& X, const vec3d& kvec) const override 
     {
         return exp(iu*kvec.dot(X-pos)) * phat;
     }
@@ -49,7 +49,7 @@ public:
     cmplx getIntegratedRad(const std::shared_ptr<Source> src) const override {
         const auto srcDip = dynamic_pointer_cast<Dipole>(src);
 
-        assert(pos != srcDip->pos);
+        if (pos == srcDip->pos) return 0.0;
 
         const auto& rad = Math::dyadicG(pos - srcDip->pos, Einc->wavenum) * srcDip->phat;
 
