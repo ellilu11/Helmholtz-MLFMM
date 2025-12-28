@@ -26,6 +26,7 @@ enum class Dir {
 class Node;
 
 using NodeVec = std::vector<std::shared_ptr<Node>>;
+using NodePair = std::pair<std::shared_ptr<Node>, std::shared_ptr<Node>>;
 
 class Node {
     friend struct Tables;
@@ -99,11 +100,13 @@ public:
     
     void pushSelfToNearNonNbors();
 
+    static void buildNonNearRads();
+
     void buildMpoleToLocalCoeffs();
 
     void evalLeafIlistSols();
 
-    void evalPairSolsDir(const std::shared_ptr<Node>);
+    void evalNonNearPairSols(const std::shared_ptr<Node>);
 
     void evalSelfSolsDir();
 
@@ -144,12 +147,13 @@ protected:
     static std::vector<realVec> thetaWeights;
     static std::vector<realVec> phis;
     static std::vector<int> Ls;
-    
     static Tables tables;
 
-    // std::shared_ptr<Solver> solver;
     static std::shared_ptr<vecXcd> currents;
     static std::shared_ptr<vecXcd> sols;
+
+    static std::vector<NodePair> nonNearPairs;
+    std::vector<cmplxVec> nonNearRads;
 
     std::vector<vec2cd> coeffs;
     std::pair<vec2cd, vec2cd> polarCoeffs;
@@ -167,7 +171,5 @@ protected:
     const int level;
     const vec3d center;
 
-    // Test members
-    static NodeVec nodes;
-    int nodeIdx;
+    size_t nonNearPairIdx; // index of near pairs with this leaf as observer
 };

@@ -64,6 +64,7 @@ int main() {
 
     start = Clock::now();
 
+    Node::buildNonNearRads();
     Leaf::buildNearRads();
 
     end = Clock::now();
@@ -116,9 +117,7 @@ int main() {
     duration_ms = end - start;
     Time fmm_duration_ms = end - fmm_start;
 
-    cout << "   Elapsed time: " << duration_ms.count() << " ms\n";
-    cout << "   Elapsed time (L2T): " << t.L2T.count() << " ms\n";
-    cout << "   Elapsed time (S2T): " << t.S2T.count() << " ms\n\n";
+    cout << "   Elapsed time: " << duration_ms.count() << " ms\n\n";
     cout << " FMM total elapsed time: " << fmm_duration_ms.count() << " ms\n";
 
     solver->printSols("sol.txt");
@@ -127,7 +126,6 @@ int main() {
 
     // ================== Compute direct ===================== //
     solver->resetSols();
-    // auto leafRoot = make_shared<Leaf>(srcs, 0, nullptr);
 
     cout << "\n Computing direct...\n";
     start = Clock::now();

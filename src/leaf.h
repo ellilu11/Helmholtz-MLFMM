@@ -57,11 +57,13 @@ protected:
     static LeafVec leaves;
     static std::vector<LeafPair> nearPairs;
 
-    cmplxVec nearRads;
+    std::vector<cmplxVec> nearRads;
     cmplxVec selfRads;
 
     std::vector<std::vector<vec2cd>> radPats;
 
     NodeVec nearNbors; // list 1
     NodeVec nearNonNbors; // list 3
+
+    size_t leafPairIdx; // index of near pairs with this leaf as observer
 };

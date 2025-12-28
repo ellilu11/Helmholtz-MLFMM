@@ -6,12 +6,12 @@ std::vector<realVec> Node::thetas;
 std::vector<realVec> Node::thetaWeights;
 std::vector<realVec> Node::phis;
 std::vector<int> Node::Ls;
-
 Tables Node::tables;
-NodeVec Node::nodes;
 
 std::shared_ptr<vecXcd> Node::currents;
 std::shared_ptr<vecXcd> Node::sols;
+
+std::vector<NodePair> Node::nonNearPairs;
 
 void Node::initNodes(
     const Config& config_, 
@@ -39,9 +39,10 @@ Node::Node(
     nodeLeng(base == nullptr ? config.rootLeng : base->nodeLeng / 2.0),
     level(base == nullptr ? 0 : base->level + 1),
     center(base == nullptr ? zeroVec :
-        base->center + nodeLeng / 2.0 * Math::idx2pm(branchIdx))
+        base->center + nodeLeng / 2.0 * Math::idx2pm(branchIdx)),
+    nonNearPairIdx(0)
 {
-    nodeIdx = numNodes++;
+    numNodes++;
 }
 
 /* buildAngularSamples()
@@ -126,12 +127,38 @@ void Node::buildInteractionList() {
  * (if leaf is in list 4 of self, self is in list 3 of leaf) 
  */
 void Node::pushSelfToNearNonNbors() {
+    if (isNodeType<Stem>()) std::cout << leafIlist.size() << ' ';
+
     if (leafIlist.empty()) return;
 
     for (const auto& node : leafIlist) {
         auto leaf = dynamic_pointer_cast<Leaf>(node);
 
         leaf->pushToNearNonNbors(getSelf()); // call shared_from_this()
+
+        nonNearPairs.emplace_back(getSelf(), node); // record list3-list4 pair
+    }
+}
+
+void Node::buildNonNearRads() {
+
+    for (const auto& pair : nonNearPairs) {
+        auto [obsNode, srcNode] = pair;
+
+        const size_t numObss = obsNode->srcs.size(), numSrcs = srcNode->srcs.size();
+
+        auto nodePairRads = cmplxVec(numObss*numSrcs);
+
+        int pairIdx = 0;
+        for (size_t obsIdx = 0; obsIdx < numObss; ++obsIdx) {
+            for (size_t srcIdx = 0; srcIdx < numSrcs; ++srcIdx) {
+                const auto obs = obsNode->srcs[obsIdx], src = srcNode->srcs[srcIdx];
+
+                nodePairRads[pairIdx++] = obs->getIntegratedRad(src);
+            }
+        }
+
+        obsNode->nonNearRads.push_back(nodePairRads);
     }
 }
 
@@ -187,7 +214,7 @@ void Node::buildMpoleToLocalCoeffs() {
  */
 void Node::evalLeafIlistSols() {
      for (const auto& node : leafIlist)
-        evalPairSolsDir(node);
+        evalNonNearPairSols(node);
      return;
 
     /* No psi LUT
@@ -212,33 +239,35 @@ void Node::evalLeafIlistSols() {
  * srcNode and vice versa
  * srcNode : source node
  */
-void Node::evalPairSolsDir(const std::shared_ptr<Node> srcNode) {
+void Node::evalNonNearPairSols(const std::shared_ptr<Node> srcNode) {
 
     const int numObss = srcs.size(), numSrcs = srcNode->srcs.size();
 
     cmplxVec solAtObss(numObss, 0.0);
     cmplxVec solAtSrcs(numSrcs, 0.0);
 
+    int pairIdx = 0;
     for (size_t obsIdx = 0; obsIdx < numObss; ++obsIdx) {
         for (size_t srcIdx = 0; srcIdx < numSrcs; ++srcIdx) {
             const auto obs = srcs[obsIdx], src = srcNode->srcs[srcIdx];
 
-            const cmplx rad = obs->getIntegratedRad(src); // TODO: Precompute
+            const cmplx rad = nonNearRads[nonNearPairIdx][pairIdx++];
 
             solAtObss[obsIdx] += (*currents)[src->getIdx()] * rad;
             solAtSrcs[srcIdx] += (*currents)[obs->getIdx()] * rad;
         }
     }
 
+    ++nonNearPairIdx;
+
     for (int n = 0; n < numObss; ++n)
         (*sols)[srcs[n]->getIdx()] += Phys::C * wavenum * solAtObss[n];
-    // addToSol(srcs[n]->getIdx(), Phys::C * wavenum * solAtObss[n]);
 
     for (int n = 0; n < numSrcs; ++n)
         (*sols)[srcNode->srcs[n]->getIdx()] += Phys::C * wavenum * solAtSrcs[n];
-    // addToSol(srcNode->srcs[n]->getIdx(), Phys::C * wavenum * solAtSrcs[n]);
 }
 
+// evalSelfSols without precomputed rads
 void Node::evalSelfSolsDir() {
 
     const int numSrcs = srcs.size();
@@ -262,7 +291,6 @@ void Node::evalSelfSolsDir() {
 
     for (int n = 0; n < numSrcs; ++n)
         (*sols)[srcs[n]->getIdx()] += Phys::C * wavenum * solAtObss[n];
-
 }
 
 /* getFarSol()

@@ -52,8 +52,6 @@ void Stem::buildLists() {
         buildInteractionList();
 
         pushSelfToNearNonNbors();
-
-        nodes.push_back(shared_from_this()); // 
     }
 
     for (const auto& branch : branches)

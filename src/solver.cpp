@@ -29,7 +29,6 @@ void Solver::iterateArnoldi(int iter) {
         cmplx h = q_i.dot(*sols);
         *sols -= h * q_i;
         hvec[i] = h;
-        // Normalize sols at every Arnoldi iteration?
     }
     hvec[iter] = (*sols).norm();
 
@@ -81,10 +80,12 @@ void Solver::updateCurrent(int k, int numIter) {
 void Solver::solve(int numIter) {
 
     for (int k = 1; k <= numIter; ++k) {
-        // root->doMLFMA();
+        // computeSols(root);
 
         iterateArnoldi(k);
     }
+
+    // updateCurrent(numIter);
 }
 
 void Solver::printSols(const std::string& fname)
