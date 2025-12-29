@@ -43,8 +43,6 @@ public:
 
     void evalNearNonNborSols();
 
-    void evalPairSols(const std::shared_ptr<Node>);
-
     void evalSelfSols();
 
     static void evaluateSols();

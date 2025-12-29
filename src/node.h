@@ -106,7 +106,7 @@ public:
 
     void evalLeafIlistSols();
 
-    void evalNonNearPairSols(const std::shared_ptr<Node>);
+    void evalPairSols(const std::shared_ptr<Node>, const cmplxVec&);
 
     void evalSelfSolsDir();
 

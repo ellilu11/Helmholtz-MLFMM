@@ -9,13 +9,14 @@ struct Tables {
     Tables(const Config& config)
         : order(config.interpOrder)
     {
+        dists = Math::getINodeDistances();
+        rhats = Math::getINodeDirections();
+
         buildAngularTables();
         
         buildInterpTables();
         
         buildTranslationTable();
-
-        buildInterpPsiTable();
     }
     
     void buildAngularTables();
@@ -26,11 +27,15 @@ struct Tables {
 
     void buildInterpTables();
 
+    Map<vecXcd> getAlphaAtLvl(int);
+
+    HashMap<interpPair> getInterpPsiAtLvl(int);
+
     void buildTranslationTable();
 
-    void buildInterpPsiTable();
-
     int order;
+    realVec dists;
+    std::array<vec3d,316> rhats;
 
     // Angular tables
     std::vector<std::vector<vec3d>> khat;
@@ -44,9 +49,8 @@ struct Tables {
     std::vector<std::vector<interpPair>> invInterpTheta;
     std::vector<std::vector<interpPair>> invInterpPhi;
 
-    // M2L translation tables
-    std::vector<Map<double,vecXcd>> transl;
-    std::vector<HashMap<double,interpPair>> interpPsi;
+    // M2L translation table
+    std::vector<VecHashMap<vecXcd>> transl;
 
 };
 

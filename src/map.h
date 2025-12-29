@@ -5,31 +5,50 @@
 
 namespace Maps {
 
-    constexpr double DistEPS = 1.0E-3;
-    constexpr double PsiEPS = 1.0E-3; // Pick largest value that avoids collisions
+    // Pick largest values that avoid collisions
+    constexpr double DistEPS = 1.0E-2;
+    constexpr double EPS = 1.0E-3; 
+    constexpr double VEPS = 3.0*EPS;
 
-    struct Comp {
+    struct DoubleComp {
         bool operator()(double x, double y) const noexcept {
             return x + DistEPS < y;
         }
     };
 
-    struct HashFunc {
+    struct DoubleFunc {
         std::size_t operator()(double x) const noexcept {
-            long long q = static_cast<long long>(std::llround(x / PsiEPS));
+            long long q = static_cast<long long>(std::llround(x / EPS));
             return std::hash<long long>{}(q);
         }
     };
 
-    struct HashEq {
+    struct DoubleEq {
         bool operator()(double x, double y) const noexcept {
-            return std::fabs(x - y) <= PsiEPS;
+            return std::fabs(x - y) <= EPS;
+        }
+    };
+
+    struct VecFunc {
+        std::size_t operator()(const vec3d& X) const noexcept {
+            long long q = static_cast<long long>(std::llround(X.norm() / VEPS));
+            return std::hash<long long>{}(q);
+        }
+    };
+
+    struct VecEq {
+        bool operator()(const vec3d& X, const vec3d& Y) const noexcept {
+            return ((X-Y).norm()) <= VEPS;
         }
     };
 }
 
-template <typename T, typename U>
-using Map = std::map<T, U, Maps::Comp>;
+// TODO: Concepts
+template <typename T>
+using Map = std::map<double, T, Maps::DoubleComp>;
 
-template <typename T, typename U>
-using HashMap = std::unordered_map<T, U, Maps::HashFunc, Maps::HashEq>;
+template <typename T>
+using HashMap = std::unordered_map<double, T, Maps::DoubleFunc, Maps::DoubleEq>;
+
+template <typename T>
+using VecHashMap = std::unordered_map<vec3d, T, Maps::VecFunc, Maps::VecEq>;

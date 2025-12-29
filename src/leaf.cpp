@@ -240,47 +240,6 @@ void Leaf::evalNearNonNborSols() {
     //return;
 }
 
-/* evalPairSols(srcNode)
- * (S2T) Evaluate sols at sources in this node due to sources in srcNode
- * and vice versa
- * srcNode : source node
- */
-void Leaf::evalPairSols(const std::shared_ptr<Node> srcNode) {
-
-    assert(shared_from_this() < srcNode);
-
-    auto srcLeaf = dynamic_pointer_cast<Leaf>(srcNode);
-
-    const int numObss = srcs.size(), numSrcs = srcLeaf->srcs.size();
-
-    cmplxVec solAtObss(numObss, 0.0);
-    cmplxVec solAtSrcs(numSrcs, 0.0);
-
-    int pairIdx = 0;
-    for (size_t obsIdx = 0; obsIdx < numObss; ++obsIdx) {
-        for (size_t srcIdx = 0; srcIdx < numSrcs; ++srcIdx) {
-            const auto obs = srcs[obsIdx], src = srcLeaf->srcs[srcIdx];
-
-            const cmplx rad = nearRads[leafPairIdx][pairIdx++];
-
-            // std::cout << rad << ' ' << obs->getIntegratedRad(src) << "\n";
-
-            solAtObss[obsIdx] += (*currents)[src->getIdx()] * rad;
-            solAtSrcs[srcIdx] += (*currents)[obs->getIdx()] * rad;
-
-        }
-    }
-
-    ++leafPairIdx;
-
-    for (int n = 0; n < numObss; ++n)
-        (*sols)[srcs[n]->getIdx()] += Phys::C * wavenum * solAtObss[n];
-
-    for (int n = 0; n < numSrcs; ++n)
-        (*sols)[srcLeaf->srcs[n]->getIdx()] += Phys::C * wavenum * solAtSrcs[n];
-
-}
-
 /* evalSelfSols()
  * (S2T) Evaluate sols at sources in this node due to other sources
  * in this node
@@ -326,7 +285,8 @@ void Leaf::evaluateSols() {
 
     for (const auto& pair : nearPairs) {
         auto [obsLeaf, srcLeaf] = pair;
-        obsLeaf->evalPairSols(srcLeaf);
+        auto pairIdx = obsLeaf->leafPairIdx++;
+        obsLeaf->evalPairSols(srcLeaf, obsLeaf->nearRads[pairIdx]);
     }
 
     // No reciprocity
