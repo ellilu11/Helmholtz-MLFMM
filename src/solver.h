@@ -1,27 +1,25 @@
 #pragma once
 
 #include <filesystem>
-#include "node.h"
 #include "types.h"
 #include "sources/source.h"
 
-//namespace Solver {
-//    class Solver;
-//    struct StateVecs;
-//};
+class Node;
 
 class Solver {
 
 public :
-    Solver(const SrcVec& srcs);
+    Solver(const SrcVec& srcs, std::shared_ptr<Node>, int);
 
     void iterateArnoldi(int);
 
-    pair2cd applyGivensRotation(vecXcd&, const vecXcd&, const vecXcd&, int);
+    void updateSols(int);
 
-    void updateCurrent(int, int);
+    void applyGivensRotation(vecXcd&, vecXcd&, vecXcd&, int);
 
-    void solve(int);
+    void updateGvec(vecXcd&, vecXcd&, int);
+
+    void solve();
 
     std::shared_ptr<vecXcd> getQvec() { return qvec; }
 
@@ -31,23 +29,28 @@ public :
 
     // void addToSols(size_t idx, cmplx val) { sols[idx] += val; }
 
-    void resetSols() { (*sols) = vecXcd::Zero(nsols); }
+    void resetSols() { (*sols) = vecXcd::Zero(numSols); }
 
-    void printSols(const std::string&);
+    // void printSols(const std::string&);
+    void printSols(std::ofstream&);
 
 private :
     //Solver();
     //Solver(const Solver&) = delete;
     //Solver& operator=(const Solver&) = delete;
     
-    int nsols;
+    std::shared_ptr<Node> root;
+
+    int numSols;
+    int numIter;
 
     matXcd Q;
     matXcd H;
 
+    vecXcd gvec;
+    vecXcd currents;
+
     std::shared_ptr<vecXcd> qvec;
     std::shared_ptr<vecXcd> sols;
     
-    vecXcd gvec;
-    vecXcd currents;
 };

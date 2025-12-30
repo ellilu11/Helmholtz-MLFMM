@@ -32,14 +32,15 @@ class Node {
     friend struct Tables;
 
 public:
-    static void initNodes(
+    static void initParams(
         const Config&, 
-        const std::shared_ptr<Excitation::PlaneWave>&, 
-        const std::unique_ptr<Solver>&);
+        const std::shared_ptr<Excitation::PlaneWave>&);
+
+    static void linkStates(const std::unique_ptr<Solver>&);
 
     static void buildAngularSamples();
 
-    static void buildTables() { tables = Tables(config); }
+    static void buildTables() { tables = Tables(maxLevel, config.interpOrder); }
 
     static int getMaxLvl() { return maxLevel; }
 
@@ -95,32 +96,26 @@ public:
     std::shared_ptr<Node> getNeighborGeqSize(const Dir) const;
 
     NodeVec getNeighborsLeqSize(const std::shared_ptr<Node>, const Dir) const;
+
+    void resizeCoeffs();
     
     void buildInteractionList();
     
     void pushSelfToNearNonNbors();
 
-    static void buildNonNearRads();
-
     void buildMpoleToLocalCoeffs();
 
     void evalLeafIlistSols();
 
-    void evalPairSols(const std::shared_ptr<Node>, const cmplxVec&);
-
     void evalSelfSolsDir();
 
-    // void evalSelfSolsSlow();
-
     std::vector<vec3cd> getFarSolsFromCoeffs(double);
-
-    // std::vector<vec3cd> getFarSols(double);
    
     virtual std::shared_ptr<Node> getSelf() = 0;
     
     virtual void buildNeighbors() = 0;
 
-    virtual void buildLists() = 0;
+    virtual void initNode() = 0;
     
     virtual void buildMpoleCoeffs() = 0;
     
@@ -149,11 +144,10 @@ protected:
     static std::vector<int> Ls;
     static Tables tables;
 
+    static std::vector<NodePair> nonNearPairs;
+
     static std::shared_ptr<vecXcd> currents;
     static std::shared_ptr<vecXcd> sols;
-
-    static std::vector<NodePair> nonNearPairs;
-    std::vector<cmplxVec> nonNearRads;
 
     std::vector<vec2cd> coeffs;
     std::pair<vec2cd, vec2cd> polarCoeffs;
@@ -170,6 +164,4 @@ protected:
     const double nodeLeng;
     const int level;
     const vec3d center;
-
-    size_t nonNearPairIdx; // index of near pairs with this leaf as observer
 };

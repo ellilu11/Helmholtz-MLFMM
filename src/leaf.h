@@ -27,7 +27,7 @@ public:
 
     void buildNeighbors() override;
 
-    void buildLists() override;
+    void initNode() override;
 
     static void findNearNborPairs();
 
@@ -43,6 +43,8 @@ public:
 
     void evalNearNonNborSols();
 
+    void evalPairSols(const std::shared_ptr<Node>, const cmplxVec&);
+
     void evalSelfSols();
 
     static void evaluateSols();
@@ -56,6 +58,7 @@ protected:
     static std::vector<LeafPair> nearPairs;
 
     std::vector<cmplxVec> nearRads;
+    std::vector<cmplxVec> nonNearRads;
     cmplxVec selfRads;
 
     std::vector<std::vector<vec2cd>> radPats;
@@ -64,4 +67,5 @@ protected:
     NodeVec nearNonNbors; // list 3
 
     size_t leafPairIdx; // index of near pairs with this leaf as observer
+    size_t nonNearPairIdx; // index of non-near pairs with this leaf as observer
 };

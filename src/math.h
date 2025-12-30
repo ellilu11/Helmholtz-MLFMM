@@ -163,7 +163,7 @@ namespace Math {
 
     std::array<vec3d, 316> getINodeDistVecs();
 
-    std::array<vec3d, 316> getINodeDirections();
+    std::vector<vec3d> getINodeDirections();
 
 } // namespace Math
 
@@ -288,8 +288,8 @@ std::array<vec3d,316> Math::getINodeDistVecs() {
     return dvecs;
 }
 
-std::array<vec3d,316> Math::getINodeDirections() {
-    std::array<vec3d,316> dirs;
+std::vector<vec3d> Math::getINodeDirections() {
+    std::vector<vec3d> dirs(316);
 
     int idx = 0;
     for (double dz = -3; dz <= 3; ++dz)
@@ -302,7 +302,25 @@ std::array<vec3d,316> Math::getINodeDirections() {
                     dirs[idx++] = dir/dist;
             }
 
-    // CONSIDER: Removing dups
+    auto vecLessThan = [&](const vec3d& X, const vec3d& Y) {
+        if (approxLess(X[0], Y[0])) return true;
+        if (approxLess(Y[0], X[0])) return false;
+
+        if (approxLess(X[1], Y[1])) return true;
+        if (approxLess(Y[1], X[1])) return false;
+
+        return X[2] < Y[2];
+        };
+
+    auto vecEquals = [](const vec3d X, const vec3d Y) {
+        return ((X-Y).norm()) < FEPS;
+        };
+
+    std::sort(dirs.begin(), dirs.end(), vecLessThan);
+
+    dirs.erase(
+        std::unique(dirs.begin(), dirs.end(), vecEquals),
+        dirs.end());
 
     return dirs;
 }

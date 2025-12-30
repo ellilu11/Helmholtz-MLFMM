@@ -7,20 +7,20 @@ std::vector<realVec> Node::thetaWeights;
 std::vector<realVec> Node::phis;
 std::vector<int> Node::Ls;
 Tables Node::tables;
+std::vector<NodePair> Node::nonNearPairs;
 
 std::shared_ptr<vecXcd> Node::currents;
 std::shared_ptr<vecXcd> Node::sols;
 
-std::vector<NodePair> Node::nonNearPairs;
-
-void Node::initNodes(
-    const Config& config_, 
-    const std::shared_ptr<Excitation::PlaneWave>& Einc,
-    const std::unique_ptr<Solver>& solver) 
+void Node::initParams(
+    const Config& config_,
+    const std::shared_ptr<Excitation::PlaneWave>& Einc)
 {
     config = config_;
     wavenum = Einc->wavenum;
+}
 
+void Node::linkStates(const std::unique_ptr<Solver>& solver) {
     currents = std::move(solver->getQvec());
     sols = std::move(solver->getSols());
 }
@@ -38,8 +38,7 @@ Node::Node(
     nodeLeng(base == nullptr ? config.rootLeng : base->nodeLeng / 2.0),
     level(base == nullptr ? 0 : base->level + 1),
     center(base == nullptr ? zeroVec :
-        base->center + nodeLeng / 2.0 * Math::idx2pm(branchIdx)),
-    nonNearPairIdx(0)
+        base->center + nodeLeng / 2.0 * Math::idx2pm(branchIdx))
 {
     numNodes++;
 }
@@ -51,7 +50,7 @@ void Node::buildAngularSamples() {
 
     constexpr double EPS_NR = 1.0E-9; // Newton-Raphson precision
 
-    std::cout << "   (Lvl,Nth,Nph) =\n";
+    // std::cout << "   (Lvl,Nth,Nph) =\n";
 
     for (int lvl = 0; lvl <= maxLevel; ++lvl) {
         const double nodeLeng = config.rootLeng / pow(2.0, lvl);
@@ -85,8 +84,15 @@ void Node::buildAngularSamples() {
 
         phis.push_back(phis_lvl);
 
-        std::cout << "   (" << lvl << "," << nth << "," << nph << ")\n";
+        // std::cout << "   (" << lvl << "," << nth << "," << nph << ")\n";
     }
+}
+
+void Node::resizeCoeffs() {
+    const auto [nth, nph] = getNumAngles(level);
+
+    coeffs.resize(nth*nph, vec2cd::Zero());
+    localCoeffs.resize(nth*nph, vec2cd::Zero());
 }
 
 /* buildInteractionList()
@@ -133,29 +139,7 @@ void Node::pushSelfToNearNonNbors() {
 
         leaf->pushToNearNonNbors(getSelf()); // call shared_from_this()
 
-        nonNearPairs.emplace_back(getSelf(), node); // record list3-list4 pair
-    }
-}
-
-void Node::buildNonNearRads() {
-
-    for (const auto& pair : nonNearPairs) {
-        auto [obsNode, srcNode] = pair;
-
-        const size_t numObss = obsNode->srcs.size(), numSrcs = srcNode->srcs.size();
-
-        auto nodePairRads = cmplxVec(numObss*numSrcs);
-
-        int pairIdx = 0;
-        for (size_t obsIdx = 0; obsIdx < numObss; ++obsIdx) {
-            for (size_t srcIdx = 0; srcIdx < numSrcs; ++srcIdx) {
-                const auto obs = obsNode->srcs[obsIdx], src = srcNode->srcs[srcIdx];
-
-                nodePairRads[pairIdx++] = obs->getIntegratedRad(src);
-            }
-        }
-
-        obsNode->nonNearRads.push_back(nodePairRads);
+        nonNearPairs.emplace_back(leaf, getSelf()); // record list4-list3 pair
     }
 }
 
@@ -163,11 +147,11 @@ void Node::buildNonNearRads() {
  * (M2L) Translate mpole coeffs of interaction nodes into local coeffs at center
  */
 void Node::buildMpoleToLocalCoeffs() {
-
-    const auto [nth, nph] = getNumAngles(level); 
-    localCoeffs.resize(nth*nph, vec2cd::Zero()); // TODO: Allocate elsewhere
-
     if (iList.empty()) return;
+
+    std::fill(localCoeffs.begin(), localCoeffs.end(), vec2cd::Zero());
+
+    const size_t numAngles = localCoeffs.size();
 
     for (const auto& node : iList) {
 
@@ -177,7 +161,8 @@ void Node::buildMpoleToLocalCoeffs() {
 
         const auto& transl_dX = tables.transl[level].at(dX/nodeLeng);
 
-        for (int idx = 0; idx < nth*nph; ++idx)
+        // std::transform
+        for (int idx = 0; idx < numAngles; ++idx)
             localCoeffs[idx] += transl_dX[idx] * mpoleCoeffs[idx];
     }
 }
@@ -186,9 +171,11 @@ void Node::buildMpoleToLocalCoeffs() {
  * (S2L/S2T) Add contribution from list 4 to local coeffs
  */
 void Node::evalLeafIlistSols() {
-    for (const auto& node : leafIlist)
-        evalPairSols(node, nonNearRads[nonNearPairIdx++]);
-    return;
+    // Do nothing! Contribution from list 4 node was 
+    // to be evaluated by Leaf::evalNearNonNborSols()
+    //for (const auto& node : leafIlist)
+    //    evalPairSols(node, nonNearRads[nonNearPairIdx++]);
+    //return;
 
     /* No psi LUT
     const int nearIdx = std::floor((nps-1) * psi / PI);
@@ -205,37 +192,6 @@ void Node::evalLeafIlistSols() {
             * Interp::evalLagrangeBasis(psi,psis_,k);
     }
     */
-}
-
-/* (S2T) Evaluate sols at sources in this node due to sources in srcNode
- * and vice versa
- * srcNode : source node
- * rads    : precomputed radiation coefficients
- */
-void Node::evalPairSols(const std::shared_ptr<Node> srcNode, const cmplxVec& rads) {
-
-    const int numObss = srcs.size(), numSrcs = srcNode->srcs.size();
-
-    cmplxVec solAtObss(numObss, 0.0);
-    cmplxVec solAtSrcs(numSrcs, 0.0);
-
-    int pairIdx = 0;
-    for (size_t obsIdx = 0; obsIdx < numObss; ++obsIdx) {
-        for (size_t srcIdx = 0; srcIdx < numSrcs; ++srcIdx) {
-            const auto obs = srcs[obsIdx], src = srcNode->srcs[srcIdx];
-
-            const cmplx rad = rads[pairIdx++];
-
-            solAtObss[obsIdx] += (*currents)[src->getIdx()] * rad;
-            solAtSrcs[srcIdx] += (*currents)[obs->getIdx()] * rad;
-        }
-    }
-
-    for (int n = 0; n < numObss; ++n)
-        (*sols)[srcs[n]->getIdx()] += Phys::C * wavenum * solAtObss[n];
-
-    for (int n = 0; n < numSrcs; ++n)
-        (*sols)[srcNode->srcs[n]->getIdx()] += Phys::C * wavenum * solAtSrcs[n];
 }
 
 // evalSelfSols without precomputed rads

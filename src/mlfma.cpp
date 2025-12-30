@@ -11,25 +11,16 @@ extern auto t = ClockTimes();
 int main() {
     // ===================== Read config ==================== //
     cout << " Importing sources...\n";
-    auto start = Clock::now();
 
     Config config("config/config.txt");
 
     auto [srcs, Einc] = importFromConfig(config);
     auto nsrcs = srcs.size();
 
-    auto solver = make_unique<Solver>(srcs);
+    Node::initParams(config, Einc);
 
-    Node::initNodes(config, Einc, solver);
-
-    auto end = Clock::now();
-    Time duration_ms = end - start;
-    cout << "   Elapsed time: " << duration_ms.count() << " ms\n\n";
-
-    // ==================== Set up domain ==================== //
+    // ==================== Set up nodes ==================== //
     cout << " Setting up nodes...\n";
-    auto fmm_start = Clock::now();
-    start = Clock::now();
 
     shared_ptr<Node> root;
     if (nsrcs > config.maxNodeSrcs)
@@ -37,26 +28,21 @@ int main() {
     else
         root = make_shared<Leaf>(srcs, 0, nullptr);
 
-    root->buildLists();
-
-    end = Clock::now();
-    duration_ms = end - start;
-
     cout << "   # Nodes: " << Node::getNumNodes() << '\n';
     cout << "   # Leaves: " << Leaf::getNumLeaves() << '\n';
-    cout << "   Max node level: " << Node::getMaxLvl() << '\n';
-    cout << "   Elapsed time: " << duration_ms.count() << " ms\n\n";
+    cout << "   Max node level: " << Node::getMaxLvl() << "\n\n";
 
     // ==================== Build tables ===================== //
     cout << " Building tables...\n";
 
-    start = Clock::now();
+    auto start = Clock::now();
 
     Node::buildAngularSamples();
     Node::buildTables();
+    root->initNode();
 
-    end = Clock::now();
-    duration_ms = end - start;
+    auto end = Clock::now();
+    Time duration_ms = end - start;
     cout << "   Elapsed time: " << duration_ms.count() << " ms\n\n";
 
     // ==================== Build nearfield ===================== //
@@ -64,7 +50,6 @@ int main() {
 
     start = Clock::now();
 
-    Node::buildNonNearRads();
     Leaf::buildNearRads();
 
     end = Clock::now();
@@ -82,52 +67,22 @@ int main() {
     duration_ms = end - start;
     cout << "   Elapsed time: " << duration_ms.count() << " ms\n\n";
 
-    // ==================== Upward pass ===================== //
-    cout << " Computing upward pass...\n";
+    // ==================== Solve iterative ==================== //
+    constexpr int NUM_ITER = 20;
 
-    start = Clock::now();
+    auto solver = make_unique<Solver>(srcs, root, NUM_ITER);
+    Node::linkStates(solver);
 
-    root->buildMpoleCoeffs();
+    solver->solve();
 
-    end = Clock::now();
-    duration_ms = end - start;
-    cout << "   Elapsed time: " << duration_ms.count() << " ms\n";
-    cout << "   Elapsed time (S2M): " << t.S2M.count() << " ms\n";
-    cout << "   Elapsed time (M2M): " << t.M2M.count() << " ms\n\n";
+    return 0;
 
-    // ==================== Downward pass ==================== //
-    cout << " Computing downward pass...\n";
-    start = Clock::now();
-
-    root->buildLocalCoeffs();
-
-    end = Clock::now();
-    duration_ms = end - start;
-    cout << "   Elapsed time: " << duration_ms.count() << " ms\n";
-    cout << "   Elapsed time (M2L): " << t.M2L.count() << " ms\n";
-    cout << "   Elapsed time (L2L): " << t.L2L.count() << " ms\n\n";
-
-    // ================== Evaluate solutions ================= //
-    cout << " Evaluating solutions...\n";
-    start = Clock::now();
-
-    Leaf::evaluateSols();
-
-    end = Clock::now();
-    duration_ms = end - start;
-    Time fmm_duration_ms = end - fmm_start;
-
-    cout << "   Elapsed time: " << duration_ms.count() << " ms\n\n";
-    cout << " FMM total elapsed time: " << fmm_duration_ms.count() << " ms\n";
-
-    solver->printSols("sol.txt");
-
-    if (!config.evalDirect) return 0;
+    // if (!config.evalDirect) return 0;
 
     // ================== Compute direct ===================== //
-    solver->resetSols();
+    /*solver->resetSols();
 
-    cout << "\n Computing direct...\n";
+    cout << " Computing direct...\n";
     start = Clock::now();
 
     root->evalSelfSolsDir();
@@ -138,5 +93,5 @@ int main() {
 
     solver->printSols("solDir.txt");
 
-    return 0;
+    return 0;*/
 }

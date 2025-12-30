@@ -41,11 +41,13 @@ void Stem::buildNeighbors() {
     assert(nbors.size() <= numDir);
 }
 
-/* buildLists()
+/* initNode()
  * Find neighbor and interaction lists.
  * Add self as near non-neighbor (list 3 node) of any list 4 nodes
  */
-void Stem::buildLists() {
+void Stem::initNode() {
+    resizeCoeffs();
+
     if (!isRoot()) {
         buildNeighbors();
 
@@ -55,7 +57,7 @@ void Stem::buildLists() {
     }
 
     for (const auto& branch : branches)
-        branch->buildLists();
+        branch->initNode();
 }
 
 /* buildMpoleCoeffs()
@@ -66,9 +68,8 @@ void Stem::buildMpoleCoeffs() {
     const int order = config.interpOrder;
 
     const auto [mth, mph] = getNumAngles(level+1);
-    const auto [nth, nph] = getNumAngles(level);
 
-    coeffs.resize(nth*nph, vec2cd::Zero());
+    std::fill(coeffs.begin(), coeffs.end(), vec2cd::Zero());
 
     for (const auto& branch : branches) {
         if (branch->isSrcless()) continue;
@@ -174,8 +175,7 @@ void Stem::addInterpCoeffs(
                 const int m_shifted = ith_flipped*mph + iph_shifted;
 
                 innerCoeffs[m] += 
-                    interp[k] * inCoeffs[m_shifted]
-                    * Math::sign(outOfRange); // only for spherical components!
+                    interp[k] * inCoeffs[m_shifted] * Math::sign(outOfRange); 
             }
 
             ++m;
@@ -185,6 +185,7 @@ void Stem::addInterpCoeffs(
     // Interpolate over phi
     size_t n = 0;
     for (int jth = 0; jth < nth; ++jth) {
+        const int jthmph = jth*mph;
 
         for (int jph = 0; jph < nph; ++jph) {
             const auto [interp, nearIdx] = interpPhi[tblLvl][jph]; // TODO: don't need to lookup for every jth
@@ -195,8 +196,7 @@ void Stem::addInterpCoeffs(
                 const int iph_wrapped = Math::wrapIdxToRange(iph, mph);
 
                 outCoeffs[n] += 
-                    interp[k]
-                    * innerCoeffs[jth*mph + iph_wrapped];
+                    interp[k] * innerCoeffs[jthmph + iph_wrapped];
             }
 
             ++n;

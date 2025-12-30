@@ -2,7 +2,7 @@
 
 void Tables::buildAngularTables() {
    
-    for (int level = 0; level <= Node::maxLevel; ++level) {
+    for (int level = 0; level <= maxLevel; ++level) {
 
         const auto [nth, nph] = Node::getNumAngles(level);
 
@@ -108,7 +108,7 @@ std::vector<interpPair> Tables::getInterpPhiAtLvl(int srcLvl, int tgtLvl) {
 
 void Tables::buildInterpTables() {
 
-    for (int lvl = 0; lvl < Node::maxLevel; ++lvl) {
+    for (int lvl = 0; lvl < maxLevel; ++lvl) {
 
         // M2M interpolation tables
         interpTheta.push_back(getInterpThetaAtLvl(lvl+1, lvl));
@@ -158,10 +158,9 @@ Map<vecXcd> Tables::getAlphaAtLvl(int level) {
         alpha.emplace(dist, transl_dist);
     }
 
-    // std::cout << alpha.size() << '\n';
+    assert(alpha.size() == dists.size());
 
     return alpha;
-
 };
 
 HashMap<interpPair> Tables::getInterpPsiAtLvl(int level) {
@@ -174,10 +173,10 @@ HashMap<interpPair> Tables::getInterpPsiAtLvl(int level) {
     size_t m = 0;
     for (size_t l = 0; l < nth*nph; ++l) {
 
-        const auto& khat_ = khat[level][l];
+        const auto& khat = this->khat[level][l];
 
         for (const auto& rhat : rhats)
-            psis[m++] = acos(khat_.dot(rhat));
+            psis[m++] = acos(khat.dot(rhat));
     }
 
     std::sort(psis.begin(), psis.end()); 
@@ -199,16 +198,18 @@ HashMap<interpPair> Tables::getInterpPsiAtLvl(int level) {
         for (int ips = nearIdx+1-order; ips <= nearIdx+order; ++ips)
             psis.push_back(PI*ips/static_cast<double>(nps-1));
 
+        // CONSIDER: Use barycentric coordinates
         vecXd coeffs(2*order);
         for (size_t k = 0; k < 2*order; ++k)
-            coeffs[k] = 
-                    Interp::evalLagrangeBasis(psi, psis, k); // TODO: Use barycentric coordinates
+            coeffs[k] = Interp::evalLagrangeBasis(psi, psis, k); 
 
         interpPairs.emplace(psi, std::make_pair(coeffs, nearIdx));
 
+        // if (!level) std::cout << std::setprecision(15) << psi << '\n';
     }
 
-    // std::cout << interpPairs.size() << '\n';
+    // assert(interpPairs.size() == psis.size());
+    // std::cout << interpPairs.size() << ' ' << psis.size() << '\n';
 
     return interpPairs;
 }
@@ -217,10 +218,10 @@ void Tables::buildTranslationTable() {
 
     const auto& dXs = Math::getINodeDistVecs();
 
-    for (size_t level = 0; level <= Node::maxLevel; ++level) {
+    for (size_t level = 0; level <= maxLevel; ++level) {
 
-        const auto& alphas = getAlphaAtLvl(level); // do not copy!
-        const auto& interpPsis = getInterpPsiAtLvl(level); // do not copy! 
+        const auto& alphas = getAlphaAtLvl(level);
+        const auto& interpPsis = getInterpPsiAtLvl(level); 
 
         const auto [nth, nph] = Node::getNumAngles(level);
 
@@ -258,6 +259,8 @@ void Tables::buildTranslationTable() {
 
             transl_lvl.emplace(dX, transl_dX);
         }
+
+        assert(transl_lvl.size() == dXs.size());
 
         transl.push_back(transl_lvl);
     }
