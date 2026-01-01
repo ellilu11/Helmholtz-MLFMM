@@ -16,6 +16,8 @@ public:
         : Einc(std::move(Einc)), voltage(0.0), current(0.0), sol(0.0) 
     {};
 
+    cmplx getVoltage() const { return voltage; }
+
     cmplx getCurrent() const { return current; }
 
     cmplx getSol() const { return sol; }

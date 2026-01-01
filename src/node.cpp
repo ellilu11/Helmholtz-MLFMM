@@ -216,8 +216,8 @@ void Node::evalPairSols(const std::shared_ptr<Node> srcNode) {
 
             const cmplx rad = obs->getIntegratedRad(src);
 
-            solAtObss[obsIdx] += src->getCurrent() * rad;
-            solAtSrcs[srcIdx] += obs->getCurrent() * rad;
+            solAtObss[obsIdx] += -src->getVoltage() * rad;
+            solAtSrcs[srcIdx] += -obs->getVoltage() * rad;
         }
     }
 
@@ -245,8 +245,8 @@ void Node::evalSelfSols() {
 
             const cmplx rad = obs->getIntegratedRad(src);
 
-            sols[obsIdx] += src->getCurrent() * rad;
-            sols[srcIdx] += obs->getCurrent() * rad;
+            sols[obsIdx] += -src->getVoltage() * rad;
+            sols[srcIdx] += -obs->getVoltage() * rad;
         }
     }
 

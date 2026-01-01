@@ -96,7 +96,7 @@ void Leaf::buildMpoleCoeffs() {
 
         int srcIdx = 0;
         for (const auto& src : srcs)
-            coeff += src->getCurrent() * radPats[angIdx][srcIdx++];
+            coeff += -src->getVoltage() * radPats[angIdx][srcIdx++];
 
         coeffs.push_back(coeff);
 

@@ -21,6 +21,7 @@ using mat3d = Eigen::Matrix3d;
 using mat23d = Eigen::Matrix<double, 2, 3>;
 
 using interpPair = std::pair<vecXd, int>;
+using quadPair = std::pair<vec3d, double>;
 
 template <typename T>
 std::vector<T> operator+ (const std::vector<T>& zs, const std::vector<T>& ws) {

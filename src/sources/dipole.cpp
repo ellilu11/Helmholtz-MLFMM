@@ -22,6 +22,8 @@ Dipole::Dipole(
 
 void Dipole::buildVoltage() {
 
+    // voltage = -1.0;
+
     voltage = -Einc->amplitude * exp(iu*Einc->wavevec.dot(pos)) 
                 * pol.dot(Einc->pol);
 
