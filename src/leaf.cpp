@@ -136,20 +136,6 @@ void Leaf::buildNearRads() {
 
             }
         }
-
-        /* GMRES testing
-        for (size_t obsIdx = 0; obsIdx < leaf->srcs.size(); ++obsIdx) { 
-            const auto& obs = leaf->srcs[obsIdx];
-
-            for (size_t srcIdx = 0; srcIdx < leaf->srcs.size(); ++srcIdx) {  
-                const auto& src = leaf->srcs[srcIdx];
-                zmatFile << std::setprecision(9) << Phys::C * wavenum * obs->getIntegratedRad(src) << ' ';
-
-            }
-            
-            vvecFile << std::setprecision(9) << obs->getVoltage() << '\n';
-            zmatFile << '\n';
-        }
         */
     }
 }
