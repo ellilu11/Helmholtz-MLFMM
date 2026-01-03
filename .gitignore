@@ -381,3 +381,7 @@ FodyWeavers.xsd
 /plt/dip_n2000_master.fig
 /plt/plotSol.asv
 /plt/testRWGs.m
+/plt/plotFarfield.asv
+/plt/quiver3InLogScale.m
+/plt/rwg_n480_iter.fig
+/plt/tRWGs.m
