@@ -19,7 +19,7 @@ public:
 
     static void addInterpCoeffs(const std::vector<vec2cd>&, std::vector<vec2cd>&, int, int);
 
-    // static void addAnterpCoeffs(const std::vector<vec2cd>&, std::vector<vec2cd>&, int);
+    static void addAnterpCoeffs(const std::vector<vec2cd>&, std::vector<vec2cd>&, int, int);
 
     void buildLocalCoeffs() override;
 

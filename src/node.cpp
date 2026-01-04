@@ -162,15 +162,20 @@ void Node::buildMpoleToLocalCoeffs() {
 
             for (int ips = nearIdx+1-order, k = 0; k < 2*order; ++ips, ++k) {
 
-                const int ips_flipped = Math::flipIdxToRange(ips, nps); 
+    // Apply integration weights
+    const auto [nth, nph] = getNumAngles(level);
 
-                translCoeff += transl_dX[ips_flipped] * interpPsi[k];
-            }
-            //
+    const double phiWeight = 2.0*PI / static_cast<double>(nph);
+    size_t idx = 0;
+    for (int ith = 0; ith < nth; ++ith) {
+        const double weight = thetas[level].second[ith];
 
-            localCoeffs[idx] += translCoeff * mpoleCoeffs[idx];
+        for (int iph = 0; iph < nph; ++iph) {
+            localCoeffs[idx] *= weight * phiWeight;
+            ++idx;
         }
     }
+    //
 }
 
 /* evalLeafIlistSols()

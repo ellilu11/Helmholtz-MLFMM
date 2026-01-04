@@ -4,9 +4,10 @@ digits = 6;
 
 dir = "C:\Users\ellil\Documents\WORK\MLFMA\MLFMA\out\build\x64-debug\out\sol\";
 
-sol1 = readmatrix(dir+"sol.txt");
-% sol1 = readmatrix(dir+"sol_d" + digits +".txt");
-sol2 = readmatrix(dir+"solDir.txt");
+sol1 = readmatrix(dir+"rvec.txt");
+sol2 = readmatrix(dir+"rvecDir.txt");
+% sol1 = readmatrix(dir+"curr_nq7.txt");
+% sol2 = readmatrix(dir+"currDir_nq7.txt");
 
 nvec = 1:length(sol1);
 
@@ -15,11 +16,13 @@ close all;
 for i=1:2
     sol1Sort = sortrows(sol1,i);
     sol2Sort = sortrows(sol2,i);
+    % sol3Sort = sortrows(sol3,i);
     figure(2*i-1);
     plot(nvec, sol1Sort(:,i), nvec, sol2Sort(:,i));
     % semilogy(nvec, abs(sol1Sort(:,i)), nvec, abs(sol2Sort(:,i)));
 
     relErr = abs(sol1Sort(:,i)-sol2Sort(:,i)) ./ abs(sol2Sort(:,i));
+    % relErr2 = abs(sol2Sort(:,i)-sol3Sort(:,i)) ./ abs(sol3Sort(:,i));
     figure(2*i);
     semilogy(nvec, relErr)
 end

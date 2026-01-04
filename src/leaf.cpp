@@ -145,6 +145,35 @@ void Leaf::buildLocalCoeffs() {
 /* evalFarSols()
  * (L2T) Evaluate sols from local expansion due to far nodes
  */
+//
+void Leaf::evalFarSols() {
+    if (isSrcless() || level <= 1) return;
+
+    const auto [nth, nph] = getNumAngles(level);
+
+    int obsIdx = 0;
+    for (const auto& obs : srcs) {
+
+        size_t dirIdx = 0;
+        cmplx intRad = 0;
+
+        for (int ith = 0; ith < nth; ++ith) {
+            for (int iph = 0; iph < nph; ++iph) {
+                // Do the angular integration
+                intRad += radPats[dirIdx][obsIdx].dot(localCoeffs[dirIdx]); // Hermitian dot!
+
+                ++dirIdx;
+            }
+        }
+
+        (*rvec)[obs->getIdx()] += Phys::C * wavenum * intRad;
+
+        ++obsIdx;
+    }
+}
+//
+
+/*
 void Leaf::evalFarSols() {
     if (isSrcless() || level <= 1) return;
 
@@ -155,7 +184,7 @@ void Leaf::evalFarSols() {
     int obsIdx = 0;
     for (const auto& obs : srcs) {
 
-        size_t angIdx = 0;
+        size_t dirIdx = 0;
         cmplx sol = 0;
 
         for (int ith = 0; ith < nth; ++ith) {
@@ -163,8 +192,8 @@ void Leaf::evalFarSols() {
 
             for (int iph = 0; iph < nph; ++iph) {
                 // Do the angular integration
-                sol += weight 
-                    * radPats[angIdx][obsIdx].dot(localCoeffs[angIdx]); // Hermitian dot!
+                sol += weight
+                    * radPats[dirIdx][obsIdx].dot(localCoeffs[dirIdx]); // Hermitian dot!
 
                 ++angIdx;
             }
@@ -175,6 +204,7 @@ void Leaf::evalFarSols() {
         ++obsIdx;
     }
 }
+*/
 
 /* evalNearNonNborSols()
  * (M2T/S2T) Evaluate sols from mpole expansion due to list 3 nodes

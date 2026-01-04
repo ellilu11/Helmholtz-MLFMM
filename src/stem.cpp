@@ -130,8 +130,8 @@ std::vector<vec2cd> Stem::getShiftedLocalCoeffs(int branchIdx) const {
 }
 
 void Stem::addInterpCoeffs(
-    const std::vector<vec2cd>& inCoeffs, 
-    std::vector<vec2cd>& outCoeffs, 
+    const std::vector<vec2cd>& inCoeffs,
+    std::vector<vec2cd>& outCoeffs,
     int srcLvl, int tgtLvl)
 {
     const int order = config.interpOrder;
@@ -141,10 +141,10 @@ void Stem::addInterpCoeffs(
 
     assert(!(mph%2)); // mph needs to be even
 
-    // Choose which interp tables to use
-    const auto& interpTheta = 
+    // Select which interp tables to use
+    const auto& interpTheta =
         (srcLvl > tgtLvl) ? tables.interpTheta : tables.invInterpTheta;
-    const auto& interpPhi = 
+    const auto& interpPhi =
         (srcLvl > tgtLvl) ? tables.interpPhi : tables.invInterpPhi;
 
     const int tblLvl = std::min(srcLvl, tgtLvl);
@@ -175,9 +175,8 @@ void Stem::addInterpCoeffs(
 
                 const int m_shifted = ith_flipped*mph + iph_shifted;
 
-                innerCoeffs[m] += 
-                    interp[k] * inCoeffs[m_shifted]
-                    * Math::sign(outOfRange); // only for spherical components!
+                innerCoeffs[m] +=
+                    interp[k] * inCoeffs[m_shifted] * Math::sign(outOfRange);
             }
 
             ++m;
@@ -196,9 +195,8 @@ void Stem::addInterpCoeffs(
                 // Wrap iph if not in [0, mph-1]
                 const int iph_wrapped = Math::wrapIdxToRange(iph, mph);
 
-                outCoeffs[n] += 
-                    interp[k]
-                    * innerCoeffs[jth*mph + iph_wrapped];
+                outCoeffs[n] +=
+                    interp[k] * innerCoeffs[jthmph + iph_wrapped];
             }
 
             ++n;
@@ -206,78 +204,72 @@ void Stem::addInterpCoeffs(
     }
 }
 
-/*void Stem::addAnterpCoeffs(
-    const std::vector<vec3cd>& inCoeffs, std::vector<vec3cd>& outCoeffs, int level)
+void Stem::addAnterpCoeffs(
+    const std::vector<vec2cd>& inCoeffs, 
+    std::vector<vec2cd>& outCoeffs, 
+    int srcLvl, int tgtLvl)
 {
     const int order = config.interpOrder;
 
-    const auto [nth, nph] = getNumAngles(level);
-    const auto [mth, mph] = getNumAngles(level+1);
+    const auto [mth, mph] = getNumAngles(srcLvl);
+    const auto [nth, nph] = getNumAngles(tgtLvl);
 
     assert(!(mph%2)); // mph needs to be even
 
-    std::vector<vec3cd> outCoeffs(mth*mph, vec3cd::Zero());
+    const int tblLvl = std::min(srcLvl, tgtLvl);
 
     // Anterpolate over theta
-    std::vector<vec3cd> innerCoeffs(mth*nph, vec3cd::Zero());
+    std::vector<vec2cd> innerCoeffs(nth*mph, vec2cd::Zero());
 
     size_t m = 0;
-    for (int ith = 0; ith < mth; ++ith) { // over child thetas to anterpolate
+    for (int jth = 0; jth < nth; ++jth) { // over child thetas to anterpolate
 
-        for (int jph = 0; jph < nph; ++jph) { // over parent phis (unanterpolated)
+        for (int iph = 0; iph < mph; ++iph) { // over parent phis (unanterpolated)
 
-            for (int jth = 0; jth < nth; ++jth) { // over parent thetas anterpolating child thetas
+            for (int ith = 0; ith < mth; ++ith) { // over parent thetas anterpolating child thetas
 
-                const int t = tables.ts[level][jth]; // TODO: don't need to lookup for every ith & jph
+                const auto [interp, nearIdx] = tables.interpTheta[tblLvl][ith]; // TODO: don't need to lookup for every ith & jph
 
                 // shift from ith \in [t+1-order,t+order] to k \in [0,2*order-1]   
-                const int k = ith - (t+1-order);
-
-                // std::cout << ith << ' ' << jth << ' ' << t << ' ' << k << '\n';
+                const int k = jth - (nearIdx+1-order);
 
                 // if ith \notin [t+1-order,t+order], matrix element is zero
                 if (k < 0 || k >= 2*order) continue;
 
-                innerCoeffs[m] +=
-                    tables.interpTheta[level][jth][k] * inCoeffs[m];
-
-                // std::cout << tables.interpTheta[level][jth][k] << ' ';
+                innerCoeffs[m] += interp[k] * inCoeffs[m];
             }
 
             // std::cout << std::setprecision(9) << inCoeffs[m] << '\n';
 
-            m++;
+            ++m;
         }
     }
 
     // Anterpolate over phi
     size_t n = 0;
-    for (int ith = 0; ith < mth; ++ith) { // over child thetas (anterpolated)
+    for (int jth = 0; jth < nth; ++jth) { // over child thetas (anterpolated)
 
-        for (int iph = 0; iph < mph; ++iph) { // over child phis to anterpolate
+        for (int jph = 0; jph < nph; ++jph) { // over child phis to anterpolate
 
-            for (int jph = 0; jph < nph; ++jph) { // over parent phis anterpolating child phis
+            for (int iph = 0; iph < mph; ++iph) { // over parent phis anterpolating child phis
 
-                const int s = tables.ss[level][jph]; // TODO: don't need to lookup for every ith & iph
+                const auto [interp, nearIdx] = tables.interpPhi[tblLvl][iph]; // TODO: don't need to lookup for every ith & iph
 
-                // shift from iph \in [s+1-order,s+order] to k \in [0,2*order-1]
-                const int k = iph - (s+1-order);
+                // shift from iph \in [nearIdx+1-order,nearIdx+order] to k \in [0,2*order-1]
+                const int k = jph - (nearIdx+1-order);
 
                 // if iph \notin [s+1-order,s+order], matrix element is zero
                 if (k < 0 || k >= 2*order) continue;
 
-                outCoeffs[n] +=
-                    tables.interpPhi[level][jph][k] * innerCoeffs[n];
+                outCoeffs[n] += interp[k] * innerCoeffs[n];
             }
 
             // std::cout << std::setprecision(9) << outCoeffs[n] << '\n';
 
-            n++;
+            ++n;
         }
     }
-
-    return outCoeffs;
-}*/
+}
 
 /* buildLocalCoeffs()
  * (M2L) Translate mpole coeffs of interaction nodes into local coeffs at center
@@ -299,8 +291,8 @@ void Stem::buildLocalCoeffs() {
             localCoeffs =
                 localCoeffs + stemBase->getShiftedLocalCoeffs(branchIdx);
         }
+
         t.L2L += Clock::now() - start;
-        
     }
 
     for (const auto& branch : branches)
