@@ -260,19 +260,16 @@ void Stem::tAnterp(int level) {
     for (int ith = 0; ith < mth; ++ith) { // over parent thetas anterpolating child thetas
 
         const auto [interp, nearIdx] = tables.interpTheta[level][ith];
+        for (int jth = -order; jth < nth+order; ++jth) { // over child thetas to anterpolate
 
-        for (int jph = -order; jph < nph+order; ++jph) { // over child phis (anterpolated)
+            // shift from ith \in [t+1-order,t+order] to k \in [0,2*order-1]   
+            const int k = jth - (nearIdx+1-order);
 
-            for (int jth = -order; jth < nth+order; ++jth) { // over child thetas to anterpolate
+            // if ith \notin [t+1-order,t+order], matrix element is zero
+            if (k < 0 || k >= 2*order) continue;
 
-                // shift from ith \in [t+1-order,t+order] to k \in [0,2*order-1]   
-                const int k = jth - (nearIdx+1-order);
-
-                // if ith \notin [t+1-order,t+order], matrix element is zero
-                if (k < 0 || k >= 2*order) continue;
-
+            for (int jph = -order; jph < nph+order; ++jph) // over child phis (anterpolated)
                 longVals[(jth+order)*Nph+jph+order] += interp[k] * innerVals[ith*Nph+jph+order];
-            }
         }
     }
 
@@ -282,32 +279,35 @@ void Stem::tAnterp(int level) {
 
     for (int jth = 0; jth < nth; ++jth) {
         for (int jph = 0; jph < nph; ++jph) {
-            anterpVals[dirIdx] = longVals[(jth+order)*Nph+jph+order];
+            const int Jth = jth+order, Jph = jph+order;
+
+            anterpVals[dirIdx] = longVals[Jth*Nph+Jph];
 
             // Handle nodes near prime meridian
-            int jph_wrapped = jph;
-            if (jph < order) {
-                jph_wrapped += nph;
-                anterpVals[dirIdx] += longVals[(jth+order)*Nph+jph_wrapped+order];
-            } else if (jph >= nph-order) {
-                jph_wrapped -= nph;
-                anterpVals[dirIdx] += longVals[(jth+order)*Nph+jph_wrapped+order];
+            if (jph < order || jph >= nph-order) {
+                const int Jph_wrapped = Jph + (jph < order ? nph : -nph);
+                anterpVals[dirIdx] += longVals[(jth+order)*Nph+Jph_wrapped];
             }
 
             // Handle nodes near poles
-            int jph_shifted = jph;
-            jph_shifted += ((jph < nph/2) ? nph/2 : -nph/2);
-            assert(jph_shifted >=0 && jph_shifted < nph);
+            if (jth < order || jth >= nth-order) {
+                int Jph_shifted = Jph + ((jph < nph/2) ? nph/2 : -nph/2);
+                // assert(jph_shifted >=0 && jph_shifted < nph);
 
-            if (jth < order) {
-                int jth_flipped = -jth-1;
-                assert(jth_flipped+order >= 0);
-                anterpVals[dirIdx] += longVals[(jth_flipped+order)*Nph+jph_shifted+order];
+                const int jth_flipped = (jth < order ? -jth-1 : 2*nth-jth-1);
+
+                anterpVals[dirIdx] += longVals[(jth_flipped+order)*Nph+Jph_shifted];
             }
-            else if (jth >= nth-order) {
-                int jth_flipped = 2*nth-jth-1;
-                anterpVals[dirIdx] += longVals[(jth_flipped+order)*Nph+jph_shifted+order];
-            }
+            
+            //if (jth < order) {
+            //    int jth_flipped = -jth-1;
+            //    assert(jth_flipped+order >= 0);
+
+            //}
+            //else if (jth >= nth-order) {
+            //    int jth_flipped = 2*nth-jth-1;
+            //    anterpVals[dirIdx] += longVals[(jth_flipped+order)*Nph+jph_shifted+order];
+            //}
 
 
             ++dirIdx;

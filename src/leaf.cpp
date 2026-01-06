@@ -102,18 +102,6 @@ void Leaf::buildMpoleCoeffs() {
 
     }
 
-    /* Get polar coeffs in cartesian components
-    vec2cd northCoeff = vec2cd::Zero();
-    for (const auto& rwg : rwgs)
-        northCoeff += rwg->getRadAlongDir(center, wavenum*northPole);
-    polarCoeffs.first = Math::IminusRR(0, 0) * northCoeff;
-
-    vec2cd southCoeff = vec2cd::Zero();
-    for (const auto& rwg : rwgs)
-        southCoeff += rwg->getRadAlongDir(center, wavenum*southPole);
-    polarCoeffs.second = Math::IminusRR(0, PI) * southCoeff;
-    */
-
     t.S2M += Clock::now() - start;
 
 }

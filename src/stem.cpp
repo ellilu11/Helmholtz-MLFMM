@@ -217,59 +217,75 @@ void Stem::addAnterpCoeffs(
 
     const auto [mth, mph] = getNumAngles(srcLvl);
     const auto [nth, nph] = getNumAngles(tgtLvl);
+    const int Nth = nth+2*order, Nph = nph+2*order;
 
     assert(!(mph%2)); // mph needs to be even
 
     const int tblLvl = std::min(srcLvl, tgtLvl);
 
     // Anterpolate over phi
-    std::vector<vec2cd> innerCoeffs(mth*nph, vec2cd::Zero());
-    size_t n = 0;
-    for (int ith = 0; ith < mth; ++ith) { // over parent thetas (unanterpolated)
-        const int ithmph = ith*mph;
+    std::vector<vec2cd> innerCoeffs(mth*Nph, vec2cd::Zero());
+    for (int iph = 0; iph < mph; ++iph) { // over parent phis anterpolating child phis
+        const auto [interp, nearIdx] = tables.interpPhi[tblLvl][iph];
 
-        for (int jph = 0; jph < nph; ++jph) { // over child phis to anterpolate
+        for (int jph = -order; jph < nph+order; ++jph) { // over child phis to anterpolate
 
-            for (int iph = 0; iph < mph; ++iph) { // over parent phis anterpolating child phis
+            // shift from jph \in [nearIdx+1-order,nearIdx+order] to k \in [0,2*order-1]
+            const int k = jph - (nearIdx+1-order);
 
-                const auto [interp, nearIdx] = tables.interpPhi[tblLvl][iph]; // TODO: don't need to lookup for every ith & iph
+            // if iph \notin [nearIdx+1-order,nearIdx+order], matrix element is zero
+            if (k < 0 || k >= 2*order) continue;
 
-                // shift from iph \in [nearIdx+1-order,nearIdx+order] to k \in [0,2*order-1]
-                const int k = jph - (nearIdx+1-order);
-
-                // if iph \notin [s+1-order,s+order], matrix element is zero
-                if (k < 0 || k >= 2*order) continue;
-
-                innerCoeffs[n] += interp[k] * inCoeffs[ithmph+iph];
-            }
-
-            ++n;
+            for (int ith = 0; ith < mth; ++ith) // over parent thetas (unanterpolated)
+                innerCoeffs[ith*Nph+jph+order] += interp[k] * inCoeffs[ith*mph+iph];
         }
     }
 
     // Anterpolate over theta
-    size_t m = 0;
-    for (int jth = 0; jth < nth; ++jth) { // over child thetas to anterpolate
+    std::vector<vec2cd> longCoeffs(Nth*Nph, vec2cd::Zero());
+    for (int ith = 0; ith < mth; ++ith) { // over parent thetas anterpolating child thetas
 
-        for (int jph = 0; jph < nph; ++jph) { // over child phis (anterpolated)
+        const auto [interp, nearIdx] = tables.interpTheta[tblLvl][ith];
+        for (int jth = -order; jth < nth+order; ++jth) { // over child thetas to anterpolate
 
-            for (int ith = 0; ith < mth; ++ith) { // over parent thetas anterpolating child thetas
+            // shift from ith \in [t+1-order,t+order] to k \in [0,2*order-1]   
+            const int k = jth - (nearIdx+1-order);
 
-                const auto [interp, nearIdx] = tables.interpTheta[tblLvl][ith]; // TODO: don't need to lookup for every ith & jph
+            // if ith \notin [t+1-order,t+order], matrix element is zero
+            if (k < 0 || k >= 2*order) continue;
 
-                // shift from ith \in [t+1-order,t+order] to k \in [0,2*order-1]   
-                const int k = jth - (nearIdx+1-order);
-
-                // if ith \notin [t+1-order,t+order], matrix element is zero
-                if (k < 0 || k >= 2*order) continue;
-
-                outCoeffs[m] += interp[k] * innerCoeffs[ith*nph+jph];
-            }
-
-            ++m;
+            for (int jph = -order; jph < nph+order; ++jph) // over child phis (anterpolated)
+                longCoeffs[(jth+order)*Nph+jph+order] += interp[k] * innerCoeffs[ith*Nph+jph+order];
         }
     }
 
+    // Contract grid points in theta and phi
+    int dirIdx = 0;
+
+    for (int jth = 0; jth < nth; ++jth) {
+        for (int jph = 0; jph < nph; ++jph) {
+            const int Jth = jth+order, Jph = jph+order;
+
+            outCoeffs[dirIdx] = longCoeffs[Jth*Nph+Jph];
+
+            // Handle nodes near prime meridian
+            if (jph < order || jph >= nph-order) {
+                const int Jph_wrapped = Jph + (jph < order ? nph : -nph);
+                outCoeffs[dirIdx] += longCoeffs[(jth+order)*Nph+Jph_wrapped];
+            }
+
+            // Handle nodes near poles
+            if (jth < order || jth >= nth-order) {
+                const int Jph_shifted = Jph + ((jph < nph/2) ? nph/2 : -nph/2);
+                const int jth_flipped = (jth < order ? -jth-1 : 2*nth-jth-1);
+
+                outCoeffs[dirIdx] += longCoeffs[(jth_flipped+order)*Nph+Jph_shifted]
+                    * Math::sign(1); // spherical components only
+            }
+
+            ++dirIdx;
+        }
+    }
 }
 //
 
