@@ -27,5 +27,11 @@ public:
         f << center << " " << nodeLeng << '\n';
     }
 
-    static void testInvInterp(int);
+    static void tInterpPhi(int);
+
+    static void tAnterpPhi(int);
+
+    static void tInterp(int);
+
+    static void tAnterp(int);
 };

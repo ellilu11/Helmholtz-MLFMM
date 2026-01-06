@@ -5,7 +5,8 @@ digits = 6;
 dir = "C:\Users\ellil\Documents\WORK\MLFMA\MLFMA\out\build\x64-debug\out\sol\";
 
 sol1 = readmatrix(dir+"rvec.txt");
-sol2 = readmatrix(dir+"rvecDir.txt");
+sol2 = readmatrix(dir+"rvec_anterp.txt");
+solDir = readmatrix(dir+"rvecDir.txt");
 % sol1 = readmatrix(dir+"curr_nq7.txt");
 % sol2 = readmatrix(dir+"currDir_nq7.txt");
 
@@ -16,14 +17,16 @@ close all;
 for i=1:2
     sol1Sort = sortrows(sol1,i);
     sol2Sort = sortrows(sol2,i);
-    % sol3Sort = sortrows(sol3,i);
+    solDirSort = sortrows(solDir,i);
     figure(2*i-1);
-    plot(nvec, sol1Sort(:,i), nvec, sol2Sort(:,i));
-    % semilogy(nvec, abs(sol1Sort(:,i)), nvec, abs(sol2Sort(:,i)));
+    % plot(nvec, sol1Sort(:,i), nvec, sol2Sort(:,i));
+    semilogy(nvec, abs(sol2Sort(:,i)), nvec, abs(solDirSort(:,i)));
 
-    relErr = abs(sol1Sort(:,i)-sol2Sort(:,i)) ./ abs(sol2Sort(:,i));
-    % relErr2 = abs(sol2Sort(:,i)-sol3Sort(:,i)) ./ abs(sol3Sort(:,i));
+    relErr1 = abs(sol1Sort(:,i)-solDirSort(:,i)) ./ abs(solDirSort(:,i));
+    relErr2 = abs(sol2Sort(:,i)-solDirSort(:,i)) ./ abs(solDirSort(:,i));
     figure(2*i);
-    semilogy(nvec, relErr)
+    semilogy(nvec, relErr1, nvec, relErr2);
 end
 
+mean(relErr1)
+mean(relErr2)

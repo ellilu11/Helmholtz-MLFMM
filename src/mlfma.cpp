@@ -107,8 +107,8 @@ int main() {
     cout << "   Elapsed time (S2T): " << t.S2T.count() << " ms\n\n";
     cout << " FMM total elapsed time: " << fmm_duration_ms.count() << " ms\n";
 
-    // printSols(srcs, "sol_d" + to_string(config.digits) + ".txt");
-    printSols(srcs, "sol.txt");
+    // printSols(srcs, "rvec_d" + to_string(config.digits) + ".txt");
+    printSols(srcs, "rvec_anterp.txt");
 
     if (!config.evalDirect) return 0;
 
@@ -124,7 +124,7 @@ int main() {
     duration_ms = end - start;
     cout << "   Elapsed time: " << duration_ms.count() << " ms\n";
 
-    printSols(srcs, "solDir.txt");
+    printSols(srcs, "rvecDir.txt");
 
     return 0;
 }

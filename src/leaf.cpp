@@ -193,9 +193,9 @@ void Leaf::evalFarSols() {
             for (int iph = 0; iph < nph; ++iph) {
                 // Do the angular integration
                 sol += weight
-                    * radPats[dirIdx][obsIdx].dot(localCoeffs[dirIdx]); // Hermitian dot!
+                        * radPats[dirIdx][obsIdx].dot(localCoeffs[dirIdx]); // Hermitian dot!
 
-                ++angIdx;
+                ++dirIdx;
             }
         }
 

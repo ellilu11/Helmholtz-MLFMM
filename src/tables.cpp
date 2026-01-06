@@ -97,7 +97,7 @@ std::vector<interpPair> Tables::getInterpPhiAtLvl(int srcLvl, int tgtLvl) {
 
         vecXd coeffs(2*order);
         for (int k = 0; k < 2*order; ++k)
-            coeffs[k] = 
+            coeffs[k] =
                 Interp::evalLagrangeBasis(tgtPhi, interpPhis, k);
 
         interpPairs.emplace_back(coeffs, nearIdx);

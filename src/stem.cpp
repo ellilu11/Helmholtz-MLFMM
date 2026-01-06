@@ -61,7 +61,7 @@ void Stem::buildLists() {
 }
 
 /* buildMpoleCoeffs()
- * (M2M) Build mpole coeffs by merging branch mpole coeffs 
+ * (M2M) Build mpole coeffs by merging branch mpole coeffs
  */
 void Stem::buildMpoleCoeffs() {
 
@@ -124,7 +124,7 @@ std::vector<vec2cd> Stem::getShiftedLocalCoeffs(int branchIdx) const {
     }
 
     // Interpolate shifted coeffs to branch's angular grid
-    addInterpCoeffs(shiftedCoeffs, outCoeffs, level, level+1);
+    addAnterpCoeffs(shiftedCoeffs, outCoeffs, level, level+1);
 
     return outCoeffs;
 }
@@ -141,7 +141,7 @@ void Stem::addInterpCoeffs(
 
     assert(!(mph%2)); // mph needs to be even
 
-    // Select which interp tables to use
+    // Choose which interp tables to use
     const auto& interpTheta =
         (srcLvl > tgtLvl) ? tables.interpTheta : tables.invInterpTheta;
     const auto& interpPhi =
@@ -154,7 +154,7 @@ void Stem::addInterpCoeffs(
 
     size_t m = 0;
     for (int jth = 0; jth < nth; ++jth) {
-        
+
         const auto [interp, nearIdx] = interpTheta[tblLvl][jth];
 
         for (int iph = 0; iph < mph; ++iph) {
@@ -176,7 +176,8 @@ void Stem::addInterpCoeffs(
                 const int m_shifted = ith_flipped*mph + iph_shifted;
 
                 innerCoeffs[m] +=
-                    interp[k] * inCoeffs[m_shifted] * Math::sign(outOfRange);
+                    interp[k] * inCoeffs[m_shifted]
+                    * Math::sign(outOfRange); // only for spherical components!
             }
 
             ++m;
@@ -186,7 +187,7 @@ void Stem::addInterpCoeffs(
     // Interpolate over phi
     size_t n = 0;
     for (int jth = 0; jth < nth; ++jth) {
-        int jthmph = jth*mph;
+        const int jthmph = jth*mph;
 
         for (int jph = 0; jph < nph; ++jph) {
             const auto [interp, nearIdx] = interpPhi[tblLvl][jph]; // TODO: don't need to lookup for every jth
@@ -197,7 +198,8 @@ void Stem::addInterpCoeffs(
                 const int iph_wrapped = Math::wrapIdxToRange(iph, mph);
 
                 outCoeffs[n] +=
-                    interp[k] * innerCoeffs[jthmph + iph_wrapped];
+                    interp[k]
+                    * innerCoeffs[jthmph + iph_wrapped];
             }
 
             ++n;
@@ -205,6 +207,7 @@ void Stem::addInterpCoeffs(
     }
 }
 
+//
 void Stem::addAnterpCoeffs(
     const std::vector<vec2cd>& inCoeffs, 
     std::vector<vec2cd>& outCoeffs, 
@@ -219,36 +222,11 @@ void Stem::addAnterpCoeffs(
 
     const int tblLvl = std::min(srcLvl, tgtLvl);
 
-    // Anterpolate over theta
-    std::vector<vec2cd> innerCoeffs(nth*mph, vec2cd::Zero());
-
-    size_t m = 0;
-    for (int jth = 0; jth < nth; ++jth) { // over child thetas to anterpolate
-
-        for (int iph = 0; iph < mph; ++iph) { // over parent phis (unanterpolated)
-
-            for (int ith = 0; ith < mth; ++ith) { // over parent thetas anterpolating child thetas
-
-                const auto [interp, nearIdx] = tables.interpTheta[tblLvl][ith]; // TODO: don't need to lookup for every ith & jph
-
-                // shift from ith \in [t+1-order,t+order] to k \in [0,2*order-1]   
-                const int k = jth - (nearIdx+1-order);
-
-                // if ith \notin [t+1-order,t+order], matrix element is zero
-                if (k < 0 || k >= 2*order) continue;
-
-                innerCoeffs[m] += interp[k] * inCoeffs[m];
-            }
-
-            // std::cout << std::setprecision(9) << inCoeffs[m] << '\n';
-
-            ++m;
-        }
-    }
-
     // Anterpolate over phi
+    std::vector<vec2cd> innerCoeffs(mth*nph, vec2cd::Zero());
     size_t n = 0;
-    for (int jth = 0; jth < nth; ++jth) { // over child thetas (anterpolated)
+    for (int ith = 0; ith < mth; ++ith) { // over parent thetas (unanterpolated)
+        const int ithmph = ith*mph;
 
         for (int jph = 0; jph < nph; ++jph) { // over child phis to anterpolate
 
@@ -262,15 +240,38 @@ void Stem::addAnterpCoeffs(
                 // if iph \notin [s+1-order,s+order], matrix element is zero
                 if (k < 0 || k >= 2*order) continue;
 
-                outCoeffs[n] += interp[k] * innerCoeffs[n];
+                innerCoeffs[n] += interp[k] * inCoeffs[ithmph+iph];
             }
-
-            // std::cout << std::setprecision(9) << outCoeffs[n] << '\n';
 
             ++n;
         }
     }
+
+    // Anterpolate over theta
+    size_t m = 0;
+    for (int jth = 0; jth < nth; ++jth) { // over child thetas to anterpolate
+
+        for (int jph = 0; jph < nph; ++jph) { // over child phis (anterpolated)
+
+            for (int ith = 0; ith < mth; ++ith) { // over parent thetas anterpolating child thetas
+
+                const auto [interp, nearIdx] = tables.interpTheta[tblLvl][ith]; // TODO: don't need to lookup for every ith & jph
+
+                // shift from ith \in [t+1-order,t+order] to k \in [0,2*order-1]   
+                const int k = jth - (nearIdx+1-order);
+
+                // if ith \notin [t+1-order,t+order], matrix element is zero
+                if (k < 0 || k >= 2*order) continue;
+
+                outCoeffs[m] += interp[k] * innerCoeffs[ith*nph+jph];
+            }
+
+            ++m;
+        }
+    }
+
 }
+//
 
 /* buildLocalCoeffs()
  * (M2L) Translate mpole coeffs of interaction nodes into local coeffs at center
