@@ -61,7 +61,7 @@ void Stem::initNode() {
 }
 
 /* buildMpoleCoeffs()
- * (M2M) Build mpole coeffs by merging branch mpole coeffs 
+ * (M2M) Build mpole coeffs by merging branch mpole coeffs
  */
 void Stem::buildMpoleCoeffs() {
     const int order = config.interpOrder;
@@ -121,15 +121,42 @@ std::vector<vec2cd> Stem::getShiftedLocalCoeffs(int branchIdx) const {
     }
 
     // Interpolate shifted coeffs to branch's angular grid
-    addInterpCoeffs(shiftedCoeffs, outCoeffs, level, level+1);
+    addAnterpCoeffs(shiftedCoeffs, outCoeffs, level, level+1);
 
     return outCoeffs;
 }
 
+/* buildLocalCoeffs()
+ * (M2L) Translate mpole coeffs of interaction nodes into local coeffs at center
+ * (L2L) Shift base local coeffs to center and add to local coeffs
+ */
+void Stem::buildLocalCoeffs() {
+    if (!isRoot()) {
+
+        auto start = Clock::now();
+        buildMpoleToLocalCoeffs();
+        t.M2L += Clock::now() - start;
+
+        evalLeafIlistSols();
+
+        start = Clock::now();
+        if (!base->isRoot()) {
+            auto stemBase = dynamic_cast<Stem*>(base);
+
+            localCoeffs =
+                localCoeffs + stemBase->getShiftedLocalCoeffs(branchIdx);
+        }
+
+        t.L2L += Clock::now() - start;
+    }
+
+    for (const auto& branch : branches)
+        branch->buildLocalCoeffs();
+}
+
+template <typename T>
 void Stem::addInterpCoeffs(
-    const std::vector<vec2cd>& inCoeffs, 
-    std::vector<vec2cd>& outCoeffs, 
-    int srcLvl, int tgtLvl)
+    const std::vector<T>& inCoeffs, std::vector<T>& outCoeffs, int srcLvl, int tgtLvl)
 {
     const int order = config.interpOrder;
 
@@ -138,18 +165,18 @@ void Stem::addInterpCoeffs(
 
     assert(!(mph%2)); // mph needs to be even
 
-    // Select which interp tables to use
-    const auto& interpTheta = 
+    // TODO: Remove
+    const auto& interpTheta =
         (srcLvl > tgtLvl) ? tables.interpTheta : tables.invInterpTheta;
-    const auto& interpPhi = 
+    const auto& interpPhi =
         (srcLvl > tgtLvl) ? tables.interpPhi : tables.invInterpPhi;
 
     const int tblLvl = std::min(srcLvl, tgtLvl);
 
     // Interpolate over theta
-    std::vector<vec2cd> innerCoeffs(nth*mph, vec2cd::Zero());
-
+    std::vector<T> innerCoeffs(nth*mph, T{});
     size_t m = 0;
+
     for (int jth = 0; jth < nth; ++jth) {
         const auto [interp, nearIdx] = interpTheta[tblLvl][jth];
 
@@ -159,19 +186,22 @@ void Stem::addInterpCoeffs(
                 // Flip ith if not in [0, mth-1]
                 const int ith_flipped = Math::flipIdxToRange(ith, mth);
 
-                const bool outOfRange = ith != ith_flipped; // jth < 0 || jth >= mth;
+                const bool nearPole = ith != ith_flipped; // jth < 0 || jth >= mth;
 
                 int iph_shifted = iph;
 
                 // if theta \notin [0, pi] then if:
                 // phi \in (0, pi) add pi, phi \in (pi, 2pi) subtract pi
-                if (outOfRange)
+                if (nearPole)
                     iph_shifted += ((iph < mph/2) ? mph/2 : -mph/2);
 
                 const int m_shifted = ith_flipped*mph + iph_shifted;
 
-                innerCoeffs[m] += 
-                    interp[k] * inCoeffs[m_shifted] * Math::sign(outOfRange); 
+                // if (!nearPole)
+                innerCoeffs[m] +=
+                    interp[k] * inCoeffs[m_shifted]
+                    * Math::sign(nearPole) // spherical vector components only
+                    ; 
             }
 
             ++m;
@@ -200,103 +230,93 @@ void Stem::addInterpCoeffs(
     }
 }
 
-/*void Stem::addAnterpCoeffs(
-    const std::vector<vec3cd>& inCoeffs, std::vector<vec3cd>& outCoeffs, int level)
+template <typename T>
+void Stem::addAnterpCoeffs(
+    const std::vector<T>& inCoeffs, std::vector<T>& outCoeffs, int srcLvl, int tgtLvl)
 {
     const int order = config.interpOrder;
 
-    const auto [nth, nph] = getNumAngles(level);
-    const auto [mth, mph] = getNumAngles(level+1);
+    const auto [mth, mph] = getNumAngles(srcLvl);
+    const auto [nth, nph] = getNumAngles(tgtLvl);
+    const int Nth = nth+2*order, Nph = nph+2*order;
 
-    assert(!(mph%2)); // mph needs to be even
+    assert(!(nph%2)); // nph needs to be even
 
-    std::vector<vec3cd> outCoeffs(mth*mph, vec3cd::Zero());
+    const int tblLvl = std::min(srcLvl, tgtLvl);
 
-    // Anterpolate over theta
-    std::vector<vec3cd> innerCoeffs(mth*nph, vec3cd::Zero());
+    // Anterpolate over extended phi
+    std::vector<T> innerCoeffs(mth*Nph, T{});
+    for (int iph = 0; iph < mph; ++iph) { // over parent phis anterpolating child phis
+        const auto [interp, nearIdx] = tables.interpPhi[tblLvl][iph];
 
-    size_t m = 0;
-    for (int ith = 0; ith < mth; ++ith) { // over child thetas to anterpolate
+        for (int jph = -order; jph < nph+order; ++jph) { // over child phis to anterpolate
 
-        for (int jph = 0; jph < nph; ++jph) { // over parent phis (unanterpolated)
+            // shift from jph \in [nearIdx+1-order,nearIdx+order] to k \in [0,2*order-1]
+            const int k = jph - (nearIdx+1-order);
 
-            for (int jth = 0; jth < nth; ++jth) { // over parent thetas anterpolating child thetas
+            // if iph \notin [nearIdx+1-order,nearIdx+order], matrix element is zero
+            if (k < 0 || k >= 2*order) continue;
 
-                const int t = tables.ts[level][jth]; // TODO: don't need to lookup for every ith & jph
+            const int Jph = jph+order;
+            for (int ith = 0; ith < mth; ++ith) // over parent thetas (unanterpolated)
+                innerCoeffs[ith*Nph+Jph] += interp[k] * inCoeffs[ith*mph+iph];
+        }
+    }
 
-                // shift from ith \in [t+1-order,t+order] to k \in [0,2*order-1]   
-                const int k = ith - (t+1-order);
+    // Anterpolate over extended theta
+    std::vector<T> longCoeffs(Nth*Nph, T{});
+    for (int ith = 0; ith < mth; ++ith) { // over parent thetas anterpolating child thetas
+        const auto [interp, nearIdx] = tables.interpTheta[tblLvl][ith];
 
-                // std::cout << ith << ' ' << jth << ' ' << t << ' ' << k << '\n';
+        for (int jth = -order; jth < nth+order; ++jth) { // over child thetas to anterpolate
 
-                // if ith \notin [t+1-order,t+order], matrix element is zero
-                if (k < 0 || k >= 2*order) continue;
+            // shift from ith \in [t+1-order,t+order] to k \in [0,2*order-1]   
+            const int k = jth - (nearIdx+1-order);
 
-                innerCoeffs[m] +=
-                    tables.interpTheta[level][jth][k] * inCoeffs[m];
+            // if ith \notin [t+1-order,t+order], matrix element is zero
+            if (k < 0 || k >= 2*order) continue;
 
-                // std::cout << tables.interpTheta[level][jth][k] << ' ';
+            const int Jth = jth+order;
+            for (int jph = -order; jph < nph+order; ++jph) { // over child phis (anterpolated)
+                const int Jph = jph+order;
+                longCoeffs[Jth*Nph+Jph] += interp[k] * innerCoeffs[ith*Nph+Jph];
+            }
+        }
+    }
+
+    // Contract extended theta and phi
+    int dirIdx = 0;
+
+    for (int jth = 0; jth < nth; ++jth) {
+        for (int jph = 0; jph < nph; ++jph) {
+            const int Jth = jth+order, Jph = jph+order;
+
+            outCoeffs[dirIdx] += longCoeffs[Jth*Nph+Jph];
+
+            // Handle nodes near prime meridian
+            if (jph < order || jph >= nph-order) {
+                const int Jph_wrapped = Jph + (jph < order ? nph : -nph);
+                outCoeffs[dirIdx] += longCoeffs[Jth*Nph+Jph_wrapped];
             }
 
-            // std::cout << std::setprecision(9) << inCoeffs[m] << '\n';
+            // Handle nodes near poles
+            // TODO: Fix!!!
+            if (jth < order || jth >= nth-order) {
+            // if (jth < order) {
+                const int Jph_shifted = Jph + ((jph < nph/2) ? nph/2 : -nph/2);
+                const int jth_flipped = (jth < order ? -jth-1 : 2*nth-jth-1);
 
-            m++;
-        }
-    }
+                outCoeffs[dirIdx] +=
+                    longCoeffs[(jth_flipped+order)*Nph+Jph_shifted]
+                    * Math::sign(1) // spherical vector components only
+                    ; 
 
-    // Anterpolate over phi
-    size_t n = 0;
-    for (int ith = 0; ith < mth; ++ith) { // over child thetas (anterpolated)
-
-        for (int iph = 0; iph < mph; ++iph) { // over child phis to anterpolate
-
-            for (int jph = 0; jph < nph; ++jph) { // over parent phis anterpolating child phis
-
-                const int s = tables.ss[level][jph]; // TODO: don't need to lookup for every ith & iph
-
-                // shift from iph \in [s+1-order,s+order] to k \in [0,2*order-1]
-                const int k = iph - (s+1-order);
-
-                // if iph \notin [s+1-order,s+order], matrix element is zero
-                if (k < 0 || k >= 2*order) continue;
-
-                outCoeffs[n] +=
-                    tables.interpPhi[level][jph][k] * innerCoeffs[n];
+                // std::cout << longCoeffs[(jth_flipped+order)*Nph+Jph] << ' ';
             }
 
-            // std::cout << std::setprecision(9) << outCoeffs[n] << '\n';
-
-            n++;
+            ++dirIdx;
         }
+
+        // std::cout << '\n';
     }
-
-    return outCoeffs;
-}*/
-
-/* buildLocalCoeffs()
- * (M2L) Translate mpole coeffs of interaction nodes into local coeffs at center
- * (L2L) Shift base local coeffs to center and add to local coeffs
- */
-void Stem::buildLocalCoeffs() {
-    if (!isRoot()) {
-
-        auto start = Clock::now();
-        buildMpoleToLocalCoeffs();
-        t.M2L += Clock::now() - start;
-
-        evalLeafIlistSols();
-
-        start = Clock::now();
-        if (!base->isRoot()) {
-            auto stemBase = dynamic_cast<Stem*>(base);
-
-            localCoeffs =
-                localCoeffs + stemBase->getShiftedLocalCoeffs(branchIdx);
-        }
-        t.L2L += Clock::now() - start;
-        
-    }
-
-    for (const auto& branch : branches)
-        branch->buildLocalCoeffs();
 }
