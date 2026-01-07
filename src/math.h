@@ -9,8 +9,7 @@ constexpr cmplx iu(0, 1);
 const double PI = std::acos(-1.0);
 
 const vec3d zeroVec = vec3d::Zero();
-const vec3d northVec(0, 0, 1);
-const vec3d southVec(0, 0, -1);
+const std::array<vec3d, 2> poles{ vec3d(0, 0, 1), vec3d(0, 0, -1) };
 
 namespace Math {
     constexpr double FEPS = 1.0E-6; // floating point error tolerance

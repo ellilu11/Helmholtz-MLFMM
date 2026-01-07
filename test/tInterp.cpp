@@ -129,7 +129,7 @@ void Stem::tInterpTheta(int srcLvl, int tgtLvl) {
     cmplxVec vals;
 
     for (int ith = 0; ith < mth; ++ith) {
-        const double theta = thetas[srcLvl][ith];
+        const double theta = thetas[srcLvl].first[ith];
         vals.push_back(thetaFunc(theta));
     }
 
@@ -152,8 +152,8 @@ void Stem::tInterpTheta(int srcLvl, int tgtLvl) {
     // Do inner product (weighted)
     cmplx intVal = 0.0;
     for (int jth = 0; jth < nth; ++jth) {
-        const double theta = thetas[tgtLvl][jth];
-        const double thetaWeight = thetaWeights[tgtLvl][jth];
+        const double theta = thetas[tgtLvl].first[jth];
+        const double thetaWeight = thetas[tgtLvl].second[jth];
 
         intVal += thetaWeight * thetaFunc(theta) * interpVals[jth];
     }
@@ -171,8 +171,8 @@ void Stem::tAnterpTheta(int srcLvl, int tgtLvl) {
     cmplxVec vals;
 
     for (int ith = 0; ith < mth; ++ith) {
-        const double theta = thetas[srcLvl][ith];
-        const double thetaWeight = thetaWeights[srcLvl][ith];
+        const double theta = thetas[srcLvl].first[ith];
+        const double thetaWeight = thetas[srcLvl].second[ith];
         vals.push_back(thetaWeight*thetaFunc(theta));
     }
 
@@ -216,7 +216,7 @@ void Stem::tAnterpTheta(int srcLvl, int tgtLvl) {
     // Do inner product
     cmplx intVal = 0.0;
     for (int jth = 0; jth < nth; ++jth) {
-        const double theta = thetas[tgtLvl][jth];
+        const double theta = thetas[tgtLvl].first[jth];
         intVal += anterpVals[jth] * thetaFunc(theta);
         // std::cout << std::setprecision(6) << anterpVals[jth] << ' ';
     }
@@ -234,7 +234,7 @@ void Stem::tInterp(int srcLvl, int tgtLvl) {
     cmplxVec vals;
 
     for (int ith = 0; ith < mth; ++ith) {
-        const double theta = thetas[srcLvl][ith];
+        const double theta = thetas[srcLvl].first[ith];
 
         for (int iph = 0; iph < mph; ++iph) {
             const double phi = phis[srcLvl][iph];
@@ -252,8 +252,8 @@ void Stem::tInterp(int srcLvl, int tgtLvl) {
     cmplx intVal = 0.0;
     size_t l = 0;
     for (int jth = 0; jth < nth; ++jth) {
-        const double theta = thetas[tgtLvl][jth];
-        const double thetaWeight = thetaWeights[tgtLvl][jth];
+        const double theta = thetas[tgtLvl].first[jth];
+        const double thetaWeight = thetas[tgtLvl].second[jth];
 
         for (int jph = 0; jph < nph; ++jph) {
             const double phi = phis[tgtLvl][jph];
@@ -276,8 +276,8 @@ void Stem::tAnterp(int srcLvl, int tgtLvl) {
 
     const double phiWeight = 2.0*PI / static_cast<double>(mph);
     for (int ith = 0; ith < mth; ++ith) {
-        const double theta = thetas[srcLvl][ith];
-        const double thetaWeight = thetaWeights[srcLvl][ith];
+        const double theta = thetas[srcLvl].first[ith];
+        const double thetaWeight = thetas[srcLvl].second[ith];
 
         for (int iph = 0; iph < mph; ++iph) {
             const double phi = phis[srcLvl][iph];
@@ -294,7 +294,7 @@ void Stem::tAnterp(int srcLvl, int tgtLvl) {
     cmplx intVal = 0.0;
     size_t l = 0;
     for (int jth = 0; jth < nth; ++jth) {
-        const double theta = thetas[tgtLvl][jth];
+        const double theta = thetas[tgtLvl].first[jth];
 
         for (int jph = 0; jph < nph; ++jph) {
             const double phi = phis[tgtLvl][jph];
@@ -319,7 +319,7 @@ int main() {
     auto [srcs, Einc] = importFromConfig(config);
     auto nsrcs = srcs.size();
 
-    Node::setNodeParams(config, Einc);
+    Node::initParams(config, Einc);
 
     // ==================== Set up domain ==================== //
     cout << " Setting up domain...\n";
@@ -331,8 +331,6 @@ int main() {
         root = make_shared<Stem>(srcs, 0, nullptr);
     else
         root = make_shared<Leaf>(srcs, 0, nullptr);
-
-    root->buildLists();
 
     auto end = Clock::now();
     Time duration_ms = end - start;
@@ -349,6 +347,7 @@ int main() {
 
     Node::buildAngularSamples();
     Node::buildTables();
+    root->initNode();
 
     end = Clock::now();
     duration_ms = end - start;
@@ -358,10 +357,10 @@ int main() {
     const int lvl = 0;
     // Stem::tInterpPhi(lvl+1,lvl);
     // Stem::tAnterpPhi(lvl,lvl+1);
-    Stem::tInterpTheta(lvl+1,lvl);
-    Stem::tAnterpTheta(lvl,lvl+1);
-    // Stem::tInterp(lvl+1,lvl);
-    // Stem::tAnterp(lvl,lvl+1);
+    // Stem::tInterpTheta(lvl+1,lvl);
+    // Stem::tAnterpTheta(lvl,lvl+1);
+    Stem::tInterp(lvl+1,lvl);
+    Stem::tAnterp(lvl,lvl+1);
 
     return 0;
 }

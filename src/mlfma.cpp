@@ -85,8 +85,8 @@ int main() {
     cout << "   Total elapsed time: " << duration_ms.count() << " ms\n\n";
 
     solver->printSols("curr_nq7.txt");
-    root->printFarSols("ff_nq7.txt");
-    root->printAngles();
+    //root->printFarSols("ff_nq7.txt");
+    //root->printAngles();
 
     if (!config.evalDirect) return 0;
 
@@ -104,16 +104,12 @@ int main() {
     cout << "   Elapsed time: " << duration_ms.count() << " ms\n\n";
 
     cout << " Solving w/ direct...\n";
-    auto solverDir = make_unique<Solver>(srcs, root, MAX_ITER, EPS);
-    Node::linkStates(solverDir);
+    solver = make_unique<Solver>(srcs, root, MAX_ITER, EPS);
+    Node::linkStates(solver);
 
-    start = Clock::now();
-    solverDir->solve();
-    end = Clock::now();
-    duration_ms = end - start;
-    cout << "   Elapsed time: " << duration_ms.count() << " ms\n";
+    solver->solve();
 
-    solverDir->printSols("currDir_nq7.txt");
+    solver->printSols("currDir_nq7.txt");
 
     return 0;
 }

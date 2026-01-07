@@ -157,18 +157,17 @@ void Node::buildMpoleToLocalCoeffs() {
             localCoeffs[idx] += transl_dX[idx] * node->coeffs[idx];
     }
 
-    /* Apply integration weights
-    // const double phiWeight = 2.0*PI / static_cast<double>(nph);
-    size_t idx = 0;
+    // Apply integration weights
+    const auto [nth, nph] = getNumAngles(level);
+    const double phiWeight = 2.0*PI / static_cast<double>(nph);
+    size_t dirIdx = 0;
     for (int ith = 0; ith < nth; ++ith) {
-        const double weight = thetas[level].second[ith];
+        const double weight = phiWeight * thetas[level].second[ith];
 
-        for (int iph = 0; iph < nph; ++iph) {
-            localCoeffs[idx] *= weight * phiWeight;
-
-            ++idx;
-        }
-    }*/
+        for (int iph = 0; iph < nph; ++iph)
+            localCoeffs[dirIdx++] *= weight;
+    }
+    //
 }
 
 /* evalLeafIlistSols()

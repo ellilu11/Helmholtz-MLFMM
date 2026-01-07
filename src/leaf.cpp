@@ -15,10 +15,8 @@ Leaf::Leaf(
     /* Assign indices to all sources in this leaf
     for (const auto& src : srcs) {
         src->setIdx(glSrcIdx++);
-
         std::cout << src->getIdx() << ' ';
     }
-
     if (!isSrcless()) std::cout << '\n';
     */
 }
@@ -158,14 +156,12 @@ void Leaf::buildNearRads() {
 void Leaf::buildRadPats() {
 
     for (const auto& leaf : leaves) {
-
         const int level = leaf->level;
         const auto& center = leaf->center;
 
         const auto [nth, nph] = getNumAngles(level);
 
         for (int dirIdx = 0; dirIdx < nth*nph; ++dirIdx) {
-
             const auto& kvec = tables.khat[level][dirIdx] * wavenum;
             const auto& toThPh = tables.toThPh[level][dirIdx];
 
@@ -176,6 +172,20 @@ void Leaf::buildRadPats() {
                 radPat[srcIdx++] = toThPh * src->getRadAlongDir(center, kvec);
 
             leaf->radPats.push_back(radPat);
+        }
+
+        // Do polar radpats
+        for (int dirIdx = 0; dirIdx < 2; ++dirIdx) {
+            const auto& kvec = poles[dirIdx] * wavenum;
+
+            std::vector<vec2cd> radPat(leaf->srcs.size(), vec2cd::Zero());
+
+            int srcIdx = 0;
+            for (const auto& src : leaf->srcs)
+                // x,y components only
+                radPat[srcIdx++] = src->getRadAlongDir(center, kvec).head(2);
+
+            leaf->polarRadPats[dirIdx] = radPat;
         }
     }
 }
@@ -191,7 +201,6 @@ void Leaf::buildMpoleCoeffs() {
     auto start = Clock::now();
 
     for (int dirIdx = 0; dirIdx < coeffs.size(); ++dirIdx) {
-
         vec2cd coeff = vec2cd::Zero();
 
         int srcIdx = 0;
@@ -199,7 +208,17 @@ void Leaf::buildMpoleCoeffs() {
             coeff += (*lvec)[src->getIdx()] * radPats[dirIdx][srcIdx++];
 
         coeffs[dirIdx] = coeff;
+    }
 
+    // Build polar coeffs
+    for (int dirIdx = 0; dirIdx < 2; ++dirIdx) {
+        vec2cd coeff = vec2cd::Zero();
+
+        int srcIdx = 0;
+        for (const auto& src : srcs)
+            coeff += (*lvec)[src->getIdx()] * polarRadPats[dirIdx][srcIdx++];
+
+        polarCoeffs[dirIdx] = coeff;
     }
 
     t.S2M += Clock::now() - start;
@@ -241,7 +260,6 @@ void Leaf::evalFarSols() {
 
     int obsIdx = 0;
     for (const auto& obs : srcs) {
-
         size_t dirIdx = 0;
         cmplx intRad = 0;
 
@@ -254,7 +272,7 @@ void Leaf::evalFarSols() {
             }
         }
 
-        obs->addToSol(Phys::C * wavenum * intRad);
+        (*rvec)[obs->getIdx()] += Phys::C * wavenum * intRad;
 
         ++obsIdx;
     }

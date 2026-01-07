@@ -73,7 +73,7 @@ public:
     
     std::vector<vec2cd> getMpoleCoeffs() const { return coeffs; }
 
-    std::pair<vec2cd, vec2cd> getPolarCoeffs() const { return polarCoeffs; }
+    std::array<vec2cd,2> getPolarCoeffs() const { return polarCoeffs; }
     
     std::vector<vec2cd> getLocalCoeffs() const { return localCoeffs; }
 
@@ -147,7 +147,7 @@ protected:
     static std::shared_ptr<vecXcd> currents;
 
     std::vector<vec2cd> coeffs;
-    std::pair<vec2cd, vec2cd> polarCoeffs;
+    std::array<vec2cd,2> polarCoeffs;
     std::vector<vec2cd> localCoeffs;
 
     NodeVec branches;
