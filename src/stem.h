@@ -29,11 +29,15 @@ public:
         f << center << " " << nodeLeng << '\n';
     }
 
-    static void tInterpPhi(int);
+    static void tInterpPhi(int, int);
 
-    static void tAnterpPhi(int);
+    static void tAnterpPhi(int, int);
 
-    static void tInterp(int);
+    static void tInterpTheta(int, int);
 
-    static void tAnterp(int);
+    static void tAnterpTheta(int, int);
+
+    static void tInterp(int, int);
+
+    static void tAnterp(int, int);
 };

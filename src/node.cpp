@@ -61,9 +61,8 @@ void Node::buildAngularSamples() {
 
         // Absorb sin(theta) into weights
         std::transform(weights.begin(), weights.end(), nodes.begin(), weights.begin(),
-            [](double weight, double theta) {
-                return weight * sin(theta);
-            });
+            [](double weight, double theta) { return weight * sin(theta); }
+        );
 
         thetas.push_back(nodes);
         thetaWeights.push_back(weights);

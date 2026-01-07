@@ -7,33 +7,39 @@ using namespace std;
 
 extern auto t = ClockTimes();
 
+cmplx phiFunc(double ph) {
+    return exp(iu*ph);
+}
+
+double thetaFunc(double th) {
+    return cos(th);
+};
+
 cmplx sphFunc(double th, double ph) {
-    // return 0.3989422804 * exp(iu*ph);
-
     // return 0.48860251190292 * cos(th);
-
+    // return thetaFunc(th);
     return 0.345494149471336 * sin(th) * exp(iu*ph);
 };
 
-/*void Stem::tInterpPhi(int level) {
+void Stem::tInterpPhi(int srcLvl, int tgtLvl) {
     const int order = config.interpOrder;
 
     // Evaluate function at source nodes
-    const auto mph = getNumAngles(level+1).second;
+    const auto mph = getNumAngles(srcLvl).second;
     cmplxVec vals;
 
     for (int iph = 0; iph < mph; ++iph) {
-        const double phi = phis[level+1][iph];
+        const double phi = phis[srcLvl][iph];
         vals.push_back(phiFunc(phi));
     }
 
     // Interpolate over phi
-    const auto nph = getNumAngles(level).second;
+    const auto nph = getNumAngles(tgtLvl).second;
     cmplxVec interpVals(nph, 0.0);
     size_t n = 0;
 
     for (int jph = 0; jph < nph; ++jph) {
-        const auto [interp, nearIdx] = tables.interpPhi[level][jph];
+        const auto [interp, nearIdx] = tables.interpPhi[tgtLvl][jph];
 
         for (int iph = nearIdx+1-order, k = 0; iph <= nearIdx+order; ++iph, ++k) {
 
@@ -48,40 +54,35 @@ cmplx sphFunc(double th, double ph) {
     // Do inner product (weighted)
     const double phiWeight = 2.0*PI / static_cast<double>(nph);
     cmplx intVal = 0.0;
-
     for (int jph = 0; jph < nph; ++jph) {
-        const double phi = phis[level][jph];
+        const double phi = phis[tgtLvl][jph];
         intVal += phiWeight * conj(phiFunc(phi)) * interpVals[jph];
     }
 
     std::cout << "Integrated val using interp: " << std::setprecision(15) << intVal << '\n';
 }
 
-void Stem::tAnterpPhi(int level) {
+
+void Stem::tAnterpPhi(int srcLvl, int tgtLvl) {
     const int order = config.interpOrder;
 
     // Evaluate function times weights at source nodes
-    const auto mph = getNumAngles(level).second;
+    const auto mph = getNumAngles(srcLvl).second;
+    const auto nph = getNumAngles(tgtLvl).second;
+    const int Nph = nph+2*order;
     cmplxVec vals;
 
     const double phiWeight = 2.0*PI / static_cast<double>(mph);
-
     for (int iph = 0; iph < mph; ++iph) {
-        const double phi = phis[level][iph];
+        const double phi = phis[srcLvl][iph];
 
         vals.push_back(phiWeight*phiFunc(phi));
     }
 
     // Anterpolate over phi
-    const auto nph = getNumAngles(level+1).second;
-    cmplxVec anterpVals(nph, 0.0);
-    cmplxVec anterpLongVals(nph+2*order, 0.0);
-
+    cmplxVec extVals(Nph, 0.0);
     for (int iph = 0; iph < mph; ++iph) { // over parent phis anterpolating child phis
-
-        const auto [interp, nearIdx] = tables.interpPhi[level][iph];
-
-        // if (!ith) std::cout << nearIdx << ' ';
+        const auto [interp, nearIdx] = tables.interpPhi[srcLvl][iph];
 
         for (int jph = -order; jph < nph+order; ++jph) { // over child phis to anterpolate
 
@@ -91,46 +92,152 @@ void Stem::tAnterpPhi(int level) {
             // if iph \notin [nearIdx+1-order,nearIdx+order], matrix element is zero
             if (k < 0 || k >= 2*order) continue;
 
-            // if (!ith) std::cout << k << ' ';
-
-            anterpLongVals[jph+order] += interp[k] * vals[iph];
+            const int Jph = jph+order;
+            extVals[Jph] += interp[k] * vals[iph];
         }
+    }
 
-        for (int jph = 0; jph < nph; ++jph) {
+    // Contract extended theta
+    cmplxVec anterpVals(nph, 0.0);
+    for (int jph = 0; jph < nph; ++jph) {
+        const int Jph = jph+order;
 
-            anterpVals[jph] = anterpLongVals[jph+order];
+        anterpVals[jph] += extVals[Jph];
 
-            if (jph < order)
-                anterpVals[jph] += anterpLongVals[jph+order+nph];
-            else if (jph >= nph-order)
-                anterpVals[jph] += anterpLongVals[jph+order-nph];
+        if (jph < order || jph >= nph-order) {
+            const int Jph_wrapped = Jph + (jph < order ? nph : -nph);
+            anterpVals[jph] += extVals[Jph_wrapped];
         }
     }
 
     // Do inner product
     cmplx intVal = 0.0;
-
     for (int jph = 0; jph < nph; ++jph) {
-        const double phi = phis[level+1][jph];
+        const double phi = phis[tgtLvl][jph];
         intVal += conj(anterpVals[jph]) * phiFunc(phi);
     }
 
     std::cout << "Integrated val using anterp: " << std::setprecision(15) << intVal << '\n';
-}*/
+}
 
-void Stem::tInterp(int level) {
+void Stem::tInterpTheta(int srcLvl, int tgtLvl) {
     const int order = config.interpOrder;
 
     // Evaluate function at source nodes
-    const auto [mth, mph] = getNumAngles(level+1);
-    const auto [nth, nph] = getNumAngles(level);
+    const int mth = getNumAngles(srcLvl).first;
+    const int nth = getNumAngles(tgtLvl).first;
     cmplxVec vals;
 
     for (int ith = 0; ith < mth; ++ith) {
-        const double theta = thetas[level+1][ith];
+        const double theta = thetas[srcLvl][ith];
+        vals.push_back(thetaFunc(theta));
+    }
+
+    // Interpolate function values to target nodes
+    cmplxVec interpVals(nth, 0.0);
+ 
+    for (int jth = 0; jth < nth; ++jth) {
+
+        const auto [interp, nearIdx] = tables.interpTheta[tgtLvl][jth];
+
+        for (int ith = nearIdx+1-order, k = 0; ith <= nearIdx+order; ++ith, ++k) {
+
+            // Flip ith if not in [0, mth-1]
+            const int ith_flipped = Math::flipIdxToRange(ith, mth);
+
+            interpVals[jth] += interp[k] * vals[ith_flipped];
+        }
+    }
+
+    // Do inner product (weighted)
+    cmplx intVal = 0.0;
+    for (int jth = 0; jth < nth; ++jth) {
+        const double theta = thetas[tgtLvl][jth];
+        const double thetaWeight = thetaWeights[tgtLvl][jth];
+
+        intVal += thetaWeight * thetaFunc(theta) * interpVals[jth];
+    }
+
+    std::cout << "Integrated val using interp: " << std::setprecision(15) << 2*PI*intVal << '\n';
+}
+
+void Stem::tAnterpTheta(int srcLvl, int tgtLvl) {
+    const int order = config.interpOrder;
+
+    // Evaluate function times weights at source nodes
+    const int mth = getNumAngles(srcLvl).first;
+    const int nth = getNumAngles(tgtLvl).first;
+    const int Nth = nth+2*order;
+    cmplxVec vals;
+
+    for (int ith = 0; ith < mth; ++ith) {
+        const double theta = thetas[srcLvl][ith];
+        const double thetaWeight = thetaWeights[srcLvl][ith];
+        vals.push_back(thetaWeight*thetaFunc(theta));
+    }
+
+    // Anterpolate function values to target nodes on extended grid
+    cmplxVec extVals(Nth, 0.0);
+
+    for (int ith = 0; ith < mth; ++ith) { // over parent thetas anterpolating child thetas
+        const auto [interp, nearIdx] = tables.interpTheta[srcLvl][ith];
+
+        for (int jth = -order; jth < nth+order; ++jth) { // over child thetas to anterpolate
+
+            // shift from ith \in [t+1-order,t+order] to k \in [0,2*order-1]   
+            const int k = jth - (nearIdx+1-order);
+
+            // if ith \notin [t+1-order,t+order], matrix element is zero
+            if (k < 0 || k >= 2*order) continue;
+
+            const int Jth = jth+order;
+            extVals[Jth] += interp[k] * vals[ith];
+        }
+    }
+
+    // Contract extended theta
+    cmplxVec anterpVals(nth, 0.0);
+    for (int jth = 0; jth < nth; ++jth) {
+        const int Jth = jth+order;
+
+        anterpVals[jth] += extVals[Jth];
+
+        // Handle nodes near poles
+        if (jth < order || jth >= nth-order) {
+            const int jth_flipped = (jth < order ? -jth-1 : 2*nth-jth-1);
+
+            anterpVals[jth] += extVals[jth_flipped+order];
+
+            // std::cout << std::setprecision(9) << extVals[jth_flipped+order] << '\n';
+        }
+        //
+    }
+
+    // Do inner product
+    cmplx intVal = 0.0;
+    for (int jth = 0; jth < nth; ++jth) {
+        const double theta = thetas[tgtLvl][jth];
+        intVal += anterpVals[jth] * thetaFunc(theta);
+        // std::cout << std::setprecision(6) << anterpVals[jth] << ' ';
+    }
+    // std::cout << '\n';
+
+    std::cout << "Integrated val using anterp: " << std::setprecision(15) << 2.0*PI*intVal << '\n';
+}
+
+void Stem::tInterp(int srcLvl, int tgtLvl) {
+    const int order = config.interpOrder;
+
+    // Evaluate function at source nodes
+    const auto [mth, mph] = getNumAngles(srcLvl);
+    const auto [nth, nph] = getNumAngles(tgtLvl);
+    cmplxVec vals;
+
+    for (int ith = 0; ith < mth; ++ith) {
+        const double theta = thetas[srcLvl][ith];
 
         for (int iph = 0; iph < mph; ++iph) {
-            const double phi = phis[level+1][iph];
+            const double phi = phis[srcLvl][iph];
 
             vals.push_back(sphFunc(theta, phi));
         }
@@ -138,18 +245,18 @@ void Stem::tInterp(int level) {
 
     // Interpolate function values to target nodes
     cmplxVec interpVals(nth*nph, 0.0);
-    addInterpCoeffs<cmplx>(vals, interpVals, level+1, level);
+    addInterpCoeffs(vals, interpVals, srcLvl, tgtLvl);
 
     // Do inner product (weighted)
     const double phiWeight = 2.0*PI / static_cast<double>(nph);
     cmplx intVal = 0.0;
     size_t l = 0;
     for (int jth = 0; jth < nth; ++jth) {
-        const double theta = thetas[level][jth];
-        const double thetaWeight = thetaWeights[level][jth];
+        const double theta = thetas[tgtLvl][jth];
+        const double thetaWeight = thetaWeights[tgtLvl][jth];
 
         for (int jph = 0; jph < nph; ++jph) {
-            const double phi = phis[level][jph];
+            const double phi = phis[tgtLvl][jph];
 
             intVal += thetaWeight * phiWeight * conj(sphFunc(theta, phi)) * interpVals[l++];
         }
@@ -159,21 +266,21 @@ void Stem::tInterp(int level) {
     std::cout << "Integrated val using interp: " << std::setprecision(15) << intVal << '\n';
 }
 
-void Stem::tAnterp(int level) {
+void Stem::tAnterp(int srcLvl, int tgtLvl) {
     const int order = config.interpOrder;
 
     // Evaluate function times weights at source nodes
-    const auto [mth, mph] = getNumAngles(level);
-    const auto [nth, nph] = getNumAngles(level+1);
+    const auto [mth, mph] = getNumAngles(srcLvl);
+    const auto [nth, nph] = getNumAngles(tgtLvl);
     cmplxVec vals;
 
     const double phiWeight = 2.0*PI / static_cast<double>(mph);
     for (int ith = 0; ith < mth; ++ith) {
-        const double theta = thetas[level][ith];
-        const double thetaWeight = thetaWeights[level][ith];
+        const double theta = thetas[srcLvl][ith];
+        const double thetaWeight = thetaWeights[srcLvl][ith];
 
         for (int iph = 0; iph < mph; ++iph) {
-            const double phi = phis[level][iph];
+            const double phi = phis[srcLvl][iph];
 
             vals.push_back(phiWeight*thetaWeight*sphFunc(theta, phi));
         }
@@ -181,20 +288,25 @@ void Stem::tAnterp(int level) {
 
     // Anterpolate function values to target nodes on extended grid
     cmplxVec anterpVals(nth*nph, 0.0);
-    addAnterpCoeffs<cmplx>(vals, anterpVals, level, level+1);
+    addAnterpCoeffs(vals, anterpVals, srcLvl, tgtLvl);
 
     // Do inner product
     cmplx intVal = 0.0;
     size_t l = 0;
     for (int jth = 0; jth < nth; ++jth) {
-        const double theta = thetas[level+1][jth];
+        const double theta = thetas[tgtLvl][jth];
 
         for (int jph = 0; jph < nph; ++jph) {
-            const double phi = phis[level+1][jph];
+            const double phi = phis[tgtLvl][jph];
 
             intVal += conj(anterpVals[l++]) * sphFunc(theta, phi);
+
+            // std::cout << std::setprecision(6) << anterpVals[jth*nph+jph]/phiWeight << ' ';
         }
+        // std::cout << '\n';
     }
+
+
     assert(l == anterpVals.size());
 
     std::cout << "Integrated val using anterp: " << std::setprecision(15) << intVal << '\n';
@@ -244,8 +356,12 @@ int main() {
 
     // Do test
     const int lvl = 0;
-    Stem::tInterp(lvl);
-    Stem::tAnterp(lvl);
+    // Stem::tInterpPhi(lvl+1,lvl);
+    // Stem::tAnterpPhi(lvl,lvl+1);
+    Stem::tInterpTheta(lvl+1,lvl);
+    Stem::tAnterpTheta(lvl,lvl+1);
+    // Stem::tInterp(lvl+1,lvl);
+    // Stem::tAnterp(lvl,lvl+1);
 
     return 0;
 }
@@ -281,11 +397,11 @@ int main() {
 
                 const int ith_flipped = Math::flipIdxToRange(ith, mth);
 
-                const bool outOfRange = ith != ith_flipped;
+                const bool nearPole = ith != ith_flipped;
 
                 int iph_shifted = iph;
 
-                if (outOfRange)
+                if (nearPole)
                     iph_shifted += ((iph < mph/2) ? mph/2 : -mph/2);
 
                 const int m_shifted = ith_flipped*mph + iph_shifted;
