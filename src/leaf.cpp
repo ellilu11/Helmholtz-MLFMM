@@ -88,9 +88,9 @@ void Leaf::buildNearRads() {
         auto leafPairRads = cmplxVec(numObss*numSrcs);
 
         int pairIdx = 0;
-        for (size_t obsIdx = 0; obsIdx < numObss; ++obsIdx) {
+        for (size_t iObs = 0; iObs < numObss; ++iObs) {
             for (size_t srcIdx = 0; srcIdx < numSrcs; ++srcIdx) {
-                const auto obs = obsLeaf->srcs[obsIdx], src = srcLeaf->srcs[srcIdx];
+                const auto obs = obsLeaf->srcs[iObs], src = srcLeaf->srcs[srcIdx];
 
                 leafPairRads[pairIdx++] = obs->getIntegratedRad(src);
             }
@@ -107,9 +107,9 @@ void Leaf::buildNearRads() {
         auto nodePairRads = cmplxVec(numObss*numSrcs);
 
         int pairIdx = 0;
-        for (size_t obsIdx = 0; obsIdx < numObss; ++obsIdx) {
+        for (size_t iObs = 0; iObs < numObss; ++iObs) {
             for (size_t srcIdx = 0; srcIdx < numSrcs; ++srcIdx) {
-                const auto obs = obsLeaf->srcs[obsIdx], src = srcNode->getSrcs()[srcIdx];
+                const auto obs = obsLeaf->srcs[iObs], src = srcNode->getSrcs()[srcIdx];
 
                 nodePairRads[pairIdx++] = obs->getIntegratedRad(src);
             }
@@ -122,10 +122,10 @@ void Leaf::buildNearRads() {
     //std::ofstream vvecFile("out/vvec.txt");
 
     for (const auto& leaf : leaves) {
-        for (size_t obsIdx = 1; obsIdx < leaf->srcs.size(); ++obsIdx) { // obsIdx = 0
-            const auto& obs = leaf->srcs[obsIdx];
+        for (size_t iObs = 1; iObs < leaf->srcs.size(); ++iObs) { // iObs = 0
+            const auto& obs = leaf->srcs[iObs];
 
-            for (size_t srcIdx = 0; srcIdx < obsIdx; ++srcIdx) { // srcIdx <= obsIdx 
+            for (size_t srcIdx = 0; srcIdx < iObs; ++srcIdx) { // srcIdx <= iObs 
                 const auto& src = leaf->srcs[srcIdx];
 
                 leaf->selfRads.push_back(obs->getIntegratedRad(src));
@@ -134,8 +134,8 @@ void Leaf::buildNearRads() {
         }
 
         /* GMRES testing
-        for (size_t obsIdx = 0; obsIdx < leaf->srcs.size(); ++obsIdx) {
-            const auto& obs = leaf->srcs[obsIdx];
+        for (size_t iObs = 0; iObs < leaf->srcs.size(); ++iObs) {
+            const auto& obs = leaf->srcs[iObs];
 
             for (size_t srcIdx = 0; srcIdx < leaf->srcs.size(); ++srcIdx) {
                 const auto& src = leaf->srcs[srcIdx];
@@ -163,9 +163,8 @@ void Leaf::buildRadPats() {
         const int nDir = nth*nph;
 
         for (int iDir = 0; iDir < nDir+2; ++iDir) {
-            const auto& kvec = (iDir < nDir ?
-                tables.khat[level][iDir] : poles[iDir-nDir])
-                * wavenum;
+            const auto& kvec = wavenum * (iDir < nDir ?
+                tables.khat[level][iDir] : poles[iDir-nDir]);
                 
             const auto& toThPh = (iDir < nDir ?
                 tables.toThPh[level][iDir] : tables.toThPhPole[iDir-nDir]);
@@ -192,7 +191,6 @@ void Leaf::buildMpoleCoeffs() {
     const int nDir = nth*nph;
 
     auto start = Clock::now();
-
     for (int iDir = 0; iDir < nDir+2; ++iDir) {
         vec2cd coeff = vec2cd::Zero();
 
@@ -202,7 +200,6 @@ void Leaf::buildMpoleCoeffs() {
 
         coeffs[iDir] = coeff;
     }
-
     t.S2M += Clock::now() - start;
 }
 
@@ -227,19 +224,18 @@ void Leaf::buildLocalCoeffs() {
             localCoeffs + stemBase->getShiftedLocalCoeffs(branchIdx);
     }
     t.L2L += Clock::now() - start;
-    
 }
 
 /* evalFarSols()
  * (L2T) Evaluate sols from local expansion due to far nodes
  */
-/*
+//
 void Leaf::evalFarSols() {
     if (isSrcless() || level <= 1) return;
 
     const auto [nth, nph] = getNumAngles(level);
 
-    int obsIdx = 0;
+    int iObs = 0;
     for (const auto& obs : srcs) {
         size_t iDir = 0;
         cmplx intRad = 0;
@@ -247,7 +243,7 @@ void Leaf::evalFarSols() {
         for (int ith = 0; ith < nth; ++ith) {
             for (int iph = 0; iph < nph; ++iph) {
                 // Do the angular integration
-                intRad += radPats[iDir][obsIdx].dot(localCoeffs[iDir]); // Hermitian dot!
+                intRad += radPats[iDir][iObs].dot(localCoeffs[iDir]); // Hermitian dot!
 
                 ++iDir;
             }
@@ -255,12 +251,12 @@ void Leaf::evalFarSols() {
 
         (*rvec)[obs->getIdx()] += Phys::C * wavenum * intRad;
 
-        ++obsIdx;
+        ++iObs;
     }
 }
-*/
-
 //
+
+/*
 void Leaf::evalFarSols() {
     if (isSrcless() || level <= 1) return;
 
@@ -268,7 +264,7 @@ void Leaf::evalFarSols() {
 
     const double phiWeight = 2.0*PI / static_cast<double>(nph); // TODO: static member
 
-    size_t obsIdx = 0;
+    size_t iObs = 0;
     for (const auto& obs : srcs) {
         size_t iDir = 0;
         cmplx intRad = 0;
@@ -279,7 +275,7 @@ void Leaf::evalFarSols() {
             for (int iph = 0; iph < nph; ++iph) {
                 // Do the angular integration
                 intRad += weight 
-                    * radPats[iDir][obsIdx].dot(localCoeffs[iDir]); // Hermitian dot!
+                    * radPats[iDir][iObs].dot(localCoeffs[iDir]); // Hermitian dot!
 
                 ++iDir;
             }
@@ -287,10 +283,10 @@ void Leaf::evalFarSols() {
 
         (*rvec)[obs->getIdx()] += Phys::C * wavenum * phiWeight * intRad;
 
-        ++obsIdx;
+        ++iObs;
     }
 }
-//
+*/
 
 /* evalNearNonNborSols()
  * (M2T/S2T) Evaluate sols from mpole expansion due to list 3 nodes
@@ -316,13 +312,13 @@ void Leaf::evalPairSols(const std::shared_ptr<Node> srcNode, const cmplxVec& rad
     cmplxVec solAtSrcs(numSrcs, 0.0);
 
     int pairIdx = 0;
-    for (size_t obsIdx = 0; obsIdx < numObss; ++obsIdx) {
+    for (size_t iObs = 0; iObs < numObss; ++iObs) {
         for (size_t srcIdx = 0; srcIdx < numSrcs; ++srcIdx) {
-            const auto obs = srcs[obsIdx], src = srcSrcs[srcIdx];
+            const auto obs = srcs[iObs], src = srcSrcs[srcIdx];
 
             const cmplx rad = rads[pairIdx++];
 
-            solAtObss[obsIdx] += (*lvec)[src->getIdx()] * rad;
+            solAtObss[iObs] += (*lvec)[src->getIdx()] * rad;
             solAtSrcs[srcIdx] += (*lvec)[obs->getIdx()] * rad;
         }
     }
@@ -346,13 +342,13 @@ void Leaf::evalSelfSols() {
 
     // TODO: Handle self-interactions
     int pairIdx = 0;
-    for (size_t obsIdx = 1; obsIdx < numSrcs; ++obsIdx) { // obsIdx = 0
-        for (size_t srcIdx = 0; srcIdx < obsIdx; ++srcIdx) { // srcIdx <= obsIdx 
-            auto obs = srcs[obsIdx], src = srcs[srcIdx];
+    for (size_t iObs = 1; iObs < numSrcs; ++iObs) { // iObs = 0
+        for (size_t srcIdx = 0; srcIdx < iObs; ++srcIdx) { // srcIdx <= iObs 
+            auto obs = srcs[iObs], src = srcs[srcIdx];
 
             const cmplx rad = selfRads[pairIdx++];
 
-            solAtObss[obsIdx] += (*lvec)[src->getIdx()] * rad;
+            solAtObss[iObs] += (*lvec)[src->getIdx()] * rad;
             solAtObss[srcIdx] += (*lvec)[obs->getIdx()] * rad;
         }
     }

@@ -4,7 +4,7 @@ digits = 6;
 
 dir = "C:\Users\ellil\Documents\WORK\MLFMA\MLFMA\out\build\x64-debug\out\sol\";
 
-sol1 = readmatrix(dir+"rvec_interp_polar.txt");
+sol1 = readmatrix(dir+"rvec.txt");
 sol2 = readmatrix(dir+"rvec_interp.txt");
 solDir = readmatrix(dir+"rvecDir.txt");
 % sol1 = readmatrix(dir+"curr_nq7.txt");

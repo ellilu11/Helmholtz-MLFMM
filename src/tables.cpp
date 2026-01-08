@@ -3,7 +3,6 @@
 void Tables::buildAngularTables() {
    
     for (int level = 0; level <= maxLevel; ++level) {
-
         const auto [nth, nph] = Node::getNumAngles(level);
 
         std::vector<vec3d> khat_lvl(nth*nph);

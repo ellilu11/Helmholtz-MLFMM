@@ -84,7 +84,7 @@ int main() {
     duration_ms = end - start;
     cout << "   Total elapsed time: " << duration_ms.count() << " ms\n\n";
 
-    solver->printSols("rvec_interp_polar.txt");
+    solver->printSols("rvec.txt");
     //root->printFarSols("ff_nq7.txt");
     //root->printAngles();
 

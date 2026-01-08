@@ -285,9 +285,10 @@ void Stem::tAnterp(int srcLvl, int tgtLvl) {
             vals.push_back(phiWeight*thetaWeight*sphFunc(theta, phi));
         }
     }
+    vals.insert(vals.end(), { sphFunc(0,0), sphFunc(PI,0) });
 
     // Anterpolate function values to target nodes on extended grid
-    cmplxVec anterpVals(nth*nph, 0.0);
+    cmplxVec anterpVals(nth*nph+2, 0.0);
     addAnterpCoeffs(vals, anterpVals, srcLvl, tgtLvl);
 
     // Do inner product
@@ -306,7 +307,7 @@ void Stem::tAnterp(int srcLvl, int tgtLvl) {
         // std::cout << '\n';
     }
 
-    assert(l == anterpVals.size());
+    assert(l == anterpVals.size()-2);
 
     std::cout << "Integrated val using anterp: " << std::setprecision(15) << intVal << '\n';
 }
@@ -359,7 +360,7 @@ int main() {
     // Stem::tInterpTheta(lvl+1,lvl);
     // Stem::tAnterpTheta(lvl,lvl+1);
     Stem::tInterp(lvl+1,lvl);
-    // Stem::tAnterp(lvl,lvl+1);
+    Stem::tAnterp(lvl,lvl+1);
 
     return 0;
 }
