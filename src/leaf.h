@@ -68,7 +68,6 @@ protected:
     cmplxVec selfRads;
 
     std::vector<std::vector<vec2cd>> radPats;
-    std::array<std::vector<vec2cd>, 2> polarRadPats;
 
     NodeVec nearNbors; // list 1
     NodeVec nearNonNbors; // list 3

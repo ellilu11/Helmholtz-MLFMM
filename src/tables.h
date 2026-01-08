@@ -19,12 +19,13 @@ public:
         
         buildInterpTables();
         
-        // buildTranslationTable();
+        buildTranslationTable();
     }
     
     // Angular tables
     std::vector<std::vector<vec3d>> khat;
     std::vector<std::vector<mat23d>> toThPh;
+    std::array<mat23d, 2> toThPhPole;
     std::vector<std::vector<mat3d>> ImRR;
 
     // M2M interpolation tables

@@ -29,6 +29,8 @@ void Tables::buildAngularTables() {
         toThPh.push_back(toThPh_lvl);
         ImRR.push_back(ImRR_lvl);
     }
+
+    toThPhPole = { Math::toThPh(0.0, 0.0), Math::toThPh(PI, 0.0) };
 }
 
 std::vector<interpPair> Tables::getInterpThetaAtLvl(int srcLvl, int tgtLvl) {
@@ -43,7 +45,7 @@ std::vector<interpPair> Tables::getInterpThetaAtLvl(int srcLvl, int tgtLvl) {
 
     std::vector<interpPair> interpPairs;
 
-    for (size_t jth = 0; jth < nth; ++jth) {
+    for (size_t jth = 0; jth < nth+2; ++jth) {
         const double tgtTheta = tgtThetas[jth];
 
         const int nearIdx = Interp::getNearGLNodeIdx(tgtTheta, mth, 0.0, PI);
@@ -58,21 +60,26 @@ std::vector<interpPair> Tables::getInterpThetaAtLvl(int srcLvl, int tgtLvl) {
             double srcTheta = srcThetas[ith_flipped];
 
             // Extend source thetas to outside [0, pi] as needed
-            if (ith < 0)
-                srcTheta *= -1.0;
-            else if (ith >= mth)
-                srcTheta = 2.0*PI - srcTheta;
+            if (ith < 0) srcTheta *= -1.0;
+            else if (ith >= mth) srcTheta = 2.0*PI - srcTheta;
 
             interpThetas.push_back(srcTheta);
         }
 
-        vecXd coeffs(2*order);
-        for (int k = 0; k < 2*order; ++k)
-            coeffs[k] = 
-                Interp::evalLagrangeBasis(tgtTheta, interpThetas, k);
+        if (jth < nth) { // don't use a pole to interpolate itself
+            if (nearIdx < order-1) interpThetas.push_back(0.0); // use northpole
+            else if (nearIdx >= mth-order) interpThetas.push_back(PI); // use southpole
+        }
+
+        const int numInterps = interpThetas.size();
+        // if (srcLvl == 1) std::cout << nearIdx << ' ' << numInterps << '\n';
+        assert(numInterps == 2*order || numInterps == 2*order+1);
+
+        vecXd coeffs(numInterps);
+        for (int k = 0; k < numInterps; ++k)
+            coeffs[k] = Interp::evalLagrangeBasis(tgtTheta, interpThetas, k);
 
         interpPairs.emplace_back(coeffs, nearIdx);
-
     }
 
     return interpPairs;
@@ -102,8 +109,7 @@ std::vector<interpPair> Tables::getInterpPhiAtLvl(int srcLvl, int tgtLvl) {
 
         vecXd coeffs(2*order);
         for (int k = 0; k < 2*order; ++k)
-            coeffs[k] =
-                Interp::evalLagrangeBasis(tgtPhi, interpPhis, k);
+            coeffs[k] = Interp::evalLagrangeBasis(tgtPhi, interpPhis, k);
 
         interpPairs.emplace_back(coeffs, nearIdx);
     }
@@ -114,7 +120,6 @@ std::vector<interpPair> Tables::getInterpPhiAtLvl(int srcLvl, int tgtLvl) {
 void Tables::buildInterpTables() {
 
     for (int lvl = 0; lvl < maxLevel; ++lvl) {
-
         // M2M interpolation tables
         interpTheta.push_back(getInterpThetaAtLvl(lvl+1, lvl));
         interpPhi.push_back(getInterpPhiAtLvl(lvl+1, lvl));
@@ -122,7 +127,6 @@ void Tables::buildInterpTables() {
         // L2L interpolation tables
         invInterpTheta.push_back(getInterpThetaAtLvl(lvl, lvl+1));
         invInterpPhi.push_back(getInterpPhiAtLvl(lvl, lvl+1));
-
     }
 }
 
@@ -171,13 +175,15 @@ HashMap<interpPair> Tables::getInterpPsiAtLvl(int level) {
 
     // Find all unique psi = acos(khat.dot(rhat))
     const auto [nth, nph] = Node::getNumAngles(level);
+    const int nDir = nth*nph;
 
-    realVec psis(nth*nph*rhats.size());
+    realVec psis((nth*nph+2)*rhats.size());
 
     size_t m = 0;
-    for (size_t l = 0; l < nth*nph; ++l) {
+    for (size_t iDir = 0; iDir < nDir+2; ++iDir) {
 
-        const auto& khat = this->khat[level][l];
+        const auto& khat = (iDir < nDir ?
+                this->khat[level][iDir] : poles[iDir-nDir]);
 
         for (const auto& rhat : rhats)
             psis[m++] = acos(khat.dot(rhat));
@@ -226,6 +232,7 @@ void Tables::buildTranslationTable() {
         const auto& interpPsis = getInterpPsiAtLvl(level); 
 
         const auto [nth, nph] = Node::getNumAngles(level);
+        const int nDir = nth*nph;
 
         const int nps = std::floor(Node::config.overInterp*(nth-1));
 
@@ -237,10 +244,11 @@ void Tables::buildTranslationTable() {
 
             const auto& alpha_dX = alphas.at(r);
 
-            vecXcd transl_dX(nth*nph);
+            vecXcd transl_dX(nDir+2);
 
-            for (int idx = 0; idx < nth*nph; ++idx) {
-                const auto& khat = this->khat[level][idx];
+            for (int iDir = 0; iDir < nDir+2; ++iDir) {
+                const auto& khat = (iDir < nDir ?
+                    this->khat[level][iDir] : poles[iDir-nDir]);
 
                 const double psi = acos(khat.dot(rhat));
 
@@ -255,7 +263,7 @@ void Tables::buildTranslationTable() {
                     translCoeff += alpha_dX[ips_flipped] * interpPsi[k];
                 }
 
-                transl_dX[idx] = translCoeff;
+                transl_dX[iDir] = translCoeff;
             }
 
             transl_lvl.emplace(dX, transl_dX);

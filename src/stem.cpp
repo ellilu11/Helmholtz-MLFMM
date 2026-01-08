@@ -67,6 +67,7 @@ void Stem::buildMpoleCoeffs() {
     const int order = config.interpOrder;
 
     const auto [mth, mph] = getNumAngles(level+1);
+    const int mDir = mth*mph;
 
     std::fill(coeffs.begin(), coeffs.end(), vec2cd::Zero());
 
@@ -82,12 +83,14 @@ void Stem::buildMpoleCoeffs() {
         // Shift branch coeffs to center of this node
         const auto& dX = center - branch->getCenter();
 
-        std::vector<vec2cd> shiftedCoeffs(mth*mph, vec2cd::Zero());
+        std::vector<vec2cd> shiftedCoeffs(mDir+2, vec2cd::Zero());
 
-        for (int idx = 0; idx < mth*mph; ++idx) {
-            const auto& kvec = tables.khat[level+1][idx] * wavenum;
-
-            shiftedCoeffs[idx] = exp(iu*kvec.dot(dX)) * branchCoeffs[idx];
+        for (int iDir = 0; iDir < mDir+2; ++iDir) {
+            const auto& kvec = (iDir < mDir ?
+                tables.khat[level+1][iDir] : poles[iDir-mDir])
+                * wavenum;
+                
+            shiftedCoeffs[iDir] = exp(iu*kvec.dot(dX)) * branchCoeffs[iDir];
         }
 
         // Interpolate shifted coeffs to this node's angular grid
@@ -105,23 +108,26 @@ std::vector<vec2cd> Stem::getShiftedLocalCoeffs(int branchIdx) const {
 
     const auto [mth, mph] = getNumAngles(level);
     const auto [nth, nph] = getNumAngles(level+1);
+    const int mDir = mth*mph;
 
-    std::vector<vec2cd> outCoeffs(nth*nph, vec2cd::Zero());
+    std::vector<vec2cd> outCoeffs(nth*nph+2, vec2cd::Zero());
     if (iList.empty()) return outCoeffs;
 
     // Shift local coeffs to center of branch
     const auto& dX = branches[branchIdx]->getCenter() - center;
 
-    std::vector<vec2cd> shiftedCoeffs(mth*mph, vec2cd::Zero());
+    std::vector<vec2cd> shiftedCoeffs(mDir+2, vec2cd::Zero());
 
-    for (int idx = 0; idx < mth*mph; ++idx) {
-        const auto& kvec = tables.khat[level][idx] * wavenum;
+    for (int iDir = 0; iDir < mDir+2; ++iDir) {
+        const auto& kvec = (iDir < mDir ?
+            tables.khat[level][iDir] : poles[iDir-mDir])
+            * wavenum;
 
-        shiftedCoeffs[idx] = exp(iu*kvec.dot(dX)) * localCoeffs[idx];
+        shiftedCoeffs[iDir] = exp(iu*kvec.dot(dX)) * localCoeffs[iDir];
     }
 
     // Interpolate shifted coeffs to branch's angular grid
-    addAnterpCoeffs(shiftedCoeffs, outCoeffs, level, level+1);
+    addInterpCoeffs(shiftedCoeffs, outCoeffs, level, level+1);
 
     return outCoeffs;
 }
@@ -162,7 +168,9 @@ void Stem::addInterpCoeffs(
 
     const auto [mth, mph] = getNumAngles(srcLvl);
     const auto [nth, nph] = getNumAngles(tgtLvl);
+    const int mDir = mth*mph, nDir = nth*nph;
 
+    assert(inCoeffs.size() == mDir+2 && outCoeffs.size() == nDir+2);
     assert(!(mph%2)); // mph needs to be even
 
     // TODO: Remove
@@ -195,13 +203,23 @@ void Stem::addInterpCoeffs(
 
                 const int idx_shifted = ith_flipped*mph + iph_shifted;
 
-                // if (ith < ith_flipped) //
                 innerCoeffs[jthmph+iph] +=
                     interp[k] * inCoeffs[idx_shifted]
                     * Math::sign(isNearPole) // spherical vector components only
                     ; 
             }
         }
+
+        // For near pole nodes, add contribution from poles
+        if (nearIdx < order-1 || nearIdx > mth-order) {
+            assert(interp.size() == 2*order+1);
+
+            for (int iph = 0; iph < mph; ++iph) {
+                innerCoeffs[jthmph+iph] += interp[2*order] *
+                    (nearIdx < order-1) ? inCoeffs[mDir] : inCoeffs[mDir+1];
+            }
+        }
+        //
     }
 
     // Interpolate over phi
@@ -216,6 +234,17 @@ void Stem::addInterpCoeffs(
                     interp[k] * innerCoeffs[jth*mph + iph_wrapped];
         }
     }
+
+    // Interpolate poles over theta and phi
+    for (int jth = 0; jth < 2; ++jth) {
+        const auto [interp, nearIdx] = interpTheta[tblLvl][nth+jth];
+
+        for (int ith = nearIdx+1-order, k = 0; ith <= nearIdx+order; ++ith, ++k) {
+            const int ith_flipped = Math::flipIdxToRange(ith, mth);
+
+            outCoeffs[nDir+jth] += interp[k] * inCoeffs[ith_flipped*mph]; // Pick phi = 0
+        }
+    }
 }
 
 template <typename T>
@@ -226,8 +255,10 @@ void Stem::addAnterpCoeffs(
 
     const auto [mth, mph] = getNumAngles(srcLvl);
     const auto [nth, nph] = getNumAngles(tgtLvl);
+    const int mDir = mth*mph, nDir = nth*nph;
     const int Nth = nth+2*order, Nph = nph+2*order;
 
+    assert(inCoeffs.size() == mDir+2 && outCoeffs.size() == nDir+2);
     assert(!(nph%2)); // nph needs to be even
 
     const int tblLvl = std::min(srcLvl, tgtLvl);
@@ -266,6 +297,16 @@ void Stem::addAnterpCoeffs(
                 longCoeffs[Jth*Nph+Jph] += interp[k] * innerCoeffs[ith*Nph+Jph];
             }
         }
+
+        /* For near pole nodes, add contribution from poles
+        if (nearIdx < order-1 || nearIdx > mth-order) {
+            assert(interp.size() == 2*order+1);
+
+            for (int iph = 0; iph < mph; ++iph) {
+                longCoeffs[Jth*Nph+Jph] += interp[2*order] *
+                    (nearIdx < order-1) ? innerCoeffs[mDir] : inCoeffs[mDir+1];
+            }
+        }*/
     }
 
     // Contract extended theta and phi

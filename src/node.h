@@ -47,7 +47,7 @@ public:
     static int getNumNodes() { return numNodes; }
 
     static pair2i getNumAngles(const int level) {
-        return std::make_pair(thetas[level].first.size(), phis[level].size());
+        return std::make_pair(thetas[level].first.size()-2, phis[level].size());
     }
 
 public:
@@ -72,8 +72,6 @@ public:
     NodeVec getLeafIlist() const { return leafIlist; }
     
     std::vector<vec2cd> getMpoleCoeffs() const { return coeffs; }
-
-    std::array<vec2cd,2> getPolarCoeffs() const { return polarCoeffs; }
     
     std::vector<vec2cd> getLocalCoeffs() const { return localCoeffs; }
 
@@ -147,7 +145,6 @@ protected:
     static std::shared_ptr<vecXcd> currents;
 
     std::vector<vec2cd> coeffs;
-    std::array<vec2cd,2> polarCoeffs;
     std::vector<vec2cd> localCoeffs;
 
     NodeVec branches;
@@ -161,4 +158,5 @@ protected:
     const double nodeLeng;
     const int level;
     const vec3d center;
+
 };

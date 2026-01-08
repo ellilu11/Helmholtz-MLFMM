@@ -101,7 +101,6 @@ double Interp::evalLagrangeBasis(
     const double x, const realVec& xs, const int k) {
 
     // assert(k < xs.size());
-
     double product = 1.0;
 
     for (int j = 0; j < xs.size(); ++j) {

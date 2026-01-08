@@ -137,7 +137,6 @@ void Stem::tInterpTheta(int srcLvl, int tgtLvl) {
     cmplxVec interpVals(nth, 0.0);
  
     for (int jth = 0; jth < nth; ++jth) {
-
         const auto [interp, nearIdx] = tables.interpTheta[tgtLvl][jth];
 
         for (int ith = nearIdx+1-order, k = 0; ith <= nearIdx+order; ++ith, ++k) {
@@ -242,9 +241,10 @@ void Stem::tInterp(int srcLvl, int tgtLvl) {
             vals.push_back(sphFunc(theta, phi));
         }
     }
+    vals.insert(vals.end(), { sphFunc(0,0), sphFunc(PI,0) });
 
     // Interpolate function values to target nodes
-    cmplxVec interpVals(nth*nph, 0.0);
+    cmplxVec interpVals(nth*nph+2, 0.0);
     addInterpCoeffs(vals, interpVals, srcLvl, tgtLvl);
 
     // Do inner product (weighted)
@@ -261,7 +261,7 @@ void Stem::tInterp(int srcLvl, int tgtLvl) {
             intVal += thetaWeight * phiWeight * conj(sphFunc(theta, phi)) * interpVals[l++];
         }
     }
-    assert(l == interpVals.size());
+    assert(l == interpVals.size()-2);
 
     std::cout << "Integrated val using interp: " << std::setprecision(15) << intVal << '\n';
 }
@@ -305,7 +305,6 @@ void Stem::tAnterp(int srcLvl, int tgtLvl) {
         }
         // std::cout << '\n';
     }
-
 
     assert(l == anterpVals.size());
 
@@ -360,7 +359,7 @@ int main() {
     // Stem::tInterpTheta(lvl+1,lvl);
     // Stem::tAnterpTheta(lvl,lvl+1);
     Stem::tInterp(lvl+1,lvl);
-    Stem::tAnterp(lvl,lvl+1);
+    // Stem::tAnterp(lvl,lvl+1);
 
     return 0;
 }

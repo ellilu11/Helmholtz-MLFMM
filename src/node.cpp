@@ -48,7 +48,6 @@ Node::Node(
  * Compute theta and phi samples at each level
  */
 void Node::buildAngularSamples() {
-
     constexpr double EPS_NR = 1.0E-9; // Newton-Raphson precision
 
     std::cout << "   (Lvl,Nth,Nph) =\n";
@@ -71,6 +70,9 @@ void Node::buildAngularSamples() {
             [](double weight, double theta) { return weight * sin(theta); }
         );
 
+        // Append poles (0, pi) to thetas
+        nodes.insert(nodes.end(), { 0.0, PI });
+
         thetas.emplace_back(nodes, weights);
 
         // Construct phis
@@ -88,9 +90,11 @@ void Node::buildAngularSamples() {
 
 void Node::resizeCoeffs() {
     const auto [nth, nph] = getNumAngles(level);
+    // std::tie(nth, nph) = getNumAngles(level);
 
-    coeffs.resize(nth*nph, vec2cd::Zero());
-    localCoeffs.resize(nth*nph, vec2cd::Zero());
+    // +2 for polar coeffs
+    coeffs.resize(nth*nph+2, vec2cd::Zero()); 
+    localCoeffs.resize(nth*nph+2, vec2cd::Zero());
 }
 
 /* buildInteractionList()
@@ -116,7 +120,6 @@ void Node::buildInteractionList() {
         for (const auto& branch : baseNbor->branches)
             if (notContains(nbors, branch) && !branch->isSrcless()) // TODO: double check
                 iList.push_back(branch);
-
     }
 
     assert(iList.size() <= pow(6, DIM) - pow(3, DIM));
@@ -157,7 +160,7 @@ void Node::buildMpoleToLocalCoeffs() {
             localCoeffs[idx] += transl_dX[idx] * node->coeffs[idx];
     }
 
-    // Apply integration weights
+    /* Apply integration weights
     const auto [nth, nph] = getNumAngles(level);
     const double phiWeight = 2.0*PI / static_cast<double>(nph);
     size_t dirIdx = 0;
@@ -167,7 +170,7 @@ void Node::buildMpoleToLocalCoeffs() {
         for (int iph = 0; iph < nph; ++iph)
             localCoeffs[dirIdx++] *= weight;
     }
-    //
+    */
 }
 
 /* evalLeafIlistSols()

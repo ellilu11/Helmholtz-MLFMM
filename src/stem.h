@@ -39,5 +39,7 @@ public:
 
     static void tInterp(int, int);
 
+    static void tInvInterp(int, int);
+
     static void tAnterp(int, int);
 };

@@ -160,10 +160,15 @@ void Leaf::buildRadPats() {
         const auto& center = leaf->center;
 
         const auto [nth, nph] = getNumAngles(level);
+        const int nDir = nth*nph;
 
-        for (int dirIdx = 0; dirIdx < nth*nph; ++dirIdx) {
-            const auto& kvec = tables.khat[level][dirIdx] * wavenum;
-            const auto& toThPh = tables.toThPh[level][dirIdx];
+        for (int iDir = 0; iDir < nDir+2; ++iDir) {
+            const auto& kvec = (iDir < nDir ?
+                tables.khat[level][iDir] : poles[iDir-nDir])
+                * wavenum;
+                
+            const auto& toThPh = (iDir < nDir ?
+                tables.toThPh[level][iDir] : tables.toThPhPole[iDir-nDir]);
 
             std::vector<vec2cd> radPat(leaf->srcs.size(), vec2cd::Zero());
 
@@ -171,21 +176,7 @@ void Leaf::buildRadPats() {
             for (const auto& src : leaf->srcs)
                 radPat[srcIdx++] = toThPh * src->getRadAlongDir(center, kvec);
 
-            leaf->radPats.push_back(radPat);
-        }
-
-        // Do polar radpats
-        for (int dirIdx = 0; dirIdx < 2; ++dirIdx) {
-            const auto& kvec = poles[dirIdx] * wavenum;
-
-            std::vector<vec2cd> radPat(leaf->srcs.size(), vec2cd::Zero());
-
-            int srcIdx = 0;
-            for (const auto& src : leaf->srcs)
-                // x,y components only
-                radPat[srcIdx++] = src->getRadAlongDir(center, kvec).head(2);
-
-            leaf->polarRadPats[dirIdx] = radPat;
+            leaf->radPats.push_back(radPat); // TODO: Use reserve() or resize()
         }
     }
 }
@@ -197,32 +188,22 @@ void Leaf::buildMpoleCoeffs() {
     if (isSrcless() || isRoot()) return;
 
     std::fill(coeffs.begin(), coeffs.end(), vec2cd::Zero());
+    const auto [nth, nph] = getNumAngles(level);
+    const int nDir = nth*nph;
 
     auto start = Clock::now();
 
-    for (int dirIdx = 0; dirIdx < coeffs.size(); ++dirIdx) {
+    for (int iDir = 0; iDir < nDir+2; ++iDir) {
         vec2cd coeff = vec2cd::Zero();
 
         int srcIdx = 0;
         for (const auto& src : srcs)
-            coeff += (*lvec)[src->getIdx()] * radPats[dirIdx][srcIdx++];
+            coeff += (*lvec)[src->getIdx()] * radPats[iDir][srcIdx++];
 
-        coeffs[dirIdx] = coeff;
-    }
-
-    // Build polar coeffs
-    for (int dirIdx = 0; dirIdx < 2; ++dirIdx) {
-        vec2cd coeff = vec2cd::Zero();
-
-        int srcIdx = 0;
-        for (const auto& src : srcs)
-            coeff += (*lvec)[src->getIdx()] * polarRadPats[dirIdx][srcIdx++];
-
-        polarCoeffs[dirIdx] = coeff;
+        coeffs[iDir] = coeff;
     }
 
     t.S2M += Clock::now() - start;
-
 }
 
 /* buildLocalCoeffs()
@@ -252,7 +233,7 @@ void Leaf::buildLocalCoeffs() {
 /* evalFarSols()
  * (L2T) Evaluate sols from local expansion due to far nodes
  */
-//
+/*
 void Leaf::evalFarSols() {
     if (isSrcless() || level <= 1) return;
 
@@ -260,15 +241,15 @@ void Leaf::evalFarSols() {
 
     int obsIdx = 0;
     for (const auto& obs : srcs) {
-        size_t dirIdx = 0;
+        size_t iDir = 0;
         cmplx intRad = 0;
 
         for (int ith = 0; ith < nth; ++ith) {
             for (int iph = 0; iph < nph; ++iph) {
                 // Do the angular integration
-                intRad += radPats[dirIdx][obsIdx].dot(localCoeffs[dirIdx]); // Hermitian dot!
+                intRad += radPats[iDir][obsIdx].dot(localCoeffs[iDir]); // Hermitian dot!
 
-                ++dirIdx;
+                ++iDir;
             }
         }
 
@@ -277,9 +258,9 @@ void Leaf::evalFarSols() {
         ++obsIdx;
     }
 }
-//
+*/
 
-/*
+//
 void Leaf::evalFarSols() {
     if (isSrcless() || level <= 1) return;
 
@@ -289,7 +270,7 @@ void Leaf::evalFarSols() {
 
     size_t obsIdx = 0;
     for (const auto& obs : srcs) {
-        size_t dirIdx = 0;
+        size_t iDir = 0;
         cmplx intRad = 0;
 
         for (int ith = 0; ith < nth; ++ith) {
@@ -298,9 +279,9 @@ void Leaf::evalFarSols() {
             for (int iph = 0; iph < nph; ++iph) {
                 // Do the angular integration
                 intRad += weight 
-                    * radPats[dirIdx][obsIdx].dot(localCoeffs[dirIdx]); // Hermitian dot!
+                    * radPats[iDir][obsIdx].dot(localCoeffs[iDir]); // Hermitian dot!
 
-                ++dirIdx;
+                ++iDir;
             }
         }
 
@@ -309,7 +290,7 @@ void Leaf::evalFarSols() {
         ++obsIdx;
     }
 }
-*/
+//
 
 /* evalNearNonNborSols()
  * (M2T/S2T) Evaluate sols from mpole expansion due to list 3 nodes
