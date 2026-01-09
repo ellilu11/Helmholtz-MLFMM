@@ -166,6 +166,7 @@ void Leaf::buildRadPats() {
             const auto& kvec = wavenum * (iDir < nDir ?
                 tables.khat[level][iDir] : poles[iDir-nDir]);
                 
+            // const auto& toThPh = tables.toThPh[level][iDir];
             const auto& toThPh = (iDir < nDir ?
                 tables.toThPh[level][iDir] : tables.toThPhPole[iDir-nDir]);
 
@@ -229,7 +230,7 @@ void Leaf::buildLocalCoeffs() {
 /* evalFarSols()
  * (L2T) Evaluate sols from local expansion due to far nodes
  */
-//
+/*
 void Leaf::evalFarSols() {
     if (isSrcless() || level <= 1) return;
 
@@ -254,9 +255,9 @@ void Leaf::evalFarSols() {
         ++iObs;
     }
 }
-//
+*/
 
-/*
+//
 void Leaf::evalFarSols() {
     if (isSrcless() || level <= 1) return;
 
@@ -286,7 +287,7 @@ void Leaf::evalFarSols() {
         ++iObs;
     }
 }
-*/
+//
 
 /* evalNearNonNborSols()
  * (M2T/S2T) Evaluate sols from mpole expansion due to list 3 nodes

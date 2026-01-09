@@ -37,7 +37,7 @@ std::vector<T> operator+ (const std::vector<T>& zs, const std::vector<T>& ws) {
 
 std::ostream& operator<< (std::ostream& os, cmplx z) {
     //char sign = z.imag() >= 0.0 ? '+' : '-';
-    //os << z.real() << sign << abs(z.imag()) << 'i';
+    //os << z.real() << sign << abs(z.imag()) << 'I';
 
     os << z.real() << ' ' << z.imag();
 

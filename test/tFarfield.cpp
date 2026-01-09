@@ -70,30 +70,6 @@ void Node::testFarfield(double r) {
     }
 }
 
-/*void Node::testFarfieldDir(double r) {
-
-    ofstream outFile("out/ffDir.txt");
-
-    outFile << setprecision(15) << scientific;
-
-    const auto [nth, nph] = getNumAngles(level);
-
-    auto sols = getFarSols(r);
-
-    size_t idx = 0;
-    for (int ith = 0; ith < nth; ++ith) {
-
-        for (int iph = 0; iph < nph; ++iph) {
-
-            const vec3d solAbs = sols[idx].cwiseAbs();
-
-            outFile << solAbs << '\n';
-
-            idx++;
-        }
-    }
-}*/
-
 /* testFarfieldFromLeaves(r)
     * Print total farfield along leaf sampled directions at distance r,
     * assuming all non-empty leaves are at same level

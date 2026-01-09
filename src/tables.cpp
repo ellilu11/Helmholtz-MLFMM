@@ -33,7 +33,7 @@ void Tables::buildAngularTables() {
 }
 
 std::vector<interpPair> Tables::getInterpThetaAtLvl(int srcLvl, int tgtLvl) {
-
+    
     assert(abs(srcLvl - tgtLvl) == 1);
 
     const int mth = Node::getNumAngles(srcLvl).first;
@@ -44,14 +44,14 @@ std::vector<interpPair> Tables::getInterpThetaAtLvl(int srcLvl, int tgtLvl) {
 
     std::vector<interpPair> interpPairs;
 
-    for (size_t jth = 0; jth < nth+2; ++jth) {
+    for (size_t jth = 0; jth < nth; ++jth) {
         const double tgtTheta = tgtThetas[jth];
 
         const int nearIdx = Interp::getNearGLNodeIdx(tgtTheta, mth, 0.0, PI);
 
         // Assemble source thetas interpolating target theta
-        realVec interpThetas;
-        for (int ith = nearIdx+1-order; ith <= nearIdx+order; ++ith) {
+        realVec interpThetas(2*order);
+        for (int ith = nearIdx+1-order, k = 0; ith <= nearIdx+order; ++ith, ++k) {
 
             // Flip ith if not in [0, mth-1]
             int ith_flipped = Math::flipIdxToRange(ith, mth);
@@ -62,13 +62,16 @@ std::vector<interpPair> Tables::getInterpThetaAtLvl(int srcLvl, int tgtLvl) {
             if (ith < 0) srcTheta *= -1.0;
             else if (ith >= mth) srcTheta = 2.0*PI - srcTheta;
 
-            interpThetas.push_back(srcTheta);
+            interpThetas[k] = srcTheta;
         }
 
-        if (jth < nth) { // don't use a pole to interpolate itself
-            if (nearIdx < order-1) interpThetas.push_back(0.0); // use northpole
-            else if (nearIdx >= mth-order) interpThetas.push_back(PI); // use southpole
-        }
+        if (nearIdx < order-1) interpThetas.push_back(0.0); // use northpole
+        else if (nearIdx >= mth-order) interpThetas.push_back(PI); // use southpole
+
+        //if (tgtLvl == 0) {
+        //    for (const auto& theta : interpThetas) std::cout << std::setprecision(15) << theta << ',';
+        //    std::cout << '\n';
+        //}
 
         const int numInterps = interpThetas.size();
         // if (srcLvl == 1) std::cout << nearIdx << ' ' << numInterps << '\n';
@@ -102,9 +105,9 @@ std::vector<interpPair> Tables::getInterpPhiAtLvl(int srcLvl, int tgtLvl) {
         const int nearIdx = std::floor(mph * tgtPhi / (2.0*PI));
 
         // Assemble source phis interpolating target phi
-        realVec interpPhis;
-        for (int iph = nearIdx+1-order; iph <= nearIdx+order; ++iph)
-            interpPhis.push_back(2.0*PI*iph/static_cast<double>(mph));
+        realVec interpPhis(2*order);
+        for (int iph = nearIdx+1-order, k = 0; iph <= nearIdx+order; ++iph, ++k)
+            interpPhis[k] = 2.0*PI*iph/static_cast<double>(mph);
 
         vecXd coeffs(2*order);
         for (int k = 0; k < 2*order; ++k)
@@ -176,13 +179,13 @@ HashMap<interpPair> Tables::getInterpPsiAtLvl(int level) {
     const auto [nth, nph] = Node::getNumAngles(level);
     const int nDir = nth*nph;
 
-    realVec psis((nth*nph+2)*rhats.size());
+    realVec psis((nDir+2)*rhats.size());
 
     size_t m = 0;
     for (size_t iDir = 0; iDir < nDir+2; ++iDir) {
-
+        // const auto& khat = this->khat[level][iDir];
         const auto& khat = (iDir < nDir ?
-                this->khat[level][iDir] : poles[iDir-nDir]);
+            this->khat[level][iDir] : poles[iDir-nDir]);
 
         for (const auto& rhat : rhats)
             psis[m++] = acos(khat.dot(rhat));
@@ -246,6 +249,7 @@ void Tables::buildTranslationTable() {
             vecXcd transl_dX(nDir+2);
 
             for (int iDir = 0; iDir < nDir+2; ++iDir) {
+                // const auto& khat = this->khat[level][iDir];
                 const auto& khat = (iDir < nDir ?
                     this->khat[level][iDir] : poles[iDir-nDir]);
 

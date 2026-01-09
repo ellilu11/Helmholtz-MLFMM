@@ -160,7 +160,7 @@ void Node::buildMpoleToLocalCoeffs() {
             localCoeffs[idx] += transl_dX[idx] * node->coeffs[idx];
     }
 
-    // Apply integration weights
+    /* Apply integration weights
     const auto [nth, nph] = getNumAngles(level);
     const double phiWeight = 2.0*PI / static_cast<double>(nph);
     size_t dirIdx = 0;
@@ -170,7 +170,7 @@ void Node::buildMpoleToLocalCoeffs() {
         for (int iph = 0; iph < nph; ++iph)
             localCoeffs[dirIdx++] *= weight;
     }
-    //
+    */
 }
 
 /* evalLeafIlistSols()
