@@ -21,6 +21,9 @@ public:
     static void addInterpCoeffs(const std::vector<T>&, std::vector<T>&, int, int);
 
     template <typename T>
+    static void addInvInterpCoeffs(const std::vector<T>&, std::vector<T>&, int, int);
+
+    template <typename T>
     static void addAnterpCoeffs(const std::vector<T>&, std::vector<T>&, int, int);
 
     void buildLocalCoeffs() override;

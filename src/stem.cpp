@@ -111,14 +111,17 @@ std::vector<vec2cd> Stem::getShiftedLocalCoeffs(int branchIdx) const {
     const int mDir = mth*mph;
 
     std::vector<vec2cd> outCoeffs(nth*nph+2, vec2cd::Zero());
+    // std::vector<vec2cd> outCoeffs(nth*nph, vec2cd::Zero());
     if (iList.empty()) return outCoeffs;
 
     // Shift local coeffs to center of branch
     const auto& dX = branches[branchIdx]->getCenter() - center;
 
     std::vector<vec2cd> shiftedCoeffs(mDir+2, vec2cd::Zero());
+    // std::vector<vec2cd> shiftedCoeffs(mDir, vec2cd::Zero());
 
     for (int iDir = 0; iDir < mDir+2; ++iDir) {
+    // for (int iDir = 0; iDir < mDir; ++iDir) {
         // const auto& kvec = tables.khat[level][iDir] * wavenum;
         const auto& kvec = wavenum * (iDir < mDir ?
             tables.khat[level][iDir] : poles[iDir-mDir]);
@@ -127,7 +130,8 @@ std::vector<vec2cd> Stem::getShiftedLocalCoeffs(int branchIdx) const {
     }
 
     // Interpolate shifted coeffs to branch's angular grid
-    addInterpCoeffs(shiftedCoeffs, outCoeffs, level, level+1);
+    addAnterpCoeffs(shiftedCoeffs, outCoeffs, level, level+1);
+    // addInvInterpCoeffs(shiftedCoeffs, outCoeffs, level, level+1);
 
     return outCoeffs;
 }
@@ -136,6 +140,8 @@ template <typename T>
 void Stem::addInterpCoeffs(
     const std::vector<T>& inCoeffs, std::vector<T>& outCoeffs, int srcLvl, int tgtLvl)
 {
+    std::cout << std::setprecision(9);
+
     const int order = config.interpOrder;
 
     const auto [mth, mph] = getNumAngles(srcLvl);
@@ -174,22 +180,33 @@ void Stem::addInterpCoeffs(
                     interp[k] * inCoeffs[ith_flipped*mph+iph_shifted]
                     * Math::sign(outOfRange) // spherical vector components only
                     ; 
+
+                // if (!iph && (srcLvl == maxLevel)) std::cout << static_cast<cmplx>(inCoeffs[ith_flipped*mph+iph_shifted][0]*Math::sign(outOfRange)) << ",";
             }
         }
 
-        // For nodes near poles, add contribution from poles
+        /* For nodes near poles, add contribution from poles
         if (interp.size() == 2*order+1) {
             assert(nearIdx < order-1 || nearIdx >= mth-order);
 
             for (int iph = 0; iph < mph; ++iph) {
-                const auto& inPoleCoeff = ((nearIdx < order-1) ? inCoeffs[mDir] : inCoeffs[mDir+1]);
+                const T& inPoleCoeff = ((nearIdx < order-1) ? inCoeffs[mDir] : inCoeffs[mDir+1]);
 
                 innerCoeffs[jthmph+iph] += interp[2*order] *
                     inPoleCoeff;
+
+                // if (!iph && (srcLvl == maxLevel)) std::cout << static_cast<cmplx>(inPoleCoeff[0]);
             }
         }
-        //
+        */
+
+        if (srcLvl == maxLevel) {
+            // std::cout << '\n';
+            // std::cout << jth << ' ' << innerCoeffs[jthmph] << '\n';
+        }
     }
+
+    // std::cout << "End of node\n";
 
     // Interpolate over phi
     for (int jph = 0; jph < nph; ++jph) {
@@ -210,6 +227,62 @@ void Stem::addInterpCoeffs(
 }
 
 template <typename T>
+void Stem::addInvInterpCoeffs(
+    const std::vector<T>& inCoeffs, std::vector<T>& outCoeffs, int srcLvl, int tgtLvl)
+{
+    std::cout << std::setprecision(9);
+
+    const int order = config.interpOrder;
+
+    const auto [mth, mph] = getNumAngles(srcLvl);
+    const auto [nth, nph] = getNumAngles(tgtLvl);
+    const int mDir = mth*mph, nDir = nth*nph;
+
+    assert(inCoeffs.size() == mDir && outCoeffs.size() == nDir);
+    assert(!(mph%2)); // mph needs to be even
+
+    const int tblLvl = std::min(srcLvl, tgtLvl);
+
+    // Interpolate over theta
+    std::vector<T> innerCoeffs(nth*mph, T{});
+
+    for (int jth = 0; jth < nth; ++jth) {
+        const auto [interp, nearIdx] = tables.invInterpTheta[tblLvl][jth];
+        const int jthmph = jth*mph;
+
+        for (int ith = nearIdx+1-order, k = 0; ith <= nearIdx+order; ++ith, ++k) {
+            const int ith_flipped = Math::flipIdxToRange(ith, mth);
+
+            const bool outOfRange = ith != ith_flipped; // jth < 0 || jth >= mth;
+
+            for (int iph = 0; iph < mph; ++iph) {
+                int iph_shifted = iph;
+
+                if (outOfRange) iph_shifted += ((iph < mph/2) ? mph/2 : -mph/2);
+
+                innerCoeffs[jthmph+iph] +=
+                    interp[k] * inCoeffs[ith_flipped*mph+iph_shifted]
+                    * Math::sign(outOfRange) // spherical vector components only
+                    ;
+            }
+        }
+    }
+
+    // Interpolate over phi
+    for (int jph = 0; jph < nph; ++jph) {
+        const auto [interp, nearIdx] = tables.invInterpPhi[tblLvl][jph];
+
+        for (int iph = nearIdx+1-order, k = 0; iph <= nearIdx+order; ++iph, ++k) {
+            const int iph_wrapped = Math::wrapIdxToRange(iph, mph);
+
+            for (int jth = 0; jth < nth; ++jth)
+                outCoeffs[jth*nph+jph] +=
+                interp[k] * innerCoeffs[jth*mph+iph_wrapped];
+        }
+    }
+}
+
+template <typename T>
 void Stem::addAnterpCoeffs(
     const std::vector<T>& inCoeffs, std::vector<T>& outCoeffs, int srcLvl, int tgtLvl)
 {
@@ -217,6 +290,7 @@ void Stem::addAnterpCoeffs(
 
     const auto [mth, mph] = getNumAngles(srcLvl);
     const auto [nth, nph] = getNumAngles(tgtLvl);
+    const int mDir = mth*mph, nDir = nth*nph;
 
     assert(inCoeffs.size() == mDir+2 && outCoeffs.size() == nDir+2);
     assert(!(nph%2)); // nph needs to be even
@@ -245,32 +319,43 @@ void Stem::addAnterpCoeffs(
     for (int ith = 0; ith < mth; ++ith) {
         const auto [interp, nearIdx] = tables.interpTheta[tblLvl][ith];
 
-        for (int jth = -order; jth < nth+order; ++jth) {  
+        for (int jth = -order; jth < nth+order; ++jth) {
             const int k = jth - (nearIdx+1-order);
 
             // If ith \notin [nearIdx+1-order,nearIdx+order], matrix element is zero
             if (k < 0 || k >= 2*order) continue;
 
-            const int Jth = jth+order;
-            for (int jph = -order; jph < nph+order; ++jph) {
-                const int Jph = jph+order;
-                extCoeffs[Jth*Nph+Jph] += interp[k] * innerCoeffs[ith*Nph+Jph];
+            const int jth_flipped = Math::flipIdxToRange(jth, nth);
+
+            const bool outOfRange = jth != jth_flipped; // jth < 0 || jth >= nth;
+
+            for (int jph = 0; jph < nph; ++jph) {
+                int jph_shifted = jph;
+
+                if (outOfRange) jph_shifted += ((jph < nph/2) ? nph/2 : -nph/2);
+
+                outCoeffs[jth_flipped*nph+jph_shifted] +=
+                    interp[k] * innerCoeffs[ith*nph+jph]
+                    * Math::sign(outOfRange) // spherical vector components only
+                    ;
             }
         }
 
-        // For near pole nodes, add contribution to poles
-        if (nearIdx < order-1 || nearIdx > mth-order) {
-            assert(interp.size() == 2*order+1);
+        /* For near pole nodes, add contribution to poles
+        if (interp.size() == 2*order+1) {
+            assert(nearIdx < order-1 || nearIdx >= nth-order);
 
-            for (int jph = -order; jph < nph+order; ++jph) {
-                const int Jph = jph+order;
-
-                extCoeffs[(nearIdx < order-1) ? NDir : NDir+1] 
-                    += interp[2*order] * innerCoeffs[ith*Nph+Jph];
+            for (int jph = 0; jph < nph; ++jph) {
+                outCoeffs[(nearIdx < order-1) ? nDir : nDir+1] 
+                    += interp[2*order] * innerCoeffs[ith*nph+jph];
             }
         }
-        //
+        */
     }
+
+    // Add polar coeffs (no anterp)
+    for (int jth = 0; jth < 2; ++jth)
+        outCoeffs[nDir+jth] += inCoeffs[mDir+jth];
 }
 
 /* buildLocalCoeffs()

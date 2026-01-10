@@ -65,8 +65,8 @@ std::vector<interpPair> Tables::getInterpThetaAtLvl(int srcLvl, int tgtLvl) {
             interpThetas[k] = srcTheta;
         }
 
-        if (nearIdx < order-1) interpThetas.push_back(0.0); // use northpole
-        else if (nearIdx >= mth-order) interpThetas.push_back(PI); // use southpole
+        //if (nearIdx < order-1) interpThetas.push_back(0.0); // use northpole
+        //else if (nearIdx >= mth-order) interpThetas.push_back(PI); // use southpole
 
         //if (tgtLvl == 0) {
         //    for (const auto& theta : interpThetas) std::cout << std::setprecision(15) << theta << ',';
@@ -120,7 +120,6 @@ std::vector<interpPair> Tables::getInterpPhiAtLvl(int srcLvl, int tgtLvl) {
 }
 
 void Tables::buildInterpTables() {
-
     for (int lvl = 0; lvl < maxLevel; ++lvl) {
         // M2M interpolation tables
         interpTheta.push_back(getInterpThetaAtLvl(lvl+1, lvl));

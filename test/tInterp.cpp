@@ -22,10 +22,10 @@ cmplx sphFunc(double th, double ph) {
 };
 
 vec2cd vecSphFunc(double th, double ph) {
-    return vec2cd{ sphFunc(th,ph),thetaFunc(th) };
+    return vec2cd{ sphFunc(th,ph), thetaFunc(th) };
 }
 
-void Stem::tInterpPhi(int srcLvl, int tgtLvl) {
+/*void Stem::tInterpPhi(int srcLvl, int tgtLvl) {
     const int order = config.interpOrder;
 
     // Evaluate function at source nodes
@@ -226,7 +226,7 @@ void Stem::tAnterpTheta(int srcLvl, int tgtLvl) {
     // std::cout << '\n';
 
     std::cout << "Integrated val using anterp: " << std::setprecision(15) << 2.0*PI*intVal << '\n';
-}
+}*/
 
 template <typename T>
 void Stem::tInterp(int srcLvl, int tgtLvl) {
@@ -246,10 +246,10 @@ void Stem::tInterp(int srcLvl, int tgtLvl) {
             vals.push_back(vecSphFunc(theta, phi));
         }
     }
-    vals.insert(vals.end(), { sphFunc(0,0), sphFunc(PI,0) });
+    vals.insert(vals.end(), { vecSphFunc(0,0), vecSphFunc(PI,0) });
 
     // Interpolate function values to target nodes
-    std::vector<T> interpVals(nth*nph, T{});
+    std::vector<T> interpVals(nth*nph+2, T{});
     addInterpCoeffs(vals, interpVals, srcLvl, tgtLvl);
 
     // Do inner product (weighted)
@@ -294,10 +294,11 @@ void Stem::tAnterp(int srcLvl, int tgtLvl) {
             vals.push_back(phiWeight*thetaWeight*vecSphFunc(theta, phi));
         }
     }
-    vals.insert(vals.end(), { sphFunc(0,0), sphFunc(PI,0) });
+    // vals.insert(vals.end(), { vecSphFunc(0,0), vecSphFunc(PI,0) });
+    vals.insert(vals.end(), { vec2cd::Zero(), vec2cd::Zero() });
 
     // Anterpolate function values to target nodes on extended grid
-    std::vector<T> anterpVals(nth*nph, T{});
+    std::vector<T> anterpVals(nth*nph+2, T{});
     addAnterpCoeffs(vals, anterpVals, srcLvl, tgtLvl);
 
     // Do inner product
@@ -318,6 +319,9 @@ void Stem::tAnterp(int srcLvl, int tgtLvl) {
     }
 
     assert(l == anterpVals.size()-2);
+
+    intVal += anterpVals[nth*nph].dot(vecSphFunc(0.0, 0.0));
+    intVal += anterpVals[nth*nph+1].dot(vecSphFunc(PI, 0.0));
 
     std::cout << "Integrated val using anterp: " << std::setprecision(15) << intVal << '\n';
 }
@@ -364,7 +368,7 @@ int main() {
     cout << "   Elapsed time: " << duration_ms.count() << " ms\n\n";
 
     // Do test
-    const int lvl = 2;
+    const int lvl = 0;
     // Stem::tInterpPhi(lvl+1,lvl);
     // Stem::tAnterpPhi(lvl,lvl+1);
     // Stem::tInterpTheta(lvl+1,lvl);

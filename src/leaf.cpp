@@ -230,11 +230,12 @@ void Leaf::buildLocalCoeffs() {
 /* evalFarSols()
  * (L2T) Evaluate sols from local expansion due to far nodes
  */
-/*
+//
 void Leaf::evalFarSols() {
     if (isSrcless() || level <= 1) return;
 
     const auto [nth, nph] = getNumAngles(level);
+    const int nDir = nth*nph;
 
     int iObs = 0;
     for (const auto& obs : srcs) {
@@ -250,14 +251,19 @@ void Leaf::evalFarSols() {
             }
         }
 
+        assert(iDir == nDir);
+
+        //for (int ith = 0; ith < 2; ++ith)
+        //    intRad += radPats[nDir+ith][iObs].dot(localCoeffs[nDir+ith]);
+
         (*rvec)[obs->getIdx()] += Phys::C * wavenum * intRad;
 
         ++iObs;
     }
 }
-*/
-
 //
+
+/*
 void Leaf::evalFarSols() {
     if (isSrcless() || level <= 1) return;
 
@@ -287,7 +293,7 @@ void Leaf::evalFarSols() {
         ++iObs;
     }
 }
-//
+*/
 
 /* evalNearNonNborSols()
  * (M2T/S2T) Evaluate sols from mpole expansion due to list 3 nodes

@@ -75,6 +75,9 @@ void Node::buildAngularSamples() {
 
         thetas.emplace_back(nodes, weights);
 
+        //for (const double theta : nodes) // 
+        //    std::cout << std::setprecision(9) << theta << ' '; //
+
         // Construct phis
         const int nph = 2*nth;
         realVec phis_lvl(nph);
@@ -95,6 +98,7 @@ void Node::resizeCoeffs() {
     // +2 for polar coeffs
     coeffs.resize(nth*nph+2, vec2cd::Zero()); 
     localCoeffs.resize(nth*nph+2, vec2cd::Zero());
+    // localCoeffs.resize(nth*nph, vec2cd::Zero());
 }
 
 /* buildInteractionList()
@@ -150,7 +154,7 @@ void Node::buildMpoleToLocalCoeffs() {
 
     std::fill(localCoeffs.begin(), localCoeffs.end(), vec2cd::Zero());
 
-    const size_t numAngles = localCoeffs.size();
+    const size_t numAngles = localCoeffs.size() - 2;
 
     for (const auto& node : iList) {
         const auto& dX = center - node->center;
@@ -160,7 +164,7 @@ void Node::buildMpoleToLocalCoeffs() {
             localCoeffs[idx] += transl_dX[idx] * node->coeffs[idx];
     }
 
-    /* Apply integration weights
+    // Apply integration weights
     const auto [nth, nph] = getNumAngles(level);
     const double phiWeight = 2.0*PI / static_cast<double>(nph);
     size_t dirIdx = 0;
@@ -170,7 +174,7 @@ void Node::buildMpoleToLocalCoeffs() {
         for (int iph = 0; iph < nph; ++iph)
             localCoeffs[dirIdx++] *= weight;
     }
-    */
+    //
 }
 
 /* evalLeafIlistSols()
