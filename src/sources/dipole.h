@@ -75,10 +75,10 @@ public:
     }
 
 private:
-    vec3d pos;  // position
+    vec3d pos;   // position
 
     double pmag; // pol. density magnitude 
-    vec3d pol; // pol. density vector
-    vec3d phat; // unit pol. density vector
+    vec3d pol;   // pol. density vector
+    vec3d phat;  // unit pol. density vector
 
 };

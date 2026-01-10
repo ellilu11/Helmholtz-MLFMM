@@ -258,10 +258,8 @@ void Stem::buildLocalCoeffs() {
 
         start = Clock::now();
         if (!base->isRoot()) {
-            auto stemBase = dynamic_cast<Stem*>(base);
-
-            localCoeffs =
-                localCoeffs + stemBase->getShiftedLocalCoeffs(branchIdx);
+            localCoeffs = localCoeffs
+                + dynamic_cast<Stem*>(base)->getShiftedLocalCoeffs(branchIdx);
         }
 
         t.L2L += Clock::now() - start;

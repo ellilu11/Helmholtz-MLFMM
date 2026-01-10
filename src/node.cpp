@@ -120,8 +120,6 @@ void Node::buildInteractionList() {
     }
 
     assert(iList.size() <= pow(6, DIM) - pow(3, DIM));
-
-    // std::cout << iList.size() << '\n';
 }
 
 /* pushSelfToNearNonNbors()
