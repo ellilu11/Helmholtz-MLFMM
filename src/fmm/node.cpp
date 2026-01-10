@@ -1,18 +1,16 @@
 #include "node.h"
 
-Config Node::config;
-double Node::wavenum;
-std::vector<std::pair<realVec, realVec>> Node::thetas;
-std::vector<realVec> Node::phis;
-std::vector<int> Node::Ls;
-Tables Node::tables;
-std::vector<NodePair> Node::nonNearPairs;
+Config FMM::Node::config;
+double FMM::Node::wavenum;
+FMM::Angles FMM::Node::angles;
+FMM::Tables FMM::Node::tables;
+std::vector<NodePair> FMM::Node::nonNearPairs;
 
-std::shared_ptr<vecXcd> Node::lvec;
-std::shared_ptr<vecXcd> Node::rvec;
-std::shared_ptr<vecXcd> Node::currents;
+std::shared_ptr<vecXcd> FMM::Node::lvec;
+std::shared_ptr<vecXcd> FMM::Node::rvec;
+std::shared_ptr<vecXcd> FMM::Node::currents;
 
-void Node::initParams(
+void FMM::Node::initParams(
     const Config& config_,
     const std::shared_ptr<Excitation::PlaneWave>& Einc)
 {
@@ -20,7 +18,7 @@ void Node::initParams(
     wavenum = Einc->wavenum;
 }
 
-void Node::linkStates(const std::unique_ptr<Solver>& solver) {
+void FMM::Node::linkStates(const std::unique_ptr<Solver>& solver) {
     lvec = std::move(solver->getLvec());
     rvec = std::move(solver->getRvec());
     currents = std::move(solver->getCurrents());
@@ -31,7 +29,7 @@ void Node::linkStates(const std::unique_ptr<Solver>& solver) {
  * branchidx : index of this node relative to its base node
  * base      : pointer to base node
  */
-Node::Node(
+FMM::Node::Node(
     const SrcVec& srcs,
     const int branchIdx,
     Node* const base)
@@ -47,7 +45,7 @@ Node::Node(
 /* buildAngularSamples()
  * Compute theta and phi samples at each level
  */
-void Node::buildAngularSamples() {
+void FMM::Node::buildAngularSamples() {
 
     constexpr double EPS_NR = 1.0E-9; // Newton-Raphson precision
 
@@ -60,7 +58,7 @@ void Node::buildAngularSamples() {
         const int tau = ceil((1.73*wavenum*nodeLeng +
                 2.16*pow(config.digits, 2.0/3.0)*pow(wavenum*nodeLeng, 1.0/3.0)));
              
-        Ls.push_back(floor(0.50*tau)); // TODO: Find optimal formula
+        angles.Ls.push_back(floor(0.50*tau)); // TODO: Find optimal formula
 
         // Construct thetas
         const int nth = tau+1;
@@ -71,7 +69,8 @@ void Node::buildAngularSamples() {
             [](double weight, double theta) { return weight * sin(theta); }
         );
 
-        thetas.emplace_back(nodes, weights);
+        angles.thetas.push_back(nodes);
+        angles.thetaWeights.push_back(weights);
 
         // Construct phis
         const int nph = 2*nth;
@@ -80,14 +79,14 @@ void Node::buildAngularSamples() {
         for (int iph = 0; iph < nph; ++iph)
             phis_lvl[iph] = 2.0*PI*iph/static_cast<double>(nph);
 
-        phis.push_back(phis_lvl);
+        angles.phis.push_back(phis_lvl);
 
         std::cout << "   (" << lvl << "," << nth << "," << nph << ")\n";
     }
 }
 
-void Node::resizeCoeffs() {
-    const auto [nth, nph] = getNumAngles(level);
+void FMM::Node::resizeCoeffs() {
+    const auto [nth, nph] = angles.getNumAngles(level);
 
     coeffs.resize(nth*nph, vec2cd::Zero());
     localCoeffs.resize(nth*nph, vec2cd::Zero());
@@ -96,7 +95,7 @@ void Node::resizeCoeffs() {
 /* buildInteractionList()
  * Find interaction nodes
  */
-void Node::buildInteractionList() {
+void FMM::Node::buildInteractionList() {
     assert(!isRoot());
     assert(!nbors.empty());
 
@@ -126,7 +125,7 @@ void Node::buildInteractionList() {
  * Add this node to list 3 of leaf.
  * (if leaf is in list 4 of self, self is in list 3 of leaf) 
  */
-void Node::pushSelfToNearNonNbors() {
+void FMM::Node::pushSelfToNearNonNbors() {
     if (leafIlist.empty()) return;
 
     for (const auto& node : leafIlist) {
@@ -140,7 +139,7 @@ void Node::pushSelfToNearNonNbors() {
 /* buildMpoleToLocalCoeffs()
  * (M2L) Translate mpole coeffs of interaction nodes into local coeffs at center
  */
-void Node::buildMpoleToLocalCoeffs() {
+void FMM::Node::buildMpoleToLocalCoeffs() {
     if (iList.empty()) return;
 
     std::fill(localCoeffs.begin(), localCoeffs.end(), vec2cd::Zero());
@@ -156,11 +155,11 @@ void Node::buildMpoleToLocalCoeffs() {
     }
 
     // Apply integration weights
-    const auto [nth, nph] = getNumAngles(level);
+    const auto [nth, nph] = angles.getNumAngles(level);
     const double phiWeight = 2.0*PI / static_cast<double>(nph);
     size_t dirIdx = 0;
     for (int ith = 0; ith < nth; ++ith) {
-        const double weight = phiWeight * thetas[level].second[ith];
+        const double weight = phiWeight * angles.thetaWeights[level][ith];
 
         for (int iph = 0; iph < nph; ++iph)
             localCoeffs[dirIdx++] *= weight;
@@ -171,7 +170,7 @@ void Node::buildMpoleToLocalCoeffs() {
 /* evalLeafIlistSols()
  * (S2L/S2T) Add contribution from list 4 to local coeffs
  */
-void Node::evalLeafIlistSols() {
+void FMM::Node::evalLeafIlistSols() {
     // Do nothing! Contribution from list 4 node is 
     // to be evaluated by Leaf::evalNearNonNborSols()
     //for (const auto& node : leafIlist)
@@ -195,7 +194,7 @@ void Node::evalLeafIlistSols() {
     */
 }
 
-void Node::printFarSols(const std::string& fname) {
+void FMM::Node::printFarSols(const std::string& fname) {
     // assert(r >= 5.0 * config.rootLeng); // verify farfield condition
     // const cmplx kernel = Phys::C * wavenum * exp(iu*wavenum*r) / r;
 
@@ -211,7 +210,7 @@ void Node::printFarSols(const std::string& fname) {
     std::ofstream farfile(dir/fname);
     farfile << std::setprecision(15) << std::scientific;
 
-    const auto [nth, nph] = getNumAngles(level);
+    const auto [nth, nph] = angles.getNumAngles(level);
     for (int dirIdx = 0; dirIdx < nth*nph; ++dirIdx) {
         const auto& krhat = tables.khat[level][dirIdx] * wavenum;
 
@@ -225,13 +224,13 @@ void Node::printFarSols(const std::string& fname) {
     }
 }
 
-void Node::printAngles() {
+void FMM::Node::printAngles() {
     std::filesystem::path dir = "out/ff";
     std::ofstream thfile(dir/"thetas.txt"), phfile(dir/"phis.txt");
 
-    for (const auto& theta : thetas[level].first)
+    for (const auto& theta : angles.thetas[level])
         thfile << theta << '\n';
 
-    for (const auto& phi : phis[level])
+    for (const auto& phi : angles.phis[level])
         phfile << phi << '\n';
 }

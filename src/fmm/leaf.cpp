@@ -1,9 +1,9 @@
 #include "leaf.h"
 
-LeafVec Leaf::leaves;
-std::vector<LeafPair> Leaf::nearPairs;
+LeafVec FMM::Leaf::leaves;
+std::vector<LeafPair> FMM::Leaf::nearPairs;
 
-Leaf::Leaf(
+FMM::Leaf::Leaf(
     const SrcVec& srcs,
     const int branchIdx,
     Stem* const base)
@@ -25,7 +25,7 @@ Leaf::Leaf(
  * Find all neighbor nodes of equal or greater size
  * Also find all neighbor leaves of equal or lesser size (list 1)
  */
-void Leaf::buildNeighbors() {
+void FMM::Leaf::buildNeighbors() {
     assert(!isRoot());
 
     for (int i = 0; i < numDir; ++i) {
@@ -47,7 +47,7 @@ void Leaf::buildNeighbors() {
  * Find neighbor and interaction lists
  * Add self as near non-neighbor (list 3 node) of any list 4 nodes
  */
-void Leaf::initNode() {
+void FMM::Leaf::initNode() {
     leaves.push_back(shared_from_this()); 
 
     resizeCoeffs();
@@ -64,7 +64,7 @@ void Leaf::initNode() {
 /* findNearNborPairs()
  * From list of leaves, find all near neighbor leaf pairs
  */
-void Leaf::findNearNborPairs() {
+void FMM::Leaf::findNearNborPairs() {
 
     for (const auto& leaf : leaves) {
         for (const auto& nbor : leaf->nearNbors) {
@@ -76,7 +76,7 @@ void Leaf::findNearNborPairs() {
     }
 }
 
-void Leaf::buildNearRads() {
+void FMM::Leaf::buildNearRads() {
 
     findNearNborPairs();
 
@@ -153,13 +153,13 @@ void Leaf::buildNearRads() {
 /* buildRadPats()
  * Build radiation patterns due to sources in all leaves
  */
-void Leaf::buildRadPats() {
+void FMM::Leaf::buildRadPats() {
 
     for (const auto& leaf : leaves) {
         const int level = leaf->level;
         const auto& center = leaf->center;
 
-        const auto [nth, nph] = getNumAngles(level);
+        const auto [nth, nph] = angles.getNumAngles(level);
 
         for (int dirIdx = 0; dirIdx < nth*nph; ++dirIdx) {
             const auto& kvec = tables.khat[level][dirIdx] * wavenum;
@@ -179,7 +179,7 @@ void Leaf::buildRadPats() {
 /* buildMpoleCoeffs()
  * (S2M) Build multipole coefficients from sources in this node  
  */
-void Leaf::buildMpoleCoeffs() {
+void FMM::Leaf::buildMpoleCoeffs() {
     if (isSrcless() || isRoot()) return;
 
     std::fill(coeffs.begin(), coeffs.end(), vec2cd::Zero());
@@ -203,7 +203,7 @@ void Leaf::buildMpoleCoeffs() {
  * (M2L) Translate mpole coeffs of interaction nodes into local coeffs at center
  * (L2L) Shift base local coeffs to center and add to local coeffs
  */
-void Leaf::buildLocalCoeffs() {
+void FMM::Leaf::buildLocalCoeffs() {
     if (isRoot()) return;
 
     auto start = Clock::now();
@@ -225,10 +225,10 @@ void Leaf::buildLocalCoeffs() {
  * (L2T) Evaluate sols from local expansion due to far nodes
  */
 //
-void Leaf::evalFarSols() {
+void FMM::Leaf::evalFarSols() {
     if (isSrcless() || level <= 1) return;
 
-    const auto [nth, nph] = getNumAngles(level);
+    const auto [nth, nph] = angles.getNumAngles(level);
 
     int obsIdx = 0;
     for (const auto& obs : srcs) {
@@ -252,10 +252,10 @@ void Leaf::evalFarSols() {
 //
 
 /*
-void Leaf::evalFarSols() {
+void FMM::Leaf::evalFarSols() {
     if (isSrcless() || level <= 1) return;
 
-    const auto [nth, nph] = getNumAngles(level);
+    const auto [nth, nph] = angles.getNumAngles(level);
 
     const double phiWeight = 2.0*PI / static_cast<double>(nph); // TODO: static member
 
@@ -265,7 +265,7 @@ void Leaf::evalFarSols() {
         cmplx intRad = 0;
 
         for (int ith = 0; ith < nth; ++ith) {
-            const double weight = thetas[level].second[ith];
+            const double weight = thetaWeights[level][ith];
 
             for (int iph = 0; iph < nph; ++iph) {
                 // Do the angular integration
@@ -286,7 +286,7 @@ void Leaf::evalFarSols() {
 /* evalNearNonNborSols()
  * (M2T/S2T) Evaluate sols from mpole expansion due to list 3 nodes
  */
-void Leaf::evalNearNonNborSols() {
+void FMM::Leaf::evalNearNonNborSols() {
     for (const auto& node : nearNonNbors)
         evalPairSols(node, nonNearRads[nonNearPairIdx++]);
     return;
@@ -297,7 +297,7 @@ void Leaf::evalNearNonNborSols() {
  * srcNode : source node
  * rads    : precomputed radiation coefficients
  */
-void Leaf::evalPairSols(const std::shared_ptr<Node> srcNode, const cmplxVec& rads) {
+void FMM::Leaf::evalPairSols(const std::shared_ptr<Node> srcNode, const cmplxVec& rads) {
 
     const auto& srcSrcs = srcNode->getSrcs();
 
@@ -329,7 +329,7 @@ void Leaf::evalPairSols(const std::shared_ptr<Node> srcNode, const cmplxVec& rad
  * (S2T) Evaluate sols at sources in this node due to other sources
  * in this node
  */
-void Leaf::evalSelfSols() {
+void FMM::Leaf::evalSelfSols() {
 
     const int numSrcs = srcs.size();
 
@@ -356,7 +356,7 @@ void Leaf::evalSelfSols() {
 /* evaluateSols()
  * Sum solutions at all sources in all leaves 
  */ 
-void Leaf::evaluateSols() {
+void FMM::Leaf::evaluateSols() {
     auto start = Clock::now();
     for (const auto& leaf : leaves)
         leaf->evalFarSols();

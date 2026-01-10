@@ -1,10 +1,10 @@
 #include "tables.h"
 
-void Tables::buildAngularTables() {
+void FMM::Tables::buildAngularTables() {
    
     for (int level = 0; level <= maxLevel; ++level) {
 
-        const auto [nth, nph] = Node::getNumAngles(level);
+        const auto [nth, nph] = angles.getNumAngles(level);
 
         std::vector<vec3d> khat_lvl(nth*nph);
         std::vector<mat23d> toThPh_lvl(nth*nph);
@@ -12,10 +12,10 @@ void Tables::buildAngularTables() {
 
         size_t idx = 0;
         for (int ith = 0; ith < nth; ++ith) {
-            const double th = Node::thetas[level].first[ith];
+            const double th = angles.thetas[level][ith];
 
             for (int iph = 0; iph < nph; ++iph) {
-                const double ph = Node::phis[level][iph];
+                const double ph = angles.phis[level][iph];
 
                 khat_lvl[idx] = Math::fromSph(vec3d(1.0, th, ph));
                 toThPh_lvl[idx] = Math::toThPh(th, ph);
@@ -31,15 +31,15 @@ void Tables::buildAngularTables() {
     }
 }
 
-std::vector<interpPair> Tables::getInterpThetaAtLvl(int srcLvl, int tgtLvl) {
+std::vector<interpPair> FMM::Tables::getInterpThetaAtLvl(int srcLvl, int tgtLvl) {
 
     assert(abs(srcLvl - tgtLvl) == 1);
 
-    const int mth = Node::getNumAngles(srcLvl).first;
-    const int nth = Node::getNumAngles(tgtLvl).first;
+    const int mth = angles.getNumAngles(srcLvl).first;
+    const int nth = angles.getNumAngles(tgtLvl).first;
 
-    const auto& srcThetas = Node::thetas[srcLvl].first;
-    const auto& tgtThetas = Node::thetas[tgtLvl].first;
+    const auto& srcThetas = angles.thetas[srcLvl];
+    const auto& tgtThetas = angles.thetas[tgtLvl];
 
     std::vector<interpPair> interpPairs;
 
@@ -78,15 +78,15 @@ std::vector<interpPair> Tables::getInterpThetaAtLvl(int srcLvl, int tgtLvl) {
     return interpPairs;
 }
 
-std::vector<interpPair> Tables::getInterpPhiAtLvl(int srcLvl, int tgtLvl) {
+std::vector<interpPair> FMM::Tables::getInterpPhiAtLvl(int srcLvl, int tgtLvl) {
 
     assert(abs(srcLvl - tgtLvl) == 1);
 
-    const int mph = Node::getNumAngles(srcLvl).second;
-    const int nph = Node::getNumAngles(tgtLvl).second;
+    const int mph = angles.getNumAngles(srcLvl).second;
+    const int nph = angles.getNumAngles(tgtLvl).second;
 
-    const auto& srcPhis = Node::phis[srcLvl];
-    const auto& tgtPhis = Node::phis[tgtLvl];
+    const auto& srcPhis = angles.phis[srcLvl];
+    const auto& tgtPhis = angles.phis[tgtLvl];
 
     std::vector<interpPair> interpPairs;
 
@@ -111,7 +111,7 @@ std::vector<interpPair> Tables::getInterpPhiAtLvl(int srcLvl, int tgtLvl) {
     return interpPairs;
 }
 
-void Tables::buildInterpTables() {
+void FMM::Tables::buildInterpTables() {
 
     for (int lvl = 0; lvl < maxLevel; ++lvl) {
         // M2M interpolation tables
@@ -124,17 +124,15 @@ void Tables::buildInterpTables() {
     }
 }
 
-Map<vecXcd> Tables::getAlphaAtLvl(int level) {
+Map<vecXcd> FMM::Tables::getAlphaAtLvl(int level) {
 
     using namespace Math;
 
-    const double wavenum = Node::wavenum;
+    const int L = angles.Ls[level];
+    const int nth = angles.getNumAngles(level).first;
+    const int nps = std::floor(overInterp*(nth-1));
 
-    const int L = Node::Ls[level];
-    const int nth = Node::getNumAngles(level).first;
-    const int nps = std::floor(Node::config.overInterp*(nth-1));
-
-    const double nodeLeng = Node::config.rootLeng / pow(2.0, level);
+    const double nodeLeng = rootLeng / pow(2.0, level);
 
     Map<vecXcd> alpha;
         
@@ -165,10 +163,10 @@ Map<vecXcd> Tables::getAlphaAtLvl(int level) {
     return alpha;
 };
 
-HashMap<interpPair> Tables::getInterpPsiAtLvl(int level) {
+HashMap<interpPair> FMM::Tables::getInterpPsiAtLvl(int level) {
 
     // Find all unique psi = acos(khat.dot(rhat))
-    const auto [nth, nph] = Node::getNumAngles(level);
+    const auto [nth, nph] = angles.getNumAngles(level);
 
     realVec psis(nth*nph*rhats.size());
 
@@ -185,7 +183,7 @@ HashMap<interpPair> Tables::getInterpPsiAtLvl(int level) {
     psis.erase(std::unique(psis.begin(), psis.end()), psis.end());
 
     // Compute Lagrange coefficients for each possible psi
-    const int nps = std::floor(Node::config.overInterp*(nth-1));
+    const int nps = std::floor(overInterp*(nth-1));
 
     HashMap<interpPair> interpPairs;
 
@@ -215,7 +213,7 @@ HashMap<interpPair> Tables::getInterpPsiAtLvl(int level) {
     return interpPairs;
 }
 
-void Tables::buildTranslationTable() {
+void FMM::Tables::buildTranslationTable() {
     const auto& dXs = Math::getINodeDistVecs();
 
     for (size_t level = 0; level <= maxLevel; ++level) {
@@ -223,9 +221,9 @@ void Tables::buildTranslationTable() {
         const auto& alphas = getAlphaAtLvl(level);
         const auto& interpPsis = getInterpPsiAtLvl(level); 
 
-        const auto [nth, nph] = Node::getNumAngles(level);
+        const auto [nth, nph] = angles.getNumAngles(level);
 
-        const int nps = std::floor(Node::config.overInterp*(nth-1));
+        const int nps = std::floor(overInterp*(nth-1));
 
         VecHashMap<vecXcd> transl_lvl;
 

@@ -1,8 +1,10 @@
 #include "solver.h"
+#include "fmm/leaf.h"
+#include "fmm/node.h"
 
 Solver::Solver(
     SrcVec& srcs, 
-    std::shared_ptr<Node> root, 
+    std::shared_ptr<FMM::Node> root, 
     int maxIter, double EPS)
     : root(std::move(root)),
       numSrcs(srcs.size()),
@@ -34,13 +36,13 @@ Solver::Solver(
 }
 
 void Solver::evalRvec(int k) {
-    if (root->isNodeType<Stem>()) {
+    if (root->isNodeType<FMM::Stem>()) {
         root->buildMpoleCoeffs();
 
         root->buildLocalCoeffs();
     }
 
-    Leaf::evaluateSols();
+    FMM::Leaf::evaluateSols();
 
     if (!k) {
         std::cout << "   Elapsed time (S2M): " << t.S2M.count() << " ms\n";

@@ -1,6 +1,6 @@
 #include "stem.h"
 
-Stem::Stem(
+FMM::Stem::Stem(
     const SrcVec& srcs,
     const int branchIdx,
     Stem* const base)
@@ -28,7 +28,7 @@ Stem::Stem(
 /* buildNeighbors()
  * Find all neighbor nodes of equal or greater size
  */
-void Stem::buildNeighbors() {
+void FMM::Stem::buildNeighbors() {
     assert(!isRoot());
 
     for (int i = 0; i < numDir; ++i) {
@@ -45,7 +45,7 @@ void Stem::buildNeighbors() {
  * Find neighbor and interaction lists.
  * Add self as near non-neighbor (list 3 node) of any list 4 nodes
  */
-void Stem::initNode() {
+void FMM::Stem::initNode() {
     resizeCoeffs();
 
     if (!isRoot()) {
@@ -63,10 +63,10 @@ void Stem::initNode() {
 /* buildMpoleCoeffs()
  * (M2M) Build mpole coeffs by merging branch mpole coeffs
  */
-void Stem::buildMpoleCoeffs() {
+void FMM::Stem::buildMpoleCoeffs() {
     const int order = config.interpOrder;
 
-    const auto [mth, mph] = getNumAngles(level+1);
+    const auto [mth, mph] = angles.getNumAngles(level+1);
 
     std::fill(coeffs.begin(), coeffs.end(), vec2cd::Zero());
 
@@ -101,10 +101,10 @@ void Stem::buildMpoleCoeffs() {
  * (L2L) Return local coeffs shifted to center of branch labeled by branchIdx
  * branchIdx : index of branch \in {0, ..., 7}
  */
-std::vector<vec2cd> Stem::getShiftedLocalCoeffs(int branchIdx) const {
+std::vector<vec2cd> FMM::Stem::getShiftedLocalCoeffs(int branchIdx) const {
 
-    const auto [mth, mph] = getNumAngles(level);
-    const auto [nth, nph] = getNumAngles(level+1);
+    const auto [mth, mph] = angles.getNumAngles(level);
+    const auto [nth, nph] = angles.getNumAngles(level+1);
 
     std::vector<vec2cd> outCoeffs(nth*nph, vec2cd::Zero());
     if (iList.empty()) return outCoeffs;
@@ -127,13 +127,13 @@ std::vector<vec2cd> Stem::getShiftedLocalCoeffs(int branchIdx) const {
 }
 
 template <typename T>
-void Stem::addInterpCoeffs(
+void FMM::Stem::addInterpCoeffs(
     const std::vector<T>& inCoeffs, std::vector<T>& outCoeffs, int srcLvl, int tgtLvl)
 {
     const int order = config.interpOrder;
 
-    const auto [mth, mph] = getNumAngles(srcLvl);
-    const auto [nth, nph] = getNumAngles(tgtLvl);
+    const auto [mth, mph] = angles.getNumAngles(srcLvl);
+    const auto [nth, nph] = angles.getNumAngles(tgtLvl);
 
     assert(!(mph%2)); // mph needs to be even
 
@@ -185,13 +185,13 @@ void Stem::addInterpCoeffs(
 }
 
 template <typename T>
-void Stem::addAnterpCoeffs(
+void FMM::Stem::addAnterpCoeffs(
     const std::vector<T>& inCoeffs, std::vector<T>& outCoeffs, int srcLvl, int tgtLvl)
 {
     const int order = config.interpOrder;
 
-    const auto [mth, mph] = getNumAngles(srcLvl);
-    const auto [nth, nph] = getNumAngles(tgtLvl);
+    const auto [mth, mph] = angles.getNumAngles(srcLvl);
+    const auto [nth, nph] = angles.getNumAngles(tgtLvl);
 
     assert(!(nph%2)); // nph needs to be even
 
@@ -247,7 +247,7 @@ void Stem::addAnterpCoeffs(
  * (M2L) Translate mpole coeffs of interaction nodes into local coeffs at center
  * (L2L) Shift base local coeffs to center and add to local coeffs
  */
-void Stem::buildLocalCoeffs() {
+void FMM::Stem::buildLocalCoeffs() {
     if (!isRoot()) {
 
         auto start = Clock::now();

@@ -1,15 +1,15 @@
 #pragma once
 
 #include <filesystem>
-#include "types.h"
+#include "fmm/fmm.h"
 #include "sources/source.h"
 
-class Node;
+// class Node;
 
 class Solver {
 
 public :
-    Solver(SrcVec& srcs, std::shared_ptr<Node>, int, double);
+    Solver(SrcVec& srcs, std::shared_ptr<FMM::Node>, int, double);
 
     void evalRvec(int);
 
@@ -36,7 +36,7 @@ private :
     //Solver(const Solver&) = delete;
     //Solver& operator=(const Solver&) = delete;
     
-    std::shared_ptr<Node> root;
+    std::shared_ptr<FMM::Node> root;
 
     int numSrcs;
     int maxIter;
@@ -50,5 +50,4 @@ private :
     std::shared_ptr<vecXcd> lvec;
     std::shared_ptr<vecXcd> rvec;
     std::shared_ptr<vecXcd> currents;
-  
 };

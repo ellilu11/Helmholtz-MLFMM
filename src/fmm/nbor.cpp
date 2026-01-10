@@ -1,13 +1,13 @@
 #include "node.h"
 
-using enum Dir;
+using enum FMM::Dir;
 
 /* getNeighborGeqSize(dir)
  * Find the unique neighbor node (if it exists) of equal or greater size
  * along a given direction
  * dir : direction
  */
-std::shared_ptr<Node> Node::getNeighborGeqSize(const Dir dir) const {
+std::shared_ptr<FMM::Node> FMM::Node::getNeighborGeqSize(const Dir dir) const {
     if (isRoot()) return nullptr;
 
     std::shared_ptr<Node> nbor;
@@ -487,7 +487,7 @@ std::shared_ptr<Node> Node::getNeighborGeqSize(const Dir dir) const {
  * nborGeqSize : neighbor node of greater or equal size
  * dir         : direction (must be consistent with direction of nborGeqSize)
  */
-NodeVec Node::getNeighborsLeqSize(
+NodeVec FMM::Node::getNeighborsLeqSize(
     const std::shared_ptr<Node> nborGeqSize, const Dir dir) const
 {
     NodeVec nbors{};

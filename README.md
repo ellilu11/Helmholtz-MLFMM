@@ -15,7 +15,7 @@ hence the term "Multilevel" FMM. This code uses Lagrange interpolation to pass f
 As a future enhancement, this scheme can be accelerated by FFT-based techniques.
 
 A typical Method of Moments application uses an iterative solver to deduce a surface unknown (e.g. electric or magnetic current) by directly or FMM-wise evaluating interactions 
-between source and basis functions (e.g. point dipoles or RWG functions). This code uses the generalized minimal residual method (GMRES) to solve 
+between source and testing functions (e.g. point dipoles or RWG functions). This code uses the generalized minimal residual method (GMRES) to solve 
 for the surface currents, with other iterative methods such as biconjugate gradient planned as enhancements.
 
 ### Build

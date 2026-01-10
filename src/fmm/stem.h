@@ -2,12 +2,10 @@
 
 #include "node.h"
 
-class Stem : public Node, public std::enable_shared_from_this<Stem> {
+class FMM::Stem : public Node, public std::enable_shared_from_this<Stem> {
 
 public:
     Stem(const SrcVec&, const int, Stem* const);
-
-    std::shared_ptr<Node> getSelf() override { return shared_from_this(); }
 
     void buildNeighbors() override;
 
@@ -24,6 +22,8 @@ public:
     static void addAnterpCoeffs(const std::vector<T>&, std::vector<T>&, int, int);
 
     void buildLocalCoeffs() override;
+
+    std::shared_ptr<Node> getSelf() override { return shared_from_this(); }
 
     void printNode(std::ofstream& f) {
         f << center << " " << nodeLeng << '\n';

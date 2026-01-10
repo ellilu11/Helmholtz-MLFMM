@@ -10,12 +10,12 @@
 #include <vector>
 #include <utility>
 
-#include "leaf.cpp"
-#include "nbor.cpp"
-#include "node.cpp"
 #include "solver.cpp"
-#include "stem.cpp"
-#include "tables.cpp"
+#include "fmm/leaf.cpp"
+#include "fmm/nbor.cpp"
+#include "fmm/node.cpp"
+#include "fmm/stem.cpp"
+#include "fmm/tables.cpp"
 #include "sources/rwg.cpp"
 #include "sources/triangle.cpp"
 

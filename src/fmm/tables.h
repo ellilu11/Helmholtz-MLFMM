@@ -1,27 +1,31 @@
 #pragma once
 
-#include "clock.h"
-#include "interp.h"
-#include "maps.h"
+#include "../interp.h"
+#include "../maps.h"
+#include "fmm.h"
 
-class Tables {
+class FMM::Tables {
 
-public: 
+public:
     Tables() = default;
 
-    Tables(int maxLevel, int order)
-        : maxLevel(maxLevel),
-          order(order),
+    Tables(const Angles& angles, const Config& config, double wavenum, int maxLevel)
+        : angles(angles), 
+          wavenum(wavenum), 
+          maxLevel(maxLevel),
+          order(config.interpOrder), 
+          rootLeng(config.rootLeng), 
+          overInterp(config.overInterp),
           dists(Math::getINodeDistances()),
           rhats(Math::getINodeDirections())
     {
         buildAngularTables();
-        
+
         buildInterpTables();
-        
+
         buildTranslationTable();
     }
-    
+
     // Angular tables
     std::vector<std::vector<vec3d>> khat;
     std::vector<std::vector<mat23d>> toThPh;
@@ -53,9 +57,13 @@ private:
 
     void buildTranslationTable();
 
+    Angles angles;
+    double wavenum;
     int maxLevel;
     int order;
+    double rootLeng;
+    double overInterp;
+
     realVec dists;
     std::vector<vec3d> rhats;
 };
-

@@ -4,32 +4,18 @@
 #include <iostream>
 #include <numeric>
 #include <queue>
-#include "clock.h"
-#include "config.h"
-#include "interp.h"
-#include "phys.h"
-#include "solver.h"
+#include "../config.h"
+#include "../interp.h"
+#include "../phys.h"
+#include "fmm.h"
 #include "tables.h"
-#include "sources/rwg.h"
 
-extern ClockTimes t;
+class Solver;
 
-constexpr int DIM = 3;
-constexpr int numDir = 26;
+using NodeVec = std::vector<std::shared_ptr<FMM::Node>>;
+using NodePair = std::pair<std::shared_ptr<FMM::Node>, std::shared_ptr<FMM::Node>>;
 
-enum class Dir {
-    W, E, S, N, D, U,
-    SW, SE, NW, NE, DW, DE, UW, UE, DS, DN, US, UN,
-    DSW, DSE, DNW, DNE, USW, USE, UNW, UNE
-};
-
-class Node;
-
-using NodeVec = std::vector<std::shared_ptr<Node>>;
-using NodePair = std::pair<std::shared_ptr<Node>, std::shared_ptr<Node>>;
-
-class Node {
-    friend struct Tables;
+class FMM::Node {
 
 public:
     static void initParams(
@@ -38,19 +24,26 @@ public:
 
     static void linkStates(const std::unique_ptr<Solver>&);
 
+    Node(const SrcVec&, const int, Node* const);
+
     static void buildAngularSamples();
 
-    static void buildTables() { tables = Tables(maxLevel, config.interpOrder); }
+    virtual void initNode() = 0;
+
+    virtual void buildMpoleCoeffs() = 0;
+
+    virtual void buildLocalCoeffs() = 0;
+
+    void printFarSols(const std::string&);
+
+    void printAngles();
+
+    static void buildTables() { tables = Tables(angles, config, wavenum, maxLevel); }
 
     static int getMaxLvl() { return maxLevel; }
 
     static int getNumNodes() { return numNodes; }
 
-    static pair2i getNumAngles(const int level) {
-        return std::make_pair(thetas[level].first.size(), phis[level].size());
-    }
-
-public:
     SrcVec getSrcs() const { return srcs; }
     
     int getBranchIdx() const { return branchIdx; }
@@ -72,8 +65,6 @@ public:
     NodeVec getLeafIlist() const { return leafIlist; }
     
     std::vector<vec2cd> getMpoleCoeffs() const { return coeffs; }
-
-    std::array<vec2cd,2> getPolarCoeffs() const { return polarCoeffs; }
     
     std::vector<vec2cd> getLocalCoeffs() const { return localCoeffs; }
 
@@ -84,11 +75,16 @@ public:
 
     bool isSrcless() const { return srcs.empty(); }
 
-    // void resetSols() { for (const auto& src : srcs) src->resetSol(); }
+    // ========== Test methods ==========
+    void testFarfield(double);
 
-public:
-    Node(const SrcVec&, const int, Node* const);
-    
+    static void printAngularSamples(int);
+
+    static std::shared_ptr<Node> getNode();
+
+    std::vector<vec3cd> getFarSolsFromCoeffs(double);
+
+protected:
     std::shared_ptr<Node> getNeighborGeqSize(const Dir) const;
 
     NodeVec getNeighborsLeqSize(const std::shared_ptr<Node>, const Dir) const;
@@ -102,43 +98,15 @@ public:
     void buildMpoleToLocalCoeffs();
 
     void evalLeafIlistSols();
-
-    void printFarSols(const std::string&);
-
-    void printAngles();
    
     virtual std::shared_ptr<Node> getSelf() = 0;
     
     virtual void buildNeighbors() = 0;
 
-    virtual void initNode() = 0;
-    
-    virtual void buildMpoleCoeffs() = 0;
-    
-    virtual void buildLocalCoeffs() = 0;
-
-    // ========== Test methods ==========
-    static Tables getTables() { return tables; }
-
-    void testFarfield(double);
-
-    // void testFarfieldDir(double);
-
-    static void printAngularSamples(int);
-
-    static std::shared_ptr<Node> getNode();
-
-    std::vector<vec3cd> getFarSolsFromCoeffs(double);
-
 protected:
     static Config config;
     static double wavenum;
-    inline static int numNodes = 0;
-    inline static int maxLevel = 0;
-
-    static std::vector<std::pair<realVec, realVec>> thetas;
-    static std::vector<realVec> phis;
-    static std::vector<int> Ls;
+    static Angles angles;
     static Tables tables;
     static std::vector<NodePair> nonNearPairs;
 
@@ -146,8 +114,10 @@ protected:
     static std::shared_ptr<vecXcd> rvec;
     static std::shared_ptr<vecXcd> currents;
 
+    inline static int numNodes = 0;
+    inline static int maxLevel = 0;
+
     std::vector<vec2cd> coeffs;
-    std::array<vec2cd,2> polarCoeffs;
     std::vector<vec2cd> localCoeffs;
 
     NodeVec branches;
