@@ -183,7 +183,7 @@ namespace Math {
 
     std::vector<vec3d> getINodeDirections();
 
-    void buildPermutations(vec3d&, std::vector<vec3d>&, int, int);
+    void buildPermutations(vec3d&, std::vector<vec3d>&, int);
 }
 
 

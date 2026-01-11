@@ -20,6 +20,8 @@ int main() {
 
     Node::initStatic(config, Einc, nsrcs);
 
+    // return 0;
+
     // ==================== Set up nodes ==================== //
     std::cout << " Setting up nodes...\n";
 

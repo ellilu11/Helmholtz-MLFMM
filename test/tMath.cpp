@@ -135,7 +135,7 @@ void testPermutation(vec3d& xs) {
     std::vector<vec3d> permutes;
     permutes.reserve(Math::factorial(leng));
 
-    Math::buildPermutations(xs, permutes, 0, leng);
+    Math::buildPermutations(xs, permutes, 0);
     // assert(permutes.size() == Math::factorial(leng));
 
     for (const auto& permute : permutes) {

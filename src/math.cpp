@@ -147,16 +147,16 @@ std::vector<vec3d> Math::getINodeDirections() {
 
 void Math::buildPermutations(
     vec3d& xs, std::vector<vec3d>& permutes, 
-    int idx0, int idx1) {
+    int idx0) {
 
-    if (idx0 == idx1) {
+    if (idx0 == 3) {
         permutes.push_back(xs);
         return;
     }
 
-    for (int idx = idx0; idx < idx1; ++idx) {
+    for (int idx = idx0; idx < 3; ++idx) {
         std::swap(xs[idx0], xs[idx]);
-        buildPermutations(xs, permutes, idx0+1, idx1);
+        buildPermutations(xs, permutes, idx0+1);
         std::swap(xs[idx0], xs[idx]);
     }
 

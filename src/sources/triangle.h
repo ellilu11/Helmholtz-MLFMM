@@ -10,8 +10,7 @@ public:
 
     Triangle()
         : vIdx(vec3i::Zero()),
-          Xs( {zeroVec,zeroVec,zeroVec}),
-          center(zeroVec)
+          Xs( {zeroVec,zeroVec,zeroVec})
           {};
 
     Triangle(
@@ -21,7 +20,7 @@ public:
 
     std::vector<quadPair> getQuads() { return quads; }
 
-    static int prec2Int(Precision);
+    static int getNumQuads(Precision);
 
     static void buildQuadCoeffs(Precision);
 
@@ -30,16 +29,11 @@ public:
     // bool isAdjacent(const std::shared_ptr<Triangle>&);
 
 private:
-    static std::vector<vec3d> quadCoeffs;
+    static std::vector<quadPair> quadCoeffs;
+    std::vector<quadPair> quads;
 
     vec3i vIdx;
     std::array<vec3d,3> Xs; // vertices
     std::array<vec3d,3> Ds; // Ds[i] = Xs[i+1] - Xs[i]
-
-    vec3d center;
-    std::vector<quadPair> quads;
-
     vec3d nhat; // surface normal unit vector
-    
-    // double area; // not needed due to cancellation
 };

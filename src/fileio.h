@@ -241,6 +241,7 @@ pair<SrcVec, shared_ptr<Excitation::PlaneWave>> importFromConfig(const Config& c
     */
 
     // RWG sources
+    Triangle::buildQuadCoeffs(config.quadPrec);
     const string configPath = "config/rwg/n"+to_string(config.nsrcs)+"/";
     auto srcs = importRWG(configPath+"vertices.txt",
                           configPath+"faces.txt",
@@ -254,7 +255,7 @@ pair<SrcVec, shared_ptr<Excitation::PlaneWave>> importFromConfig(const Config& c
     cout << "   # Sources:       " << srcs.size() << '\n';
     cout << "   Digit precision: " << config.digits << '\n';
     cout << "   Interp order:    " << config.interpOrder << '\n';
-    cout << "   RWG quad rule:   " << Triangle::prec2Int(config.quadPrec) << "-point\n";
+    cout << "   RWG quad rule:   " << Triangle::getNumQuads(config.quadPrec) << "-point\n";
     cout << "   Max node RWGs:   " << config.maxNodeSrcs << '\n';
     cout << "   Root length:     " << config.rootLeng << '\n';
     cout << "   Wave number:     " << Einc->wavenum << "\n\n";
