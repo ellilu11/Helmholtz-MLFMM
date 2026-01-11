@@ -159,11 +159,11 @@ void FMM::Leaf::buildRadPats() {
         const int level = leaf->level;
         const auto& center = leaf->center;
 
-        const auto [nth, nph] = angles.getNumAngles(level);
+        const auto [nth, nph] = angles[level].getNumAngles();
 
         for (int dirIdx = 0; dirIdx < nth*nph; ++dirIdx) {
-            const auto& kvec = tables.khat[level][dirIdx] * wavenum;
-            const auto& toThPh = tables.toThPh[level][dirIdx];
+            const auto& kvec = tables[level].khat[dirIdx] * wavenum;
+            const auto& toThPh = tables[level].toThPh[dirIdx];
 
             std::vector<vec2cd> radPat(leaf->srcs.size(), vec2cd::Zero());
 
@@ -228,7 +228,7 @@ void FMM::Leaf::buildLocalCoeffs() {
 void FMM::Leaf::evalFarSols() {
     if (isSrcless() || level <= 1) return;
 
-    const auto [nth, nph] = angles.getNumAngles(level);
+    const auto [nth, nph] = angles[level].getNumAngles();
 
     int obsIdx = 0;
     for (const auto& obs : srcs) {
@@ -255,7 +255,7 @@ void FMM::Leaf::evalFarSols() {
 void FMM::Leaf::evalFarSols() {
     if (isSrcless() || level <= 1) return;
 
-    const auto [nth, nph] = angles.getNumAngles(level);
+    const auto [nth, nph] = angles[level].getNumAngles();
 
     const double phiWeight = 2.0*PI / static_cast<double>(nph); // TODO: static member
 
@@ -265,7 +265,7 @@ void FMM::Leaf::evalFarSols() {
         cmplx intRad = 0;
 
         for (int ith = 0; ith < nth; ++ith) {
-            const double weight = thetaWeights[level][ith];
+            const double weight = angles[level].thetaWeights[ith];
 
             for (int iph = 0; iph < nph; ++iph) {
                 // Do the angular integration

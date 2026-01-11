@@ -12,7 +12,7 @@ in each box from which solutions due to distant sources can be quickly evaluated
 For the Helmholtz kernel, the so-called "multipole" expansion is actually a modal plane wave expansion (Weyl expansion) along a set of angular samples. 
 To account for the frequency dependence of these plane waves, the algorithm adjusts the sampling rate for the box level (with larger boxes sampling at a higher rate), 
 hence the term "Multilevel" FMM. This code uses Lagrange interpolation to pass field coefficients between boxes at different levels while preserving their angular content.
-As a future enhancement, this scheme can be accelerated by FFT-based techniques.
+A future enhancement involves accelerating this scheme using FFT-based techniques.
 
 A typical Method of Moments application uses an iterative solver to deduce a surface unknown (e.g. electric or magnetic current) by directly or FMM-wise evaluating interactions 
 between source and testing functions (e.g. point dipoles or RWG functions). This code uses the generalized minimal residual method (GMRES) to solve 

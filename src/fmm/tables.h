@@ -9,47 +9,46 @@ class FMM::Tables {
 public:
     Tables() = default;
 
-    Tables(const Angles& angles, const Config& config, double wavenum, int maxLevel)
-        : angles(angles), 
-          wavenum(wavenum), 
-          maxLevel(maxLevel),
-          order(config.interpOrder), 
-          rootLeng(config.rootLeng), 
-          overInterp(config.overInterp),
-          dists(Math::getINodeDistances()),
-          rhats(Math::getINodeDirections())
+    Tables(int level, int maxLevel)
+        : level(level)
     {
         buildAngularTables();
 
-        buildInterpTables();
+        if (level < maxLevel) buildInterpTables();
 
         buildTranslationTable();
     }
 
+    static void buildDists() {
+        dists = Math::getINodeDistances();
+        rhats = Math::getINodeDirections();
+        dXs = Math::getINodeDistVecs();
+    }
+
     // Angular tables
-    std::vector<std::vector<vec3d>> khat;
-    std::vector<std::vector<mat23d>> toThPh;
-    std::vector<std::vector<mat3d>> ImRR;
+    std::vector<vec3d> khat;
+    std::vector<mat23d> toThPh;
+    std::vector<mat3d> ImRR;
 
     // M2M interpolation tables
-    std::vector<std::vector<interpPair>> interpTheta;
-    std::vector<std::vector<interpPair>> interpPhi;
+    std::vector<interpPair> interpTheta;
+    std::vector<interpPair> interpPhi;
 
     // L2L interpolation tables
-    std::vector<std::vector<interpPair>> invInterpTheta;
-    std::vector<std::vector<interpPair>> invInterpPhi;
+    std::vector<interpPair> invInterpTheta;
+    std::vector<interpPair> invInterpPhi;
 
     // M2L translation table
-    std::vector<VecHashMap<vecXcd>> transl;
+    VecHashMap<vecXcd> transl;
 
 private:
-    std::vector<interpPair> getInterpThetaAtLvl(int, int);
+    std::vector<interpPair> getInterpTheta(int, int);
 
-    std::vector<interpPair> getInterpPhiAtLvl(int, int);
+    std::vector<interpPair> getInterpPhi(int, int);
 
-    Map<vecXcd> getAlphaAtLvl(int);
+    Map<vecXcd> getAlpha();
 
-    HashMap<interpPair> getInterpPsiAtLvl(int);
+    HashMap<interpPair> getInterpPsi();
 
     void buildAngularTables();
 
@@ -57,13 +56,9 @@ private:
 
     void buildTranslationTable();
 
-    Angles angles;
-    double wavenum;
-    int maxLevel;
-    int order;
-    double rootLeng;
-    double overInterp;
+    static realVec dists;
+    static std::vector<vec3d> rhats;
+    static std::array<vec3d,316> dXs;
 
-    realVec dists;
-    std::vector<vec3d> rhats;
+    int level;
 };

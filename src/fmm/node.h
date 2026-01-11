@@ -17,6 +17,8 @@ using NodeVec = std::vector<std::shared_ptr<FMM::Node>>;
 using NodePair = std::pair<std::shared_ptr<FMM::Node>, std::shared_ptr<FMM::Node>>;
 
 class FMM::Node {
+    // friend struct Angles;
+    friend class Tables;
 
 public:
     static void initParams(
@@ -105,8 +107,8 @@ protected:
 protected:
     static Config config;
     static double wavenum;
-    static Angles angles;
-    static Tables tables;
+    static std::vector<Angles> angles;
+    static std::vector<Tables> tables;
     static std::vector<NodePair> nonNearPairs;
 
     static std::shared_ptr<vecXcd> lvec;

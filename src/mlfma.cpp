@@ -86,7 +86,6 @@ int main() {
 
     solver->printSols("rvec.txt");
     //root->printFarSols("ff_nq7.txt");
-    //root->printAngles();
 
     if (!config.evalDirect) return 0;
 

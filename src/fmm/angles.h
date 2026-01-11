@@ -7,59 +7,56 @@ struct FMM::Angles {
 
     Angles(double, double, int, int);
 
-    pair2i getNumAngles(const int level) const {
-        return std::make_pair(thetas[level].size(), phis[level].size());
+    void printAngles(std::ofstream&, std::ofstream&);
+
+    pair2i getNumAngles() const {
+        return std::make_pair(thetas.size(), phis.size());
     }
 
-    size_t getNumAllAngles(const int level) const {
-        return thetas[level].size() * phis[level].size();
+    size_t getNumAllAngles() const {
+        return thetas.size() * phis.size();
     }
 
-    std::vector<realVec> thetas;
-    std::vector<realVec> thetaWeights;
-    std::vector<realVec> phis;
-    std::vector<int> Ls;
+    realVec thetas;       // theta samples
+    realVec thetaWeights; // weights of theta samples
+    realVec phis;         // phi samples
+    int L;                // M2L series truncation number
 };
 
-FMM::Angles::Angles(double wavenum, double rootLeng, int digits, int maxLevel) {
+FMM::Angles::Angles(double wavenum, double rootLeng, int digits, int level)
+{
+    // const double wavenum = Node::wavenum;
+    const double nodeLeng = rootLeng / pow(2.0, level);
 
-    thetas.resize(maxLevel+1);
-    thetaWeights.resize(maxLevel+1);
-    phis.resize(maxLevel+1);
-    Ls.resize(maxLevel+1);
+    // Use excess bandwidth formula
+    const int tau = ceil((1.73*wavenum*nodeLeng +
+        2.16*pow(digits, 2.0/3.0)*pow(wavenum*nodeLeng, 1.0/3.0)));
 
-    std::cout << "   (Lvl,Nth,Nph) =\n";
+    L = floor(0.50*tau); // TODO: Find optimal formula
 
-    for (int level = 0; level <= maxLevel; ++level) {
-        const double nodeLeng = rootLeng / pow(2.0, level);
+    // Construct thetas
+    const int nth = tau+1;
+    std::tie(thetas, thetaWeights) = Interp::gaussLegendre(nth, EPS_NR, 0.0, PI);
 
-        // Use excess bandwidth formula
-        const int tau = ceil((1.73*wavenum*nodeLeng +
-            2.16*pow(digits, 2.0/3.0)*pow(wavenum*nodeLeng, 1.0/3.0)));
+    // Absorb sin(theta) into weights
+    std::transform(thetaWeights.begin(), thetaWeights.end(), thetas.begin(), thetaWeights.begin(),
+        [](double weight, double theta) { return weight * sin(theta); }
+    );
 
-        Ls[level] = floor(0.50*tau); // TODO: Find optimal formula
+    // Construct phis
+    const int nph = 2*nth;
+    phis.resize(nph);
 
-        // Construct thetas
-        const int nth = tau+1;
-        auto [nodes, weights] = Interp::gaussLegendre(nth, EPS_NR, 0.0, PI);
+    for (int iph = 0; iph < nph; ++iph)
+        phis[iph] = 2.0*PI*iph/static_cast<double>(nph);
 
-        // Absorb sin(theta) into weights
-        std::transform(weights.begin(), weights.end(), nodes.begin(), weights.begin(),
-            [](double weight, double theta) { return weight * sin(theta); }
-        );
+    std::cout << "   (" << level << "," << thetas.size() << "," << phis.size() << ")\n";
+}
 
-        thetas[level] = nodes;
-        thetaWeights[level] = weights;
+void FMM::Angles::printAngles(std::ofstream& thfile, std::ofstream& phfile) {
+    for (const auto& theta : thetas)
+        thfile << theta << '\n';
 
-        // Construct phis
-        const int nph = 2*nth;
-        realVec phis_lvl(nph);
-
-        for (int iph = 0; iph < nph; ++iph)
-            phis_lvl[iph] = 2.0*PI*iph/static_cast<double>(nph);
-
-        phis[level] = phis_lvl;
-
-        std::cout << "   (" << level << "," << nth << "," << nph << ")\n";
-    }
+    for (const auto& phi : phis)
+        phfile << phi << '\n';
 }

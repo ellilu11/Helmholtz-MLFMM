@@ -8,7 +8,6 @@ extern ClockTimes t;
 namespace FMM {
     constexpr int DIM = 3;
     constexpr int numDir = 26;
-
     constexpr double EPS_NR = 1.0E-9; // Newton-Raphson precision
 
     enum class Dir {
@@ -17,11 +16,10 @@ namespace FMM {
         DSW, DSE, DNW, DNE, USW, USE, UNW, UNE
     };
 
-    struct Angles;
-
     class Node;
     class Stem;
     class Leaf;
 
+    struct Angles;
     class Tables;
 }

@@ -25,6 +25,11 @@ using matXcd = Eigen::MatrixXcd;
 using interpPair = std::pair<vecXd, int>;
 using quadPair = std::pair<vec3d, double>;
 
+//template <typename T>
+//void resizeVectors(std::initializer_list<std::vector<T>> vecs, size_t size) {
+//    for (std::vector<T>& vec : vecs) vec.resize(size);
+//}
+
 template <typename T>
 std::vector<T> operator+ (const std::vector<T>& zs, const std::vector<T>& ws) {
     assert(zs.size() == ws.size());

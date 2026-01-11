@@ -2,8 +2,8 @@
 
 Config FMM::Node::config;
 double FMM::Node::wavenum;
-FMM::Angles FMM::Node::angles;
-FMM::Tables FMM::Node::tables;
+std::vector<FMM::Angles> FMM::Node::angles;
+std::vector<FMM::Tables> FMM::Node::tables;
 std::vector<NodePair> FMM::Node::nonNearPairs;
 
 std::shared_ptr<vecXcd> FMM::Node::lvec;
@@ -19,8 +19,15 @@ void FMM::Node::initParams(
 }
 
 void FMM::Node::buildTables() { 
-    angles = Angles(wavenum, config.rootLeng, config.digits, maxLevel);
-    tables = Tables(angles, config, wavenum, maxLevel); 
+    std::cout << "   (Lvl,Nth,Nph) =\n";
+    angles.resize(maxLevel+1);
+    for (int level = 0; level <= maxLevel; ++level)
+        angles[level] = Angles(wavenum, config.rootLeng, config.digits, level);
+
+    Tables::buildDists();
+    tables.resize(maxLevel+1);
+    for (int level = 0; level <= maxLevel; ++level)
+        tables[level] = Tables(level, maxLevel);
 }
 
 void FMM::Node::linkStates(const std::unique_ptr<Solver>& solver) {
@@ -48,7 +55,7 @@ FMM::Node::Node(
 }
 
 void FMM::Node::resizeCoeffs() {
-    const auto [nth, nph] = angles.getNumAngles(level);
+    const auto [nth, nph] = angles[level].getNumAngles();
 
     coeffs.resize(nth*nph, vec2cd::Zero());
     localCoeffs.resize(nth*nph, vec2cd::Zero());
@@ -77,7 +84,6 @@ void FMM::Node::buildInteractionList() {
         for (const auto& branch : baseNbor->branches)
             if (notContains(nbors, branch) && !branch->isSrcless()) // TODO: double check
                 iList.push_back(branch);
-
     }
 
     assert(iList.size() <= pow(6, DIM) - pow(3, DIM));
@@ -106,22 +112,23 @@ void FMM::Node::buildMpoleToLocalCoeffs() {
 
     std::fill(localCoeffs.begin(), localCoeffs.end(), vec2cd::Zero());
 
+    const auto& transl = tables[level].transl;
     const size_t numAngles = localCoeffs.size();
 
     for (const auto& node : iList) {
         const auto& dX = center - node->center;
-        const auto& transl_dX = tables.transl[level].at(dX/nodeLeng);
+        const auto& transl_dX = transl.at(dX/nodeLeng);
 
         for (int idx = 0; idx < numAngles; ++idx) // TODO: use Eigen::Array
             localCoeffs[idx] += transl_dX[idx] * node->coeffs[idx];
     }
 
     // Apply integration weights
-    const auto [nth, nph] = angles.getNumAngles(level);
+    const auto [nth, nph] = angles[level].getNumAngles();
     const double phiWeight = 2.0*PI / static_cast<double>(nph);
     size_t dirIdx = 0;
     for (int ith = 0; ith < nth; ++ith) {
-        const double weight = phiWeight * angles.thetaWeights[level][ith];
+        const double weight = phiWeight * angles[level].thetaWeights[ith];
 
         for (int iph = 0; iph < nph; ++iph)
             localCoeffs[dirIdx++] *= weight;
@@ -138,28 +145,9 @@ void FMM::Node::evalLeafIlistSols() {
     //for (const auto& node : leafIlist)
     //    evalPairSols(node, nonNearRads[nonNearPairIdx++]);
     //return;
-
-    /* No psi LUT
-    const int nearIdx = std::floor((nps-1) * psi / PI);
-
-    realVec psis_;
-    for (int ips = nearIdx+1-order; ips <= nearIdx+order; ++ips)
-        psis_.push_back(PI*ips/static_cast<double>(nps-1));
-
-    for (int ips = nearIdx+1-order, k = 0; k < 2*order; ++ips, ++k) {
-        const int ips_flipped = Math::flipIdxToRange(ips, nps);
-
-        translCoeff +=
-            transls[ips_flipped]
-            * Interp::evalLagrangeBasis(psi,psis_,k);
-    }
-    */
 }
 
 void FMM::Node::printFarSols(const std::string& fname) {
-    // assert(r >= 5.0 * config.rootLeng); // verify farfield condition
-    // const cmplx kernel = Phys::C * wavenum * exp(iu*wavenum*r) / r;
-
     namespace fs = std::filesystem;
     fs::path dir = "out/ff";
     std::error_code ec;
@@ -172,27 +160,21 @@ void FMM::Node::printFarSols(const std::string& fname) {
     std::ofstream farfile(dir/fname);
     farfile << std::setprecision(15) << std::scientific;
 
-    const auto [nth, nph] = angles.getNumAngles(level);
+    const auto [nth, nph] = angles[level].getNumAngles();
     for (int dirIdx = 0; dirIdx < nth*nph; ++dirIdx) {
-        const auto& krhat = tables.khat[level][dirIdx] * wavenum;
+        const auto& krhat = tables[level].khat[dirIdx] * wavenum;
 
         vec3cd dirFar = vec3cd::Zero();
         for (const auto& src : srcs)
             dirFar += (*currents)[src->getIdx()] * src->getFarAlongDir(krhat);
 
-        const vec3cd& far = Phys::C * wavenum * tables.ImRR[level][dirIdx] * dirFar;
+        const vec3cd& far = Phys::C * wavenum * tables[level].ImRR[dirIdx] * dirFar;
 
         farfile << far << '\n';
     }
-}
 
-void FMM::Node::printAngles() {
-    std::filesystem::path dir = "out/ff";
+    // Also print out angles (coordinates of farsols)
     std::ofstream thfile(dir/"thetas.txt"), phfile(dir/"phis.txt");
 
-    for (const auto& theta : angles.thetas[level])
-        thfile << theta << '\n';
-
-    for (const auto& phi : angles.phis[level])
-        phfile << phi << '\n';
+    angles[level].printAngles(thfile, phfile);
 }

@@ -1,45 +1,40 @@
 #include "tables.h"
 
+realVec FMM::Tables::dists;
+std::vector<vec3d> FMM::Tables::rhats;
+std::array<vec3d,316> FMM::Tables::dXs;
+
 void FMM::Tables::buildAngularTables() {
-   
-    for (int level = 0; level <= maxLevel; ++level) {
+    const auto& angles = Node::angles[level];
+    const auto [nth, nph] = angles.getNumAngles();
+    const size_t nDirs = nth*nph;
 
-        const auto [nth, nph] = angles.getNumAngles(level);
+    khat.resize(nDirs);
+    toThPh.resize(nDirs);
+    ImRR.resize(nDirs);
 
-        std::vector<vec3d> khat_lvl(nth*nph);
-        std::vector<mat23d> toThPh_lvl(nth*nph);
-        std::vector<mat3d> ImRR_lvl(nth*nph);
+    size_t idx = 0;
+    for (int ith = 0; ith < nth; ++ith) {
+        const double th = angles.thetas[ith];
 
-        size_t idx = 0;
-        for (int ith = 0; ith < nth; ++ith) {
-            const double th = angles.thetas[level][ith];
+        for (int iph = 0; iph < nph; ++iph) {
+            const double ph = angles.phis[iph];
 
-            for (int iph = 0; iph < nph; ++iph) {
-                const double ph = angles.phis[level][iph];
+            khat[idx] = Math::fromSph(vec3d(1.0, th, ph));
+            toThPh[idx] = Math::toThPh(th, ph);
+            ImRR[idx] = Math::ImRR(khat[idx]);
 
-                khat_lvl[idx] = Math::fromSph(vec3d(1.0, th, ph));
-                toThPh_lvl[idx] = Math::toThPh(th, ph);
-                ImRR_lvl[idx] = Math::ImRR(khat_lvl[idx]);
-
-                ++idx;
-            }
+            ++idx;
         }
-
-        khat.push_back(khat_lvl);
-        toThPh.push_back(toThPh_lvl);
-        ImRR.push_back(ImRR_lvl);
     }
 }
 
-std::vector<interpPair> FMM::Tables::getInterpThetaAtLvl(int srcLvl, int tgtLvl) {
+std::vector<interpPair> FMM::Tables::getInterpTheta(int srcLvl, int tgtLvl) 
+{
+    const int order = Node::config.interpOrder;
 
-    assert(abs(srcLvl - tgtLvl) == 1);
-
-    const int mth = angles.getNumAngles(srcLvl).first;
-    const int nth = angles.getNumAngles(tgtLvl).first;
-
-    const auto& srcThetas = angles.thetas[srcLvl];
-    const auto& tgtThetas = angles.thetas[tgtLvl];
+    const realVec& srcThetas = Node::angles[srcLvl].thetas, tgtThetas = Node::angles[tgtLvl].thetas;
+    const int mth = srcThetas.size(), nth = tgtThetas.size();
 
     std::vector<interpPair> interpPairs;
 
@@ -78,15 +73,12 @@ std::vector<interpPair> FMM::Tables::getInterpThetaAtLvl(int srcLvl, int tgtLvl)
     return interpPairs;
 }
 
-std::vector<interpPair> FMM::Tables::getInterpPhiAtLvl(int srcLvl, int tgtLvl) {
+std::vector<interpPair> FMM::Tables::getInterpPhi(int srcLvl, int tgtLvl)
+{
+    const int order = Node::config.interpOrder;
 
-    assert(abs(srcLvl - tgtLvl) == 1);
-
-    const int mph = angles.getNumAngles(srcLvl).second;
-    const int nph = angles.getNumAngles(tgtLvl).second;
-
-    const auto& srcPhis = angles.phis[srcLvl];
-    const auto& tgtPhis = angles.phis[tgtLvl];
+    const realVec& srcPhis = Node::angles[srcLvl].phis, tgtPhis = Node::angles[tgtLvl].phis;
+    const int mph = srcPhis.size(), nph = tgtPhis.size();
 
     std::vector<interpPair> interpPairs;
 
@@ -112,27 +104,24 @@ std::vector<interpPair> FMM::Tables::getInterpPhiAtLvl(int srcLvl, int tgtLvl) {
 }
 
 void FMM::Tables::buildInterpTables() {
+    // M2M interpolation tables
+    interpTheta = getInterpTheta(level+1, level);
+    interpPhi = getInterpPhi(level+1, level);
 
-    for (int lvl = 0; lvl < maxLevel; ++lvl) {
-        // M2M interpolation tables
-        interpTheta.push_back(getInterpThetaAtLvl(lvl+1, lvl));
-        interpPhi.push_back(getInterpPhiAtLvl(lvl+1, lvl));
-
-        // L2L interpolation tables
-        invInterpTheta.push_back(getInterpThetaAtLvl(lvl, lvl+1));
-        invInterpPhi.push_back(getInterpPhiAtLvl(lvl, lvl+1));
-    }
+    // L2L interpolation tables
+    invInterpTheta = getInterpTheta(level, level+1);
+    invInterpPhi = getInterpPhi(level, level+1);
 }
 
-Map<vecXcd> FMM::Tables::getAlphaAtLvl(int level) {
-
+Map<vecXcd> FMM::Tables::getAlpha() {
     using namespace Math;
 
-    const int L = angles.Ls[level];
-    const int nth = angles.getNumAngles(level).first;
-    const int nps = std::floor(overInterp*(nth-1));
+    const double wavenum = Node::wavenum;
+    const int L = Node::angles[level].L;
+    const int nth = Node::angles[level].getNumAngles().first;
+    const int nps = std::floor(Node::config.overInterp*(nth-1));
 
-    const double nodeLeng = rootLeng / pow(2.0, level);
+    const double nodeLeng = Node::config.rootLeng / pow(2.0, level);
 
     Map<vecXcd> alpha;
         
@@ -163,17 +152,18 @@ Map<vecXcd> FMM::Tables::getAlphaAtLvl(int level) {
     return alpha;
 };
 
-HashMap<interpPair> FMM::Tables::getInterpPsiAtLvl(int level) {
+HashMap<interpPair> FMM::Tables::getInterpPsi() {
+    const int order = Node::config.interpOrder;
 
     // Find all unique psi = acos(khat.dot(rhat))
-    const auto [nth, nph] = angles.getNumAngles(level);
+    const auto [nth, nph] = Node::angles[level].getNumAngles();
 
     realVec psis(nth*nph*rhats.size());
 
     size_t m = 0;
     for (size_t l = 0; l < nth*nph; ++l) {
 
-        const auto& khat = this->khat[level][l];
+        const auto& khat = this->khat[l];
 
         for (const auto& rhat : rhats)
             psis[m++] = acos(khat.dot(rhat));
@@ -183,7 +173,7 @@ HashMap<interpPair> FMM::Tables::getInterpPsiAtLvl(int level) {
     psis.erase(std::unique(psis.begin(), psis.end()), psis.end());
 
     // Compute Lagrange coefficients for each possible psi
-    const int nps = std::floor(overInterp*(nth-1));
+    const int nps = std::floor(Node::config.overInterp*(nth-1));
 
     HashMap<interpPair> interpPairs;
 
@@ -214,51 +204,45 @@ HashMap<interpPair> FMM::Tables::getInterpPsiAtLvl(int level) {
 }
 
 void FMM::Tables::buildTranslationTable() {
-    const auto& dXs = Math::getINodeDistVecs();
+    const int order = Node::config.interpOrder;
 
-    for (size_t level = 0; level <= maxLevel; ++level) {
+    const auto& alphas = getAlpha();
+    const auto& interpPsis = getInterpPsi(); 
 
-        const auto& alphas = getAlphaAtLvl(level);
-        const auto& interpPsis = getInterpPsiAtLvl(level); 
+    const auto [nth, nph] = Node::angles[level].getNumAngles();
 
-        const auto [nth, nph] = angles.getNumAngles(level);
+    const int nps = std::floor(Node::config.overInterp*(nth-1));
 
-        const int nps = std::floor(overInterp*(nth-1));
+    for (const auto& dX : dXs) {
+        const double r = dX.norm();
+        const auto& rhat = dX / r;
 
-        VecHashMap<vecXcd> transl_lvl;
+        const auto& alpha_dX = alphas.at(r);
 
-        for (const auto& dX : dXs) {
-            const double r = dX.norm();
-            const auto& rhat = dX / r;
+        vecXcd transl_dX(nth*nph);
 
-            const auto& alpha_dX = alphas.at(r);
+        for (int idx = 0; idx < nth*nph; ++idx) {
+            const auto& khat = this->khat[idx];
 
-            vecXcd transl_dX(nth*nph);
+            const double psi = acos(khat.dot(rhat));
 
-            for (int idx = 0; idx < nth*nph; ++idx) {
-                const auto& khat = this->khat[level][idx];
+            cmplx translCoeff = 0.0;
 
-                const double psi = acos(khat.dot(rhat));
+            const auto [interpPsi, nearIdx] = interpPsis.at(psi);
 
-                cmplx translCoeff = 0.0;
+            for (int ips = nearIdx+1-order, k = 0; k < 2*order; ++ips, ++k) {
 
-                const auto [interpPsi, nearIdx] = interpPsis.at(psi);
+                const int ips_flipped = Math::flipIdxToRange(ips, nps);
 
-                for (int ips = nearIdx+1-order, k = 0; k < 2*order; ++ips, ++k) {
-
-                    const int ips_flipped = Math::flipIdxToRange(ips, nps);
-
-                    translCoeff += alpha_dX[ips_flipped] * interpPsi[k];
-                }
-
-                transl_dX[idx] = translCoeff;
+                translCoeff += alpha_dX[ips_flipped] * interpPsi[k];
             }
 
-            transl_lvl.emplace(dX, transl_dX);
+            transl_dX[idx] = translCoeff;
         }
 
-        assert(transl_lvl.size() == dXs.size());
-
-        transl.push_back(transl_lvl);
+        transl.emplace(dX, transl_dX);
     }
+
+    assert(transl.size() == dXs.size());
+
 }

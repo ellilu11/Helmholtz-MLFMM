@@ -66,7 +66,7 @@ void FMM::Stem::initNode() {
 void FMM::Stem::buildMpoleCoeffs() {
     const int order = config.interpOrder;
 
-    const auto [mth, mph] = angles.getNumAngles(level+1);
+    const auto [mth, mph] = angles[level+1].getNumAngles();
 
     std::fill(coeffs.begin(), coeffs.end(), vec2cd::Zero());
 
@@ -85,7 +85,7 @@ void FMM::Stem::buildMpoleCoeffs() {
         std::vector<vec2cd> shiftedCoeffs(mth*mph, vec2cd::Zero());
 
         for (int idx = 0; idx < mth*mph; ++idx) {
-            const auto& kvec = tables.khat[level+1][idx] * wavenum;
+            const auto& kvec = tables[level+1].khat[idx] * wavenum;
 
             shiftedCoeffs[idx] = exp(iu*kvec.dot(dX)) * branchCoeffs[idx];
         }
@@ -103,8 +103,8 @@ void FMM::Stem::buildMpoleCoeffs() {
  */
 std::vector<vec2cd> FMM::Stem::getShiftedLocalCoeffs(int branchIdx) const {
 
-    const auto [mth, mph] = angles.getNumAngles(level);
-    const auto [nth, nph] = angles.getNumAngles(level+1);
+    const auto [mth, mph] = angles[level].getNumAngles();
+    const auto [nth, nph] = angles[level+1].getNumAngles();
 
     std::vector<vec2cd> outCoeffs(nth*nph, vec2cd::Zero());
     if (iList.empty()) return outCoeffs;
@@ -115,7 +115,7 @@ std::vector<vec2cd> FMM::Stem::getShiftedLocalCoeffs(int branchIdx) const {
     std::vector<vec2cd> shiftedCoeffs(mth*mph, vec2cd::Zero());
 
     for (int idx = 0; idx < mth*mph; ++idx) {
-        const auto& kvec = tables.khat[level][idx] * wavenum;
+        const auto& kvec = tables[level].khat[idx] * wavenum;
 
         shiftedCoeffs[idx] = exp(iu*kvec.dot(dX)) * localCoeffs[idx];
     }
@@ -132,24 +132,19 @@ void FMM::Stem::addInterpCoeffs(
 {
     const int order = config.interpOrder;
 
-    const auto [mth, mph] = angles.getNumAngles(srcLvl);
-    const auto [nth, nph] = angles.getNumAngles(tgtLvl);
-
+    const auto [mth, mph] = angles[srcLvl].getNumAngles();
+    const auto [nth, nph] = angles[tgtLvl].getNumAngles();
     assert(!(mph%2)); // mph needs to be even
 
-    // TODO: Remove
-    const auto& interpTheta =
-        (srcLvl > tgtLvl) ? tables.interpTheta : tables.invInterpTheta;
-    const auto& interpPhi =
-        (srcLvl > tgtLvl) ? tables.interpPhi : tables.invInterpPhi;
-
     const int tblLvl = std::min(srcLvl, tgtLvl);
+    const auto& interpTheta = tables[tblLvl].interpTheta;
+    const auto& interpPhi = tables[tblLvl].interpPhi;
 
     // Interpolate over theta
     std::vector<T> innerCoeffs(nth*mph, T{});
 
     for (int jth = 0; jth < nth; ++jth) {
-        const auto [interp, nearIdx] = interpTheta[tblLvl][jth];
+        const auto [interp, nearIdx] = interpTheta[jth];
         const int jthmph = jth*mph;
 
         for (int ith = nearIdx+1-order, k = 0; ith <= nearIdx+order; ++ith, ++k) {
@@ -172,7 +167,7 @@ void FMM::Stem::addInterpCoeffs(
 
     // Interpolate over phi
     for (int jph = 0; jph < nph; ++jph) {
-        const auto [interp, nearIdx] = interpPhi[tblLvl][jph];
+        const auto [interp, nearIdx] = interpPhi[jph];
 
         for (int iph = nearIdx+1-order, k = 0; iph <= nearIdx+order; ++iph, ++k) {
             const int iph_wrapped = Math::wrapIdxToRange(iph, mph);
@@ -190,17 +185,18 @@ void FMM::Stem::addAnterpCoeffs(
 {
     const int order = config.interpOrder;
 
-    const auto [mth, mph] = angles.getNumAngles(srcLvl);
-    const auto [nth, nph] = angles.getNumAngles(tgtLvl);
-
+    const auto [mth, mph] = angles[srcLvl].getNumAngles();
+    const auto [nth, nph] = angles[tgtLvl].getNumAngles();
     assert(!(nph%2)); // nph needs to be even
 
     const int tblLvl = std::min(srcLvl, tgtLvl);
+    const auto& interpTheta = tables[tblLvl].interpTheta;
+    const auto& interpPhi = tables[tblLvl].interpPhi;
 
     // Anterpolate over extended phi
     std::vector<T> innerCoeffs(mth*nph, T{});
     for (int iph = 0; iph < mph; ++iph) {
-        const auto [interp, nearIdx] = tables.interpPhi[tblLvl][iph];
+        const auto [interp, nearIdx] = interpPhi[iph];
 
         for (int jph = -order; jph < nph+order; ++jph) {
             const int k = jph - (nearIdx+1-order);
@@ -217,7 +213,7 @@ void FMM::Stem::addAnterpCoeffs(
 
     // Anterpolate over extended theta
     for (int ith = 0; ith < mth; ++ith) {
-        const auto [interp, nearIdx] = tables.interpTheta[tblLvl][ith];
+        const auto [interp, nearIdx] = interpTheta[ith];
 
         for (int jth = -order; jth < nth+order; ++jth) {  
             const int k = jth - (nearIdx+1-order);

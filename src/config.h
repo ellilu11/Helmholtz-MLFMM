@@ -5,30 +5,13 @@
 #include <iostream>
 #include <type_traits>
 
-enum class Mode {
-    READ,
-    WRITE
-};
+enum class Mode { READ, WRITE };
 
-enum class Dist {
-    UNIFORM,
-    GAUSSIAN,
-    SPHERE,
-    CYLINDER
-};
+enum class Precision { VERYLOW, LOW, MEDIUM, HIGH };
 
-enum class QDist {
-    UNIFORM,
-    RANDSIGN,
-    RANDOM
-};
+enum class Dist { UNIFORM, GAUSSIAN, SPHERE, CYLINDER };
 
-enum class Precision {
-    VERYLOW,
-    LOW,
-    MEDIUM,
-    HIGH
-};
+enum class QDist { UNIFORM, RANDSIGN, RANDOM };
 
 void getDigit(std::istringstream& iss, char ch) {
     while (iss.get(ch)) {
@@ -74,6 +57,7 @@ struct Config {
             >> nsrcs;
     }
 
+    Mode mode;
     Precision quadPrec;
     int digits;
     int interpOrder;
@@ -81,10 +65,9 @@ struct Config {
     double rootLeng;
     int maxNodeSrcs;
     bool evalDirect;
+    int nsrcs;
 
     // For point sources only
-    Mode mode;
     Dist pdist;
     QDist qdist;
-    int nsrcs;
 };
