@@ -2,15 +2,33 @@
 
 std::vector<quadPair> Triangle::quadCoeffs;
 int Triangle::numQuads;
+TriVec Triangle::refinedTris;
 
+// Construct triangle on original mesh from file
 Triangle::Triangle(
     const vec3i& vIdx,
     const std::vector<vec3d>& vList,
-    const Precision quadPrec)
+    Precision quadPrec)
     : vIdx(vIdx),
     Xs({ vList[vIdx[0]], vList[vIdx[1]], vList[vIdx[2]] }),
     center( (Xs[0]+Xs[1]+Xs[2])/3.0 )
 {
+    buildTriangle(quadPrec);
+
+    findRefinedTris(quadPrec); // Find 6 refined triangles
+};
+
+// Construct triangle on refined mesh from triangle on original mesh
+Triangle::Triangle(
+    int vIdx, const vec3d& v0, const vec3d& center, const vec3d& mid, 
+    Precision quadPrec)
+    : vIdx({vIdx, 0, 0}),
+    Xs({ v0, center, mid })
+{
+    buildTriangle(quadPrec);
+}
+
+void Triangle::buildTriangle(Precision quadPrec) {
     for (int i = 0; i < 3; ++i) {
         const int ipp = Math::wrapIdxToRange(i+1, 3);
         Ds[i] = Xs[ipp] - Xs[i];
@@ -19,7 +37,20 @@ Triangle::Triangle(
     nhat = (Ds[0].cross(Ds[1])).normalized();
 
     buildQuads(quadPrec);
-};
+}
+
+// Construct all 6 refined tris of this tri and add to list of refined tris
+void Triangle::findRefinedTris(Precision quadPrec) {
+    for (int i = 0; i < 3; ++i) {
+        const int ipp = Math::wrapIdxToRange(i+1, 3);
+        const vec3d mid = (Xs[i]+Xs[ipp])/2; // midpoint of ith edge
+
+        refinedTris.push_back(
+            std::make_shared<Triangle>(vIdx[i], Xs[i], center, mid, quadPrec));
+        refinedTris.push_back(
+            std::make_shared<Triangle>(vIdx[ipp], Xs[ipp], center, mid, quadPrec));
+    }
+}
 
 void Triangle::buildQuadCoeffs(Precision quadPrec) {
     numQuads = [&]() {
