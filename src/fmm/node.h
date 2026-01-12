@@ -37,8 +37,6 @@ public:
 
     void printFarSols(const std::string&);
 
-    void printAngles();
-
     static int getMaxLvl() { return maxLevel; }
 
     static int getNumNodes() { return numNodes; }

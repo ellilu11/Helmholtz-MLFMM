@@ -41,22 +41,6 @@ pair2d Math::legendreP(double x, int n) {
     return std::make_pair(P_n, dP_n);
 }
 
-/*pair2d Math::legendreL(double x, int l) {
-    double p;
-    double pm2 = 1.0;
-    double pmm = x;
-
-    for (int i = 2; i <= l; ++i) {
-        p = ((2.0*i-1)*x*pmm - (i-1)*pm2) / static_cast<double>(i);
-        pm2 = pmm;
-        pmm = p;
-    }
-
-    double dp = l*(x*pmm - pm2) / (x*x - 1.0);
-
-    return std::make_pair(p, dp);
-}*/
-
 /* sphericalHankel1(x,n)
  * Recursively evaluate the spherical Hankel function
  * of the 1st kind of order n at the point x
@@ -91,7 +75,6 @@ realVec Math::getINodeDistances() {
 
                 if (dir.lpNorm<Eigen::Infinity>() > 1.0)
                     dists.push_back(dist);
-
             }
 
     std::sort(dists.begin(), dists.end());

@@ -47,7 +47,7 @@ int main() {
     std::cout << "   Elapsed time: " << duration_ms.count() << " ms\n\n";
 
     // ==================== Build tables ======================== //
-    std::cout << " Building translation operators...\n";
+    std::cout << " Building interp/transl operators...\n";
 
     start = Clock::now();
     Node::buildTables();
@@ -80,7 +80,7 @@ int main() {
     duration_ms = end - start;
     std::cout << "   Total elapsed time: " << duration_ms.count() << " ms\n\n";
 
-    solver->printSols("curr_nq7.txt");
+    solver->printSols("curr_nq7_enh.txt");
     //root->printFarSols("ff_nq7.txt");
 
     if (!config.evalDirect) return 0;
@@ -106,7 +106,7 @@ int main() {
 
     solver->solve();
 
-    solver->printSols("currDir_nq7.txt");
+    solver->printSols("currDir_nq7_enh.txt");
 
     return 0;
 }

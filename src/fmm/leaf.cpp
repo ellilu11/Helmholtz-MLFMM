@@ -327,7 +327,6 @@ void FMM::Leaf::evalNearNonNborSols() {
  * rads    : precomputed radiation coefficients
  */
 void FMM::Leaf::evalPairSols(const std::shared_ptr<Node> srcNode, const cmplxVec& rads) {
-
     const auto& srcSrcs = srcNode->getSrcs();
 
     const int nObs = srcs.size(), nSrcs = srcSrcs.size();
@@ -359,7 +358,6 @@ void FMM::Leaf::evalPairSols(const std::shared_ptr<Node> srcNode, const cmplxVec
  * in this node
  */
 void FMM::Leaf::evalSelfSols() {
-
     const int nSrcs = srcs.size();
 
     cmplxVec solAtObss(nSrcs, 0.0);
@@ -379,7 +377,6 @@ void FMM::Leaf::evalSelfSols() {
 
     for (int n = 0; n < nSrcs; ++n)
         (*rvec)[srcs[n]->getIdx()] += Phys::C * wavenum * solAtObss[n];
-
 }
 
 /* evaluateSols()

@@ -162,7 +162,7 @@ HashMap<interpPair> FMM::Tables::getInterpPsi() {
         for (int ips = nearIdx+1-order, k = 0; ips <= nearIdx+order; ++ips, ++k)
             psis[k] = PI*ips/static_cast<double>(nps-1);
 
-        // CONSIDER: Use barycentric coordinates
+        // CONSIDER: Barycentric coordinates
         vecXd coeffs(2*order);
         for (size_t k = 0; k < 2*order; ++k)
             coeffs[k] = Interp::evalLagrangeBasis(psi, psis, k); 

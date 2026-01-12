@@ -192,7 +192,7 @@ int main() {
 
     testNearPhiIdx(0, 10);*/
 
-    vec3d xs{ 1, 1, 2 };
+    vec3d xs{ 2, 1, 1 };
     testPermutation(xs);
 
     return 0;

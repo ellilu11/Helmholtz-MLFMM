@@ -4,8 +4,6 @@
 #include "fmm/fmm.h"
 #include "sources/source.h"
 
-// class Node;
-
 class Solver {
 
 public :
@@ -17,7 +15,7 @@ public :
         std::shared_ptr<vecXcd>,
         std::shared_ptr<vecXcd>);
 
-    void evalRvec(int);
+    void updateRvec(int);
 
     void iterateArnoldi(int);
 
@@ -38,10 +36,6 @@ public :
     void printSols(const std::string&);
 
 private :
-    //Solver();
-    //Solver(const Solver&) = delete;
-    //Solver& operator=(const Solver&) = delete;
-    
     std::shared_ptr<FMM::Node> root;
 
     std::shared_ptr<vecXcd> lvec;

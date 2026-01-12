@@ -20,9 +20,9 @@ public:
 
     std::vector<quadPair> getQuads() { return quads; }
 
-    static int getNumQuads(Precision);
-
     static void buildQuadCoeffs(Precision);
+
+    static int getNumQuads() { return numQuads; }
 
     void buildQuads(Precision);
 
@@ -30,10 +30,13 @@ public:
 
 private:
     static std::vector<quadPair> quadCoeffs;
+    static int numQuads;
+
     std::vector<quadPair> quads;
 
     vec3i vIdx;
     std::array<vec3d,3> Xs; // vertices
     std::array<vec3d,3> Ds; // Ds[i] = Xs[i+1] - Xs[i]
-    vec3d nhat; // surface normal unit vector
+    vec3d center;           // barycentric center
+    vec3d nhat;             // surface normal unit vector
 };

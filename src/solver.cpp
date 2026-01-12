@@ -38,7 +38,7 @@ Solver::Solver(
     Qmat.col(0) = *lvec; // store lvec as first column of Qmat
 }
 
-void Solver::evalRvec(int k) {
+void Solver::updateRvec(int k) {
     if (root->isNodeType<FMM::Stem>()) {
         root->buildMpoleCoeffs();
 
@@ -124,7 +124,7 @@ void Solver::solve() {
         std::cout << " Do iteration #" << iter << '\n';
         auto iter_start = Clock::now();
 
-        evalRvec(iter);
+        updateRvec(iter);
 
         iterateArnoldi(iter);
 
@@ -142,7 +142,7 @@ void Solver::solve() {
 
     const auto& Hp = Hmat.block(0, 0, Hmat.rows()-1, Hmat.cols());
     vecXcd yvec = Hp.lu().solve(gvec.segment(0, iter));
-    (*currents) = Qmat.leftCols(iter) * yvec;
+    *currents = Qmat.leftCols(iter) * yvec;
 }
 //
 
