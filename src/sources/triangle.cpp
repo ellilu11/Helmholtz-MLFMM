@@ -31,6 +31,7 @@ void Triangle::buildQuadCoeffs(Precision quadPrec) {
         };
         } ();
 
+    /* TODO: Find out why precomputing yields larger error
     quadCoeffs.reserve(numQuads);
 
     switch (quadPrec) {
@@ -122,27 +123,96 @@ void Triangle::buildQuadCoeffs(Precision quadPrec) {
     }
 
     assert(quadCoeffs.size() == numQuads);
+    */
 
     //for (const auto& [coeffs, weight] : quadCoeffs)
     //    std::cout << coeffs << '\n';
 }
 
+/*
 void Triangle::buildQuads(Precision quadPrec) {
-    auto coeffsToNode = [&](const vec3d& ws) {
+    auto baryToPos = [&](const vec3d& ws) {
         return ws[0]*Xs[0] + ws[1]*Xs[1] + ws[2]*Xs[2];
     };
-    //auto coeffsToNode = [&](double w0, double w1, double w2) {
-    //    return w0*Xs[0] + w1*Xs[1] + w2*Xs[2];
-    //};
 
     quads.reserve(numQuads);
 
     for (const auto& [coeffs, weight] : quadCoeffs) {
-        quads.emplace_back(coeffsToNode(coeffs), weight);
-        // quads.emplace_back(coeffsToNode(coeffs[0], coeffs[1], coeffs[2]), weight);
+        quads.emplace_back(baryToPos(coeffs), weight);
+    }
+}*/
+
+void Triangle::buildQuads(Precision quadPrec) {
+    auto baryToPos = [&](double w0, double w1, double w2) {
+        return w0*Xs[0] + w1*Xs[1] + w2*Xs[2];
+    };
+
+    quads.reserve(numQuads);
+
+    switch (quadPrec) {
+        case Precision::VERYLOW:
+            quads.emplace_back(center, 1.0/2.0);
+            break;
+
+        case Precision::LOW: {
+            constexpr double weight = 1.0/6.0;
+            quads.emplace_back(baryToPos(2.0/3.0, 1.0/6.0, 1.0/6.0), weight);
+            quads.emplace_back(baryToPos(1.0/6.0, 2.0/3.0, 1.0/6.0), weight);
+            quads.emplace_back(baryToPos(1.0/6.0, 1.0/6.0, 2.0/3.0), weight);
+            break;
+        }
+
+        case Precision::MEDIUM: {
+            constexpr double weight0 = 0.1125;
+            quads.emplace_back(center, weight0);
+
+            constexpr double weight1 = 0.066197076394253;
+            constexpr double alpha = 0.059715871789770, beta = 0.470142064105115;
+            quads.emplace_back(baryToPos(alpha, beta, beta), weight1);
+            quads.emplace_back(baryToPos(beta, alpha, beta), weight1);
+            quads.emplace_back(baryToPos(beta, beta, alpha), weight1);
+
+            constexpr double weight2 = 0.0629695902724135;
+            constexpr double gamma = 0.797426985353087, delta = 0.101286507323456;
+            quads.emplace_back(baryToPos(gamma, delta, delta), weight2);
+            quads.emplace_back(baryToPos(delta, gamma, delta), weight2);
+            quads.emplace_back(baryToPos(delta, delta, gamma), weight2);
+
+            constexpr double weightErr = weight0 + 3.0*(weight1+weight2) - 0.5;
+            static_assert(weightErr > -Math::FEPS && weightErr < Math::FEPS);
+            break;
+        }
+
+        case Precision::HIGH: {
+            constexpr double weight0 = -0.074785022233841;
+            quads.emplace_back(center, weight0);
+
+            constexpr double weight1 = 0.087807628716604;
+            constexpr double alpha = 0.479308067841920, beta = 0.260345966079040;
+            quads.emplace_back(baryToPos(alpha, beta, beta), weight1);
+            quads.emplace_back(baryToPos(beta, alpha, beta), weight1);
+            quads.emplace_back(baryToPos(beta, beta, alpha), weight1);
+
+            constexpr double weight2 = 0.026673617804419;
+            constexpr double gamma = 0.869739794195568, delta = 0.065130102902216;
+            quads.emplace_back(baryToPos(gamma, delta, delta), weight2);
+            quads.emplace_back(baryToPos(delta, gamma, delta), weight2);
+            quads.emplace_back(baryToPos(delta, delta, gamma), weight2);
+
+            constexpr double weight3 = 0.0385568804451285;
+            constexpr double eps = 0.048690315425316, zeta = 0.312865496004874, theta = 0.638444188569810;
+            quads.emplace_back(baryToPos(eps, zeta, theta), weight3);
+            quads.emplace_back(baryToPos(theta, eps, zeta), weight3);
+            quads.emplace_back(baryToPos(zeta, theta, eps), weight3);
+            quads.emplace_back(baryToPos(eps, theta, zeta), weight3);
+            quads.emplace_back(baryToPos(zeta, eps, theta), weight3);
+            quads.emplace_back(baryToPos(theta, zeta, eps), weight3);
+
+            constexpr double weightErr = weight0 + 3.0*(weight1+weight2) + 6.0*weight3 - 0.5;
+            static_assert(weightErr > -Math::FEPS && weightErr < Math::FEPS);
+            break;
+        }
     }
 
-    //for (const auto& [node, weight] : quads)
-    //    std::cout << std::setprecision(15) << node << '\n';
-    //std::cout << "\n\n";
+    assert(quads.size() == numQuads);
 }
