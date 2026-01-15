@@ -45,11 +45,13 @@ namespace Math {
         return x < y;
     }
 
-    inline bool vecEquals(const vec3d& X, const vec3d& Y) {
-        return ((X-Y).norm()) < FEPS;
+    inline bool vecEquals(const vec3d& X,const vec3d& Y) noexcept {
+    // inline bool vecEquals(const vec3d& X, const vec3d& Y, double EPS2 = FEPS*FEPS) noexcept {
+        // return ((X-Y).norm()) < FEPS;
+        return ((X-Y).squaredNorm()) < FEPS*FEPS;
     };
 
-    inline bool vecLessThan(const vec3d& X, const vec3d& Y) {
+    inline bool vecLessThan(const vec3d& X, const vec3d& Y) noexcept {
         if (approxLess(X[0], Y[0])) return true;
         if (approxLess(Y[0], X[0])) return false;
 
@@ -94,7 +96,7 @@ namespace Math {
         };
     }
 
-    inline mat3d ImRR(const vec3d& rhat) {
+    inline mat3d ImRR(const vec3d& rhat) noexcept {
         return mat3d::Identity() - rhat * rhat.transpose();
     }
 

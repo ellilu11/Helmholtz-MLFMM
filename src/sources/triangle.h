@@ -21,21 +21,17 @@ public:
 
     Triangle(const vec3i&);
 
-    Triangle(const std::array<vec3d,3>&);
-
-    void buildTriangle();
+    Triangle(int idx, const vec3d&, const vec3d&);
 
     std::vector<quadPair> getQuads() { return quads; }
 
     static void buildQuadCoeffs();
 
-    static void buildVertsToSubtris(int);
-
     static int getNumQuads() { return numQuads; }
 
     void buildQuads();
 
-    TriArr6 getSubtris(const std::array<vec3d,3>&);
+    TriArr6 getSubtris(const vec3i&);
 
     // bool isAdjacent(const std::shared_ptr<Triangle>&);
 
@@ -46,12 +42,10 @@ private:
     static Precision quadPrec;
     static int numQuads;
 
-    //static TriVec glSubtris; // list of all subtris in mesh
-    //static std::vector<std::vector<int>> vertsToSubtris; // list of indices of subtri containing vert
-
     std::vector<quadPair> quads;
 
-    vec3i iVerts;           // global indices of vertices
+    vec3i glIdxs;           // global indices of vertices
+    // vec3i llIdxs;           // local indices of vertices
     std::array<vec3d,3> Xs; // vertices
     std::array<vec3d,3> Ds; // edges (Ds[i] = Xs[i+1] - Xs[i])
     vec3d center;           // barycentric center

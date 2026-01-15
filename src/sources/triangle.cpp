@@ -6,9 +6,6 @@ std::vector<quadPair> Triangle::quadCoeffs;
 Precision Triangle::quadPrec;
 int Triangle::numQuads;
 
-//TriVec Triangle::glSubtris;
-//std::vector<std::vector<int>> Triangle::vertsToSubtris;
-
 void Triangle::importVertices(const std::filesystem::path& vpath) {
     std::ifstream file(vpath);
     if (!file) throw std::runtime_error("Unable to find file");
@@ -31,6 +28,7 @@ TriVec Triangle::importTriangles(
     Precision prec)
 {
     importVertices(vpath);
+
     quadPrec = prec;
     buildQuadCoeffs(); // build quad coeffs
 
@@ -41,37 +39,26 @@ TriVec Triangle::importTriangles(
 
     while (std::getline(file, line)) {
         std::istringstream iss(line);
-        vec3i iVerts;
+        vec3i glIdxs;
 
-        if (iss >> iVerts)
-            triangles.push_back(std::make_shared<Triangle>(iVerts));
+        if (iss >> glIdxs)
+            triangles.push_back(std::make_shared<Triangle>(glIdxs));
         else
             throw std::runtime_error("Unable to parse line");
     }
 
-    // Build vertex to triangle list
-    // Triangle::buildVertsToSubtris(vList.size()); 
-
     return triangles;
 }
 
-// Construct triangle on original mesh from file
-Triangle::Triangle(const vec3i& iVerts)
-    : iVerts(iVerts),
-    Xs({ glVerts[iVerts[0]], glVerts[iVerts[1]], glVerts[iVerts[2]] }),
+/* Triangle(glIdxs)
+ * Construct triangle from global indices of vertices
+ * glIdxs : global indices of vertices
+ */
+Triangle::Triangle(const vec3i& glIdxs)
+    : glIdxs(glIdxs),
+    Xs({ glVerts[glIdxs[0]], glVerts[glIdxs[1]], glVerts[glIdxs[2]] }),
     center( (Xs[0]+Xs[1]+Xs[2])/3.0 )
 {
-    buildTriangle();
-};
-
-// Construct triangle on refined mesh from triangle on original mesh
-Triangle::Triangle(const std::array<vec3d,3>& Xs)
-    : Xs(Xs)
-{
-    buildTriangle();
-}
-
-void Triangle::buildTriangle() {
     for (int i = 0; i < 3; ++i) {
         const int ipp = (i+1) % 3;
         Ds[i] = Xs[ipp] - Xs[i];
@@ -80,51 +67,55 @@ void Triangle::buildTriangle() {
     nhat = (Ds[0].cross(Ds[1])).normalized();
 
     buildQuads();
-}
+};
+
+/* Triangle(idx, X1, X2)
+ * Construct triangle on refined mesh from idx of vertex on coarse mesh
+ * and midpoint and center of parent triangle
+ * idx : index of vertex on coarse mesh
+ * X1  : vertex on fine mesh (midpoint or center of parent)
+ * X2  : vertex on fine mesh (midpoint or center of parent)
+ */
+Triangle::Triangle(int idx, const vec3d& X1, const vec3d& X2)
+    : Xs( {glVerts[idx], X1, X2} ),
+      glIdxs( {idx, 0, 0} ), // TODO: Discard dummy indices
+      center((Xs[0]+Xs[1]+Xs[2])/3.0)
+{
+};
 
 // Construct all 6 sub-tris of this tri and add to list of sub-tris
-TriArr6 Triangle::getSubtris(const std::array<vec3d,3>& Xs) {
+TriArr6 Triangle::getSubtris(const vec3i& idx_c) {
     TriArr6 subtris;
     int iSubtri = 0;
 
     for (int i = 0; i < 3; ++i) {
         const int ipp = (i+1) % 3;
-        const vec3d mid = (Xs[i]+Xs[ipp])/2; // midpoint of ith edge
+        const int idx_i = idx_c[i], idx_ipp = idx_c[ipp];
+        const auto& mid = (glVerts[idx_i]+glVerts[idx_ipp])/2; // midpoint of ith edge
 
         for (int j = 0; j < 2; ++j) {
             auto subtri = (!j ?
-                std::make_shared<Triangle>(std::array<vec3d, 3>{ Xs[i], mid, center }) :
-                std::make_shared<Triangle>(std::array<vec3d, 3>{ Xs[ipp], center, mid })
+                std::make_shared<Triangle>(idx_i, mid, center) :
+                std::make_shared<Triangle>(idx_ipp, center, mid)
                 );
 
             // assert(Math::vecEquals(nhat, subtri->nhat)); // Check orientation
             // std::cout << nhat << '\n' << subtri->nhat << "\n\n";
 
             subtris[iSubtri] = std::move(subtri);
-            // glSubtris.push_back(std::move(subtri));
 
             ++iSubtri;
         }
     }
 
+    //for (const auto& tri: subtris) {
+    //    for (const auto& X : tri->Xs)
+    //        std::cout << X << ' ';
+    //    std::cout << '\n';
+    //}
+
     return subtris;
 }
-
-/*void Triangle::buildVertsToSubtris(int numVerts) {
-    vertsToSubtris.resize(numVerts);
-
-    int iTri = 0;
-    for (const auto& tri : glSubtris) {
-        int iVerts = tri->iVerts[0]; // only examine vert of subtri in coarse mesh
-        vertsToSubtris[iVerts].push_back(iTri);
-        ++iTri;
-    }
-
-    //int iVerts = 0;
-    //for (const auto& verts : vertsToSubtris)
-    //    std::cout << iVerts++ << " " << verts.size() << '\n';
-}
-*/
 
 void Triangle::buildQuadCoeffs() {
     numQuads = [&]() {
@@ -136,7 +127,7 @@ void Triangle::buildQuadCoeffs() {
         };
         } ();
 
-    /* TODO: Find out why precomputing yields larger error
+    // TODO: Find out why precomputing yields larger error
     quadCoeffs.reserve(numQuads);
 
     switch (quadPrec) {
@@ -228,14 +219,10 @@ void Triangle::buildQuadCoeffs() {
     }
 
     assert(quadCoeffs.size() == numQuads);
-    */
-
-    //for (const auto& [coeffs, weight] : quadCoeffs)
-    //    std::cout << coeffs << '\n';
 }
 
-/*
-void Triangle::buildQuads(Precision quadPrec) {
+//
+void Triangle::buildQuads() {
     auto baryToPos = [&](const vec3d& ws) {
         return ws[0]*Xs[0] + ws[1]*Xs[1] + ws[2]*Xs[2];
     };
@@ -245,8 +232,10 @@ void Triangle::buildQuads(Precision quadPrec) {
     for (const auto& [coeffs, weight] : quadCoeffs) {
         quads.emplace_back(baryToPos(coeffs), weight);
     }
-}*/
+}
+//
 
+/*
 void Triangle::buildQuads() {
     auto baryToPos = [&](double w0, double w1, double w2) {
         return w0*Xs[0] + w1*Xs[1] + w2*Xs[2];
@@ -321,3 +310,4 @@ void Triangle::buildQuads() {
 
     assert(quads.size() == numQuads);
 }
+*/

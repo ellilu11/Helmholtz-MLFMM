@@ -131,35 +131,6 @@ SrcVec importDipoles(
     return dipoles;
 }
 
-// Make RWG static method
-SrcVec importRWG(
-    const filesystem::path& vpath,
-    const filesystem::path& tpath,
-    const filesystem::path& rpath,
-    const Precision quadPrec,
-    const shared_ptr<Excitation::PlaneWave> Einc)
-{
-    auto triangles = Triangle::importTriangles(vpath, tpath, quadPrec);
-
-    ifstream file(rpath);
-    string line;
-    if (!file) throw std::runtime_error("Unable to find file");
-    SrcVec rwgs;
-    size_t rwgIdx = 0;
-
-    while (getline(file, line)) {
-        istringstream iss(line);
-        Eigen::Vector4i idxs;
-
-        if (iss >> idxs)
-            rwgs.emplace_back(make_shared<RWG>(Einc, rwgIdx++, idxs, triangles));
-        else
-            throw std::runtime_error("Unable to parse line");
-    }
-
-    return rwgs;
-}
-
 std::filesystem::path makePath(const Config& config) {
     std::string distStr =
         [&]() -> std::string {
@@ -202,7 +173,7 @@ pair<SrcVec, shared_ptr<Excitation::PlaneWave>> importFromConfig(const Config& c
     // RWG sources
     const string configPath = "config/rwg/n"+to_string(config.nsrcs)+"/";
 
-    auto srcs = importRWG(configPath+"vertices.txt",
+    auto srcs = RWG::importRWG(configPath+"vertices.txt",
                           configPath+"faces.txt",
                           configPath+"rwgs.txt",
                           config.quadPrec,

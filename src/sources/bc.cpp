@@ -1,7 +1,7 @@
 #include "bc.h"
 
 BC::BC(RWG* rwg) :
-    X0(rwg->X0), X1(rwg->X1)
+    idx_c(rwg->idx_c)
 {
     /*
     const vec3d& ehat = (X1-X0).normalized();

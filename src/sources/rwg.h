@@ -3,9 +3,20 @@
 #include "source.h"
 #include "triangle.h"
 
+class RWG;
+
+using RWGVec = std::vector<std::shared_ptr<RWG>>;
+
 class RWG final : public Source {
 public:
     friend class BC;
+
+    static SrcVec importRWG(
+        const std::filesystem::path&,
+        const std::filesystem::path&,
+        const std::filesystem::path&,
+        const Precision,
+        const std::shared_ptr<Excitation::PlaneWave>);
 
     RWG(std::shared_ptr<Excitation::PlaneWave>,
         size_t,
@@ -14,6 +25,14 @@ public:
 
     RWG(std::shared_ptr<Triangle>,
         std::shared_ptr<Triangle>);
+
+    void buildSubRWGs();
+
+    static void buildVertsToSubrwgs(int numVerts);
+
+    vec3cd getIntegratedPlaneWave(const vec3d&,bool = 0) const;
+
+    cmplx getIntegratedRad(const std::shared_ptr<Source>) const override;
 
     double getLeng() const { return leng; }
 
@@ -32,19 +51,18 @@ public:
         return getIntegratedPlaneWave(krhat).conjugate();
     }
 
-    void buildSubRWGs();
-
-    vec3cd getIntegratedPlaneWave(const vec3d&, bool = 0) const;
-
-    cmplx getIntegratedRad(const std::shared_ptr<Source>) const override;
-
 private:
-    std::array<std::shared_ptr<Triangle>,2> tris;
-    std::array<vec3d,2> Xpm;  // non-common vertices
-    // std::array<int, 2> idxpm; // global indices of non-common vertices
+    static RWGVec glSubrwgs; // list of all subrwgs in mesh
+    // list of indices of subrwg having vert as common vert
+    static std::vector<std::vector<int>> vertsToSubrwgs; 
 
-    int idx0, idx1; // global indices of common vertices
-    vec3d X0, X1;   // common vertices
+    std::array<std::shared_ptr<Triangle>,2> tris;
+
+    std::array<vec3d,2> Xc;  // common vertices
+    vec2i idx_c; // global indices of common vertices
+
+    std::array<vec3d,2> Xnc;  // non-common vertices
+    vec2i idx_nc; // global indices of non-common vertices
 
     vec3d center;   // midpoint of common edge
     double leng;    // length of common edge
