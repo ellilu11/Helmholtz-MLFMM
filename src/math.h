@@ -45,7 +45,7 @@ namespace Math {
         return x < y;
     }
 
-    inline bool vecEquals(const vec3d X, const vec3d Y) {
+    inline bool vecEquals(const vec3d& X, const vec3d& Y) {
         return ((X-Y).norm()) < FEPS;
     };
 

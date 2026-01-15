@@ -1,47 +1,59 @@
 #pragma once
 
+#include <filesystem>
+
 class Triangle;
 
 using TriVec = std::vector<std::shared_ptr<Triangle>>;
+using TriArr6 = std::array<std::shared_ptr<Triangle>,6>;
 
 class Triangle {
 public:
     friend class RWG;
+    friend class BC;
 
-    //Triangle()
-    //    : vIdx(vec3i::Zero()),
-    //      Xs( {zeroVec,zeroVec,zeroVec})
-    //      {};
+    static void importVertices(const std::filesystem::path& fpath);
 
-    Triangle(const vec3i&, const std::vector<vec3d>&, Precision);
+    static TriVec importTriangles(
+        const std::filesystem::path&,
+        const std::filesystem::path&, 
+        Precision);
 
-    Triangle(int, const vec3d&, const vec3d&, const vec3d&, Precision);
+    Triangle(const vec3i&);
 
-    void buildTriangle(Precision);
+    Triangle(const std::array<vec3d,3>&);
+
+    void buildTriangle();
 
     std::vector<quadPair> getQuads() { return quads; }
 
-    static void buildQuadCoeffs(Precision);
+    static void buildQuadCoeffs();
+
+    static void buildVertsToSubtris(int);
 
     static int getNumQuads() { return numQuads; }
 
-    void buildQuads(Precision);
+    void buildQuads();
 
-    void findRefinedTris(Precision);
+    TriArr6 getSubtris(const std::array<vec3d,3>&);
 
     // bool isAdjacent(const std::shared_ptr<Triangle>&);
 
 private:
+    static std::vector<vec3d> glVerts;
+
     static std::vector<quadPair> quadCoeffs;
+    static Precision quadPrec;
     static int numQuads;
 
-    static TriVec refinedTris;
+    //static TriVec glSubtris; // list of all subtris in mesh
+    //static std::vector<std::vector<int>> vertsToSubtris; // list of indices of subtri containing vert
 
     std::vector<quadPair> quads;
 
-    vec3i vIdx;             // global indices of vertices
+    vec3i iVerts;           // global indices of vertices
     std::array<vec3d,3> Xs; // vertices
-    std::array<vec3d,3> Ds; // Ds[i] = Xs[i+1] - Xs[i]
+    std::array<vec3d,3> Ds; // edges (Ds[i] = Xs[i+1] - Xs[i])
     vec3d center;           // barycentric center
     vec3d nhat;             // surface normal unit vector
 };

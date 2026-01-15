@@ -19,6 +19,7 @@
 #include "fmm/node.cpp"
 #include "fmm/stem.cpp"
 #include "fmm/tables.cpp"
+#include "sources/bc.cpp"
 #include "sources/rwg.cpp"
 #include "sources/triangle.cpp"
 

@@ -107,6 +107,7 @@ SrcVec makeDipoles(const Config& config, const shared_ptr<Excitation::PlaneWave>
     return dipoles;
 }
 
+// TODO: Make Dipole static method
 SrcVec importDipoles(
     const filesystem::path& fpath,
     const shared_ptr<Excitation::PlaneWave>& Einc)
@@ -117,12 +118,12 @@ SrcVec importDipoles(
     SrcVec dipoles;
     size_t idx = 0;
 
-    while (getline(inFile, line)) {
+    while (getline(inFile,line)) {
         istringstream iss(line);
 
-        vec3d pos, dip;
+        vec3d pos,dip;
         if (iss >> pos >> dip)
-            dipoles.emplace_back(make_shared<Dipole>(Einc, idx++, pos, dip));
+            dipoles.emplace_back(make_shared<Dipole>(Einc,idx++,pos,dip));
         else
             throw std::runtime_error("Unable to parse line");
     }
@@ -130,47 +131,7 @@ SrcVec importDipoles(
     return dipoles;
 }
 
-
-vector<vec3d> importVertices(const filesystem::path& fpath) {
-    ifstream file(fpath);
-    if (!file) throw std::runtime_error("Unable to find file");
-    string line;
-    vector<vec3d> vList;
-
-    while (getline(file, line)) {
-        istringstream iss(line);
-        vec3d vertex;
-
-        if (iss >> vertex)
-            vList.push_back(vertex);
-        else
-            throw std::runtime_error("Unable to parse line");
-    }
-
-    return vList;
-}
-
-TriVec importTriangles(
-    const filesystem::path& fpath, const vector<vec3d>& vList, const Precision prec)
-{
-    ifstream file(fpath);
-    string line;
-    if (!file) throw std::runtime_error("Unable to find file");
-    TriVec triangles;
-
-    while (getline(file, line)) {
-        istringstream iss(line);
-        vec3i vIdx;
-
-        if (iss >> vIdx)
-            triangles.emplace_back(make_shared<Triangle>(vIdx, vList, prec));
-        else
-            throw std::runtime_error("Unable to parse line");
-    }
-
-    return triangles;
-}
-
+// Make RWG static method
 SrcVec importRWG(
     const filesystem::path& vpath,
     const filesystem::path& tpath,
@@ -178,9 +139,7 @@ SrcVec importRWG(
     const Precision quadPrec,
     const shared_ptr<Excitation::PlaneWave> Einc)
 {
-    auto vertices = importVertices(vpath);
-
-    auto triangles = importTriangles(tpath, vertices, quadPrec);
+    auto triangles = Triangle::importTriangles(vpath, tpath, quadPrec);
 
     ifstream file(rpath);
     string line;
@@ -190,10 +149,10 @@ SrcVec importRWG(
 
     while (getline(file, line)) {
         istringstream iss(line);
-        Eigen::Vector4i idx;
+        Eigen::Vector4i idxs;
 
-        if (iss >> idx)
-            rwgs.emplace_back(make_shared<RWG>(Einc, rwgIdx++, idx, vertices, triangles));
+        if (iss >> idxs)
+            rwgs.emplace_back(make_shared<RWG>(Einc, rwgIdx++, idxs, triangles));
         else
             throw std::runtime_error("Unable to parse line");
     }
@@ -241,14 +200,13 @@ pair<SrcVec, shared_ptr<Excitation::PlaneWave>> importFromConfig(const Config& c
     */
 
     // RWG sources
-    Triangle::buildQuadCoeffs(config.quadPrec);
     const string configPath = "config/rwg/n"+to_string(config.nsrcs)+"/";
+
     auto srcs = importRWG(configPath+"vertices.txt",
                           configPath+"faces.txt",
                           configPath+"rwgs.txt",
                           config.quadPrec,
                           Einc);
-    //
     
     cout << fixed << setprecision(3);
     cout << "   Mode:            " << (config.mode == Mode::READ ? "READ" : "WRITE") << '\n';

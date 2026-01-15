@@ -1,58 +1,132 @@
 #include "triangle.h"
 
+std::vector<vec3d> Triangle::glVerts;
+
 std::vector<quadPair> Triangle::quadCoeffs;
+Precision Triangle::quadPrec;
 int Triangle::numQuads;
-TriVec Triangle::refinedTris;
+
+//TriVec Triangle::glSubtris;
+//std::vector<std::vector<int>> Triangle::vertsToSubtris;
+
+void Triangle::importVertices(const std::filesystem::path& vpath) {
+    std::ifstream file(vpath);
+    if (!file) throw std::runtime_error("Unable to find file");
+    std::string line;
+
+    while (getline(file,line)) {
+        std::istringstream iss(line);
+        vec3d vertex;
+
+        if (iss >> vertex)
+            glVerts.push_back(vertex);
+        else
+            throw std::runtime_error("Unable to parse line");
+    }
+}
+
+TriVec Triangle::importTriangles(
+    const std::filesystem::path& vpath, 
+    const std::filesystem::path& fpath, 
+    Precision prec)
+{
+    importVertices(vpath);
+    quadPrec = prec;
+    buildQuadCoeffs(); // build quad coeffs
+
+    std::ifstream file(fpath);
+    std::string line;
+    if (!file) throw std::runtime_error("Unable to find file");
+    TriVec triangles;
+
+    while (std::getline(file, line)) {
+        std::istringstream iss(line);
+        vec3i iVerts;
+
+        if (iss >> iVerts)
+            triangles.push_back(std::make_shared<Triangle>(iVerts));
+        else
+            throw std::runtime_error("Unable to parse line");
+    }
+
+    // Build vertex to triangle list
+    // Triangle::buildVertsToSubtris(vList.size()); 
+
+    return triangles;
+}
 
 // Construct triangle on original mesh from file
-Triangle::Triangle(
-    const vec3i& vIdx,
-    const std::vector<vec3d>& vList,
-    Precision quadPrec)
-    : vIdx(vIdx),
-    Xs({ vList[vIdx[0]], vList[vIdx[1]], vList[vIdx[2]] }),
+Triangle::Triangle(const vec3i& iVerts)
+    : iVerts(iVerts),
+    Xs({ glVerts[iVerts[0]], glVerts[iVerts[1]], glVerts[iVerts[2]] }),
     center( (Xs[0]+Xs[1]+Xs[2])/3.0 )
 {
-    buildTriangle(quadPrec);
-
-    findRefinedTris(quadPrec); // Find 6 refined triangles
+    buildTriangle();
 };
 
 // Construct triangle on refined mesh from triangle on original mesh
-Triangle::Triangle(
-    int vIdx, const vec3d& v0, const vec3d& center, const vec3d& mid, 
-    Precision quadPrec)
-    : vIdx({vIdx, 0, 0}),
-    Xs({ v0, center, mid })
+Triangle::Triangle(const std::array<vec3d,3>& Xs)
+    : Xs(Xs)
 {
-    buildTriangle(quadPrec);
+    buildTriangle();
 }
 
-void Triangle::buildTriangle(Precision quadPrec) {
+void Triangle::buildTriangle() {
     for (int i = 0; i < 3; ++i) {
-        const int ipp = Math::wrapIdxToRange(i+1, 3);
+        const int ipp = (i+1) % 3;
         Ds[i] = Xs[ipp] - Xs[i];
     }
 
     nhat = (Ds[0].cross(Ds[1])).normalized();
 
-    buildQuads(quadPrec);
+    buildQuads();
 }
 
-// Construct all 6 refined tris of this tri and add to list of refined tris
-void Triangle::findRefinedTris(Precision quadPrec) {
+// Construct all 6 sub-tris of this tri and add to list of sub-tris
+TriArr6 Triangle::getSubtris(const std::array<vec3d,3>& Xs) {
+    TriArr6 subtris;
+    int iSubtri = 0;
+
     for (int i = 0; i < 3; ++i) {
-        const int ipp = Math::wrapIdxToRange(i+1, 3);
+        const int ipp = (i+1) % 3;
         const vec3d mid = (Xs[i]+Xs[ipp])/2; // midpoint of ith edge
 
-        refinedTris.push_back(
-            std::make_shared<Triangle>(vIdx[i], Xs[i], center, mid, quadPrec));
-        refinedTris.push_back(
-            std::make_shared<Triangle>(vIdx[ipp], Xs[ipp], center, mid, quadPrec));
+        for (int j = 0; j < 2; ++j) {
+            auto subtri = (!j ?
+                std::make_shared<Triangle>(std::array<vec3d, 3>{ Xs[i], mid, center }) :
+                std::make_shared<Triangle>(std::array<vec3d, 3>{ Xs[ipp], center, mid })
+                );
+
+            // assert(Math::vecEquals(nhat, subtri->nhat)); // Check orientation
+            // std::cout << nhat << '\n' << subtri->nhat << "\n\n";
+
+            subtris[iSubtri] = std::move(subtri);
+            // glSubtris.push_back(std::move(subtri));
+
+            ++iSubtri;
+        }
     }
+
+    return subtris;
 }
 
-void Triangle::buildQuadCoeffs(Precision quadPrec) {
+/*void Triangle::buildVertsToSubtris(int numVerts) {
+    vertsToSubtris.resize(numVerts);
+
+    int iTri = 0;
+    for (const auto& tri : glSubtris) {
+        int iVerts = tri->iVerts[0]; // only examine vert of subtri in coarse mesh
+        vertsToSubtris[iVerts].push_back(iTri);
+        ++iTri;
+    }
+
+    //int iVerts = 0;
+    //for (const auto& verts : vertsToSubtris)
+    //    std::cout << iVerts++ << " " << verts.size() << '\n';
+}
+*/
+
+void Triangle::buildQuadCoeffs() {
     numQuads = [&]() {
         switch (quadPrec) {
             case Precision::VERYLOW: return 1;
@@ -173,7 +247,7 @@ void Triangle::buildQuads(Precision quadPrec) {
     }
 }*/
 
-void Triangle::buildQuads(Precision quadPrec) {
+void Triangle::buildQuads() {
     auto baryToPos = [&](double w0, double w1, double w2) {
         return w0*Xs[0] + w1*Xs[1] + w2*Xs[2];
     };

@@ -10,6 +10,7 @@ using pair2i = std::pair<int, int>;
 using pair2d = std::pair<double, double>;
 using pair2cd = std::pair<cmplx, cmplx>;
 
+using vec2i = Eigen::Vector2i;
 using vec3i = Eigen::Vector3i;
 using vec3d = Eigen::Vector3d;
 using vecXd = Eigen::VectorXd;
@@ -51,6 +52,7 @@ std::ostream& operator<< (std::ostream& os, cmplx z) {
 
 std::ostream& operator<< (std::ostream& os, const vec3d& X) {
     os << X[0] << " " << X[1] << " " << X[2];
+    // os << '(' << X[0] << " " << X[1] << " " << X[2] << ')';
     return os;
 }
 

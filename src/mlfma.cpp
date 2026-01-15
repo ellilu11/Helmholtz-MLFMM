@@ -11,19 +11,24 @@ extern auto t = ClockTimes();
 
 int main() {
     // ===================== Read config ==================== //
-    std::cout << " Importing sources...\n";
+    std::cout << " Building sources...\n";
 
     Config config("config/config.txt");
 
+    auto start = Clock::now();
     auto [srcs, Einc] = importFromConfig(config);
+    auto end = Clock::now();
+    Time duration_ms = end - start;
+    std::cout << "   Elapsed time: " << duration_ms.count() << " ms\n\n";
+
     auto nsrcs = srcs.size();
 
     Node::initStatic(config, Einc, nsrcs);
 
-    // return 0;
+    return 0;
 
     // ==================== Set up nodes ==================== //
-    std::cout << " Setting up nodes...\n";
+    std::cout << " Building nodes...\n";
 
     shared_ptr<Node> root;
     if (nsrcs > config.maxNodeSrcs)
@@ -40,14 +45,14 @@ int main() {
     // ==================== Build nearfield ===================== //
     std::cout << " Building nearfield interactions...\n";
 
-    auto start = Clock::now();
+    start = Clock::now();
     Leaf::buildNearRads();
-    auto end = Clock::now();
-    Time duration_ms = end - start;
+    end = Clock::now();
+    duration_ms = end - start;
     std::cout << "   Elapsed time: " << duration_ms.count() << " ms\n\n";
 
-    // ==================== Build tables ======================== //
-    std::cout << " Building interp/transl operators...\n";
+    // ==================== Build FMM operators =============== //
+    std::cout << " Building FMM operators...\n";
 
     start = Clock::now();
     Node::buildTables();

@@ -3,27 +3,84 @@
 RWG::RWG(
     std::shared_ptr<Excitation::PlaneWave> Einc,
     size_t rwgIdx,
-    const Eigen::Vector4i& idx,
-    const std::vector<vec3d>& vertices,
+    const Eigen::Vector4i& idxs,
     const TriVec& triangles)
     : Source(std::move(Einc), rwgIdx),
-      tris({triangles[idx[2]], triangles[idx[3]]}),
-      X0(vertices[idx[0]]), 
-      X1(vertices[idx[1]]),
+      tris({triangles[idxs[2]], triangles[idxs[3]]}),
+      idx0(idxs[0]), idx1(idxs[1]),
+      X0(Triangle::glVerts[idx0]), X1(Triangle::glVerts[idx1]),
       center((X0+X1)/2.0), 
-      leng((X0-X1).norm())
+      leng((X0-X1).norm()),
+      bc(std::make_unique<BC>(this))
 {
     // Find non-common vertices
     for (int i = 0; i < 2; ++i)
-        for (const auto& vIdx : tris[i]->vIdx)
-            if (vIdx != idx[0] && vIdx != idx[1])
-                Xpm[i] = vertices[vIdx];
+        for (const auto& iVerts : tris[i]->iVerts)
+            if (iVerts != idxs[0] && iVerts != idxs[1]) {
+                // idxpm[i] = iVerts;
+                Xpm[i] = Triangle::glVerts[iVerts];
+            }
+
+    buildSubRWGs();
 
     buildVoltage(); // needs Xpm initialized!
 
     /*std::cout << '(' << X0 << ") (" << X1 << ") ("
         << Xpm[0] << ") (" << Xpm[1] << ") " << leng << '\n';*/
 };
+
+RWG::RWG(
+    std::shared_ptr<Triangle> tri0,
+    std::shared_ptr<Triangle> tri1)
+    : tris( {std::move(tri0), std::move(tri1)} ) 
+{ 
+    // Find common and non-common vertices
+
+
+}
+
+void RWG::buildSubRWGs() {
+    const Eigen::MatrixXi subIdxs{
+        {0, 0, 4, 1, 2, 3},
+        {5, 1, 5, 2, 3, 4}
+    };
+
+    int iTri = 0;
+    TriVec centerSubtris;
+
+    for (const auto& tri : tris) {
+        const auto& subtris = tri->getSubtris({ Xpm[iTri], X0, X1 });
+        //const auto& subtris = (!iTri ?
+        //    tri->getSubtris({Xpm[iTri], X0, X1}) :
+        //    tri->getSubtris({Xpm[iTri], X1, X0})
+        //    );
+        const int iTriBy8 = 8*iTri;
+        
+        for (int iSub = 0; iSub < 6; ++iSub) {
+            auto subrwg = 
+                std::make_shared<RWG>(subtris[subIdxs(0,iSub)], subtris[subIdxs(1,iSub)]);
+
+            subrwgs[iTriBy8+iSub] = std::move(subrwg);
+                
+            if (iSub == 2 || iSub == 3)
+                centerSubtris.push_back(subtris[iSub]);
+        }
+        /*subrwgs[iShift] = std::make_shared<RWG>(subtris[0], subtris[5]);
+        subrwgs[iShift+1] = std::make_shared<RWG>(subtris[0], subtris[1]);
+        subrwgs[iShift+2] = std::make_shared<RWG>(subtris[4], subtris[5]);
+        subrwgs[iShift+3] = std::make_shared<RWG>(subtris[1], subtris[2]);
+        subrwgs[iShift+4] = std::make_shared<RWG>(subtris[2], subtris[3]);
+        subrwgs[iShift+5] = std::make_shared<RWG>(subtris[3], subtris[4]);*/
+
+        ++iTri;
+    }
+    
+    subrwgs[6] = std::make_shared<RWG>(centerSubtris[0], centerSubtris[2]);
+    subrwgs[7] = std::make_shared<RWG>(centerSubtris[1], centerSubtris[3]);
+
+    //for (int iSub = 0; iSub < 14; ++iSub)
+    //    std::cout << subrwgs[iSub]->X0 << ' ' << subrwgs[iSub]->X1 << '\n';
+}
 
 vec3cd RWG::getIntegratedPlaneWave(const vec3d& kvec, bool doNumeric) const {
     using namespace Math;
