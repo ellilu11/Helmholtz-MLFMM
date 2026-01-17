@@ -1,16 +1,16 @@
 #pragma once
 
-#include "rwg.h"
+#include "srcrwg.h"
+#include "subrwg.h"
 
 class BC {
 public:
-    BC(RWG*);
+    BC(SrcRWG* const);
 
 private:
     // std::array<std::shared_ptr<RWG>, 10> subrwgs;
-    std::vector<std::shared_ptr<RWG>> subrwgs;
+    SubRWGVec subrwgs;
+    SrcRWG* const base;
 
-    vec2i idx_c; // global indices of common vertices
-
-    vec3d center; // midpoint of common edge
+    vec2i numRWGs;
 };

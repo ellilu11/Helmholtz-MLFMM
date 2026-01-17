@@ -37,5 +37,4 @@ protected:
     std::shared_ptr<Excitation::PlaneWave> Einc;
     cmplx voltage;
     size_t idx;
-
 };

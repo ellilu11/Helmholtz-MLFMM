@@ -40,6 +40,10 @@ namespace Math {
         return fabs(x) < FEPS;
     }
 
+    inline bool approxEquals(double x, double y) noexcept {
+        return fabs(x-y) < FEPS;
+    }
+
     inline bool approxLess(double x, double y) noexcept {
         if (fabs(x-y) < FEPS) return false;
         return x < y;

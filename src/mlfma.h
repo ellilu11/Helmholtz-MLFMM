@@ -21,6 +21,8 @@
 #include "fmm/tables.cpp"
 #include "sources/bc.cpp"
 #include "sources/rwg.cpp"
+#include "sources/srcrwg.cpp"
+#include "sources/subrwg.cpp"
 #include "sources/triangle.cpp"
 
 // TODO: Reference additional headers your program requires here.

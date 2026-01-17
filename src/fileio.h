@@ -1,7 +1,7 @@
 #include <filesystem>
 #include <random>
 #include "sources/dipole.h"
-#include "sources/rwg.h"
+#include "sources/srcrwg.h"
 
 using namespace std; // TODO: Remove
 
@@ -173,7 +173,7 @@ pair<SrcVec, shared_ptr<Excitation::PlaneWave>> importFromConfig(const Config& c
     // RWG sources
     const string configPath = "config/rwg/n"+to_string(config.nsrcs)+"/";
 
-    auto srcs = RWG::importRWG(configPath+"vertices.txt",
+    auto srcs = SrcRWG::importRWG(configPath+"vertices.txt",
                           configPath+"faces.txt",
                           configPath+"rwgs.txt",
                           config.quadPrec,

@@ -66,6 +66,11 @@ Triangle::Triangle(const vec3i& glIdxs)
 
     nhat = (Ds[0].cross(Ds[1])).normalized();
 
+    // If nhat is pointing inward, reverse it
+    // Assume a closed, star-shaped mesh centered at and enclosing the origin
+    if (center.dot(nhat) < 0.0) nhat *= -1.0;
+    // std::cout << center.dot(nhat) << '\n';
+
     buildQuads();
 };
 
@@ -81,16 +86,30 @@ Triangle::Triangle(int idx, const vec3d& X1, const vec3d& X2)
       glIdxs( {idx, 0, 0} ), // TODO: Discard dummy indices
       center((Xs[0]+Xs[1]+Xs[2])/3.0)
 {
+    for (int i = 0; i < 3; ++i) {
+        const int ipp = (i+1) % 3;
+        Ds[i] = Xs[ipp] - Xs[i];
+    }
+
+    nhat = (Ds[0].cross(Ds[1])).normalized();
+
+    // If nhat is pointing inward, reverse it
+    // Assume a closed, star-shaped mesh centered at and enclosing the origin
+    if (center.dot(nhat) < 0.0) nhat *= -1.0;
+
+    alpha = acos(
+        (Ds[0].normalized()).dot(-Ds[2].normalized())
+    );
 };
 
-// Construct all 6 sub-tris of this tri and add to list of sub-tris
-TriArr6 Triangle::getSubtris(const vec3i& idx_c) {
+// Construct all 6 sub-tris of this tri
+TriArr6 Triangle::getSubtris(const vec3i& glIdxc) {
     TriArr6 subtris;
     int iSubtri = 0;
 
     for (int i = 0; i < 3; ++i) {
         const int ipp = (i+1) % 3;
-        const int idx_i = idx_c[i], idx_ipp = idx_c[ipp];
+        const int idx_i = glIdxc[i], idx_ipp = glIdxc[ipp];
         const auto& mid = (glVerts[idx_i]+glVerts[idx_ipp])/2; // midpoint of ith edge
 
         for (int j = 0; j < 2; ++j) {
@@ -99,7 +118,7 @@ TriArr6 Triangle::getSubtris(const vec3i& idx_c) {
                 std::make_shared<Triangle>(idx_ipp, center, mid)
                 );
 
-            // assert(Math::vecEquals(nhat, subtri->nhat)); // Check orientation
+            assert(Math::vecEquals(nhat, subtri->nhat)); // Check orientation
             // std::cout << nhat << '\n' << subtri->nhat << "\n\n";
 
             subtris[iSubtri] = std::move(subtri);

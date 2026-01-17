@@ -51,8 +51,8 @@ std::ostream& operator<< (std::ostream& os, cmplx z) {
 }
 
 std::ostream& operator<< (std::ostream& os, const vec3d& X) {
-    os << X[0] << " " << X[1] << " " << X[2];
-    // os << '(' << X[0] << " " << X[1] << " " << X[2] << ')';
+    // os << X[0] << " " << X[1] << " " << X[2];
+    os << '(' << X[0] << " " << X[1] << " " << X[2] << ')';
     return os;
 }
 

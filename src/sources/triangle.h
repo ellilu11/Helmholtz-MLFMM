@@ -10,6 +10,8 @@ using TriArr6 = std::array<std::shared_ptr<Triangle>,6>;
 class Triangle {
 public:
     friend class RWG;
+    friend class SrcRWG;
+    friend class SubRWG;
     friend class BC;
 
     static void importVertices(const std::filesystem::path& fpath);
@@ -35,9 +37,10 @@ public:
 
     // bool isAdjacent(const std::shared_ptr<Triangle>&);
 
-private:
+public:
     static std::vector<vec3d> glVerts;
 
+private:
     static std::vector<quadPair> quadCoeffs;
     static Precision quadPrec;
     static int numQuads;
@@ -45,9 +48,9 @@ private:
     std::vector<quadPair> quads;
 
     vec3i glIdxs;           // global indices of vertices
-    // vec3i llIdxs;           // local indices of vertices
     std::array<vec3d,3> Xs; // vertices
     std::array<vec3d,3> Ds; // edges (Ds[i] = Xs[i+1] - Xs[i])
     vec3d center;           // barycentric center
     vec3d nhat;             // surface normal unit vector
+    double alpha;           // angle between 0th and 2nd edges
 };
