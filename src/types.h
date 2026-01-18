@@ -26,11 +26,6 @@ using matXcd = Eigen::MatrixXcd;
 using interpPair = std::pair<vecXd, int>;
 using quadPair = std::pair<vec3d, double>;
 
-//template <typename T>
-//void resizeVectors(std::initializer_list<std::vector<T>> vecs, size_t size) {
-//    for (std::vector<T>& vec : vecs) vec.resize(size);
-//}
-
 template <typename T>
 std::vector<T> operator+ (const std::vector<T>& zs, const std::vector<T>& ws) {
     assert(zs.size() == ws.size());
@@ -39,6 +34,11 @@ std::vector<T> operator+ (const std::vector<T>& zs, const std::vector<T>& ws) {
     for (size_t i = 0; i < zs.size(); ++i)
         sum.push_back(zs[i] + ws[i]);
     return sum;
+}
+
+template <typename T>
+inline std::pair<T,T> makeUpair(T x, T y) noexcept {
+    return (x < y ? std::make_pair(x,y) : std::make_pair(y,x));
 }
 
 std::ostream& operator<< (std::ostream& os, cmplx z) {

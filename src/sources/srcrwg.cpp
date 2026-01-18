@@ -25,10 +25,10 @@ SrcVec SrcRWG::importRWG(
             throw std::runtime_error("Unable to parse line");
     }
 
-    SubRWG::buildVertsToSubrwgs(Triangle::glVerts.size());
+    //SubRWG::buildVertsToSubrwgs(Triangle::glVerts.size());
 
-    for (const auto& rwg : rwgs)
-        dynamic_pointer_cast<SrcRWG>(rwg)->buildBC();
+    //for (const auto& rwg : rwgs)
+    //    dynamic_pointer_cast<SrcRWG>(rwg)->buildBC();
 
     return rwgs;
 }
@@ -73,7 +73,7 @@ void SrcRWG::buildSubRWGs() {
 
     int iTri = 0;
     TriVec midSubtris;
-
+    /*
     for (const auto& tri : tris) {
         const auto& subtris = tri->getSubtris(vec3i(glIdxnc[iTri],glIdxc[0],glIdxc[1]));
         const int iTri8 = 8*iTri;
@@ -102,6 +102,7 @@ void SrcRWG::buildSubRWGs() {
         subrwgs[iSub+6] = subrwg; // TODO: Move assign
         glSubrwgs.push_back(std::move(subrwg));
     }
+    */
 
     //for (const auto& rwg : subrwgs) {
     //    for (auto& idx : rwg->glIdxs)

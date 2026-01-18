@@ -31,7 +31,7 @@ vec3cd RWG::getIntegratedPlaneWave(const vec3d& kvec, bool doNumeric) const {
     }
 
     for (const auto& tri : tris) {
-        const auto& Xs = tri->Xs, Ds = tri->Ds;
+        const auto& Xs = tri->getVerts(), Ds = tri->Ds; // TODO: Compute Ds[0] and Ds[2] here
 
         const double alpha = kvec.dot(Ds[0]), beta = -kvec.dot(Ds[2]), gamma = alpha-beta;
 

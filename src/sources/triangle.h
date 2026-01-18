@@ -1,6 +1,7 @@
 #pragma once
 
 #include <filesystem>
+#include "maps.h"
 
 class Triangle;
 
@@ -23,22 +24,33 @@ public:
 
     Triangle(const vec3i&);
 
-    Triangle(int idx, const vec3d&, const vec3d&);
+    Triangle(int, int, int);
 
-    std::vector<quadPair> getQuads() { return quads; }
+    static void refineVertices(const TriVec&);
+
+    TriArr6 getSubtris();
 
     static void buildQuadCoeffs();
 
+    void buildQuads(const std::array<vec3d,3>&);
+
+    std::array<vec3d,3> getVerts() const {
+        return { glVerts[glIdxs[0]], glVerts[glIdxs[1]], glVerts[glIdxs[2]] };
+    }
+
+    //vec3d getCenter() const {
+    //    return (glVerts[glIdxs[0]] + glVerts[glIdxs[1]] + glVerts[glIdxs[2]]) / 3.0;
+    //}
+
+    std::vector<quadPair> getQuads() { return quads; }
+
     static int getNumQuads() { return numQuads; }
-
-    void buildQuads();
-
-    TriArr6 getSubtris(const vec3i&);
 
     // bool isAdjacent(const std::shared_ptr<Triangle>&);
 
 public:
-    static std::vector<vec3d> glVerts;
+    static std::vector<vec3d> glVerts;   // global list of fine vertices
+    static PairHashMap<int> glEdgeToIdx; // global list of indices of edges
 
 private:
     static std::vector<quadPair> quadCoeffs;
@@ -48,9 +60,12 @@ private:
     std::vector<quadPair> quads;
 
     vec3i glIdxs;           // global indices of vertices
-    std::array<vec3d,3> Xs; // vertices
-    std::array<vec3d,3> Ds; // edges (Ds[i] = Xs[i+1] - Xs[i])
+    int glIdxCenter;        // global index of barycentric center
+
+    // std::array<vec3d,3> Xs; // vertices
     vec3d center;           // barycentric center
+    std::array<vec3d,3> Ds; // edges (Ds[i] = Xs[i+1] - Xs[i])
+
     vec3d nhat;             // surface normal unit vector
-    double alpha;           // angle between 0th and 2nd edges
+    // double alpha;        // angle between 0th and 2nd edges
 };

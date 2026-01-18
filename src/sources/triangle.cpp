@@ -1,6 +1,7 @@
 #include "triangle.h"
 
 std::vector<vec3d> Triangle::glVerts;
+PairHashMap<int> Triangle::glEdgeToIdx;
 
 std::vector<quadPair> Triangle::quadCoeffs;
 Precision Triangle::quadPrec;
@@ -47,6 +48,10 @@ TriVec Triangle::importTriangles(
             throw std::runtime_error("Unable to parse line");
     }
 
+    refineVertices(triangles);
+
+    for (const auto& tri : triangles) tri->getSubtris();
+
     return triangles;
 }
 
@@ -54,16 +59,17 @@ TriVec Triangle::importTriangles(
  * Construct triangle from global indices of vertices
  * glIdxs : global indices of vertices
  */
-Triangle::Triangle(const vec3i& glIdxs)
-    : glIdxs(glIdxs),
-    Xs({ glVerts[glIdxs[0]], glVerts[glIdxs[1]], glVerts[glIdxs[2]] }),
-    center( (Xs[0]+Xs[1]+Xs[2])/3.0 )
+Triangle::Triangle(const vec3i& glIdxs) : glIdxs(glIdxs)
 {
-    for (int i = 0; i < 3; ++i) {
-        const int ipp = (i+1) % 3;
-        Ds[i] = Xs[ipp] - Xs[i];
-    }
+    assert(glIdxs.maxCoeff() < glVerts.size());
+    std::cout << "Building triangle with indices: " 
+              << glIdxs[0] << ", " 
+              << glIdxs[1] << ", " 
+              << glIdxs[2] << '\n';
 
+    const auto Xs = getVerts();
+
+    for (int i = 0; i < 3; ++i) Ds[i] = Xs[(i+1)%3] - Xs[i];
     nhat = (Ds[0].cross(Ds[1])).normalized();
 
     // If nhat is pointing inward, reverse it
@@ -71,67 +77,66 @@ Triangle::Triangle(const vec3i& glIdxs)
     if (center.dot(nhat) < 0.0) nhat *= -1.0;
     // std::cout << center.dot(nhat) << '\n';
 
-    buildQuads();
-};
+    //alpha = acos(
+    //    (Ds[0].normalized()).dot(-Ds[2].normalized())
+    //);
 
-/* Triangle(idx, X1, X2)
- * Construct triangle on refined mesh from idx of vertex on coarse mesh
- * and midpoint and center of parent triangle
- * idx : index of vertex on coarse mesh
- * X1  : vertex on fine mesh (midpoint or center of parent)
- * X2  : vertex on fine mesh (midpoint or center of parent)
- */
-Triangle::Triangle(int idx, const vec3d& X1, const vec3d& X2)
-    : Xs( {glVerts[idx], X1, X2} ),
-      glIdxs( {idx, 0, 0} ), // TODO: Discard dummy indices
-      center((Xs[0]+Xs[1]+Xs[2])/3.0)
-{
-    for (int i = 0; i < 3; ++i) {
-        const int ipp = (i+1) % 3;
-        Ds[i] = Xs[ipp] - Xs[i];
-    }
+    buildQuads(Xs);
+}
 
-    nhat = (Ds[0].cross(Ds[1])).normalized();
+Triangle::Triangle(int idx0, int idx1, int idx2) 
+    : Triangle(vec3i(idx0, idx1, idx2))
+{}
 
-    // If nhat is pointing inward, reverse it
-    // Assume a closed, star-shaped mesh centered at and enclosing the origin
-    if (center.dot(nhat) < 0.0) nhat *= -1.0;
+void Triangle::refineVertices(const TriVec& tris) {
+    assert(!glVerts.empty());
 
-    alpha = acos(
-        (Ds[0].normalized()).dot(-Ds[2].normalized())
-    );
-};
+    int numVerts = glVerts.size();
+    for (const auto& tri : tris) {
+        // Add center vertex
+        tri->glIdxCenter = numVerts++;
+        glVerts.push_back(tri->center); 
 
-// Construct all 6 sub-tris of this tri
-TriArr6 Triangle::getSubtris(const vec3i& glIdxc) {
-    TriArr6 subtris;
-    int iSubtri = 0;
+        // Add midpoints of edges
+        for (int i = 0; i < 3; ++i) {
+            const int idx0 = tri->glIdxs[i], idx1 = tri->glIdxs[(i+1)%3];
+            const vec3d mid = (glVerts[idx0] + glVerts[idx1]) / 2.0;
+            const auto& edge = makeUpair(idx0,idx1);
 
-    for (int i = 0; i < 3; ++i) {
-        const int ipp = (i+1) % 3;
-        const int idx_i = glIdxc[i], idx_ipp = glIdxc[ipp];
-        const auto& mid = (glVerts[idx_i]+glVerts[idx_ipp])/2; // midpoint of ith edge
+            // Check if midpoint already exists
+            if (glEdgeToIdx.find(edge) != glEdgeToIdx.end())
+                continue;
 
-        for (int j = 0; j < 2; ++j) {
-            auto subtri = (!j ?
-                std::make_shared<Triangle>(idx_i, mid, center) :
-                std::make_shared<Triangle>(idx_ipp, center, mid)
-                );
-
-            assert(Math::vecEquals(nhat, subtri->nhat)); // Check orientation
-            // std::cout << nhat << '\n' << subtri->nhat << "\n\n";
-
-            subtris[iSubtri] = std::move(subtri);
-
-            ++iSubtri;
+            glEdgeToIdx.emplace(edge, numVerts++);
+            glVerts.push_back(mid);
         }
     }
 
-    //for (const auto& tri: subtris) {
-    //    for (const auto& X : tri->Xs)
-    //        std::cout << X << ' ';
-    //    std::cout << '\n';
-    //}
+    assert(numVerts == glVerts.size());
+    std::cout << "Refined to " << glVerts.size() << " vertices.\n";
+}
+
+// Construct all 6 subtris of this tri
+TriArr6 Triangle::getSubtris() {
+    TriArr6 subtris;
+    int iTri = 0;
+
+    for (int i = 0; i < 3; ++i) {
+        const int idx0 = glIdxs[i], idx1 = glIdxs[(i+1)%3];
+        const int idxMid = glEdgeToIdx[makeUpair(idx0,idx1)];
+
+        for (int j = 0; j < 2; ++j) {
+            auto subtri = (!j ?
+                std::make_shared<Triangle>(idx0,idxMid,glIdxCenter) :
+                std::make_shared<Triangle>(idx1,glIdxCenter,idxMid)
+                );
+
+            // assert(Math::vecEquals(nhat,subtri->nhat)); // Check orientation
+            // std::cout << nhat << '\n' << subtri->nhat << "\n\n";
+
+            subtris[iTri++] = std::move(subtri);
+        }
+    }
 
     return subtris;
 }
@@ -241,7 +246,7 @@ void Triangle::buildQuadCoeffs() {
 }
 
 //
-void Triangle::buildQuads() {
+void Triangle::buildQuads(const std::array<vec3d,3>& Xs) {
     auto baryToPos = [&](const vec3d& ws) {
         return ws[0]*Xs[0] + ws[1]*Xs[1] + ws[2]*Xs[2];
     };

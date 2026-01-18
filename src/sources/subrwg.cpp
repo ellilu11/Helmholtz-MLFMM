@@ -10,13 +10,14 @@ SubRWG::SubRWG(std::shared_ptr<Triangle> tri0, std::shared_ptr<Triangle> tri1)
     if (tris[0]->glIdxs[0] == tris[1]->glIdxs[0])
         glIdx = tris[0]->glIdxs[0];
 
+    const auto& Xs0 = tris[0]->getVerts();
+    const auto& Xs1 = tris[1]->getVerts();
+
     // Find common vertices
     int k = 0;
     for (int i = 0; i < 3; ++i) {
-        const vec3d& X0 = tris[0]->Xs[i];
         for (int j = 0; j < 3; ++j) {
-            const vec3d& X1 = tris[1]->Xs[j];
-            if (vecEquals(X0,X1)) Xc[k++] = X0;
+            if (vecEquals(Xs0[i],Xs1[j])) Xc[k++] = Xs0[i];
         }
     }
     const vec3d& dX = Xc[1]-Xc[0];
@@ -40,7 +41,7 @@ SubRWG::SubRWG(std::shared_ptr<Triangle> tri0, std::shared_ptr<Triangle> tri1)
 }
 
 void SubRWG::buildVertsToSubrwgs(int numVerts) {
-    // Remove duplicate subrwgs from global list based on their centers
+    /* Remove duplicate subrwgs from global list based on their centers
     std::cout << glSubrwgs.size() << " subrwgs before removing duplicates\n";
 
     std::sort(glSubrwgs.begin(), glSubrwgs.end(), 
@@ -58,6 +59,7 @@ void SubRWG::buildVertsToSubrwgs(int numVerts) {
     );
 
     std::cout << glSubrwgs.size() << " subrwgs after removing duplicates\n";
+    */
 
     // For each subrwg, map its coarse mesh vertex to itself
     vertsToSubrwgs.resize(numVerts);
