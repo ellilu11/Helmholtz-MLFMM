@@ -173,11 +173,8 @@ pair<SrcVec, shared_ptr<Excitation::PlaneWave>> importFromConfig(const Config& c
     // RWG sources
     const string configPath = "config/rwg/n"+to_string(config.nsrcs)+"/";
 
-    auto srcs = SrcRWG::importRWG(configPath+"vertices.txt",
-                          configPath+"faces.txt",
-                          configPath+"rwgs.txt",
-                          config.quadPrec,
-                          Einc);
+    Triangle::importTriangles(configPath+"vertices.txt",configPath+"faces.txt",config.quadPrec);
+    auto srcs = RWG::importRWG(configPath+"rwgs.txt", Einc);
     
     cout << fixed << setprecision(3);
     cout << "   Mode:            " << (config.mode == Mode::READ ? "READ" : "WRITE") << '\n';

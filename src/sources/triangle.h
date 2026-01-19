@@ -1,12 +1,8 @@
 #pragma once
 
 #include <filesystem>
+#include <ranges>
 #include "maps.h"
-
-class Triangle;
-
-using TriVec = std::vector<std::shared_ptr<Triangle>>;
-using TriArr6 = std::array<std::shared_ptr<Triangle>,6>;
 
 class Triangle {
 public:
@@ -17,40 +13,47 @@ public:
 
     static void importVertices(const std::filesystem::path& fpath);
 
-    static TriVec importTriangles(
+    static void importTriangles(
         const std::filesystem::path&,
         const std::filesystem::path&, 
         Precision);
 
-    Triangle(const vec3i&);
+    Triangle(const vec3i&, int);
 
-    Triangle(int, int, int);
+    static void refineVertices();
 
-    static void refineVertices(const TriVec&);
+    static void buildSubtris();
 
-    TriArr6 getSubtris();
+    static void buildEdgeToTri();
 
     static void buildQuadCoeffs();
 
     void buildQuads(const std::array<vec3d,3>&);
 
     std::array<vec3d,3> getVerts() const {
-        return { glVerts[glIdxs[0]], glVerts[glIdxs[1]], glVerts[glIdxs[2]] };
+        return { glVerts[iVerts[0]], glVerts[iVerts[1]], glVerts[iVerts[2]] };
     }
 
     //vec3d getCenter() const {
-    //    return (glVerts[glIdxs[0]] + glVerts[glIdxs[1]] + glVerts[glIdxs[2]]) / 3.0;
+    //    return (glVerts[iVerts[0]] + glVerts[iVerts[1]] + glVerts[iVerts[2]]) / 3.0;
     //}
 
-    std::vector<quadPair> getQuads() { return quads; }
+    std::vector<quadPair> getQuads() const { return quads; }
 
     static int getNumQuads() { return numQuads; }
 
     // bool isAdjacent(const std::shared_ptr<Triangle>&);
 
 public:
-    static std::vector<vec3d> glVerts;   // global list of fine vertices
-    static PairHashMap<int> glEdgeToIdx; // global list of indices of edges
+    // TODO: Place in Mesh::
+    static std::vector<vec3d> glVerts;      // indices to all vertices
+    static std::vector<Triangle> glTris;    // indices to all triangles
+    // static std::vector<Triangle> glSubtris; // indices to subtris (merge w/ glTris?)
+    static PairHashMap<int> glEdgeToIdx;    // coarse edges to indices
+    static PairHashMap<vec2i> glEdgeToTri;  // fine edges to subtri indices 
+
+    static size_t numCoarseVerts;
+    static size_t numCoarseTris;
 
 private:
     static std::vector<quadPair> quadCoeffs;
@@ -59,8 +62,9 @@ private:
 
     std::vector<quadPair> quads;
 
-    vec3i glIdxs;           // global indices of vertices
-    int glIdxCenter;        // global index of barycentric center
+    vec3i iVerts;         // global indices of vertices
+    int iCenter;          // global index of center
+    int iTri;             // index in glTris or glSubtris
 
     // std::array<vec3d,3> Xs; // vertices
     vec3d center;           // barycentric center

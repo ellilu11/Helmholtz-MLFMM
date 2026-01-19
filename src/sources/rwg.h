@@ -9,18 +9,31 @@ using SubRWGVec = std::vector<std::shared_ptr<SubRWG>>;
 class RWG : public Source {
 
 public:
-    RWG(std::shared_ptr<Excitation::PlaneWave>,
-        size_t,
-        std::shared_ptr<Triangle>, 
-        std::shared_ptr<Triangle>);
+    static SrcVec importRWG(
+        const std::filesystem::path&,
+        const std::shared_ptr<Excitation::PlaneWave>);
+
+    RWG(std::shared_ptr<Excitation::PlaneWave>, size_t, const vec4i&);
 
     vec3cd getIntegratedPlaneWave(const vec3d&,bool = 0) const;
 
     cmplx getIntegratedRad(const std::shared_ptr<Source>) const override;
 
-    double getLeng() const { return leng; }
+    std::array<Triangle,2> getTris() const {
+        return { Triangle::glTris[iTris[0]], Triangle::glTris[iTris[1]] };
+    }
 
-    vec3d getCenter() const override { return center; } 
+    std::array<vec3d,2> getVertsC() const {
+        return { Triangle::glVerts[iVertsC[0]], Triangle::glVerts[iVertsC[1]] };
+    }
+
+    std::array<vec3d,2> getVertsNC() const {
+        return { Triangle::glVerts[iVertsNC[0]], Triangle::glVerts[iVertsNC[1]] };
+    }
+
+    vec3d getCenter() const override { return center; }
+
+    double getLeng() const { return leng; }
 
     void buildVoltage() override {
         voltage = -Einc->amplitude
@@ -40,11 +53,10 @@ protected:
     // list of indices of subrwg having vert as common vert
     static std::vector<SubRWGVec> vertsToSubrwgs;
 
-    std::array<std::shared_ptr<Triangle>,2> tris;
+    vec2i iTris;   // indices of triangles
+    vec2i iVertsC;  // indices of common vertices
+    vec2i iVertsNC; // indices of non-common vertices
 
-    std::array<vec3d,2> Xc;   // common vertices
-    std::array<vec3d,2> Xnc;  // non-common vertices
-
-    vec3d center;   // midpoint of common edge
-    double leng;    // length of common edge
+    vec3d center;  // midpoint of common edge
+    double leng;   // length of common edge
 };

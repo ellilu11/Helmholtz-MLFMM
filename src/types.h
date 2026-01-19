@@ -12,6 +12,7 @@ using pair2cd = std::pair<cmplx, cmplx>;
 
 using vec2i = Eigen::Vector2i;
 using vec3i = Eigen::Vector3i;
+using vec4i = Eigen::Vector4i;
 using vec3d = Eigen::Vector3d;
 using vecXd = Eigen::VectorXd;
 
@@ -37,7 +38,7 @@ std::vector<T> operator+ (const std::vector<T>& zs, const std::vector<T>& ws) {
 }
 
 template <typename T>
-inline std::pair<T,T> makeUpair(T x, T y) noexcept {
+inline std::pair<T,T> makeUnordered(T x, T y) noexcept {
     return (x < y ? std::make_pair(x,y) : std::make_pair(y,x));
 }
 

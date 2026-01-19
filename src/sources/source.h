@@ -13,15 +13,15 @@ class Source {
 public:
     Source() = default;
     
-    Source(std::shared_ptr<Excitation::PlaneWave> Einc, size_t idx)
-        : Einc(std::move(Einc)), idx(idx), voltage(0.0)
+    Source(std::shared_ptr<Excitation::PlaneWave> Einc, size_t iSrc)
+        : Einc(std::move(Einc)), iSrc(iSrc), voltage(0.0)
     {};
 
     cmplx getVoltage() const { return voltage; }
 
-    size_t getIdx() const { return idx; }
+    size_t getIdx() const { return iSrc; }
 
-    void setIdx(size_t idx) { this->idx = idx; }
+    void setIdx(size_t iSrc) { this->iSrc = iSrc; }
 
     virtual vec3d getCenter() const = 0;
 
@@ -36,5 +36,5 @@ public:
 protected:
     std::shared_ptr<Excitation::PlaneWave> Einc;
     cmplx voltage;
-    size_t idx;
+    size_t iSrc;
 };

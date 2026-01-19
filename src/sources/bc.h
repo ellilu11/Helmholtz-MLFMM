@@ -8,7 +8,6 @@ public:
     BC(SrcRWG* const);
 
 private:
-    // std::array<std::shared_ptr<RWG>, 10> subrwgs;
     SubRWGVec subrwgs;
     SrcRWG* const base;
 

@@ -1,37 +1,38 @@
 #include "subrwg.h"
 
-SubRWG::SubRWG(std::shared_ptr<Triangle> tri0, std::shared_ptr<Triangle> tri1)
-    : RWG(nullptr, 0, std::move(tri0), std::move(tri1))
-{
-    using namespace Math;
+void SubRWG::buildSubRWGs() {
+    int iSub = 0;
+    for (const auto& [edge, iTri] : Triangle::glEdgeToTri) {
+        const vec4i& idx4 = 
+            { edge.first, edge.second, iTri[0], iTri[1]};
 
-    // If an RWG straddles two coarse mesh vertices, it does not contribute 
-    // to the BC function at either vertex
-    if (tris[0]->glIdxs[0] == tris[1]->glIdxs[0])
-        glIdx = tris[0]->glIdxs[0];
+        if (iTri[1] >= 0) { // Ignore edges not shared by two tris
+            //std::cout << "Building SubRWG for edge ("
+            //    << edge.first << ',' << edge.second << ") with tris # "
+            //    << iTri[0] << ' ' << iTri[1] << '\n';
 
-    const auto& Xs0 = tris[0]->getVerts();
-    const auto& Xs1 = tris[1]->getVerts();
-
-    // Find common vertices
-    int k = 0;
-    for (int i = 0; i < 3; ++i) {
-        for (int j = 0; j < 3; ++j) {
-            if (vecEquals(Xs0[i],Xs1[j])) Xc[k++] = Xs0[i];
+            glSubrwgs.push_back(std::make_shared<SubRWG>(idx4, iSub));
+            ++iSub;
         }
     }
-    const vec3d& dX = Xc[1]-Xc[0];
-    center = (Xc[0]+Xc[1])/2.0;
-    leng = dX.norm();
+}
 
-    /*
-    // Find non-common vertices
-    for (int i = 0; i < 2; ++i)
-        for (const auto& X : tris[i]->Xs)
-            if (!vecEquals(X,Xc[0]) && !vecEquals(X,Xc[1]))
-                Xnc[i] = X;
+SubRWG::SubRWG(const vec4i& idx4, int iSub)
+    : RWG(nullptr, iSub, idx4)
+{
+    const auto& [tri0, tri1] = getTris();
 
-    // Reorder tris if needed
+    // If an RWG straddles two coarse mesh vertices, 
+    // it does not contribute to the BC function at either vertex
+    if (tri0.iVerts[0] == tri1.iVerts[0])
+        iVertsCoarse = tri0.iVerts[0];
+
+    std::cout << "Built subRWG #" << iSrc << " w/ common vertices # "
+        << iVertsC[0] << ' '<< iVertsC[1] << " and non-common vertices # "
+        << iVertsNC[0] << ' ' << iVertsNC[1] << " and coarse vertex # "
+        << (iVertsCoarse.has_value() ? std::to_string(iVertsCoarse.value()) : "N/A") << "\n";
+
+    /* Reorder tris if needed
     const vec3d& nhat0 = dX.cross(Xnc[0] - Xc[0]);
     const vec3d& nhat1 = dX.cross(Xnc[1] - Xc[0]);
     assert(nhat0.dot(nhat0 - nhat1) > 0);
@@ -41,46 +42,26 @@ SubRWG::SubRWG(std::shared_ptr<Triangle> tri0, std::shared_ptr<Triangle> tri1)
 }
 
 void SubRWG::buildVertsToSubrwgs(int numVerts) {
-    /* Remove duplicate subrwgs from global list based on their centers
-    std::cout << glSubrwgs.size() << " subrwgs before removing duplicates\n";
-
-    std::sort(glSubrwgs.begin(), glSubrwgs.end(), 
-        [](std::shared_ptr<SubRWG> rwg0, std::shared_ptr<SubRWG> rwg1) {
-            return Math::vecLessThan(rwg0->center,rwg1->center);
-        }
-    );
-
-    glSubrwgs.erase(
-        std::unique(glSubrwgs.begin(),glSubrwgs.end(),
-        [](std::shared_ptr<SubRWG> rwg0,std::shared_ptr<SubRWG> rwg1) {
-            return Math::vecEquals(rwg0->center,rwg1->center);
-        }), 
-        glSubrwgs.end()
-    );
-
-    std::cout << glSubrwgs.size() << " subrwgs after removing duplicates\n";
-    */
-
     // For each subrwg, map its coarse mesh vertex to itself
     vertsToSubrwgs.resize(numVerts);
     for (const auto& rwg : glSubrwgs) {
-        if (rwg->glIdx)
-            vertsToSubrwgs[rwg->glIdx.value()].push_back(std::move(rwg));
+        if (rwg->iVertsCoarse)
+            vertsToSubrwgs[rwg->iVertsCoarse.value()].push_back(std::move(rwg));
     }
 
     /*
     int vIdx = 0;
-    for (const auto& rwgs : vertsToSubrwgs) {
-        std::cout << vIdx++ << "\n";
-        for (const auto& rwg : rwgs)
-            std::cout << rwg->Xc[0] << ' ' << rwg->Xc[1] << '\n';
+    for (const auto& vertToRwg : vertsToSubrwgs) {
+        std::cout << "Vertex # " << vIdx++ << " has subRWGs with common vertices # ";
+        for (const auto& rwg : vertToRwg)
+            std::cout << '(' << rwg->iVertsC[0] << ',' << rwg->iVertsC[1] << ") ";
         std::cout << '\n';
     }
     */
 }
 
 void SubRWG::setOriented(const vec3d& Xref, const vec3d& nhat, const vec3d& ehat) {
-    const auto& [X0,X1] = Xc;
+    const auto& [X0,X1] = getVertsC();
     assert(Math::vecEquals(Xref,X0) || Math::vecEquals(Xref,X1));
     // std::cout << X_bc << ' ' << X0 << ' ' << X1 << '\n';
     const vec3d& rhat = (Math::vecEquals(Xref,X0) ? X1-X0 : X0-X1).normalized();

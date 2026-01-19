@@ -3,12 +3,13 @@
 BC::BC(SrcRWG* const rwg) : base(rwg) {
     using namespace Math;
 
-    const auto& Xc = base->Xc;
+    const auto& vertsC = base->getVertsC();
+    vec3d ehat = (vertsC[1]-vertsC[0]).normalized();
 
     int idx = 0;
-    for (auto glIdx : base->glIdxc) {
-        const auto& X_bc = Xc[idx];
-        SubRWGVec vertrwgs = SubRWG::vertsToSubrwgs[glIdx]; // Find all subrwgs with X_bc as vertex
+    for (auto iVert : base->iVertsC) {
+        const auto& vert = vertsC[idx];
+        SubRWGVec vertrwgs = SubRWG::vertsToSubrwgs[iVert];
 
         /* Find average nhat at X_bc
         vec3d nhat = vec3d::Zero();
@@ -18,19 +19,19 @@ BC::BC(SrcRWG* const rwg) : base(rwg) {
                 // std::cout << tri->alpha * tri->nhat << '\n';
             }
         nhat.normalize();
-        */
         //std::cout << nhat << '\n';
+        */
 
-        const vec3d& ehat = (Xc[1]-Xc[0]).normalized() * sign(idx);
-        const vec3d& nhat = vertrwgs[0]->tris[0]->nhat; // WLOG pick an nhat
+        ehat *= sign(idx);
+        const vec3d& nhat = (vertrwgs[0]->getTris())[0].nhat; // WLOG pick an nhat
         
         for (const auto& rwg : vertrwgs) {
-            rwg->setOriented(X_bc,nhat,ehat);
+            rwg->setOriented(vert,nhat,ehat);
             std::cout << rwg->oriented << ' ';
         }
         std::cout << '\n';
 
-        std::cout << "Vertex " << glIdx << " has " << vertrwgs.size() << " subrwgs\n";
+        // std::cout << "Vertex " << iVert << " has " << vertrwgs.size() << " subrwgs\n";
 
         std::sort(vertrwgs.begin(),vertrwgs.end(), 
             [](std::shared_ptr<SubRWG> rwg0, std::shared_ptr<SubRWG> rwg1) {
