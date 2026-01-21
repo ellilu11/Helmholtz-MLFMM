@@ -2,11 +2,11 @@
 
 std::vector<vec3d> Triangle::glVerts;
 std::vector<Triangle> Triangle::glTris;
-PairHashMap<int> Triangle::glEdgeToIdx;
+PairHashMap<int> Triangle::glEdgeToMid;
 PairHashMap<vec2i> Triangle::glEdgeToTri;
 
-size_t Triangle::numCoarseVerts;
-size_t Triangle::numCoarseTris;
+size_t Triangle::NVerts;
+size_t Triangle::NTris;
 
 std::vector<quadPair> Triangle::quadCoeffs;
 Precision Triangle::quadPrec;
@@ -32,7 +32,7 @@ void Triangle::importTriangles(
     Precision prec)
 {
     importVertices(vpath);
-    numCoarseVerts = glVerts.size();
+    NVerts = glVerts.size();
 
     quadPrec = prec;
     buildQuadCoeffs();
@@ -49,19 +49,17 @@ void Triangle::importTriangles(
         if (iss >> iVerts) glTris.emplace_back(iVerts, iTri++);
         else throw std::runtime_error("Unable to parse line");
     }
-    numCoarseTris = glTris.size();
+    NTris = glTris.size();
 
-    // TODO: Merge these 3 functions
-    refineVertices();
     buildSubtris();
-    buildEdgeToTri();
+    buildSubtriMaps();
 }
 
 /* Triangle(iVerts)
  * Construct triangle from global indices of vertices
  * iVerts : global indices of vertices
  */
-Triangle::Triangle(const vec3i& iVerts, int iTri) 
+Triangle::Triangle(const vec3i& iVerts, int iTri)
     : iVerts(iVerts), iTri(iTri)
 {
     assert(iVerts.maxCoeff() < glVerts.size());
@@ -87,13 +85,14 @@ Triangle::Triangle(const vec3i& iVerts, int iTri)
     buildQuads(Xs);
 }
 
-void Triangle::refineVertices() {
-    assert(!glVerts.empty());
+// Construct all 6 subtris of all coarse tris and add to global list
+void Triangle::buildSubtris(){
+    // Refine vertices: add centers and midpoints of coarse tris
+    int iVerts = NVerts;
 
-    int numVerts = glVerts.size();
     for (auto& tri : glTris) {
         // Add center vertex
-        tri.iCenter = numVerts++;
+        tri.iCenter = iVerts++;
         glVerts.push_back(tri.center); 
 
         // Add midpoints of edges
@@ -103,29 +102,25 @@ void Triangle::refineVertices() {
             const auto& edge = makeUnordered(idx0,idx1);
 
             // Check if midpoint already exists
-            if (glEdgeToIdx.find(edge) != glEdgeToIdx.end())
+            if (glEdgeToMid.find(edge) != glEdgeToMid.end())
                 continue;
 
-            glEdgeToIdx.emplace(edge, numVerts++);
+            glEdgeToMid.emplace(edge, iVerts++);
             glVerts.push_back(mid);
         }
     }
 
-    assert(numVerts == glVerts.size());
-    // std::cout << "Refined to " << glVerts.size() << " vertices\n";
-}
+    assert(iVerts == glVerts.size());
 
-// Construct all 6 subtris of all coarse tris and add to global list
-void Triangle::buildSubtris(){
-    int iTri = glTris.size();
-
+    // Construct subtris
     std::vector<Triangle> glSubtris;
     glSubtris.reserve(6 * glTris.size());
 
+    int iSubtri = glTris.size();
     for (const auto& tri : glTris) {
         for (int i = 0; i < 3; ++i) {
             const int idx0 = tri.iVerts[i], idx1 = tri.iVerts[(i+1)%3], idxCenter = tri.iCenter;
-            const int idxMid = glEdgeToIdx[makeUnordered(idx0, idx1)];
+            const int idxMid = glEdgeToMid[makeUnordered(idx0, idx1)];
 
             for (int j = 0; j < 2; ++j) {
                 // Assign vertex on coarse mesh as first vertex of subtri
@@ -134,10 +129,10 @@ void Triangle::buildSubtris(){
                     vec3i(idx1, idxCenter, idxMid)
                     );
 
-                glSubtris.emplace_back(iVerts, iTri);
-                // assert(Math::vecEquals(nhat,glSubtris[iTri]->nhat)); // Check orientation
-                // std::cout << nhat << '\n' << glSubtris[iTri]->nhat << "\n\n";
-                ++iTri;
+                glSubtris.emplace_back(iVerts, iSubtri);
+                // assert(Math::vecEquals(nhat,glSubtris[iSubtri]->nhat)); // Check orientation
+                // std::cout << nhat << '\n' << glSubtris[iSubtri]->nhat << "\n\n";
+                ++iSubtri;
             }
         }
     }
@@ -146,10 +141,11 @@ void Triangle::buildSubtris(){
     glTris.insert(glTris.end(), glSubtris.begin(), glSubtris.end());
 }
 
-void Triangle::buildEdgeToTri() {
-    const auto glSubtris = glTris | std::views::drop(numCoarseTris);
+void Triangle::buildSubtriMaps() {
+    const auto glSubtris = glTris | std::views::drop(NTris);
 
     for (const auto& tri : glSubtris) {
+        // Build edge to subtri map
         for (int i = 0; i < 3; ++i) {
             const int idx0 = tri.iVerts[i], idx1 = tri.iVerts[(i+1)%3];
             const auto& edge = makeUnordered(idx0, idx1);
@@ -159,7 +155,19 @@ void Triangle::buildEdgeToTri() {
             else
                 glEdgeToTri[edge][1] = tri.iTri;
         }
+
+        // Build coarse tri to subtri map
+        // glTriToSubtri[tri.iBase].push_back(tri.iTri);
     }
+
+    /*
+    for (const auto& tri : glTriToSubtri) {
+        std::cout << " Coarse triangle #" << (&tri - &glTriToSubtri[0]) << " has subtris: ";
+        for (const auto& idx : tri)
+            std::cout << idx << " ";
+        std::cout << '\n';
+    }
+    */
 }
 
 void Triangle::buildQuadCoeffs() {

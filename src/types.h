@@ -8,6 +8,7 @@ using cmplxVec = std::vector<cmplx>;
 
 using pair2i = std::pair<int, int>;
 using pair2d = std::pair<double, double>;
+using pair2di = std::pair<double, int>;
 using pair2cd = std::pair<cmplx, cmplx>;
 
 using vec2i = Eigen::Vector2i;

@@ -1,8 +1,5 @@
 #include "rwg.h"
 
-SubRWGVec RWG::glSubrwgs;
-std::vector<SubRWGVec> RWG::vertsToSubrwgs;
-
 SrcVec RWG::importRWG(
     const std::filesystem::path& rpath,
     const std::shared_ptr<Excitation::PlaneWave> Einc)
@@ -25,11 +22,12 @@ SrcVec RWG::importRWG(
 
     SubRWG::buildSubRWGs();
 
-    SubRWG::buildVertsToSubrwgs(Triangle::numCoarseVerts);
+    SubRWG::buildVertsToSubrwgs(Triangle::NVerts);
 
-    //for (const auto& rwg : srcrwgs)
+    for (const auto& rwg : srcrwgs)
+        dynamic_pointer_cast<SrcRWG>(rwg)->buildSubIdx();
     //    dynamic_pointer_cast<SrcRWG>(rwg)->buildBC();
-
+        
     return srcrwgs;
 }
 
@@ -42,7 +40,6 @@ RWG::RWG(
     const auto& tris = getTris();
     const auto& verts = getVertsC();
 
-    center = (verts[0]+verts[1])/2.0;
     leng = (verts[0]-verts[1]).norm();
 
     // Find global indices non-common vertices
@@ -128,7 +125,7 @@ cmplx RWG::getIntegratedRad(const std::shared_ptr<Source> src) const {
 
     const double k = Einc->wavenum;
 
-    if (center == srcRWG->center) return 0.0; // TODO: Handle self-interactions
+    // if (iCenter == srcRWG->iCenter) return 0.0; // TODO: Handle self-interactions
  
     cmplx intRad = 0.0;
 

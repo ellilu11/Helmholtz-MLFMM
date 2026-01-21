@@ -3,11 +3,7 @@
 #include "source.h"
 #include "triangle.h"
 
-class SubRWG;
-using SubRWGVec = std::vector<std::shared_ptr<SubRWG>>;
-
 class RWG : public Source {
-
 public:
     static SrcVec importRWG(
         const std::filesystem::path&,
@@ -31,7 +27,10 @@ public:
         return { Triangle::glVerts[iVertsNC[0]], Triangle::glVerts[iVertsNC[1]] };
     }
 
-    vec3d getCenter() const override { return center; }
+    vec3d getCenter() const {
+        const auto& verts = getVertsC();
+        return (verts[0] + verts[1]) / 2.0;
+    }
 
     double getLeng() const { return leng; }
 
@@ -49,14 +48,9 @@ public:
     }
 
 protected:
-    static SubRWGVec glSubrwgs; // list of all subrwgs in mesh
-    // list of indices of subrwg having vert as common vert
-    static std::vector<SubRWGVec> vertsToSubrwgs;
-
-    vec2i iTris;   // indices of triangles
+    vec2i iTris;    // indices of triangles
     vec2i iVertsC;  // indices of common vertices
     vec2i iVertsNC; // indices of non-common vertices
 
-    vec3d center;  // midpoint of common edge
-    double leng;   // length of common edge
+    double leng;    // length of common edge
 };

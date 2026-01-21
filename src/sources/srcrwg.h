@@ -11,11 +11,15 @@ public:
            size_t,
            const Eigen::Vector4i&);
 
-    void buildSubRWGs();
+    void buildSubIdx();
 
     void buildBC() { bc = std::make_unique<BC>(this); }
 
+    vec3d getCenter() const override { return Triangle::glVerts[iCenter]; }
+
 private:
-    std::array<std::shared_ptr<SubRWG>,14> subrwgs;
+    std::array<int,10> iSubs;
     std::unique_ptr<BC> bc;
+
+    int iCenter; // index of midpoint of common edge
 };

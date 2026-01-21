@@ -8,7 +8,7 @@ public:
     BC(SrcRWG* const);
 
 private:
-    SubRWGVec subrwgs;
+    std::vector<SubRWG> subrwgs;
     SrcRWG* const base;
 
     vec2i numRWGs;
