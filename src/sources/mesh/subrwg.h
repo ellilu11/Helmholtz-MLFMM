@@ -6,11 +6,9 @@ class Mesh::SubRWG final : public RWG {
     friend class BC;
 
 public:
-    static void buildSubRWGs();
-
     SubRWG(int, const vec4i&);
 
-    static void buildVertsToSubrwgs(int);
+    static void buildVertsToSubRWGs(int);
 
     void setOriented(const vec3d&, const vec3d&, const vec3d&);
 

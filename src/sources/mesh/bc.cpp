@@ -27,9 +27,9 @@ Mesh::BC::BC(SrcRWG* const rwg) : base(rwg) {
         
         for (auto& rwg : vertrwgs) {
             rwg.setOriented(vert,nhat,ehat);
-            std::cout << rwg.oriented << ' ';
+            // std::cout << rwg.oriented << ' ';
         }
-        std::cout << '\n';
+        // std::cout << '\n';
 
         // std::cout << "Vertex " << iVert << " has " << vertrwgs.size() << " subrwgs\n";
 
@@ -47,5 +47,5 @@ Mesh::BC::BC(SrcRWG* const rwg) : base(rwg) {
         // std::cout << '\n';
     }
 
-    std::cout << '\n';
+    // std::cout << '\n';
 };

@@ -11,11 +11,33 @@ Mesh::RWG::RWG(
 
     leng = (verts[0]-verts[1]).norm();
 
-    // Find global indices non-common vertices
+    // Find global indices of non-common vertices
     for (int i = 0; i < 2; ++i)
         for (const auto& iVert : tris[i].iVerts)
             if (iVert != iVertsC[0] && iVert != iVertsC[1])
                 iVertsNC[i] = iVert;
+}
+
+void Mesh::RWG::refineRWGs() {
+    int iSub = 0;
+    for (const auto& [edge, iTris] : fineEdgeToTri) {
+        const vec4i& idx4 =
+            { edge.first, edge.second, iTris[0], iTris[1] };
+
+        if (iTris[1] < 0) continue; // Ignore edges not shared by two tris
+        //std::cout << "Building SubRWG for edge ("
+        //    << edge.first << ',' << edge.second << ") with tris # "
+        //    << iTri[0] << ' ' << iTri[1] << '\n';
+
+        glSubrwgs.emplace_back(iSub, idx4);
+        fineEdgeToSub.emplace(edge, iSub);
+        ++iSub;
+    }
+
+    //for (const auto& [edge, iSub] : fineEdgeToSub) {
+    //    std::cout << "Edge (" << edge.first << ',' << edge.second
+    //        << ") maps to subRWG # " << iSub << '\n';
+    //}
 }
 
 vec3cd Mesh::RWG::getIntegratedPlaneWave(const vec3d& kvec, bool doNumeric) const {

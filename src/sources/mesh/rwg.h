@@ -7,7 +7,9 @@ class Mesh::RWG : public Source {
 public:
     RWG(std::shared_ptr<Excitation::PlaneWave>, size_t, const vec4i&);
 
-    vec3cd getIntegratedPlaneWave(const vec3d&,bool = 0) const;
+    static void refineRWGs();
+
+    vec3cd getIntegratedPlaneWave(const vec3d&, bool = 0) const;
 
     cmplx getIntegratedRad(const std::shared_ptr<Source>) const override;
 

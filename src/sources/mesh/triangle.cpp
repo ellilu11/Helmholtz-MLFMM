@@ -41,8 +41,8 @@ void Mesh::Triangle::refineVertices() {
     int iVerts = nverts;
 
     for (auto& tri : glTris) {
-        // Add center vertex
-        tri.iCenter = iVerts++;
+        // Add center
+        tri.iCenter = iVerts++; // glVerts.size();
         glVerts.push_back(tri.center);
 
         // Add midpoints of edges
@@ -52,10 +52,10 @@ void Mesh::Triangle::refineVertices() {
             const auto& edge = makeUnordered(idx0, idx1);
 
             // Check if midpoint already exists
-            if (glEdgeToMid.find(edge) != glEdgeToMid.end())
+            if (edgeToMid.find(edge) != edgeToMid.end())
                 continue;
 
-            glEdgeToMid.emplace(edge, iVerts++);
+            edgeToMid.emplace(edge, iVerts++); // glVerts.size();
             glVerts.push_back(mid);
         }
     }
@@ -66,7 +66,7 @@ void Mesh::Triangle::refineVertices() {
 }
 
 // Construct all 6 subtris of all coarse tris and add to global list
-void Mesh::Triangle::buildSubtris(){
+void Mesh::Triangle::refineTriangles(){
     std::vector<Triangle> glSubtris;
     glSubtris.reserve(6 * glTris.size());
 
@@ -74,7 +74,7 @@ void Mesh::Triangle::buildSubtris(){
     for (const auto& tri : glTris) {
         for (int i = 0; i < 3; ++i) {
             const int idx0 = tri.iVerts[i], idx1 = tri.iVerts[(i+1)%3], idxCenter = tri.iCenter;
-            const int idxMid = glEdgeToMid[makeUnordered(idx0, idx1)];
+            const int idxMid = edgeToMid[makeUnordered(idx0, idx1)];
 
             for (int j = 0; j < 2; ++j) {
                 // Assign vertex on coarse mesh as first vertex of subtri
@@ -95,33 +95,23 @@ void Mesh::Triangle::buildSubtris(){
     glTris.insert(glTris.end(), glSubtris.begin(), glSubtris.end());
 }
 
+// TODO: Move into refineTriangles()
+// Build edge to subtri map
 void Mesh::Triangle::buildEdgeToTri() {
     const auto glSubtris = glTris | std::views::drop(ntris);
 
     for (const auto& tri : glSubtris) {
-        // Build edge to subtri map
+
         for (int i = 0; i < 3; ++i) {
             const int idx0 = tri.iVerts[i], idx1 = tri.iVerts[(i+1)%3];
             const auto& edge = makeUnordered(idx0, idx1);
 
-            if (glEdgeToTri.find(edge) == glEdgeToTri.end())
-                glEdgeToTri.emplace(edge, vec2i(tri.iTri, -1));
+            if (fineEdgeToTri.find(edge) == fineEdgeToTri.end())
+                fineEdgeToTri.emplace(edge, vec2i(tri.iTri, -1));
             else
-                glEdgeToTri[edge][1] = tri.iTri;
+                fineEdgeToTri[edge][1] = tri.iTri;
         }
-
-        // Build coarse tri to subtri map
-        // glTriToSubtri[tri.iBase].push_back(tri.iTri);
     }
-
-    /*
-    for (const auto& tri : glTriToSubtri) {
-        std::cout << " Coarse triangle #" << (&tri - &glTriToSubtri[0]) << " has subtris: ";
-        for (const auto& idx : tri)
-            std::cout << idx << " ";
-        std::cout << '\n';
-    }
-    */
 }
 
 void Mesh::Triangle::buildQuadCoeffs(Precision prec) {

@@ -11,21 +11,20 @@ namespace Mesh {
     class BC;
 
     // Global mesh data
-    std::vector<vec3d> glVerts;     // list of vertices (including refined)
-    std::vector<Triangle> glTris;   // list of triangles (including refined)
-    // SrcVec glRwgs;               // list of rwgs
-    std::vector<SubRWG> glSubrwgs;  // list of subrwgs
+    std::vector<vec3d> glVerts;     // list of vertices (including fine)
+    std::vector<Triangle> glTris;   // list of triangles (including fine)
+    // SrcVec glRwgs;               // list of rwgs (store globally?)
+    std::vector<SubRWG> glSubrwgs;  // list of fine rwgs
     size_t nverts;                  // number of coarse mesh vertices
     size_t ntris;                   // number of coarse mesh triangles
 
     // Mesh refinement maps
-    PairHashMap<int> glEdgeToMid;   // coarse edges to midpoint indices
-    PairHashMap<vec2i> glEdgeToTri; // fine edges to subtri indices 
-    PairHashMap<int> glEdgeToSub;   // edges to subrwg indices
-    // indices of subrwg having vert as common vert
-    std::vector<std::vector<SubRWG>> vertsToSubrwgs; 
+    PairHashMap<int> edgeToMid;       // coarse edges to midpoint indices
+    PairHashMap<vec2i> fineEdgeToTri; // fine edges to subtri indices 
+    PairHashMap<int> fineEdgeToSub;   // fine edges to subrwg indices
+    std::vector<std::vector<SubRWG>> vertsToSubrwgs; // indices of subrwgs containing vert
 
-    // Mesh import/refine functions
+    // Mesh functions
     void importVertices(const std::filesystem::path&);
 
     void importTriangles(const std::filesystem::path&);

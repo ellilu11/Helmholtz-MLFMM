@@ -1,11 +1,11 @@
 #include "mesh.h"
 
-void Mesh::importVertices(const std::filesystem::path& vpath) {
-    std::ifstream file(vpath);
+void Mesh::importVertices(const std::filesystem::path& path) {
+    std::ifstream file(path);
     if (!file) throw std::runtime_error("Unable to find file");
     std::string line;
 
-    while (getline(file, line)) {
+    while (std::getline(file, line)) {
         std::istringstream iss(line);
         vec3d vertex;
 
@@ -13,11 +13,11 @@ void Mesh::importVertices(const std::filesystem::path& vpath) {
         else throw std::runtime_error("Unable to parse line");
     }
 
-    nverts = glVerts.size(); // cache number of coarse vertices
+    nverts = glVerts.size(); // record number of coarse vertices
 }
 
-void Mesh::importTriangles(const std::filesystem::path& tpath) {
-    std::ifstream file(tpath);
+void Mesh::importTriangles(const std::filesystem::path& path) {
+    std::ifstream file(path);
     std::string line;
     if (!file) throw std::runtime_error("Unable to find file");
 
@@ -30,14 +30,14 @@ void Mesh::importTriangles(const std::filesystem::path& tpath) {
         else throw std::runtime_error("Unable to parse line");
     }
 
-    ntris = glTris.size(); // cache number of coarse triangles
+    ntris = glTris.size(); // record number of coarse triangles
 }
 
 SrcVec Mesh::importRWGs(
-    const std::filesystem::path& rpath,
+    const std::filesystem::path& path,
     const std::shared_ptr<Excitation::PlaneWave> Einc)
 {
-    std::ifstream file(rpath);
+    std::ifstream file(path);
     std::string line;
     if (!file) throw std::runtime_error("Unable to find file");
     SrcVec rwgs;
@@ -71,13 +71,22 @@ SrcVec Mesh::importMesh(
 
 void Mesh::refineMesh(const SrcVec& rwgs) {
     Triangle::refineVertices();
-    Triangle::buildSubtris();
+    Triangle::refineTriangles();
     Triangle::buildEdgeToTri();
 
-    SubRWG::buildSubRWGs();
-    SubRWG::buildVertsToSubrwgs(nverts);
+    RWG::refineRWGs();
 
     for (const auto& rwg : rwgs)
         dynamic_pointer_cast<SrcRWG>(rwg)->buildSubIdx();
-    //    dynamic_pointer_cast<SrcRWG>(rwg)->buildBC();
+
+    SubRWG::buildVertsToSubRWGs(nverts);
+
+    for (const auto& rwg : rwgs)
+        dynamic_pointer_cast<SrcRWG>(rwg)->buildBC();
+
+    // Clear refinement maps to save memory
+    edgeToMid.clear();
+    fineEdgeToTri.clear();
+    fineEdgeToSub.clear();
+    vertsToSubrwgs.clear();
 }

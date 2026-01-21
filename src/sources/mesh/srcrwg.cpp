@@ -8,18 +8,18 @@ Mesh::SrcRWG::SrcRWG(
 {
     buildVoltage(); 
 
-    std::cout << "Built srcRWG #" << iSrc << " w/ common vertices # " 
-        << iVertsC[0] << ' '<< iVertsC[1] << " and non-common vertices # "
-        << iVertsNC[0] << ' ' << iVertsNC[1] << "\n";
+    //std::cout << "Built srcRWG #" << iSrc << " w/ common vertices # " 
+    //    << iVertsC[0] << ' '<< iVertsC[1] << " and non-common vertices # "
+    //    << iVertsNC[0] << ' ' << iVertsNC[1] << "\n";
 };
 
 void Mesh::SrcRWG::buildSubIdx() {
     auto getIdxMid = [&](int i0, int i1) {
-        return glEdgeToMid.at(makeUnordered(i0, i1));
+        return edgeToMid.at(makeUnordered(i0, i1));
     };
 
     auto getIdxSub = [&](int i0, int i1) {
-        return glEdgeToSub.at(makeUnordered(i0, i1));
+        return fineEdgeToSub.at(makeUnordered(i0, i1));
     };
 
     auto iMid1 = getIdxMid(iVertsC[0], iVertsC[1]); // midpoint of common edge
@@ -32,6 +32,7 @@ void Mesh::SrcRWG::buildSubIdx() {
 
         auto i5 = 5*iPair;
 
+        // Use a loop?
         iSubs[i5] = getIdxSub(iMid0, iCenter); // edge 2 or 12
         iSubs[i5+1] = getIdxSub(iMid2, iCenter); // edge 3 or 14
         iSubs[i5+2] = getIdxSub(iVertsC[0], iCenter); // edge 4 or 9
@@ -45,18 +46,20 @@ void Mesh::SrcRWG::buildSubIdx() {
     //for (auto i : iSubs) std::cout << i << ' ';
     //std::cout << '\n';
 
+    /*
     for (auto i : iSubs) {
         //const auto& subrwg = SubRWG::glSubrwgs[i];
         //std::cout << subrwg.iVertsC[0] << ' ' << subrwg.iVertsC[1] << '\n';
          const auto& vertsC = glSubrwgs[i].getVertsC();
          std::cout << vertsC[0] << " " << vertsC[1] << '\n';
     }
+    */
 }
 
 /*
 void SrcRWG::buildAncestry() {
     // Find all subedges of this RWG
-    const auto& edgeMap = SubRWG::glEdgeToSub;
+    const auto& edgeMap = SubRWG::fineEdgeToSub;
 
     for (auto i : iTris) {
         for (int j = 0; j < 6; ++j) {
@@ -80,7 +83,7 @@ void SrcRWG::buildAncestry() {
 
     //
     for (const auto& edge : subedges) {
-        const auto& iSubtris = Triangle::glEdgeToTri[edge];
+        const auto& iSubtris = Triangle::fineEdgeToTri[edge];
         
         const int iBaseTri0 = (iSubtris[0] - Triangle::ntris) / 6;
         const int iBaseTri1 = (iSubtris[1] - Triangle::ntris) / 6;

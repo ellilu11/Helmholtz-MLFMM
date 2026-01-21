@@ -15,7 +15,7 @@ public:
 
     static void refineVertices();
 
-    static void buildSubtris();
+    static void refineTriangles();
 
     static void buildEdgeToTri();
 
