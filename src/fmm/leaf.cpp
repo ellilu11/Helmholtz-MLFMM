@@ -1,8 +1,5 @@
 #include "leaf.h"
 
-LeafVec FMM::Leaf::leaves;
-std::vector<LeafPair> FMM::Leaf::nearPairs;
-
 FMM::Leaf::Leaf(
     const SrcVec& srcs,
     const int branchIdx,

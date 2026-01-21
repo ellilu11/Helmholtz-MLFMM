@@ -487,7 +487,7 @@ std::shared_ptr<FMM::Node> FMM::Node::getNeighborGeqSize(const Dir dir) const {
  * nborGeqSize : neighbor node of greater or equal size
  * dir         : direction (must be consistent with direction of nborGeqSize)
  */
-NodeVec FMM::Node::getNeighborsLeqSize(
+FMM::NodeVec FMM::Node::getNeighborsLeqSize(
     const std::shared_ptr<Node> nborGeqSize, const Dir dir) const
 {
     NodeVec nbors{};

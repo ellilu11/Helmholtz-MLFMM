@@ -2,12 +2,11 @@
 
 void FMM::Angles::buildAngularSamples(int level)
 {
-    const double wavenum = Node::wavenum;
-    const double nodeLeng = Node::config.rootLeng / pow(2.0, level);
+    const double nodeLeng = config.rootLeng / pow(2.0, level);
 
     // Use excess bandwidth formula
     const int tau = ceil((1.73*wavenum*nodeLeng +
-        2.16*pow(Node::config.digits, 2.0/3.0)*pow(wavenum*nodeLeng, 1.0/3.0)));
+        2.16*pow(config.digits, 2.0/3.0)*pow(wavenum*nodeLeng, 1.0/3.0)));
 
     L = floor(0.50*tau); // TODO: Find optimal formula
 

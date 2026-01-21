@@ -3,11 +3,6 @@
 #include "node.h"
 #include "stem.h"
 
-class FMM::Leaf;
-
-using LeafVec = std::vector<std::shared_ptr<FMM::Leaf>>;
-using LeafPair = std::pair<std::shared_ptr<FMM::Leaf>, std::shared_ptr<FMM::Leaf>>;
-
 class FMM::Leaf final : public Node, public std::enable_shared_from_this<Leaf> {
 
 public:
@@ -17,7 +12,7 @@ public:
 
     void resizeCoeffs() override;
 
-    static void buildPairNearRads(const std::vector<NodePair>&, bool);
+    // static void buildPairNearRads(const std::vector<NodePair>&, bool);
 
     static void buildNearRads();
 
@@ -63,8 +58,6 @@ private:
 
     void evalSelfSols();
 
-    static LeafVec leaves;
-    static std::vector<LeafPair> nearPairs;
     inline static size_t glSrcIdx = 0;
 
     std::vector<cmplxVec> nearRads;

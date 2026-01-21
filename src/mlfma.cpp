@@ -23,7 +23,7 @@ int main() {
 
     auto nsrcs = srcs.size();
 
-    Node::initStatic(config, Einc, nsrcs);
+    initGlobal(config, Einc, nsrcs);
 
     return 0;
 
@@ -32,9 +32,9 @@ int main() {
 
     shared_ptr<Node> root;
     if (nsrcs > config.maxNodeSrcs)
-        root = make_shared<Stem>(srcs, 0, nullptr);
+        root = std::make_shared<Stem>(srcs, 0, nullptr);
     else
-        root = make_shared<Leaf>(srcs, 0, nullptr);
+        root = std::make_shared<Leaf>(srcs, 0, nullptr);
 
     root->buildLists();
 
@@ -55,7 +55,7 @@ int main() {
     std::cout << " Building FMM operators...\n";
 
     start = Clock::now();
-    Node::buildTables();
+    buildTables();
     root->resizeCoeffs(); // TODO: Hide this call
     end = Clock::now();
     duration_ms = end - start;
@@ -76,24 +76,24 @@ int main() {
     constexpr int MAX_ITER = 500;
     constexpr double EPS = 1.0E-6;
 
-    auto solver = make_unique<Solver>(srcs, root, MAX_ITER, EPS,
-        Node::lvec, Node::rvec, Node::currents);
+    auto solver = std::make_unique<Solver>(srcs, root, MAX_ITER, EPS,
+        lvec, rvec, currents);
 
     start = Clock::now();
-    solver->solve();
+    solver->updateRvec(0); // solver->solve();
     end = Clock::now();
     duration_ms = end - start;
     std::cout << "   Total elapsed time: " << duration_ms.count() << " ms\n\n";
 
-    solver->printSols("curr_nq7_enh.txt");
+    solver->printSols("rvec_nq7.txt");
     //root->printFarSols("ff_nq7.txt");
 
     if (!config.evalDirect) return 0;
 
     // ================== Solve iterative direct ================ //
-    Node::initStatic(config, Einc, nsrcs);
+    initGlobal(config, Einc, nsrcs);
 
-    root = make_shared<Leaf>(srcs, 0, nullptr);
+    root = std::make_shared<Leaf>(srcs, 0, nullptr);
     root->buildLists();
 
     std::cout << " Building nearfield interactions...\n";
@@ -106,12 +106,12 @@ int main() {
     std::cout << "   Elapsed time: " << duration_ms.count() << " ms\n\n";
 
     std::cout << " Solving w/ direct...\n";
-    solver = make_unique<Solver>(srcs, root, MAX_ITER, EPS,
-        Node::lvec, Node::rvec, Node::currents);
+    solver = std::make_unique<Solver>(srcs, root, MAX_ITER, EPS,
+        lvec, rvec, currents);
 
-    solver->solve();
+    solver->updateRvec(0); // solver->solve();
 
-    solver->printSols("currDir_nq7_enh.txt");
+    solver->printSols("rvecDir_nq7.txt");
 
     return 0;
 }

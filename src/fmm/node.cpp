@@ -1,30 +1,5 @@
 #include "node.h"
 
-Config FMM::Node::config;
-double FMM::Node::wavenum;
-std::vector<FMM::Angles> FMM::Node::angles;
-std::vector<FMM::Tables> FMM::Node::tables;
-std::vector<NodePair> FMM::Node::nonNearPairs;
-
-std::shared_ptr<vecXcd> FMM::Node::lvec;
-std::shared_ptr<vecXcd> FMM::Node::rvec;
-std::shared_ptr<vecXcd> FMM::Node::currents;
-
-void FMM::Node::initStatic(
-    const Config& config_,
-    const std::shared_ptr<Excitation::PlaneWave>& Einc,
-    int nsrcs)
-{
-    config = config_;
-    wavenum = Einc->wavenum;
-
-    lvec = std::make_shared<vecXcd>(vecXcd::Zero(nsrcs));
-    rvec = std::make_shared<vecXcd>(vecXcd::Zero(nsrcs));
-    currents = std::make_shared<vecXcd>(vecXcd::Zero(nsrcs)); // assume I = 0 initially
-
-    Leaf::resetLeaves();
-}
-
 /* Node(particles,branchIdx,base)
  * particles : list of particles contained in this node
  * branchidx : index of this node relative to its base node
@@ -41,18 +16,6 @@ FMM::Node::Node(
         base->center + nodeLeng/2.0 * Math::idx2pm(branchIdx))
 {
     ++numNodes;
-}
-
-void FMM::Node::buildTables() {
-    std::cout << "   (Lvl,Nth,Nph) =\n";
-    angles.reserve(maxLevel+1);
-    for (int level = 0; level <= maxLevel; ++level)
-        angles.emplace_back(level);
-
-    Tables::buildDists();
-    tables.reserve(maxLevel+1);
-    for (int level = 0; level <= maxLevel; ++level)
-        tables.emplace_back(level, maxLevel);
 }
 
 /* buildInteractionList()
