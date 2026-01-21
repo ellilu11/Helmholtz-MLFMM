@@ -3,29 +3,17 @@
 #include <cassert>
 #include <numeric>
 #include <queue>
-#include "../config.h"
-#include "../interp.h"
-#include "../phys.h"
+
 #include "angles.h"
 #include "fmm.h"
 #include "tables.h"
-
-using NodeVec = std::vector<std::shared_ptr<FMM::Node>>;
-using NodePair = std::pair<std::shared_ptr<FMM::Node>, std::shared_ptr<FMM::Node>>;
 
 class FMM::Node {
     friend struct Angles;
     friend class Tables;
 
 public:
-    static void initStatic(
-        const Config&, 
-        const std::shared_ptr<Excitation::PlaneWave>&,
-        int);
-
     Node(const SrcVec&, const int, Node* const);
-
-    static void buildTables();
 
     virtual void buildLists() = 0;
 
@@ -87,20 +75,8 @@ protected:
     
     virtual void buildNeighbors() = 0;
 
-public:
-    static std::shared_ptr<vecXcd> lvec;
-    static std::shared_ptr<vecXcd> rvec;
-    static std::shared_ptr<vecXcd> currents;
-
 protected:
-    static Config config;
-    static double wavenum;
-    static std::vector<Angles> angles;
-    static std::vector<Tables> tables;
-    static std::vector<NodePair> nonNearPairs;
-
     inline static int numNodes = 0;
-    inline static int maxLevel = 0;
 
     std::vector<vec2cd> coeffs;
     std::vector<vec2cd> localCoeffs;

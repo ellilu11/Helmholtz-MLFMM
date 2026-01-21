@@ -6,9 +6,9 @@ std::array<vec3d,316> FMM::Tables::dXs;
 
 std::vector<interpPair> FMM::Tables::getInterpTheta(int srcLvl, int tgtLvl) 
 {
-    const int order = Node::config.interpOrder;
+    const int order = config.interpOrder;
 
-    const realVec& srcThetas = Node::angles[srcLvl].thetas, tgtThetas = Node::angles[tgtLvl].thetas;
+    const realVec& srcThetas = angles[srcLvl].thetas, tgtThetas = angles[tgtLvl].thetas;
     const int mth = srcThetas.size(), nth = tgtThetas.size();
 
     std::vector<interpPair> interpPairs;
@@ -48,9 +48,9 @@ std::vector<interpPair> FMM::Tables::getInterpTheta(int srcLvl, int tgtLvl)
 
 std::vector<interpPair> FMM::Tables::getInterpPhi(int srcLvl, int tgtLvl)
 {
-    const int order = Node::config.interpOrder;
+    const int order = config.interpOrder;
 
-    const realVec& srcPhis = Node::angles[srcLvl].phis, tgtPhis = Node::angles[tgtLvl].phis;
+    const realVec& srcPhis = angles[srcLvl].phis, tgtPhis = angles[tgtLvl].phis;
     const int mph = srcPhis.size(), nph = tgtPhis.size();
 
     std::vector<interpPair> interpPairs;
@@ -90,12 +90,10 @@ void FMM::Tables::buildInterpTables() {
 Map<vecXcd> FMM::Tables::getAlpha() {
     using namespace Math;
 
-    const double wavenum = Node::wavenum;
-
-    const int L = Node::angles[level].L;
-    const int nth = Node::angles[level].getNumAngles().first;
-    const int nps = std::floor(Node::config.overInterp*(nth-1));
-    const double nodeLeng = Node::config.rootLeng / pow(2.0, level);
+    const int L = angles[level].L;
+    const int nth = angles[level].getNumAngles().first;
+    const int nps = std::floor(config.overInterp*(nth-1));
+    const double nodeLeng = config.rootLeng / pow(2.0, level);
 
     Map<vecXcd> alpha;
         
@@ -127,10 +125,10 @@ Map<vecXcd> FMM::Tables::getAlpha() {
 };
 
 HashMap<interpPair> FMM::Tables::getInterpPsi() {
-    const int order = Node::config.interpOrder;
+    const int order = config.interpOrder;
 
     // Find all unique psi = acos(khat.dot(rhat))
-    const auto& angles_lvl = Node::angles[level];
+    const auto& angles_lvl = angles[level];
     const auto [nth, nph] = angles_lvl.getNumAngles();
     const int nDir = nth*nph;
 
@@ -148,7 +146,7 @@ HashMap<interpPair> FMM::Tables::getInterpPsi() {
     psis.erase(std::unique(psis.begin(), psis.end()), psis.end());
 
     // Compute Lagrange coefficients for each possible psi
-    const int nps = std::floor(Node::config.overInterp*(nth-1));
+    const int nps = std::floor(config.overInterp*(nth-1));
 
     HashMap<interpPair> interpPairs;
 
@@ -176,16 +174,16 @@ HashMap<interpPair> FMM::Tables::getInterpPsi() {
 }
 
 void FMM::Tables::buildTranslationTable() {
-    const int order = Node::config.interpOrder;
+    const int order = config.interpOrder;
 
     const auto& alphas = getAlpha();
     const auto& interpPsis = getInterpPsi(); 
 
-    const auto& angles_lvl = Node::angles[level];
+    const auto& angles_lvl = angles[level];
     const auto [nth, nph] = angles_lvl.getNumAngles();
     const int nDir = nth*nph;
 
-    const int nps = std::floor(Node::config.overInterp*(nth-1));
+    const int nps = std::floor(config.overInterp*(nth-1));
 
     transl.reserve(dXs.size());
 

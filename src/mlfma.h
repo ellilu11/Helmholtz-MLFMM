@@ -14,6 +14,7 @@
 #include "math.cpp"
 #include "solver.cpp"
 #include "fmm/angles.cpp"
+#include "fmm/fmm.cpp"
 #include "fmm/leaf.cpp"
 #include "fmm/nbor.cpp"
 #include "fmm/node.cpp"
