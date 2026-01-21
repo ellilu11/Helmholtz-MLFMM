@@ -3,7 +3,7 @@
 #include "srcrwg.h"
 #include "subrwg.h"
 
-class BC {
+class Mesh::BC {
 public:
     BC(SrcRWG* const);
 

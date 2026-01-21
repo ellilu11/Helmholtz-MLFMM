@@ -19,10 +19,12 @@
 #include "fmm/node.cpp"
 #include "fmm/stem.cpp"
 #include "fmm/tables.cpp"
-#include "sources/bc.cpp"
-#include "sources/rwg.cpp"
-#include "sources/srcrwg.cpp"
-#include "sources/subrwg.cpp"
-#include "sources/triangle.cpp"
+#include "sources/dipole.cpp"
+#include "sources/mesh/bc.cpp"
+#include "sources/mesh/mesh.cpp"
+#include "sources/mesh/rwg.cpp"
+#include "sources/mesh/srcrwg.cpp"
+#include "sources/mesh/subrwg.cpp"
+#include "sources/mesh/triangle.cpp"
 
 // TODO: Reference additional headers your program requires here.

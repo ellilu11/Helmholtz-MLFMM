@@ -1,14 +1,10 @@
 #pragma once
 
-#include "source.h"
+#include "../source.h"
 #include "triangle.h"
 
-class RWG : public Source {
+class Mesh::RWG : public Source {
 public:
-    static SrcVec importRWG(
-        const std::filesystem::path&,
-        const std::shared_ptr<Excitation::PlaneWave>);
-
     RWG(std::shared_ptr<Excitation::PlaneWave>, size_t, const vec4i&);
 
     vec3cd getIntegratedPlaneWave(const vec3d&,bool = 0) const;
@@ -16,15 +12,15 @@ public:
     cmplx getIntegratedRad(const std::shared_ptr<Source>) const override;
 
     std::array<Triangle,2> getTris() const {
-        return { Triangle::glTris[iTris[0]], Triangle::glTris[iTris[1]] };
+        return { glTris[iTris[0]], glTris[iTris[1]] };
     }
 
     std::array<vec3d,2> getVertsC() const {
-        return { Triangle::glVerts[iVertsC[0]], Triangle::glVerts[iVertsC[1]] };
+        return { glVerts[iVertsC[0]], glVerts[iVertsC[1]] };
     }
 
     std::array<vec3d,2> getVertsNC() const {
-        return { Triangle::glVerts[iVertsNC[0]], Triangle::glVerts[iVertsNC[1]] };
+        return { glVerts[iVertsNC[0]], glVerts[iVertsNC[1]] };
     }
 
     vec3d getCenter() const {

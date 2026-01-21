@@ -1,65 +1,14 @@
 #include "triangle.h"
 
-std::vector<vec3d> Triangle::glVerts;
-std::vector<Triangle> Triangle::glTris;
-PairHashMap<int> Triangle::glEdgeToMid;
-PairHashMap<vec2i> Triangle::glEdgeToTri;
-
-size_t Triangle::NVerts;
-size_t Triangle::NTris;
-
-std::vector<quadPair> Triangle::quadCoeffs;
-Precision Triangle::quadPrec;
-int Triangle::numQuads;
-
-void Triangle::importVertices(const std::filesystem::path& vpath) {
-    std::ifstream file(vpath);
-    if (!file) throw std::runtime_error("Unable to find file");
-    std::string line;
-
-    while (getline(file,line)) {
-        std::istringstream iss(line);
-        vec3d vertex;
-
-        if (iss >> vertex) glVerts.push_back(vertex);
-        else throw std::runtime_error("Unable to parse line");
-    }
-}
-
-void Triangle::importTriangles(
-    const std::filesystem::path& vpath, 
-    const std::filesystem::path& fpath, 
-    Precision prec)
-{
-    importVertices(vpath);
-    NVerts = glVerts.size();
-
-    quadPrec = prec;
-    buildQuadCoeffs();
-
-    std::ifstream file(fpath);
-    std::string line;
-    if (!file) throw std::runtime_error("Unable to find file");
-
-    int iTri = 0;
-    while (std::getline(file, line)) {
-        std::istringstream iss(line);
-        vec3i iVerts;
-
-        if (iss >> iVerts) glTris.emplace_back(iVerts, iTri++);
-        else throw std::runtime_error("Unable to parse line");
-    }
-    NTris = glTris.size();
-
-    buildSubtris();
-    buildSubtriMaps();
-}
+std::vector<quadPair> Mesh::Triangle::quadCoeffs;
+Precision Mesh::Triangle::quadPrec;
+int Mesh::Triangle::numQuads;
 
 /* Triangle(iVerts)
  * Construct triangle from global indices of vertices
  * iVerts : global indices of vertices
  */
-Triangle::Triangle(const vec3i& iVerts, int iTri)
+Mesh::Triangle::Triangle(const vec3i& iVerts, int iTri)
     : iVerts(iVerts), iTri(iTri)
 {
     assert(iVerts.maxCoeff() < glVerts.size());
@@ -69,6 +18,8 @@ Triangle::Triangle(const vec3i& iVerts, int iTri)
     //          << iVerts[2] << '\n';
 
     const auto Xs = getVerts();
+
+    center = (Xs[0] + Xs[1] + Xs[2]) / 3.0;
 
     for (int i = 0; i < 3; ++i) Ds[i] = Xs[(i+1)%3] - Xs[i];
     nhat = (Ds[0].cross(Ds[1])).normalized();
@@ -85,21 +36,20 @@ Triangle::Triangle(const vec3i& iVerts, int iTri)
     buildQuads(Xs);
 }
 
-// Construct all 6 subtris of all coarse tris and add to global list
-void Triangle::buildSubtris(){
-    // Refine vertices: add centers and midpoints of coarse tris
-    int iVerts = NVerts;
+// Refine vertices: add centers and midpoints of coarse tris
+void Mesh::Triangle::refineVertices() {
+    int iVerts = nverts;
 
     for (auto& tri : glTris) {
         // Add center vertex
         tri.iCenter = iVerts++;
-        glVerts.push_back(tri.center); 
+        glVerts.push_back(tri.center);
 
         // Add midpoints of edges
         for (int i = 0; i < 3; ++i) {
             const int idx0 = tri.iVerts[i], idx1 = tri.iVerts[(i+1)%3];
             const vec3d mid = (glVerts[idx0] + glVerts[idx1]) / 2.0;
-            const auto& edge = makeUnordered(idx0,idx1);
+            const auto& edge = makeUnordered(idx0, idx1);
 
             // Check if midpoint already exists
             if (glEdgeToMid.find(edge) != glEdgeToMid.end())
@@ -111,8 +61,12 @@ void Triangle::buildSubtris(){
     }
 
     assert(iVerts == glVerts.size());
+    //for (const auto& vert : glVerts) 
+    //    std::cout << (&vert - &glVerts[0]) << ": " << vert.transpose() << '\n';
+}
 
-    // Construct subtris
+// Construct all 6 subtris of all coarse tris and add to global list
+void Mesh::Triangle::buildSubtris(){
     std::vector<Triangle> glSubtris;
     glSubtris.reserve(6 * glTris.size());
 
@@ -141,8 +95,8 @@ void Triangle::buildSubtris(){
     glTris.insert(glTris.end(), glSubtris.begin(), glSubtris.end());
 }
 
-void Triangle::buildSubtriMaps() {
-    const auto glSubtris = glTris | std::views::drop(NTris);
+void Mesh::Triangle::buildEdgeToTri() {
+    const auto glSubtris = glTris | std::views::drop(ntris);
 
     for (const auto& tri : glSubtris) {
         // Build edge to subtri map
@@ -170,7 +124,9 @@ void Triangle::buildSubtriMaps() {
     */
 }
 
-void Triangle::buildQuadCoeffs() {
+void Mesh::Triangle::buildQuadCoeffs(Precision prec) {
+    quadPrec = prec;
+
     numQuads = [&]() {
         switch (quadPrec) {
             case Precision::VERYLOW: return 1;
@@ -275,7 +231,7 @@ void Triangle::buildQuadCoeffs() {
 }
 
 //
-void Triangle::buildQuads(const std::array<vec3d,3>& Xs) {
+void Mesh::Triangle::buildQuads(const std::array<vec3d,3>& Xs) {
     auto baryToPos = [&](const vec3d& ws) {
         return ws[0]*Xs[0] + ws[1]*Xs[1] + ws[2]*Xs[2];
     };
@@ -289,7 +245,7 @@ void Triangle::buildQuads(const std::array<vec3d,3>& Xs) {
 //
 
 /*
-void Triangle::buildQuads() {
+void Mesh::Triangle::buildQuads() {
     auto baryToPos = [&](double w0, double w1, double w2) {
         return w0*Xs[0] + w1*Xs[1] + w2*Xs[2];
     };

@@ -2,7 +2,7 @@
 
 #include "rwg.h"
 
-class SubRWG final : public RWG {
+class Mesh::SubRWG final : public RWG {
     friend class BC;
 
 public:
@@ -12,20 +12,11 @@ public:
 
     static void buildVertsToSubrwgs(int);
 
-    void buildCoeffs();
-
     void setOriented(const vec3d&, const vec3d&, const vec3d&);
 
     //std::vector<int> getBases() const { return iBases; }
 
     //void addBase(int iBase) { iBases.push_back(iBase); }
-
-public:
-    static std::vector<SubRWG> glSubrwgs;   // indices to subrwgs
-    static PairHashMap<int> glEdgeToSub; // edges to subrwg indices
-
-    // list of indices of subrwg having vert as common vert
-    static std::vector<std::vector<SubRWG>> vertsToSubrwgs;
 
 private:
     // std::vector<int> iBases; // indices of parent RWGs

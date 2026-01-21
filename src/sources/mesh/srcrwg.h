@@ -3,7 +3,7 @@
 #include "rwg.h"
 #include "subrwg.h"
 
-class SrcRWG final : public RWG {
+class Mesh::SrcRWG final : public RWG {
     friend class BC;
 
 public:
@@ -15,11 +15,9 @@ public:
 
     void buildBC() { bc = std::make_unique<BC>(this); }
 
-    vec3d getCenter() const override { return Triangle::glVerts[iCenter]; }
+    // vec3d getCenter() const override { return glVerts[iCenter]; } // needs mesh to be refined
 
 private:
     std::array<int,10> iSubs;
     std::unique_ptr<BC> bc;
-
-    int iCenter; // index of midpoint of common edge
 };

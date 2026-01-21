@@ -1,37 +1,6 @@
 #include "rwg.h"
 
-SrcVec RWG::importRWG(
-    const std::filesystem::path& rpath,
-    const std::shared_ptr<Excitation::PlaneWave> Einc)
-{
-    std::ifstream file(rpath);
-    std::string line;
-    if (!file) throw std::runtime_error("Unable to find file");
-    SrcVec srcrwgs;
-    size_t iSrc = 0;
-
-    while (std::getline(file, line)) {
-        std::istringstream iss(line);
-        Eigen::Vector4i idx4;
-
-        if (iss >> idx4)
-            srcrwgs.push_back(std::make_shared<SrcRWG>(Einc, iSrc++, idx4));
-        else
-            throw std::runtime_error("Unable to parse line");
-    }
-
-    SubRWG::buildSubRWGs();
-
-    SubRWG::buildVertsToSubrwgs(Triangle::NVerts);
-
-    for (const auto& rwg : srcrwgs)
-        dynamic_pointer_cast<SrcRWG>(rwg)->buildSubIdx();
-    //    dynamic_pointer_cast<SrcRWG>(rwg)->buildBC();
-        
-    return srcrwgs;
-}
-
-RWG::RWG(
+Mesh::RWG::RWG(
     std::shared_ptr<Excitation::PlaneWave> Einc, size_t iSrc, const vec4i& idx4)
     : Source(std::move(Einc), iSrc),
     iTris({ idx4[2], idx4[3] }),
@@ -49,7 +18,7 @@ RWG::RWG(
                 iVertsNC[i] = iVert;
 }
 
-vec3cd RWG::getIntegratedPlaneWave(const vec3d& kvec, bool doNumeric) const {
+vec3cd Mesh::RWG::getIntegratedPlaneWave(const vec3d& kvec, bool doNumeric) const {
     using namespace Math;
 
     const auto& tris = getTris();
@@ -113,7 +82,7 @@ vec3cd RWG::getIntegratedPlaneWave(const vec3d& kvec, bool doNumeric) const {
 /* getIntegratedRad(src)
  * Return the radiated field due to src tested with this RWG
  */
-cmplx RWG::getIntegratedRad(const std::shared_ptr<Source> src) const {
+cmplx Mesh::RWG::getIntegratedRad(const std::shared_ptr<Source> src) const {
 
     const auto srcRWG = dynamic_pointer_cast<RWG>(src);
 

@@ -1,12 +1,8 @@
 #include "subrwg.h"
 
-std::vector<SubRWG> SubRWG::glSubrwgs;
-PairHashMap<int> SubRWG::glEdgeToSub;
-std::vector<std::vector<SubRWG>> SubRWG::vertsToSubrwgs;
-
-void SubRWG::buildSubRWGs() {
+void Mesh::SubRWG::buildSubRWGs() {
     int iSub = 0;
-    for (const auto& [edge, iTris] : Triangle::glEdgeToTri) {
+    for (const auto& [edge, iTris] : glEdgeToTri) {
         const vec4i& idx4 = 
             { edge.first, edge.second, iTris[0], iTris[1]};
 
@@ -26,7 +22,7 @@ void SubRWG::buildSubRWGs() {
     //}
 }
 
-SubRWG::SubRWG(int iSub, const vec4i& idx4)
+Mesh::SubRWG::SubRWG(int iSub, const vec4i& idx4)
     : RWG(nullptr, iSub, idx4)
 {
     const auto& [tri0, tri1] = getTris();
@@ -36,10 +32,10 @@ SubRWG::SubRWG(int iSub, const vec4i& idx4)
     if (tri0.iVerts[0] == tri1.iVerts[0])
         iVertsCoarse = tri0.iVerts[0];
 
-    //std::cout << "Built subRWG #" << iSrc << " w/ common vertices # "
-    //    << iVertsC[0] << ' '<< iVertsC[1] << " and non-common vertices # "
-    //    << iVertsNC[0] << ' ' << iVertsNC[1] << " and coarse vertex # "
-    //    << (iVertsCoarse.has_value() ? std::to_string(iVertsCoarse.value()) : "N/A") << "\n";
+    std::cout << "Built subRWG #" << iSrc << " w/ common vertices # "
+        << iVertsC[0] << ' '<< iVertsC[1] << " and non-common vertices # "
+        << iVertsNC[0] << ' ' << iVertsNC[1] << " and coarse vertex # "
+        << (iVertsCoarse.has_value() ? std::to_string(iVertsCoarse.value()) : "N/A") << "\n";
 
     /* Reorder tris if needed
     const vec3d& nhat0 = dX.cross(Xnc[0] - Xc[0]);
@@ -50,7 +46,7 @@ SubRWG::SubRWG(int iSub, const vec4i& idx4)
     */
 }
 
-void SubRWG::buildVertsToSubrwgs(int numVerts) {
+void Mesh::SubRWG::buildVertsToSubrwgs(int numVerts) {
     // For each subrwg, map its coarse mesh vertex to itself
     vertsToSubrwgs.resize(numVerts);
     for (const auto& rwg : glSubrwgs) {
@@ -69,11 +65,7 @@ void SubRWG::buildVertsToSubrwgs(int numVerts) {
     */
 }
 
-void SubRWG::buildCoeffs() {
-
-}
-
-void SubRWG::setOriented(const vec3d& Xref, const vec3d& nhat, const vec3d& ehat) {
+void Mesh::SubRWG::setOriented(const vec3d& Xref, const vec3d& nhat, const vec3d& ehat) {
     const auto& [X0,X1] = getVertsC();
     assert(Math::vecEquals(Xref,X0) || Math::vecEquals(Xref,X1));
     // std::cout << X_bc << ' ' << X0 << ' ' << X1 << '\n';

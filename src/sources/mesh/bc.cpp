@@ -1,6 +1,6 @@
 #include "bc.h"
 
-BC::BC(SrcRWG* const rwg) : base(rwg) {
+Mesh::BC::BC(SrcRWG* const rwg) : base(rwg) {
     using namespace Math;
 
     const auto& vertsC = base->getVertsC();
@@ -9,7 +9,7 @@ BC::BC(SrcRWG* const rwg) : base(rwg) {
     int idx = 0;
     for (auto iVert : base->iVertsC) {
         const auto& vert = vertsC[idx];
-        auto vertrwgs = SubRWG::vertsToSubrwgs[iVert];
+        auto vertrwgs = vertsToSubrwgs[iVert];
 
         /* Find average nhat at X_bc
         vec3d nhat = vec3d::Zero();
