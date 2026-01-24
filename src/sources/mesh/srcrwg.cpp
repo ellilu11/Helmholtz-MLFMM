@@ -13,7 +13,7 @@ Mesh::SrcRWG::SrcRWG(
     //    << iVertsNC[0] << ' ' << iVertsNC[1] << "\n";
 };
 
-void Mesh::SrcRWG::buildSubIdx() {
+void Mesh::SrcRWG::findSubRWGs() {
     auto getIdxMid = [&](int i0, int i1) {
         return edgeToMid.at(makeUnordered(i0, i1));
     };
@@ -56,6 +56,21 @@ void Mesh::SrcRWG::buildSubIdx() {
     */
 }
 
+// Propagate rval to rval of fine RWGs
+// TODO: Zero out fine RWG rvals in caller before calling this
+void Mesh::SrcRWG::propagateRvals() {
+    constexpr std::array<double,5> rcoeffs =
+        { -1.0/6.0, 1.0/6.0, -1.0/3.0, 1.0/3.0, 1.0 };
+
+    rval = (*FMM::rvec)[iSrc]; // get updated rval from FMM
+
+    for (size_t i = 0; i < iSubs.size(); ++i) {
+        auto& subrwg = glSubrwgs[iSubs[i]];
+
+        subrwg.addToRval(leng / subrwg.getLeng() * rcoeffs[i%5] * rval);
+    }
+}
+
 /*
 void SrcRWG::buildAncestry() {
     // Find all subedges of this RWG
@@ -72,7 +87,7 @@ void SrcRWG::buildAncestry() {
                     subtri.iVerts[(k+1)%3]
                 );
 
-                // TODO: Exclude edges at boundary of this RWG
+                // Exclude edges at boundary of this RWG
                 const int iIdxSub = edgeMap.at(edge);
                 iSubs.push_back(iIdxSub);
             }
@@ -80,16 +95,5 @@ void SrcRWG::buildAncestry() {
     }
 
     assert(iSubs.size() == 14);
-
-    //
-    for (const auto& edge : subedges) {
-        const auto& iSubtris = Triangle::fineEdgeToTri[edge];
-        
-        const int iBaseTri0 = (iSubtris[0] - Triangle::ntris) / 6;
-        const int iBaseTri1 = (iSubtris[1] - Triangle::ntris) / 6;
-
-        if (iBaseTri0 == iTris[0] || iBaseTri0 == iTris[1] || iBaseTri1 == iTris[0] || iBaseTri1 == iTris[1])
-            iBases.push_back(iSrc);
-    }//
 }
 */

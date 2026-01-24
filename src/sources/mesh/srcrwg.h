@@ -11,7 +11,9 @@ public:
            size_t,
            const Eigen::Vector4i&);
 
-    void buildSubIdx();
+    void findSubRWGs();
+
+    void propagateRvals();
 
     void buildBC() { bc = std::make_unique<BC>(this); }
 

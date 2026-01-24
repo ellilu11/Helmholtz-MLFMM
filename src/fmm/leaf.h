@@ -32,11 +32,6 @@ public:
 
     static int getNumLeaves() { return leaves.size(); }
 
-    static void resetLeaves() { 
-        leaves.clear(); 
-        nearPairs.clear();
-    }
-
     NodeVec getNearNonNbors() const { return nearNonNbors; }
 
     NodeVec getNearNbors() const { return nearNbors; }

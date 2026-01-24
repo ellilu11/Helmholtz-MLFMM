@@ -3,14 +3,14 @@
 #include <filesystem>
 
 namespace Mesh {
-    // Mesh classes
+    // Types
     class Triangle;
     class RWG;
     class SrcRWG;
     class SubRWG;
     class BC;
 
-    // Global mesh data
+    // Global data
     std::vector<vec3d> glVerts;     // list of vertices (including fine)
     std::vector<Triangle> glTris;   // list of triangles (including fine)
     // SrcVec glRwgs;               // list of rwgs (store globally?)
@@ -18,13 +18,14 @@ namespace Mesh {
     size_t nverts;                  // number of coarse mesh vertices
     size_t ntris;                   // number of coarse mesh triangles
 
-    // Mesh refinement maps
+    // Refinement maps
     PairHashMap<int> edgeToMid;       // coarse edges to midpoint indices
     PairHashMap<vec2i> fineEdgeToTri; // fine edges to subtri indices 
     PairHashMap<int> fineEdgeToSub;   // fine edges to subrwg indices
-    std::vector<std::vector<SubRWG>> vertsToSubrwgs; // indices of subrwgs containing vert
+    // std::vector<intVec> vertToTris; // indices of tris containing vert
+    std::vector<intVec> vertToSubs; // indices of subrwgs containing vert
 
-    // Mesh functions
+    // Functions
     void importVertices(const std::filesystem::path&);
 
     void importTriangles(const std::filesystem::path&);

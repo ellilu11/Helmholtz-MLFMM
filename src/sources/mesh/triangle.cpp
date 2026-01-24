@@ -12,13 +12,8 @@ Mesh::Triangle::Triangle(const vec3i& iVerts, int iTri)
     : iVerts(iVerts), iTri(iTri)
 {
     assert(iVerts.maxCoeff() < glVerts.size());
-    //std::cout << "Building triangle with indices: " 
-    //          << iVerts[0] << ", " 
-    //          << iVerts[1] << ", " 
-    //          << iVerts[2] << '\n';
 
     const auto Xs = getVerts();
-
     center = (Xs[0] + Xs[1] + Xs[2]) / 3.0;
 
     for (int i = 0; i < 3; ++i) Ds[i] = Xs[(i+1)%3] - Xs[i];
@@ -28,10 +23,6 @@ Mesh::Triangle::Triangle(const vec3i& iVerts, int iTri)
     // Assume a closed, star-shaped mesh centered at and enclosing the origin
     if (center.dot(nhat) < 0.0) nhat *= -1.0;
     // std::cout << center.dot(nhat) << '\n';
-
-    //alpha = acos(
-    //    (Ds[0].normalized()).dot(-Ds[2].normalized())
-    //);
 
     buildQuads(Xs);
 }
@@ -61,11 +52,9 @@ void Mesh::Triangle::refineVertices() {
     }
 
     assert(iVerts == glVerts.size());
-    //for (const auto& vert : glVerts) 
-    //    std::cout << (&vert - &glVerts[0]) << ": " << vert.transpose() << '\n';
 }
 
-// Construct all 6 subtris of all coarse tris and add to global list
+// Construct all 6 fine tris of all coarse tris and add to global list
 void Mesh::Triangle::refineTriangles(){
     std::vector<Triangle> glSubtris;
     glSubtris.reserve(6 * glTris.size());
@@ -84,8 +73,7 @@ void Mesh::Triangle::refineTriangles(){
                     );
 
                 glSubtris.emplace_back(iVerts, iSubtri);
-                // assert(Math::vecEquals(nhat,glSubtris[iSubtri]->nhat)); // Check orientation
-                // std::cout << nhat << '\n' << glSubtris[iSubtri]->nhat << "\n\n";
+                assert(Math::vecEquals(tri.nhat,glSubtris[iSubtri-glTris.size()].nhat)); // Check orientation
                 ++iSubtri;
             }
         }

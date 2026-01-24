@@ -10,10 +10,10 @@ Mesh::SubRWG::SubRWG(int iSub, const vec4i& idx4)
     if (tri0.iVerts[0] == tri1.iVerts[0])
         iVertsCoarse = tri0.iVerts[0];
 
-    //std::cout << "Built subRWG #" << iSrc << " w/ common vertices # "
-    //    << iVertsC[0] << ' '<< iVertsC[1] << " and non-common vertices # "
-    //    << iVertsNC[0] << ' ' << iVertsNC[1] << " and coarse vertex # "
-    //    << (iVertsCoarse.has_value() ? std::to_string(iVertsCoarse.value()) : "N/A") << "\n";
+    /*std::cout << "Built subRWG #" << iSrc << " w/ common vertices # "
+        << iVertsC[0] << ' '<< iVertsC[1] << " and non-common vertices # "
+        << iVertsNC[0] << ' ' << iVertsNC[1] << " and coarse vertex # "
+        << (iVertsCoarse.has_value() ? std::to_string(iVertsCoarse.value()) : "N/A") << "\n";*/
 
     /* Reorder tris if needed
     const vec3d& nhat0 = dX.cross(Xnc[0] - Xc[0]);
@@ -26,31 +26,43 @@ Mesh::SubRWG::SubRWG(int iSub, const vec4i& idx4)
 
 void Mesh::SubRWG::buildVertsToSubRWGs(int numVerts) {
     // For each subrwg, map its coarse mesh vertex to itself
-    vertsToSubrwgs.resize(numVerts);
+    vertToSubs.resize(numVerts);
+
+    int iSub = 0;
     for (const auto& rwg : glSubrwgs) {
         if (rwg.iVertsCoarse)
-            vertsToSubrwgs[rwg.iVertsCoarse.value()].push_back(std::move(rwg));
+            vertToSubs[rwg.iVertsCoarse.value()].push_back(iSub);
+        ++iSub;
     }
 
     /*
     int vIdx = 0;
-    for (const auto& vertToRwg : vertsToSubrwgs) {
-        std::cout << "Vertex #" << vIdx++ << " has subRWGs with common vertices # ";
-        for (const auto& rwg : vertToRwg)
+    for (const auto& vertToSub : vertToSubs) {
+        std::cout << "Vertex #" << vIdx++ << " has subRWGs #";
+        for (const auto& iSub : vertToSub) {
+            std::cout << ' ' << iSub;
+        }
+        std::cout << " with common vertices # ";
+        for (const auto& iSub : vertToSub) {
+            const auto& rwg = glSubrwgs[iSub];
             std::cout << '(' << rwg.iVertsC[0] << ',' << rwg.iVertsC[1] << ") ";
+        }
+
         std::cout << '\n';
     }
     */
 }
 
-void Mesh::SubRWG::setOriented(const vec3d& Xref, const vec3d& nhat, const vec3d& ehat) {
-    const auto& [X0,X1] = getVertsC();
-    assert(Math::vecEquals(Xref,X0) || Math::vecEquals(Xref,X1));
-    // std::cout << X_bc << ' ' << X0 << ' ' << X1 << '\n';
-    const vec3d& rhat = (Math::vecEquals(Xref,X0) ? X1-X0 : X0-X1).normalized();
+void Mesh::SubRWG::setOriented(int iVert, const vec3d& nhat, const vec3d& ehat) {
+    const vec3d& Xref = glVerts[iVert]; // vertex on coarse mesh
+    const auto& [X0,X1] = getVertsC(); // vertices of common edge
+
+    auto [i0, i1] = iVertsC;
+    assert(i0 == iVert || i1 == iVert);
+
+    const vec3d& rhat = (i0 == iVert ? X1-X0 : X0-X1).normalized();
+
     const double angle = atan2(nhat.dot(ehat.cross(rhat)),ehat.dot(rhat));
 
-    // std::cout << angle << '\n';
-
-    oriented = (angle < 0.0 ? angle+2.0*PI : angle);
+    oriented = (Math::approxLess(angle,0.0) ? angle+2.0*PI : angle);
 }

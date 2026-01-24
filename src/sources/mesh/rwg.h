@@ -46,9 +46,9 @@ public:
     }
 
 protected:
-    vec2i iTris;    // indices of triangles
-    vec2i iVertsC;  // indices of common vertices
-    vec2i iVertsNC; // indices of non-common vertices
+    std::array<int,2> iTris;    // indices of triangles
+    std::array<int,2> iVertsC;  // indices of common vertices
+    std::array<int,2> iVertsNC; // indices of non-common vertices
 
     double leng;    // length of common edge
 };

@@ -7,9 +7,10 @@ class Mesh::BC {
 public:
     BC(SrcRWG* const);
 
-private:
-    std::vector<SubRWG> subrwgs;
-    SrcRWG* const base;
+    void receiveRvals();
 
-    vec2i numRWGs;
+private:
+    SrcRWG* const base;
+    std::array<intVec,2> iSubss;
+    cmplx rval;
 };

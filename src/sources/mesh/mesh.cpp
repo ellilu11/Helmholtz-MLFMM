@@ -77,7 +77,7 @@ void Mesh::refineMesh(const SrcVec& rwgs) {
     RWG::refineRWGs();
 
     for (const auto& rwg : rwgs)
-        dynamic_pointer_cast<SrcRWG>(rwg)->buildSubIdx();
+        dynamic_pointer_cast<SrcRWG>(rwg)->findSubRWGs();
 
     SubRWG::buildVertsToSubRWGs(nverts);
 
@@ -88,5 +88,5 @@ void Mesh::refineMesh(const SrcVec& rwgs) {
     edgeToMid.clear();
     fineEdgeToTri.clear();
     fineEdgeToSub.clear();
-    vertsToSubrwgs.clear();
+    vertToSubs.clear();
 }

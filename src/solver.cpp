@@ -47,6 +47,12 @@ void Solver::updateRvec(int k) {
 
     FMM::Leaf::evaluateSols();
 
+    // Do RWG -> Fine RWG -> BC rval propagation
+
+    // Do inverse mass matrix
+
+    // Do 2nd ZI product
+
     if (!k) {
         std::cout << "   Elapsed time (S2M): " << t.S2M.count() << " ms\n";
         std::cout << "   Elapsed time (M2M): " << t.M2M.count() << " ms\n";

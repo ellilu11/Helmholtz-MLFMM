@@ -50,5 +50,5 @@ private:
     vec3d center;           // barycentric center 
     std::array<vec3d,3> Ds; // edge displacements (Ds[i] = Xs[i+1] - Xs[i])
     vec3d nhat;             // surface normal unit vector
-    // double alpha;        // angle between 0th and 2nd edges
+    double alpha;        // angle between 0th and 2nd edges
 };

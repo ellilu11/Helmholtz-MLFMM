@@ -45,6 +45,7 @@ namespace FMM {
     std::vector<NodePair> nonNearPairs;
     std::vector<LeafPair> nearPairs;
 
+    // Move to global namespace?
     std::shared_ptr<vecXcd> lvec;
     std::shared_ptr<vecXcd> rvec;
     std::shared_ptr<vecXcd> currents;
@@ -56,4 +57,9 @@ namespace FMM {
         int);
 
     void buildTables();
+
+    void resetLeaves() {
+        leaves.clear();
+        nearPairs.clear();
+    }
 }

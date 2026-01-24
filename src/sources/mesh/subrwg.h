@@ -10,7 +10,7 @@ public:
 
     static void buildVertsToSubRWGs(int);
 
-    void setOriented(const vec3d&, const vec3d&, const vec3d&);
+    void setOriented(int, const vec3d&, const vec3d&);
 
     //std::vector<int> getBases() const { return iBases; }
 
