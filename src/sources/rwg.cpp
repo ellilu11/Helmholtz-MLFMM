@@ -64,7 +64,8 @@ vec3cd RWG::getIntegratedPlaneWave(const vec3d& kvec, bool doNumeric) const {
 
         if (approxZero(gamma)) {
             const cmplx
-                f2 = (expI_alpha*(alphasq + 2.0*iu*alpha - 2.0) + 2.0) / (2.0*alpha*alphasq);
+                f2 = (approxZero(alpha) ? iu/6.0 :
+                    (expI_alpha*(alphasq + 2.0*iu*alpha - 2.0) + 2.0) / (2.0*alpha*alphasq) );
 
             radVec = -f1_alpha * (Xs[0] - Xpm[triIdx]) - iu*f2 * (Ds[0] - Ds[2]);
 
@@ -78,11 +79,9 @@ vec3cd RWG::getIntegratedPlaneWave(const vec3d& kvec, bool doNumeric) const {
         }
 
         rad += exp(iu*kvec.dot(Xs[0])) * radVec * sign(triIdx++);
-
-        //if (rad.norm() > 1.0E3)
-        //    std::cout << alpha << ' ' << beta << ' ' << gamma << ' ' << rad.norm() << '\n';
     }
 
+    assert(!std::isnan(rad.norm()));
     return leng * rad;
 }
 
@@ -136,5 +135,6 @@ cmplx RWG::getIntegratedRad(const std::shared_ptr<Source> src) const {
         ++obsTriIdx;
     }
 
+    assert(!std::isnan(intRad.real()) && !std::isnan(intRad.imag()));
     return leng * srcRWG->leng * intRad;
 }

@@ -242,7 +242,7 @@ pair<SrcVec, shared_ptr<Excitation::PlaneWave>> importFromConfig(const Config& c
 
     // RWG sources
     Triangle::buildQuadCoeffs(config.quadPrec);
-    const string configPath = "config/rwg/n"+to_string(config.nsrcs)+"/";
+    const string configPath = "config/rwg/box"+to_string(config.nsrcs)+"/";
     auto srcs = importRWG(configPath+"vertices.txt",
                           configPath+"faces.txt",
                           configPath+"rwgs.txt",
