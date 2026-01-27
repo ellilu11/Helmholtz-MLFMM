@@ -46,10 +46,10 @@ inline std::pair<T,T> makeUnordered(T x, T y) noexcept {
 }
 
 std::ostream& operator<< (std::ostream& os, cmplx z) {
-    //char sign = z.imag() >= 0.0 ? '+' : '-';
-    //os << z.real() << sign << abs(z.imag()) << 'i';
+    char sign = z.imag() >= 0.0 ? '+' : '-';
+    os << z.real() << sign << abs(z.imag()) << 'i';
 
-    os << z.real() << ' ' << z.imag();
+    // os << z.real() << ' ' << z.imag();
 
     return os;
 }

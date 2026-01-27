@@ -24,8 +24,6 @@ int main() {
     auto nsrcs = srcs.size();
     initGlobal(config, Einc, nsrcs);
 
-    // return 0;
-
     // ==================== Set up nodes ==================== //
     std::cout << " Building nodes...\n";
 

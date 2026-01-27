@@ -13,7 +13,7 @@ const vec3d zeroVec = vec3d::Zero();
 const std::array<vec3d, 2> poles{ vec3d(0, 0, 1), vec3d(0, 0, -1) };
 
 namespace Math {
-    constexpr double FEPS = 1.0E-6; // floating point error tolerance
+    constexpr double FEPS = 5.0E-5; // floating point error tolerance
 
     inline size_t bools2Idx(const std::array<bool,3>& x) noexcept {
         return x[0] + 2 * x[1] + 4 * x[2];
