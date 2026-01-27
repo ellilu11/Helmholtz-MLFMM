@@ -24,7 +24,11 @@ Mesh::Triangle::Triangle(const vec3i& iVerts, int iTri)
     if (center.dot(nhat) < 0.0) nhat *= -1.0;
     // std::cout << center.dot(nhat) << '\n';
 
+    area = (Ds[0].cross(-Ds[2])).norm() / 2.0;
+
     buildQuads(Xs);
+
+    // std::cout << "Built triangle #" << iTri << " with area " << area << '\n';
 }
 
 // Refine vertices: add centers and midpoints of coarse tris

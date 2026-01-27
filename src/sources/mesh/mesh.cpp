@@ -60,7 +60,7 @@ SrcVec Mesh::importMesh(
     const std::filesystem::path& vpath,
     const std::filesystem::path& tpath,
     const std::filesystem::path& rpath,
-    const std::shared_ptr<Excitation::PlaneWave> Einc) 
+    std::shared_ptr<Excitation::PlaneWave> Einc) 
 {
     importVertices(vpath); 
 
@@ -84,7 +84,8 @@ void Mesh::refineMesh(const SrcVec& rwgs) {
     for (const auto& rwg : rwgs)
         dynamic_pointer_cast<SrcRWG>(rwg)->buildBC();
 
-    // Clear refinement maps to save memory
+    SubRWG::buildMassCoeffs();
+
     edgeToMid.clear();
     fineEdgeToTri.clear();
     fineEdgeToSub.clear();

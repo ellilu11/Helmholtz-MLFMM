@@ -26,7 +26,7 @@ void FMM::Angles::buildAngularSamples(int level)
     for (int iph = 0; iph < nph; ++iph)
         phis[iph] = 2.0*PI*iph/static_cast<double>(nph);
 
-    std::cout << "   (" << level << "," << thetas.size() << "," << phis.size() << ")\n";
+    // std::cout << "   (" << level << "," << thetas.size() << "," << phis.size() << ")\n";
 }
 
 void FMM::Angles::buildAngularMatrices() {

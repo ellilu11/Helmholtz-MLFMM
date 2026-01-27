@@ -8,6 +8,8 @@ using Clock = std::chrono::high_resolution_clock;
 struct ClockTimes {
     ClockTimes() = default;
 
+    void resetTimes() { *this = {}; }
+
     Time S2M{};
     Time M2M{};
     Time M2L{};

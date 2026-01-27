@@ -39,12 +39,12 @@ Solver::Solver(
 }
 
 void Solver::updateRvec(int k) {
+    t.resetTimes();
+
     if (root->isNodeType<FMM::Stem>()) {
         root->buildMpoleCoeffs();
-
         root->buildLocalCoeffs();
     }
-
     FMM::Leaf::evaluateSols();
 
     // Do RWG -> Fine RWG -> BC rval propagation

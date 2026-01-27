@@ -1,6 +1,5 @@
 #pragma once
 
-
 #include <ranges>
 #include "mesh.h"
 
@@ -42,13 +41,13 @@ private:
 
     std::vector<quadPair> quads;
 
+    int iTri;     // index in glTris
     vec3i iVerts; // indices of vertices
     int iCenter;  // index of center
-    int iTri;     // index in glTris
 
     // Store or compute these on the fly?
     vec3d center;           // barycentric center 
     std::array<vec3d,3> Ds; // edge displacements (Ds[i] = Xs[i+1] - Xs[i])
     vec3d nhat;             // surface normal unit vector
-    double alpha;        // angle between 0th and 2nd edges
+    double area;            // area of triangle
 };

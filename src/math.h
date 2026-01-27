@@ -135,8 +135,10 @@ namespace Math {
     //    };
     //}
 
-    inline Eigen::Matrix3cd dyadicG(const vec3d& X, double k) noexcept {
+    inline Eigen::Matrix3cd dyadicG(const vec3d& X, double k) {
         const double r = X.norm(), kr = k*r, invkrsq = 1.0/(kr*kr);
+        if (approxZero(r)) throw std::runtime_error("dyadicG: singularity at r = 0");
+
         const cmplx iinvkr = iu/kr;
         const vec3d& rhat = X / r; // X.normalized()
         const mat3d& RR = rhat * rhat.transpose();

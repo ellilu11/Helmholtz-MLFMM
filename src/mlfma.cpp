@@ -19,13 +19,12 @@ int main() {
     auto [srcs, Einc] = importFromConfig(config);
     auto end = Clock::now();
     Time duration_ms = end - start;
-    std::cout << "   Elapsed time: " << duration_ms.count() << " ms\n\n";
+    // std::cout << "   Elapsed time: " << duration_ms.count() << " ms\n\n";
 
     auto nsrcs = srcs.size();
-
     initGlobal(config, Einc, nsrcs);
 
-    return 0;
+    // return 0;
 
     // ==================== Set up nodes ==================== //
     std::cout << " Building nodes...\n";
@@ -85,7 +84,7 @@ int main() {
     duration_ms = end - start;
     std::cout << "   Total elapsed time: " << duration_ms.count() << " ms\n\n";
 
-    solver->printSols("rvec_nq7.txt");
+    solver->printSols("rvec.txt");
     //root->printFarSols("ff_nq7.txt");
 
     if (!config.evalDirect) return 0;
@@ -111,7 +110,7 @@ int main() {
 
     solver->updateRvec(0); // solver->solve();
 
-    solver->printSols("rvecDir_nq7.txt");
+    solver->printSols("rvecDir.txt");
 
     return 0;
 }

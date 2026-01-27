@@ -10,14 +10,13 @@ public:
 
     static void buildVertsToSubRWGs(int);
 
+    static void buildMassCoeffs();
+
+    double getMassCoeff(const SubRWG&) const;
+
     void setOriented(int, const vec3d&, const vec3d&);
 
-    //std::vector<int> getBases() const { return iBases; }
-
-    //void addBase(int iBase) { iBases.push_back(iBase); }
-
 private:
-    // std::vector<int> iBases; // indices of parent RWGs
     realVec coeffs;
 
     // global index of vertex (if it exists) in coarse mesh contributing to BC

@@ -11,7 +11,7 @@ Mesh::RWG::RWG(
 
     leng = (verts[0]-verts[1]).norm();
 
-    // Find global indices of non-common vertices
+    // Find indices of non-common vertices
     for (int i = 0; i < 2; ++i)
         for (const auto& iVert : tris[i].iVerts)
             if (iVert != iVertsC[0] && iVert != iVertsC[1])
@@ -19,6 +19,8 @@ Mesh::RWG::RWG(
 }
 
 void Mesh::RWG::refineRWGs() {
+    triToSubs.resize(glTris.size());
+
     int iSub = 0;
     for (const auto& [edge, iTris] : fineEdgeToTri) {
         const vec4i& idx4 =
@@ -81,8 +83,12 @@ vec3cd Mesh::RWG::getIntegratedPlaneWave(const vec3d& kvec, bool doNumeric) cons
         vec3cd radVec;
 
         if (approxZero(gamma)) {
+            // TODO: Handle alpha -> 0
             const cmplx
-                f2 = (expI_alpha*(alphasq + 2.0*iu*alpha - 2.0) + 2.0) / (2.0*alpha*alphasq);
+                f2 = (approxZero(alpha) ? 
+                        iu/6.0 : 
+                        (expI_alpha*(alphasq + 2.0*iu*alpha - 2.0) + 2.0) / (2.0*alpha*alphasq)
+                     );
 
             radVec = -f1_alpha * (Xs[0] - Xnc[iTri]) - iu*f2 * (Ds[0] - Ds[2]);
 
@@ -98,6 +104,7 @@ vec3cd Mesh::RWG::getIntegratedPlaneWave(const vec3d& kvec, bool doNumeric) cons
         rad += exp(iu*kvec.dot(Xs[0])) * radVec * sign(iTri++);
     }
 
+    assert(!std::isnan(rad.norm()));
     return leng * rad;
 }
 
@@ -116,7 +123,7 @@ cmplx Mesh::RWG::getIntegratedRad(const std::shared_ptr<Source> src) const {
 
     const double k = Einc->wavenum;
 
-    // if (iCenter == srcRWG->iCenter) return 0.0; // TODO: Handle self-interactions
+    if (iSrc == src->getIdx()) return 0.0; // TODO: Handle self-interactions
  
     cmplx intRad = 0.0;
 
@@ -158,5 +165,6 @@ cmplx Mesh::RWG::getIntegratedRad(const std::shared_ptr<Source> src) const {
         ++obsPairIdx;
     }
 
+    assert(!std::isnan(intRad.real()) && !std::isnan(intRad.imag()));
     return leng * srcRWG->leng * intRad;
 }

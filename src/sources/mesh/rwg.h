@@ -33,8 +33,9 @@ public:
     double getLeng() const { return leng; }
 
     void buildVoltage() override {
+        bool doNumeric = false;
         voltage = -Einc->amplitude
-            * conj(getIntegratedPlaneWave(Einc->wavevec).dot(Einc->pol)); // Hermitian dot!
+            * conj(getIntegratedPlaneWave(Einc->wavevec,doNumeric).dot(Einc->pol)); // Hermitian dot!
     }
 
     vec3cd getRadAlongDir(const vec3d& X, const vec3d& kvec) const override {
@@ -50,5 +51,5 @@ protected:
     std::array<int,2> iVertsC;  // indices of common vertices
     std::array<int,2> iVertsNC; // indices of non-common vertices
 
-    double leng;    // length of common edge
+    double leng; // length of common edge
 };

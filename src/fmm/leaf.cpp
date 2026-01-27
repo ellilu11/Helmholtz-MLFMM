@@ -77,7 +77,6 @@ void FMM::Leaf::findNearNborPairs() {
 }
 
 void FMM::Leaf::buildNearRads() {
-
     findNearNborPairs();
 
     for (const auto& [obsLeaf, srcLeaf] : nearPairs) {

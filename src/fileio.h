@@ -5,27 +5,6 @@
 
 using namespace std; // TODO: Remove
 
-shared_ptr<Excitation::PlaneWave> importPlaneWave(const filesystem::path& fpath)
-{
-    ifstream inFile(fpath);
-    if (!inFile) throw runtime_error("Unable to find file");
-
-    string line;
-    getline(inFile, line);
-    istringstream iss(line);
-
-    shared_ptr<Excitation::PlaneWave> Einc;
-
-    vec3d pol, wavehat;
-    double wavenum, amplitude;
-    if (iss >> amplitude >> pol >> wavehat >> wavenum)
-        Einc = make_shared<Excitation::PlaneWave>(pol, wavehat, wavenum, amplitude);
-    else
-        throw std::runtime_error("Unable to parse line");
-
-    return Einc;
-}
-
 std::filesystem::path makePath(const Config& config) {
     std::string distStr =
         [&]() -> std::string {
@@ -44,7 +23,7 @@ std::filesystem::path makePath(const Config& config) {
 
 pair<SrcVec, shared_ptr<Excitation::PlaneWave>> importFromConfig(const Config& config) 
 {
-    auto Einc = importPlaneWave("config/pwave.txt");
+    auto Einc = Excitation::importPlaneWave("config/pwave.txt");
 
     /* Dipole sources
     const auto fpath = makePath(config);
@@ -66,14 +45,15 @@ pair<SrcVec, shared_ptr<Excitation::PlaneWave>> importFromConfig(const Config& c
     */
 
     // RWG sources
-    const string configPath = "config/rwg/n"+to_string(config.nsrcs)+"/";
+    Mesh::Triangle::buildQuadCoeffs(config.quadPrec); // build triangle quadrature coeffs
+
+    const string configPath = "config/rwg/box"+to_string(config.nsrcs)+"/";
     auto srcs = Mesh::importMesh(
         configPath+"vertices.txt",
         configPath+"faces.txt",
         configPath+"rwgs.txt",
         Einc);
-    Mesh::refineMesh(srcs);
-    Mesh::Triangle::buildQuadCoeffs(config.quadPrec); // build triangle quadrature coeffs
+    // Mesh::refineMesh(srcs);
     //
 
     cout << fixed << setprecision(3);
