@@ -13,7 +13,6 @@ namespace FMM {
     // Constants
     constexpr int DIM = 3;
     constexpr int numDir = 26;
-    constexpr double EPS_NR = 1.0E-9; // Newton-Raphson precision
 
     // Types
     enum class Dir {
@@ -35,8 +34,8 @@ namespace FMM {
     using LeafPair = std::pair<std::shared_ptr<Leaf>, std::shared_ptr<Leaf>>;
 
     // Global data
-    Config config;
-    double wavenum;
+    Config config; // move into global namespace
+    double wavenum; // move into global namespace
     std::vector<Angles> angles;
     std::vector<Tables> tables;
     inline int maxLevel = 0;

@@ -33,7 +33,7 @@ std::vector<realVec> testGaussLegendre(const int maxOrder, double a, double b) {
     std::vector<realVec> nodesVec;
 
     for (int l = 1; l <= maxOrder; ++l) {
-        auto [nodes, weights] = Interp::gaussLegendre(l, 1.0E-9, a, b);
+        auto [nodes, weights] = Math::gaussLegendre(l, a, b);
         std::cout << "l = " << l << ": ";
         for (int k = 0; k < l; ++k)
             std::cout << '(' << nodes[k] << ',' << weights[k] << ") ";

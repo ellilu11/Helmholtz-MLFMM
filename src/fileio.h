@@ -47,7 +47,7 @@ pair<SrcVec, shared_ptr<Excitation::PlaneWave>> importFromConfig(const Config& c
     // RWG sources
     Mesh::Triangle::buildQuadCoeffs(config.quadPrec); // build triangle quadrature coeffs
 
-    const string configPath = "config/rwg/box"+to_string(config.nsrcs)+"/";
+    const string configPath = "config/rwg/sph"+to_string(config.nsrcs)+"/";
     auto srcs = Mesh::importMesh(
         configPath+"vertices.txt",
         configPath+"faces.txt",

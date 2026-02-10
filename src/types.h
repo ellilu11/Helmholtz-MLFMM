@@ -28,7 +28,9 @@ using mat23d = Eigen::Matrix<double, 2, 3>;
 using matXcd = Eigen::MatrixXcd;
 
 using interpPair = std::pair<vecXd, int>;
-using quadPair = std::pair<vec3d, double>;
+
+template <typename T>
+using quadPair = std::pair<T, double>;
 
 template <typename T>
 std::vector<T> operator+ (const std::vector<T>& zs, const std::vector<T>& ws) {
@@ -46,17 +48,17 @@ inline std::pair<T,T> makeUnordered(T x, T y) noexcept {
 }
 
 std::ostream& operator<< (std::ostream& os, cmplx z) {
-    char sign = z.imag() >= 0.0 ? '+' : '-';
-    os << z.real() << sign << abs(z.imag()) << 'i';
+    //char sign = z.imag() >= 0.0 ? '+' : '-';
+    //os << z.real() << sign << abs(z.imag()) << 'i';
 
-    // os << z.real() << ' ' << z.imag();
+    os << z.real() << ' ' << z.imag();
 
     return os;
 }
 
 std::ostream& operator<< (std::ostream& os, const vec3d& X) {
-    // os << X[0] << " " << X[1] << " " << X[2];
-    os << '(' << X[0] << " " << X[1] << " " << X[2] << ')';
+    os << X[0] << " " << X[1] << " " << X[2];
+    // os << '(' << X[0] << " " << X[1] << " " << X[2] << ')';
     return os;
 }
 

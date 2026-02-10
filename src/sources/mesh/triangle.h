@@ -10,17 +10,25 @@ public:
     friend class SubRWG;
     friend class BC;
 
+    static void buildQuadCoeffs(Precision);
+
     Triangle(const vec3i&, int);
+
+    intVec getCommonVerts(const Triangle&) const;
+
+    cmplx getAdjacentIntegrated(const vec3d&, const vec3d&, const vec3d&) const;
+
+    cmplx getDuffyIntegrated(const vec3d&, const vec3d&, const vec3d&) const;
+
+    void buildTriQuads(const std::array<vec3d,3>&);
+
+    static void buildRadMoments();
 
     static void refineVertices();
 
     static void refineTriangles();
 
     static void buildEdgeToTri();
-
-    static void buildQuadCoeffs(Precision);
-
-    void buildQuads(const std::array<vec3d,3>&);
 
     std::array<vec3d,3> getVerts() const {
         return { glVerts[iVerts[0]], glVerts[iVerts[1]], glVerts[iVerts[2]] };
@@ -30,16 +38,16 @@ public:
     //    return (glVerts[iVerts[0]] + glVerts[iVerts[1]] + glVerts[iVerts[2]]) / 3.0;
     //}
 
-    std::vector<quadPair> getQuads() const { return quads; }
+    std::vector<quadPair<vec3d>> getQuads() const { return triQuads; }
 
     static int getNumQuads() { return numQuads; }
 
 private:
-    static std::vector<quadPair> quadCoeffs;
-    static Precision quadPrec;
     static int numQuads;
+    static std::vector<quadPair<vec3d>> quadCoeffs;
+    static std::vector<quadPair<double>> linQuads; // linear quadrature nodes and weights
 
-    std::vector<quadPair> quads;
+    std::vector<quadPair<vec3d>> triQuads; // triangle quadrature nodes and weights
 
     int iTri;     // index in glTris
     vec3i iVerts; // indices of vertices
@@ -49,5 +57,5 @@ private:
     vec3d center;           // barycentric center 
     std::array<vec3d,3> Ds; // edge displacements (Ds[i] = Xs[i+1] - Xs[i])
     vec3d nhat;             // surface normal unit vector
-    double area;            // area of triangle
+    double area;            // area
 };

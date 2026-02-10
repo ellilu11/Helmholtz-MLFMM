@@ -12,7 +12,7 @@ void FMM::Angles::buildAngularSamples(int level)
 
     // Construct thetas
     const int nth = tau+1;
-    std::tie(thetas, weights) = Interp::gaussLegendre(nth, EPS_NR, 0.0, PI);
+    std::tie(thetas, weights) = Math::gaussLegendre(nth, 0.0, PI);
 
     // Absorb sin(theta) into weights
     std::transform(weights.begin(), weights.end(), thetas.begin(), weights.begin(),

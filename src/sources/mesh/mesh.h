@@ -14,16 +14,21 @@ namespace Mesh {
     class SubRWG;
     class BC;
 
-    // Global data
-    std::vector<vec3d> glVerts;     // list of vertices (including fine)
-    std::vector<Triangle> glTris;   // list of triangles (including fine)
+    using QuadMoments = std::tuple<cmplx, vec3cd, vec3cd, cmplx>;
+
+    // Coarse mesh data
+    std::vector<vec3d> glVerts;   // list of vertices (including fine)
+    std::vector<Triangle> glTris; // list of triangles (including fine)
+    PairHashMap<QuadMoments> glRadMoments;    // triangle pairs to rad field moments
+    size_t nverts;                // number of coarse mesh vertices
+    size_t ntris;                 // number of coarse mesh triangles
+
+    // Fine mesh data
     std::vector<SubRWG> glSubrwgs;  // list of fine RWGs
     realVec massCoeffs;             // mass coefficients between fine RWGs
     PairHashMap<int> idxMassCoeffs; // subRWG pairs to mass coeff indices
-    size_t nverts;                  // number of coarse mesh vertices
-    size_t ntris;                   // number of coarse mesh triangles
 
-    // Refinement maps
+    // Fine mesh maps
     PairHashMap<int> edgeToMid;       // coarse edges to midpoint indices
     PairHashMap<vec2i> fineEdgeToTri; // fine edges to subtri indices 
     PairHashMap<int> fineEdgeToSub;   // fine edges to subrwg indices
@@ -46,4 +51,6 @@ namespace Mesh {
         std::shared_ptr<Excitation::PlaneWave>);
 
     void refineMesh(const SrcVec&);
+
+    void printRWGs(const SrcVec& rwgs, const std::string&);
 }

@@ -41,6 +41,55 @@ pair2d Math::legendreP(double x, int n) {
     return std::make_pair(P_n, dP_n);
 }
 
+/* [nodes, weights] = gaussLegendreTheta(l, EPS, a, b)
+    * Return lth order Gauss-Legendre nodes and weights on the interval [a,b]
+    * l   : quadrature order
+    * a   : lower bound of interval = -1.0
+    * b   : upper bound of interval = 1.0
+    * EPS : minimum error to terminate Newton-Raphson = 1.0E-12
+    * nodes   : Gauss-Legendre nodes
+    * weights : Gauss-Legendre weights
+    */
+std::pair<realVec, realVec> Math::gaussLegendre(int l, double a, double b, double EPS) {
+    const double leng = b - a;
+    const double mid = (a + b)/2.0;
+    assert(leng > 0);
+
+    realVec nodes(l);
+    realVec weights(l);
+    const int kmax = l/2; // # positive nodes = integer part of l/2
+
+    if (l%2) { // if order is odd, middle node is at (a+b)/2
+        nodes[kmax] = mid;
+        auto [p, dp] = legendreP(0.0, l);
+        weights[kmax] = leng / (dp*dp);
+    }
+
+    for (int k = 0; k < kmax; ++k) {
+        double x_k = cos(PI * (4.0*(kmax-k)-1) / (4.0*l + 2.0));
+        double dp_k;
+        while (true) {
+            auto [p, dp] = legendreP(x_k, l);
+            x_k -= p/dp; // apply Newton-Raphson
+            if (abs(p/dp) <= EPS) {
+                dp_k = dp;
+                break;
+            }
+        }
+
+        const size_t kplus = l%2 ? kmax+1+k : kmax+k;
+        const size_t kminus = kmax-1-k;
+
+        nodes[kplus] = leng/2.0*x_k + mid;
+        nodes[kminus] = -leng/2.0*x_k + mid;
+
+        weights[kplus] = leng / ((1.0-x_k*x_k) * dp_k*dp_k);
+        weights[kminus] = weights[kplus];
+    }
+
+    return std::make_pair(nodes, weights);
+}
+
 /* sphericalHankel1(x,n)
  * Recursively evaluate the spherical Hankel function
  * of the 1st kind of order n at the point x

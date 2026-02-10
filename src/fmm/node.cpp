@@ -107,9 +107,9 @@ void FMM::Node::evalLeafIlistSols() {
     //return;
 }
 
-void FMM::Node::printFarSols(const std::string& fname) {
+void FMM::Node::printFarFld(const std::string& fname) {
     namespace fs = std::filesystem;
-    fs::path dir = "out/ff";
+    fs::path dir = "out/sol";
     std::error_code ec;
 
     if (fs::create_directory(dir, ec))

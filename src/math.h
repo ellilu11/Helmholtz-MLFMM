@@ -13,7 +13,7 @@ const vec3d zeroVec = vec3d::Zero();
 const std::array<vec3d, 2> poles{ vec3d(0, 0, 1), vec3d(0, 0, -1) };
 
 namespace Math {
-    constexpr double FEPS = 5.0E-5; // floating point error tolerance
+    constexpr double FEPS = 1.0E-6; // floating point error tolerance
 
     inline size_t bools2Idx(const std::array<bool,3>& x) noexcept {
         return x[0] + 2 * x[1] + 4 * x[2];
@@ -104,43 +104,14 @@ namespace Math {
         return mat3d::Identity() - rhat * rhat.transpose();
     }
 
-    //inline mat23d crossToThPh(double th, double ph) noexcept {
-    //    return mat23d{
-    //        { -sin(ph),          cos(ph),          0.0     },
-    //        { -cos(th)*cos(ph), -cos(th)*sin(ph),  sin(th) }
-    //    };
-    //}
-
-    //inline mat32d matFromThPh(double th, double ph) noexcept {
-    //    return mat32d{
-    //        {  cos(th)*cos(ph), -sin(ph) },
-    //        {  cos(th)*sin(ph),  cos(ph) },
-    //        { -sin(th),          0.0     }
-    //    };
-    //}
-
-    //inline mat3d matToSph(double th, double ph) noexcept {
-    //    return mat3d{
-    //        {  sin(th)*cos(ph),  sin(th)*sin(ph),  cos(th) },
-    //        {  cos(th)*cos(ph),  cos(th)*sin(ph), -sin(th) },
-    //        { -sin(ph),          cos(ph),          0.0     }
-    //    };
-    //}
-
-    //inline mat3d matFromSph(double th, double ph) noexcept {
-    //    return mat3d{
-    //        {  sin(th)*cos(ph),  cos(th)*cos(ph), -sin(ph) },
-    //        {  sin(th)*sin(ph),  cos(th)*sin(ph),  cos(ph) },
-    //        {  cos(th),         -sin(th),          0.0     }
-    //    };
-    //}
+    inline cmplx helmholtzG(double r, double k) {
+        return exp(iu*k*r) / r;
+    }
 
     inline Eigen::Matrix3cd dyadicG(const vec3d& X, double k) {
         const double r = X.norm(), kr = k*r, invkrsq = 1.0/(kr*kr);
-        if (approxZero(r)) throw std::runtime_error("dyadicG: singularity at r = 0");
-
         const cmplx iinvkr = iu/kr;
-        const vec3d& rhat = X / r; // X.normalized()
+        const vec3d& rhat = X / r;
         const mat3d& RR = rhat * rhat.transpose();
 
         return
@@ -182,6 +153,9 @@ namespace Math {
     vec3d idx2pm(int);
 
     pair2d legendreP(double, int);
+
+    std::pair<realVec, realVec> gaussLegendre(
+        int, double = -1.0, double = 1.0, double = 1.0E-12);
 
     cmplx sphericalHankel1(double, int);
 

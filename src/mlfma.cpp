@@ -77,13 +77,14 @@ int main() {
         lvec, rvec, currents);
 
     start = Clock::now();
-    solver->updateRvec(0); // solver->solve();
+    solver->updateRvec(0);
+    // solver->solve();
     end = Clock::now();
     duration_ms = end - start;
     std::cout << "   Total elapsed time: " << duration_ms.count() << " ms\n\n";
 
     solver->printSols("rvec.txt");
-    //root->printFarSols("ff_nq7.txt");
+    // root->printFarFld("ff_dip201.txt");
 
     if (!config.evalDirect) return 0;
 
@@ -106,7 +107,8 @@ int main() {
     solver = std::make_unique<Solver>(srcs, root, MAX_ITER, EPS,
         lvec, rvec, currents);
 
-    solver->updateRvec(0); // solver->solve();
+    solver->updateRvec(0);
+    // solver->solve();
 
     solver->printSols("rvecDir.txt");
 

@@ -27,5 +27,6 @@
 #include "sources/mesh/srcrwg.cpp"
 #include "sources/mesh/subrwg.cpp"
 #include "sources/mesh/triangle.cpp"
+#include "sources/mesh/triquads.cpp"
 
 // TODO: Reference additional headers your program requires here.

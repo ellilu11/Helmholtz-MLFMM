@@ -136,7 +136,6 @@ void Solver::solve() {
 
         updateGvec(vcos, vsin, iter);
 
-        // if (iter < maxIter-1) 
         resetRvec();
 
         Time fmm_duration_ms = Clock::now() - iter_start;

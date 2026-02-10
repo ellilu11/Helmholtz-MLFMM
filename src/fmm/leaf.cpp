@@ -1,4 +1,5 @@
 #include "leaf.h"
+#include "../sources/mesh/triangle.h"
 
 FMM::Leaf::Leaf(
     const SrcVec& srcs,
@@ -77,6 +78,8 @@ void FMM::Leaf::findNearNborPairs() {
 }
 
 void FMM::Leaf::buildNearRads() {
+    // Mesh::Triangle::buildRadMoments();
+
     findNearNborPairs();
 
     for (const auto& [obsLeaf, srcLeaf] : nearPairs) {
@@ -117,9 +120,6 @@ void FMM::Leaf::buildNearRads() {
         obsLeaf->nonNearRads.push_back(nodePairRads);
     }
 
-    //std::ofstream zmatFile("out/zmat.txt");
-    //std::ofstream vvecFile("out/vvec.txt");
-
     for (const auto& leaf : leaves) {
         for (size_t iObs = 1; iObs < leaf->srcs.size(); ++iObs) { // iObs = 0
             const auto& obs = leaf->srcs[iObs];
@@ -131,22 +131,9 @@ void FMM::Leaf::buildNearRads() {
 
             }
         }
-
-        /* GMRES testing
-        for (size_t iObs = 0; iObs < leaf->srcs.size(); ++iObs) {
-            const auto& obs = leaf->srcs[iObs];
-
-            for (size_t iSrc = 0; iSrc < leaf->srcs.size(); ++iSrc) {
-                const auto& src = leaf->srcs[iSrc];
-
-                zmatFile << Phys::C * wavenum * obs->getIntegratedRad(src) << ' ';
-
-            }
-            vvecFile << obs->getVoltage() << '\n';
-            zmatFile << '\n';
-        }
-        */
     }
+
+    Mesh::glRadMoments.clear();
 }
 
 /* buildRadPats()
@@ -274,9 +261,6 @@ void FMM::Leaf::evalFarSols() {
                 ++iDir;
             }
         }
-
-
-
         ++iObs;
     }
 }
@@ -353,17 +337,14 @@ void FMM::Leaf::evalSelfSols() {
  * Sum solutions at all sources in all leaves 
  */ 
 void FMM::Leaf::evaluateSols() {
-    auto start = Clock::now();
-    for (const auto& leaf : leaves)
-        leaf->evalFarSols();
-    t.L2T += Clock::now() - start;
-
     for (const auto& [obsLeaf, srcLeaf] : nearPairs) {
         auto pairIdx = obsLeaf->leafPairIdx++;
         obsLeaf->evalPairSols(srcLeaf, obsLeaf->nearRads[pairIdx]);
     }
 
     for (const auto& leaf : leaves) {
+        leaf->evalFarSols();
+
         leaf->evalNearNonNborSols();
 
         leaf->evalSelfSols();

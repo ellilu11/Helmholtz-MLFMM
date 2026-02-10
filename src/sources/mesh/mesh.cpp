@@ -66,7 +66,11 @@ SrcVec Mesh::importMesh(
 
     importTriangles(tpath);
 
-    return importRWGs(rpath, std::move(Einc));
+    auto srcs = importRWGs(rpath, std::move(Einc));
+
+    // printRWGs(srcs, "rwgs_cyl558.txt");
+
+    return srcs;
 }
 
 void Mesh::refineMesh(const SrcVec& rwgs) {
@@ -91,3 +95,22 @@ void Mesh::refineMesh(const SrcVec& rwgs) {
     fineEdgeToSub.clear();
     vertToSubs.clear();
 }
+
+/*
+void Mesh::printRWGs(const SrcVec& rwgs, const std::string& fname) {
+    namespace fs = std::filesystem;
+    fs::path dir = "out/sol";
+    std::error_code ec;
+    if (fs::create_directory(dir, ec))
+        std::cout << " Created directory " << dir.generic_string() << "/\n";
+    else if (ec)
+        std::cerr << " Error creating directory " << ec.message() << "\n";
+    std::ofstream rwgfile(dir/fname);
+
+    for (const auto& rwg : rwgs) {
+        const auto& vertsC = dynamic_pointer_cast<RWG>(rwg)->getVertsC();
+        const vec3d center = (vertsC[0] + vertsC[1]) / 2.0;
+
+        rwgfile << center << '\n';
+    }
+}*/
