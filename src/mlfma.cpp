@@ -8,6 +8,7 @@
 using namespace FMM;
 
 extern auto t = ClockTimes();
+extern int numNearTriPairs = 0;
 
 int main() {
     // ===================== Read config ==================== //
@@ -78,13 +79,12 @@ int main() {
 
     start = Clock::now();
     solver->updateRvec(0);
-    // solver->solve();
+    solver->printSols("rvec.txt");
+    //solver->solve();
+    //solver->printSols("curr_se.txt");
     end = Clock::now();
     duration_ms = end - start;
     std::cout << "   Total elapsed time: " << duration_ms.count() << " ms\n\n";
-
-    solver->printSols("rvec.txt");
-    // root->printFarFld("ff_dip201.txt");
 
     if (!config.evalDirect) return 0;
 
@@ -108,9 +108,9 @@ int main() {
         lvec, rvec, currents);
 
     solver->updateRvec(0);
-    // solver->solve();
-
     solver->printSols("rvecDir.txt");
+    //solver->solve();
+    //solver->printSols("currDir_se.txt");
 
     return 0;
 }

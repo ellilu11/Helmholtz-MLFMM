@@ -104,16 +104,19 @@ void Mesh::Triangle::buildQuadCoeffs(Precision prec) {
 
     assert(quadCoeffs.size() == numQuads);
 
-    // Also build linear quadrature nodes and weights (for Duffy integration)
+    /* Also build linear quadrature nodes and weights (for Duffy integration)
     constexpr int numLinQuads = 3;
     auto [nodes, weights] = Math::gaussLegendre(numLinQuads, 0.0, 1.0);
     assert(nodes.size() == numLinQuads);
     for (int i = 0; i < numLinQuads; ++i)
         linQuads.emplace_back(nodes[i], weights[i]);
+    */
 }
 
 // Build triangular quadrature nodes and weights
-void Mesh::Triangle::buildTriQuads(const std::array<vec3d,3>& Xs) {    
+void Mesh::Triangle::buildTriQuads() {
+    const auto& Xs = getVerts();
+
     auto baryToPos = [&](const vec3d& ws) {
         return ws[0]*Xs[0] + ws[1]*Xs[1] + ws[2]*Xs[2];
     };

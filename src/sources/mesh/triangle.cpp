@@ -13,52 +13,129 @@ Mesh::Triangle::Triangle(const vec3i& iVerts, int iTri)
 {
     assert(iVerts.maxCoeff() < glVerts.size());
 
-    const auto Xs = getVerts();
+    const auto& Xs = getVerts();
     center = (Xs[0] + Xs[1] + Xs[2]) / 3.0;
 
     for (int i = 0; i < 3; ++i) Ds[i] = Xs[(i+1)%3] - Xs[i];
     nhat = (Ds[0].cross(Ds[1])).normalized();
 
-    // If nhat is pointing inward, reverse it
+    /* If nhat is pointing inward, reverse it
     // Assume a closed, star-shaped mesh centered at and enclosing the origin
-    if (center.dot(nhat) < 0.0) nhat *= -1.0;
+    if (center.dot(nhat) < 0.0) {
+        nhat *= -1.0;
+        std::swap(this->iVerts[0], this->iVerts[2]); // Swap verts per RHR orientation
+    }
+    */
 
     area = (Ds[0].cross(-Ds[2])).norm() / 2.0;
 
-    buildTriQuads(Xs);
-
-    // std::cout << "Built triangle #" << iTri << " with area " << area << '\n';
+    buildTriQuads();
+    // buildSelfIntegrated();
+    // std::cout << "Built triangle #" << iTri << " with nhat " << nhat << '\n';
 }
 
 // Return global indices of vertices shared by this and other triangle
-intVec Mesh::Triangle::getCommonVerts(const Triangle& other) const {
-    // if (iTri == other.iTri) return ;
+int Mesh::Triangle::getNumCommonVerts(const Triangle& other) const {
+    if (iTri == other.iTri) return 3;
 
-    intVec iCommons;
+    int numVerts = 0;
     for (int i = 0; i < 3; ++i)
         for (int j = 0; j < 3; ++j)
             if (iVerts[i] == other.iVerts[j])
-                iCommons.push_back(iVerts[i]);
+                ++numVerts;
 
-    assert(iCommons.size() <= 3);
-    return iCommons;
+    assert(numVerts < 3);
+    return numVerts;
 }
 
-cmplx Mesh::Triangle::getAdjacentIntegrated(
-    const vec3d& src, const vec3d& obsNC, const vec3d& srcNC) const
+std::tuple<double,vec3d,vec3d> 
+    Mesh::Triangle::getNearIntegrated(const vec3d& obs, bool doNumeric) const
 {
-    cmplx sclRad = 0.0, vecRad = 0.0;
+    using namespace Math;
+
+    double scaRad = 0.0;
+    vec3d vecRad = vec3d::Zero();
+    const vec3d& R = projectToPlane(obs);
+
+    if (doNumeric) {
+        for (const auto& [node, weight] : triQuads) {
+            const double dr = (obs-node).norm();
+            scaRad += weight / dr;
+            vecRad -= weight * (R-projectToPlane(node)) / dr;
+        }
+
+        return std::make_tuple(scaRad, vecRad, R);
+    }
+
+    const auto& verts = getVerts();
+    const double d = std::fabs(nhat.dot(obs - verts[0])), dsq = d*d;
 
     for (int i = 0; i < 3; ++i) {
-        const auto& V0 = glVerts[iVerts[i]];
-        const auto& V1 = glVerts[iVerts[(i+1)%3]];
+        const vec3d& V0 = verts[i];
+        const vec3d& V1 = verts[(i+1)%3];
 
+        const vec3d& P0 = projectToPlane(V0) - R;
+        const vec3d& P1 = projectToPlane(V1) - R;
+
+        const vec3d& lhat = (P1-P0).normalized();
+        const vec3d& uhat = lhat.cross(nhat); 
+        double l0 = P0.dot(lhat), l1 = P1.dot(lhat);
+
+        const vec3d& P = P0 - l0*lhat;
+        double p = P.norm(), p0 = P0.norm(), p1 = P1.norm();
+        const vec3d& phat = (approxZero(p) ? zeroVec : P.normalized()); 
+        //const double p = std::fabs(P0.dot(uhat)), p0 = P0.norm(), p1 = P1.norm();
+        //const vec3d& phat = (approxZero(p) ? zeroVec : (P0-l0*lhat) / p);
+
+        double rsq = p*p + dsq, r0 = std::sqrt(p0*p0 + dsq), r1 = std::sqrt(p1*p1 + dsq);
+        double f2 = std::log((r1+l1)/(r0+l0)); // Consider using atanh
+        assert(!approxZero(r0+l0) && !approxZero(r1+l1));
+
+        scaRad += phat.dot(uhat) * (
+            p*f2 - d * (std::atan2(p*l1, rsq+d*r1) - std::atan2(p*l0, rsq+d*r0)));
+
+        vecRad += uhat * (rsq*f2 + l1*r1 - l0*r0);
     }
-    
 
-    return sclRad + vecRad;
+    scaRad /= 2.0*area;
+    vecRad /= 4.0*area;
+
+    return std::make_tuple(scaRad, vecRad, R);
 }
 
+void Mesh::Triangle::buildSelfIntegrated() {
+    const auto& [V0, V1, V2] = getVerts();
+
+    auto [l0, l1, l2] = std::array<double,3>
+        {(V1-V2).norm(), (V2-V0).norm(), (V0-V1).norm()};
+    double l0sq = l0*l0, l1sq = l1*l1, l2sq = l2*l2;
+
+    auto logN = [](double l0, double l1, double l2) {
+        double lsum = l0+l1, ldiff = l2-l0;
+        return std::log((lsum*lsum - l2*l2) / (l1*l1 - ldiff*ldiff));
+    };
+
+    double log0 = logN(l0, l1, l2), log1 = logN(l1, l2, l0), log2 = logN(l2, l0, l1);
+
+    selfInts[0] = (log0 / l0 + log1 / l1 + log2 / l2) / 3.0;
+
+    selfInts[1] = log0 / (20.0*l0) 
+        + log1 * (l0sq + 5.0*l1sq - l2sq) / (120.0*l1sq*l1)
+        + log2 * (l0sq - l1sq + 5.0*l2sq) / (120.0*l2sq*l2)
+        + (l2-l0) / (60.0*l1sq) + (l1-l0) / (60.0*l2sq);
+
+    selfInts[2] = log2 / (40.0*l2)
+        + log0 * (3.0*l0sq + l1sq - l2sq) / (80.0*l0sq*l0)
+        + log1 * (l0sq + 3.0*l1sq - l2sq) / (80.0*l1sq*l1)
+        + (l2-l1) / (40.0*l0sq) + (l2-l0) / (40.0*l1sq);
+
+    selfInts[3] = log0 / (8.0*l0)
+        + log1 * (l0sq + 5.0*l1sq - l2sq) / (48.0*l1sq*l1)
+        + log2 * (l0sq - l1sq + 5.0*l2sq) / (48.0*l2sq*l2)
+        + (l2-l0) / (24.0*l1sq) + (l1-l0) / (24.0*l2sq);
+}
+
+/*
 cmplx Mesh::Triangle::getDuffyIntegrated(
     const vec3d& src, const vec3d& obsNC, const vec3d& srcNC) const 
 {
@@ -96,7 +173,7 @@ cmplx Mesh::Triangle::getDuffyIntegrated(
     // std::cout << areaSum << ' ' << area << '\n';
 
     return rad;
-}
+}*/
 
 void Mesh::Triangle::buildRadMoments() {
     /* TODO: Only loop over triangles in nearfield of each other

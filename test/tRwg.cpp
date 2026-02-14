@@ -4,60 +4,37 @@
 #include "../src/config.h"
 #include "../src/fileio.h"
 
-using namespace std;
+using namespace FMM;
 
 extern auto t = ClockTimes();
 
 int main() {
     // ===================== Read config ==================== //
+    std::cout << " Building sources...\n";
+
     Config config("config/config.txt");
 
-    auto [srcs, Einc] = importFromConfig(config);
-    auto nsrcs = srcs.size();
-
-    auto solver = make_shared<Solver>(srcs);
-
-    Node::initNodes(config, Einc, solver);
-
-    // ==================== Set up domain ==================== //
-    cout << " Setting up domain...\n";
-    auto fmm_start = Clock::now();
     auto start = Clock::now();
-
-    shared_ptr<Node> root;
-    if (nsrcs > config.maxNodeSrcs)
-        root = make_shared<Stem>(srcs, 0, nullptr);
-    else
-        root = make_shared<Leaf>(srcs, 0, nullptr);
-
-    root->buildLists();
-
+    auto [srcs, Einc] = importFromConfig(config);
     auto end = Clock::now();
     Time duration_ms = end - start;
 
-    cout << "   # Nodes: " << Node::getNumNodes() << '\n';
-    cout << "   # Leaves: " << Leaf::getNumLeaves() << '\n';
-    cout << "   Max node level: " << Node::getMaxLvl() << '\n';
-    cout << "   Elapsed time: " << duration_ms.count() << " ms\n\n";
+    auto nsrcs = srcs.size();
+    initGlobal(config, Einc, nsrcs);
 
     // ==================== Test RWG funcs ===================== //
-    const double k = 1.0;
-    const double th = PI/4.0;
-    const double ph = PI/4.0;
-    const auto& kvec = Math::fromSph(vec3d(k, th, ph));
+    const auto tri = dynamic_pointer_cast<Mesh::RWG>(srcs[0])->getTris()[0];
+    const vec3d obs = { 0.0, 0.0, 5.0 };
 
-    /*srcs[0]->getRadAlongDir(vec3d(0,0,0), kvec); // Analytic
+    std::cout << std::setprecision(15);
 
-    srcs[0]->getRadAlongDir(vec3d(0,0,0), kvec, true); // Numeric
-    */
-    /*root->evalSelfSols();
+    const auto [scaRad, vecRad, obsProj] = tri.getNearIntegratedRads(obs, 1);
+    std::cout << "Numeric :\n   scaRad = " << scaRad << "\n   vecRad = " << vecRad.transpose() << "\n\n";
 
-    printSols(srcs, "solDir.txt");
+    const auto [scaRadAnl, vecRadAnl, obsProjAnl] = tri.getNearIntegratedRads(obs, 0);
+    std::cout << "Analytic :\n   scaRad = " << scaRadAnl << "\n   vecRad = " << vecRadAnl.transpose() << "\n";
 
-    root->resetSols();
-    root->evalSelfSolsSlow();
-
-    printSols(srcs, "solDirSlow.txt");*/
+    std::cout << scaRadAnl/scaRad << ' ' << vecRadAnl[0]/vecRad[0] << ' ' << vecRadAnl[1]/vecRad[1] << ' ' << vecRadAnl[2]/vecRad[2] << '\n';
 
     return 0;
 }

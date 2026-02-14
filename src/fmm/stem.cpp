@@ -249,7 +249,6 @@ void FMM::Stem::addAnterpCoeffs(
  */
 void FMM::Stem::buildLocalCoeffs() {
     if (!isRoot()) {
-
         auto start = Clock::now();
         buildMpoleToLocalCoeffs();
         t.M2L += Clock::now() - start;

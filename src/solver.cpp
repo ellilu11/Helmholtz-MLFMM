@@ -120,7 +120,6 @@ void Solver::updateGvec(vecXcd& vcos, vecXcd& vsin, int k) {
 
 //
 void Solver::solve() {
-
     // TODO: Member variables
     vecXcd vcos = vecXcd::Zero(maxIter);
     vecXcd vsin = vecXcd::Zero(maxIter);

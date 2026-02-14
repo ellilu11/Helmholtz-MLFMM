@@ -14,13 +14,15 @@ public:
 
     Triangle(const vec3i&, int);
 
-    intVec getCommonVerts(const Triangle&) const;
+    int getNumCommonVerts(const Triangle&) const;
 
-    cmplx getAdjacentIntegrated(const vec3d&, const vec3d&, const vec3d&) const;
+    std::tuple<double,vec3d,vec3d> getNearIntegrated(const vec3d&, bool = 0) const;
 
-    cmplx getDuffyIntegrated(const vec3d&, const vec3d&, const vec3d&) const;
+    void buildSelfIntegrated();
 
-    void buildTriQuads(const std::array<vec3d,3>&);
+    // cmplx getDuffyIntegrated(const vec3d&, const vec3d&, const vec3d&) const;
+
+    void buildTriQuads();
 
     static void buildRadMoments();
 
@@ -34,13 +36,11 @@ public:
         return { glVerts[iVerts[0]], glVerts[iVerts[1]], glVerts[iVerts[2]] };
     }
 
-    //vec3d getCenter() const {
-    //    return (glVerts[iVerts[0]] + glVerts[iVerts[1]] + glVerts[iVerts[2]]) / 3.0;
-    //}
-
     std::vector<quadPair<vec3d>> getQuads() const { return triQuads; }
 
     static int getNumQuads() { return numQuads; }
+
+    vec3d projectToPlane(const vec3d& X) const { return X - (nhat.dot(X))*nhat; }
 
 private:
     static int numQuads;
@@ -58,4 +58,5 @@ private:
     std::array<vec3d,3> Ds; // edge displacements (Ds[i] = Xs[i+1] - Xs[i])
     vec3d nhat;             // surface normal unit vector
     double area;            // area
+    std::array<double,4> selfInts;
 };

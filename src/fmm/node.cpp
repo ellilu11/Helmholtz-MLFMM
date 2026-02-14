@@ -93,7 +93,6 @@ void FMM::Node::buildMpoleToLocalCoeffs() {
         for (int iph = 0; iph < nph; ++iph)
             localCoeffs[iDir++] *= thetaWeight * phiWeight;
     }
-    //
 }
 
 /* evalLeafIlistSols()

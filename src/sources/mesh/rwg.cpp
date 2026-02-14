@@ -18,30 +18,6 @@ Mesh::RWG::RWG(
                 iVertsNC[i] = iVert;
 }
 
-void Mesh::RWG::refineRWGs() {
-    triToSubs.resize(glTris.size());
-
-    int iSub = 0;
-    for (const auto& [edge, iTris] : fineEdgeToTri) {
-        const vec4i& idx4 =
-            { edge.first, edge.second, iTris[0], iTris[1] };
-
-        if (iTris[1] < 0) continue; // Ignore edges not shared by two tris
-        //std::cout << "Building SubRWG for edge ("
-        //    << edge.first << ',' << edge.second << ") with tris # "
-        //    << iTri[0] << ' ' << iTri[1] << '\n';
-
-        glSubrwgs.emplace_back(iSub, idx4);
-        fineEdgeToSub.emplace(edge, iSub);
-        ++iSub;
-    }
-
-    //for (const auto& [edge, iSub] : fineEdgeToSub) {
-    //    std::cout << "Edge (" << edge.first << ',' << edge.second
-    //        << ") maps to subRWG # " << iSub << '\n';
-    //}
-}
-
 vec3cd Mesh::RWG::getIntegratedPlaneWave(const vec3d& kvec, bool doNumeric) const {
     using namespace Math;
 
@@ -57,12 +33,11 @@ vec3cd Mesh::RWG::getIntegratedPlaneWave(const vec3d& kvec, bool doNumeric) cons
                         * sign(iTri);
             ++iTri;
         }
-
         return leng * rad;
     }
 
     for (const auto& tri : getTris()) {
-        const auto& Xs = tri.getVerts(), Ds = tri.Ds; // TODO: Compute Ds[0] and Ds[2] here
+        const auto& Xs = tri.getVerts(), Ds = tri.Ds;
         const double alpha = kvec.dot(Ds[0]), beta = -kvec.dot(Ds[2]), gamma = alpha-beta;
         const double alphasq = alpha*alpha, betasq = beta*beta;
         const cmplx expI_alpha = exp(iu*alpha), expI_beta = exp(iu*beta);
@@ -109,47 +84,52 @@ cmplx Mesh::RWG::getIntegratedRad(const std::shared_ptr<Source> src) const {
         int srcPairIdx = 0;
         for (const auto& srcTri : srcRWG->getTris()) {
             const auto& srcNC = srcRWG->getVertsNC()[srcPairIdx];
+            const auto& srcNCproj = srcTri.projectToPlane(srcNC);
 
-            const auto& vertsC = obsTri.getCommonVerts(srcTri);
-            switch (vertsC.size()) {
-                case 0: // No common vertices
-                    for (const auto& [obs, obsWeight] : obsTri.triQuads) {
-                        for (const auto& [src, srcWeight] : srcTri.triQuads) {
-                            //
-                            const cmplx G = Math::helmholtzG((obs-src).norm(), k);
-                            intRad +=
-                                ((obs-obsNC).dot(src-srcNC) - 4.0 / (k*k)) * G
-                                * obsWeight * srcWeight
-                                * Math::sign(obsPairIdx) * Math::sign(srcPairIdx);
-                            //
+            const int nCommon = obsTri.getNumCommonVerts(srcTri);
+            if (!nCommon) { // No common vertices
+            // if (nCommon < 3) { // No common vertices
+                for (const auto& [obs, obsWeight] : obsTri.triQuads) {
+                    for (const auto& [src, srcWeight] : srcTri.triQuads) {
+                        //
+                        const double r = (obs-src).norm();
+                        const cmplx G = exp(iu*k*r) / r;
+                        intRad +=
+                            ((obs-obsNC).dot(src-srcNC) - 4.0/(k*k)) * G
+                            * obsWeight * srcWeight
+                            * Math::sign(obsPairIdx) * Math::sign(srcPairIdx);
+                        //
 
-                            /*
-                            const auto& dyadic = Math::dyadicG(obs-src, k);
-                            intRad +=
-                                (obs-obsNC).dot(dyadic*(src-srcNC))
-                                * obsWeight * srcWeight
-                                * Math::sign(obsPairIdx) * Math::sign(srcPairIdx);
-                            */
-                        }
+                        /*
+                        const auto& dyadic = Math::dyadicG(obs-src, k);
+                        intRad +=
+                            (obs-obsNC).dot(dyadic*(src-srcNC))
+                            * obsWeight * srcWeight
+                            * Math::sign(obsPairIdx) * Math::sign(srcPairIdx);
+                        */
                     }
-                    break;
+                }
+            } else if (nCommon < 3) { // Common vertex or common edge
+                for (const auto& [obs, obsWeight] : obsTri.triQuads) {
+                    // Add contribution from (e^(ikR)-1)/R term (numerically)
+                    for (const auto& [src, srcWeight] : srcTri.triQuads) {
+                        const double r = (obs-src).norm();
+                        const cmplx G = (exp(iu*k*r)-1.0) / r;
+                        intRad += ((obs-obsNC).dot(src-srcNC) - 4.0 / (k*k)) * G
+                            * obsWeight * srcWeight
+                            * Math::sign(obsPairIdx) * Math::sign(srcPairIdx);
+                    }
 
-                case 1: // One common vertex
-                    for (const auto& [src, srcWeight] : srcTri.triQuads)
-                        intRad += obsTri.getDuffyIntegrated(src, obsNC, srcNC) * srcWeight;
-                    intRad *= Math::sign(obsPairIdx) * Math::sign(srcPairIdx);
-
-                    break;
-
-                case 2: // One common edge
-                    break;
-
-                case 3: // Coincident tris
-
-                    break;
-
-                default:
-                    throw std::runtime_error("Invalid number of common vertices between triangles");
+                    // Add contribution from 1/R term (analytically)
+                    const auto& [scaRad, vecRad, obsProj] = srcTri.getNearIntegrated(obs);
+                    intRad +=
+                        ((obs-obsNC).dot(vecRad+(obsProj-srcNCproj)*scaRad)
+                            - 4.0/(k*k)*scaRad)
+                        * obsWeight * Math::sign(obsPairIdx) * Math::sign(srcPairIdx);
+                    //
+                }
+            } else { // Coincident tris
+                // intRad += obsTri.selfInt * Math::sign(obsPairIdx) * Math::sign(srcPairIdx);
             }
 
             /* Using precomputed moments
@@ -168,4 +148,28 @@ cmplx Mesh::RWG::getIntegratedRad(const std::shared_ptr<Source> src) const {
 
     assert(!std::isnan(intRad.real()) && !std::isnan(intRad.imag()));
     return leng * srcRWG->leng * intRad;
+}
+
+void Mesh::RWG::refineRWGs() {
+    triToSubs.resize(glTris.size());
+
+    int iSub = 0;
+    for (const auto& [edge, iTris] : fineEdgeToTri) {
+        const vec4i& idx4 =
+        { edge.first, edge.second, iTris[0], iTris[1] };
+
+        if (iTris[1] < 0) continue; // Ignore edges not shared by two tris
+        //std::cout << "Building SubRWG for edge ("
+        //    << edge.first << ',' << edge.second << ") with tris # "
+        //    << iTri[0] << ' ' << iTri[1] << '\n';
+
+        glSubrwgs.emplace_back(iSub, idx4);
+        fineEdgeToSub.emplace(edge, iSub);
+        ++iSub;
+    }
+
+    //for (const auto& [edge, iSub] : fineEdgeToSub) {
+    //    std::cout << "Edge (" << edge.first << ',' << edge.second
+    //        << ") maps to subRWG # " << iSub << '\n';
+    //}
 }
