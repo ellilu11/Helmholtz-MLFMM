@@ -8,6 +8,7 @@
 #include "../types.h"
 
 extern ClockTimes t;
+extern bool doDirFar;
 
 namespace FMM {
     // Constants

@@ -8,7 +8,8 @@
 using namespace FMM;
 
 extern auto t = ClockTimes();
-extern int numNearTriPairs = 0;
+extern bool doDirFar = false;
+// extern int numNearTriPairs = 0;
 
 int main() {
     // ===================== Read config ==================== //
@@ -79,7 +80,7 @@ int main() {
 
     start = Clock::now();
     solver->updateRvec(0);
-    solver->printSols("rvec.txt");
+    solver->printSols("rvec_far.txt");
     //solver->solve();
     //solver->printSols("curr_se.txt");
     end = Clock::now();
@@ -91,6 +92,7 @@ int main() {
     // ================== Solve iterative direct ================ //
     initGlobal(config, Einc, nsrcs);
 
+    /*
     root = std::make_shared<Leaf>(srcs, 0, nullptr);
     root->buildLists();
 
@@ -102,13 +104,15 @@ int main() {
     
     duration_ms = end - start;
     std::cout << "   Elapsed time: " << duration_ms.count() << " ms\n\n";
+    */
 
+    doDirFar = true;
     std::cout << " Solving w/ direct...\n";
     solver = std::make_unique<Solver>(srcs, root, MAX_ITER, EPS,
         lvec, rvec, currents);
 
     solver->updateRvec(0);
-    solver->printSols("rvecDir.txt");
+    solver->printSols("rvecDir_far.txt");
     //solver->solve();
     //solver->printSols("currDir_se.txt");
 

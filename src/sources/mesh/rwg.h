@@ -53,4 +53,6 @@ protected:
     std::array<int,2> iVertsNC; // indices of non-common vertices
 
     double leng; // length of common edge
+
+
 };

@@ -192,8 +192,13 @@ int main() {
 
     testNearPhiIdx(0, 10);*/
 
-    vec3d xs{ 2, 1, 1 };
-    testPermutation(xs);
+    //vec3d xs{ 2, 1, 1 };
+    // testPermutation(xs);
+
+    double k = 1.0;
+    vec3d obs = { 1.0, 1.0, 1.0 }, src = zeroVec;
+
+    std::cout << Math::dyadicG(obs-src, k) << '\n';
 
     return 0;
 }

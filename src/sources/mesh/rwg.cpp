@@ -73,51 +73,46 @@ vec3cd Mesh::RWG::getIntegratedPlaneWave(const vec3d& kvec, bool doNumeric) cons
  */
 cmplx Mesh::RWG::getIntegratedRad(const std::shared_ptr<Source> src) const {
     const auto srcRWG = dynamic_pointer_cast<RWG>(src);
-    const double k = Einc->wavenum;
+    double k = Einc->wavenum;
  
-    cmplx intRad = 0.0;
+    cmplx intRad = 0.0, intRadFull = 0.0;
 
-    int obsPairIdx = 0;
+    int iObsTri = 0;
     for (const auto& obsTri : getTris()) {
-        const auto& obsNC = getVertsNC()[obsPairIdx];
+        const auto& obsNC = getVertsNC()[iObsTri];
 
-        int srcPairIdx = 0;
+        int iSrcTri = 0;
         for (const auto& srcTri : srcRWG->getTris()) {
-            const auto& srcNC = srcRWG->getVertsNC()[srcPairIdx];
+            const auto& srcNC = srcRWG->getVertsNC()[iSrcTri];
             const auto& srcNCproj = srcTri.projectToPlane(srcNC);
 
             const int nCommon = obsTri.getNumCommonVerts(srcTri);
-            if (!nCommon) { // No common vertices
-            // if (nCommon < 3) { // No common vertices
-                for (const auto& [obs, obsWeight] : obsTri.triQuads) {
+
+            for (const auto& [obs, obsWeight] : obsTri.triQuads) {
+                if (!nCommon) { // No common vertices
                     for (const auto& [src, srcWeight] : srcTri.triQuads) {
-                        //
                         const double r = (obs-src).norm();
                         const cmplx G = exp(iu*k*r) / r;
-                        intRad +=
-                            ((obs-obsNC).dot(src-srcNC) - 4.0/(k*k)) * G
+                        intRad += ((obs-obsNC).dot(src-srcNC) - 4.0 / (k*k)) * G
                             * obsWeight * srcWeight
-                            * Math::sign(obsPairIdx) * Math::sign(srcPairIdx);
-                        //
+                            * Math::sign(iObsTri) * Math::sign(iSrcTri);
 
-                        /*
+                        //
                         const auto& dyadic = Math::dyadicG(obs-src, k);
-                        intRad +=
+                        intRadFull +=
                             (obs-obsNC).dot(dyadic*(src-srcNC))
                             * obsWeight * srcWeight
-                            * Math::sign(obsPairIdx) * Math::sign(srcPairIdx);
-                        */
+                            * Math::sign(iObsTri) * Math::sign(iSrcTri);
+                        //
                     }
-                }
-            } else if (nCommon < 3) { // Common vertex or common edge
-                for (const auto& [obs, obsWeight] : obsTri.triQuads) {
+                } else { // Common vertex or common edge
                     // Add contribution from (e^(ikR)-1)/R term (numerically)
                     for (const auto& [src, srcWeight] : srcTri.triQuads) {
                         const double r = (obs-src).norm();
                         const cmplx G = (exp(iu*k*r)-1.0) / r;
                         intRad += ((obs-obsNC).dot(src-srcNC) - 4.0 / (k*k)) * G
                             * obsWeight * srcWeight
-                            * Math::sign(obsPairIdx) * Math::sign(srcPairIdx);
+                            * Math::sign(iObsTri) * Math::sign(iSrcTri);
                     }
 
                     // Add contribution from 1/R term (analytically)
@@ -125,11 +120,19 @@ cmplx Mesh::RWG::getIntegratedRad(const std::shared_ptr<Source> src) const {
                     intRad +=
                         ((obs-obsNC).dot(vecRad+(obsProj-srcNCproj)*scaRad)
                             - 4.0/(k*k)*scaRad)
-                        * obsWeight * Math::sign(obsPairIdx) * Math::sign(srcPairIdx);
-                    //
+                        * obsWeight * Math::sign(iObsTri) * Math::sign(iSrcTri);
                 }
-            } else { // Coincident tris
-                // intRad += obsTri.selfInt * Math::sign(obsPairIdx) * Math::sign(srcPairIdx);
+            }
+
+            // For common triangles, add contribution from 1/R term (analytically)
+            if (obsTri.iTri == srcTri.iTri) {
+                const auto [V0, V1, V2] = obsTri.getVerts();
+                double a00 = V0.dot(V0), a01 = V0.dot(V1), a02 = V0.dot(V2); // cache?
+
+                intRad += obsTri.selfInts[0]
+                    + obsTri.selfInts[1] * (-2.0*a00 + 2.0*a01 + (V0-V1).dot(srcNC+obsNC))
+                    + obsTri.selfInts[2] * (-2.0*a00 + 2.0*a02 + (V0-V2).dot(srcNC+obsNC))
+                    + obsTri.selfInts[3] * (a00 - V0.dot(srcNC+obsNC) + srcNC.dot(obsNC) - 4.0/(k*k));
             }
 
             /* Using precomputed moments
@@ -137,14 +140,22 @@ cmplx Mesh::RWG::getIntegratedRad(const std::shared_ptr<Source> src) const {
                 Mesh::glRadMoments.at(makeUnordered(obsTri.iTri, srcTri.iTri));
             intRad +=
                 (mm0 - obsNC.dot(mm1) - mm2.dot(srcNC) + mm3 * (obsNC.dot(srcNC) - 4.0/(k*k)))
-                * Math::sign(obsPairIdx) * Math::sign(srcPairIdx);
+                * Math::sign(iObsTri) * Math::sign(iSrcTri);
             */
 
-            ++srcPairIdx;
+            ++iSrcTri;
         }
 
-        ++obsPairIdx;
+        ++iObsTri;
     }
+
+    std::cout << std::setprecision(15)
+        << "intRad (bilinear): " << intRad << '\n'
+        << "intRadFull (full): " << intRadFull << '\n';
+
+    //std::cout << std::setprecision(15) 
+    //    << (intRad.real()-intRadFull.real()) / intRadFull.real() << ' '
+    //    << (intRad.imag()-intRadFull.imag()) / intRadFull.imag() << '\n';
 
     assert(!std::isnan(intRad.real()) && !std::isnan(intRad.imag()));
     return leng * srcRWG->leng * intRad;

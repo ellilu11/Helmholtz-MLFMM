@@ -235,36 +235,6 @@ void FMM::Leaf::evalFarSols() {
         ++iObs;
     }
 }
-//
-
-/*
-void FMM::Leaf::evalFarSols() {
-    if (isSrcless() || level <= 1) return;
-
-    const auto [nth, nph] = angles[level].getNumAngles();
-
-    const double phiWeight = 2.0*PI / static_cast<double>(nph); // TODO: static member
-
-    size_t iObs = 0;
-    for (const auto& obs : srcs) {
-        size_t iDir = 0;
-        cmplx intRad = 0;
-
-        for (int ith = 0; ith < nth; ++ith) {
-            const double weight = angles[level].weights[ith];
-
-            for (int iph = 0; iph < nph; ++iph) {
-                // Do the angular integration
-                intRad += weight 
-                    * radPats[iDir][iObs].dot(localCoeffs[iDir]); // Hermitian dot!
-
-                ++iDir;
-            }
-        }
-        ++iObs;
-    }
-}
-*/
 
 /* evalNearNonNborSols()
  * (M2T/S2T) Evaluate sols from mpole expansion due to list 3 nodes
@@ -337,19 +307,58 @@ void FMM::Leaf::evalSelfSols() {
  * Sum solutions at all sources in all leaves 
  */ 
 void FMM::Leaf::evaluateSols() {
+    auto start = Clock::now();
+    /*
     for (const auto& [obsLeaf, srcLeaf] : nearPairs) {
         auto pairIdx = obsLeaf->leafPairIdx++;
         obsLeaf->evalPairSols(srcLeaf, obsLeaf->nearRads[pairIdx]);
     }
+    */
+
+    if (doDirFar)
+        std::cout << "Evaluating farfield solutions directly...\n";
+    else
+        std::cout << "Evaluating farfield solutions from local expansions...\n";
 
     for (const auto& leaf : leaves) {
-        leaf->evalFarSols();
+        if (doDirFar) leaf->evalFarSolsDir();
+        else leaf->evalFarSols();
 
-        leaf->evalNearNonNborSols();
+        // leaf->evalNearNonNborSols();
 
-        leaf->evalSelfSols();
+        // leaf->evalSelfSols();
 
         leaf->leafPairIdx = 0;
         leaf->nonNearPairIdx = 0;
+    }
+
+    t.L2T += Clock::now() - start;
+}
+
+// Directly compute only far interactions (debugging only)
+void FMM::Leaf::evalFarSolsDir() {
+    auto contains =
+        [](const NodeVec& vec, const std::shared_ptr<Leaf> val) {
+        return std::find(vec.begin(), vec.end(), val) != vec.end();
+        };
+
+    for (size_t iObs = 0; iObs < srcs.size(); ++iObs) {
+        const auto obs = srcs[iObs];
+
+        for (const auto& leaf : leaves) {
+            // Ignore if leaf is self, near neighbor, or near non-neighbor
+            if (leaf == shared_from_this() || contains(nearNbors, leaf) || contains(nearNonNbors, leaf))
+                continue;
+
+            const auto& srcSrcs = leaf->getSrcs();
+            for (size_t iSrc = 0; iSrc < srcSrcs.size(); ++iSrc) {
+                const auto src = srcSrcs[iSrc];
+                assert(obs != src);
+
+                const cmplx rad = obs->getIntegratedRad(src);
+
+                (*rvec)[obs->getIdx()] += Phys::C * wavenum * (*lvec)[src->getIdx()] * rad;
+            }
+        }
     }
 }

@@ -46,6 +46,7 @@ private:
     static void findNearNborPairs();
 
     void evalFarSols();
+    void evalFarSolsDir();
 
     void evalNearNonNborSols();
 

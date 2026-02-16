@@ -8,6 +8,9 @@ using intVec = std::vector<int>;
 using realVec = std::vector<double>;
 using cmplxVec = std::vector<cmplx>;
 
+using arr3i = std::array<int,3>;
+using arr3d = std::array<double,3>;
+
 using pair2i = std::pair<int, int>;
 using pair2d = std::pair<double, double>;
 using pair2di = std::pair<double, int>;

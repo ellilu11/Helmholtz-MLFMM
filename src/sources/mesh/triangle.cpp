@@ -30,7 +30,7 @@ Mesh::Triangle::Triangle(const vec3i& iVerts, int iTri)
     area = (Ds[0].cross(-Ds[2])).norm() / 2.0;
 
     buildTriQuads();
-    // buildSelfIntegrated();
+    buildSelfIntegrated();
     // std::cout << "Built triangle #" << iTri << " with nhat " << nhat << '\n';
 }
 
@@ -68,7 +68,7 @@ std::tuple<double,vec3d,vec3d>
     }
 
     const auto& verts = getVerts();
-    const double d = std::fabs(nhat.dot(obs - verts[0])), dsq = d*d;
+    double d = std::fabs(nhat.dot(obs - verts[0])), dsq = d*d;
 
     for (int i = 0; i < 3; ++i) {
         const vec3d& V0 = verts[i];
@@ -84,8 +84,6 @@ std::tuple<double,vec3d,vec3d>
         const vec3d& P = P0 - l0*lhat;
         double p = P.norm(), p0 = P0.norm(), p1 = P1.norm();
         const vec3d& phat = (approxZero(p) ? zeroVec : P.normalized()); 
-        //const double p = std::fabs(P0.dot(uhat)), p0 = P0.norm(), p1 = P1.norm();
-        //const vec3d& phat = (approxZero(p) ? zeroVec : (P0-l0*lhat) / p);
 
         double rsq = p*p + dsq, r0 = std::sqrt(p0*p0 + dsq), r1 = std::sqrt(p1*p1 + dsq);
         double f2 = std::log((r1+l1)/(r0+l0)); // Consider using atanh
@@ -106,33 +104,57 @@ std::tuple<double,vec3d,vec3d>
 void Mesh::Triangle::buildSelfIntegrated() {
     const auto& [V0, V1, V2] = getVerts();
 
-    auto [l0, l1, l2] = std::array<double,3>
-        {(V1-V2).norm(), (V2-V0).norm(), (V0-V1).norm()};
-    double l0sq = l0*l0, l1sq = l1*l1, l2sq = l2*l2;
+    double a00 = V0.dot(V0), a01 = V0.dot(V1), a02 = V0.dot(V2);
+    double a11 = V1.dot(V1), a12 = V1.dot(V2), a22 = V2.dot(V2);
 
+    double l0 = (V1-V2).norm(), l1 = (V2-V0).norm(), l2 = (V0-V1).norm();
+    
     auto logN = [](double l0, double l1, double l2) {
         double lsum = l0+l1, ldiff = l2-l0;
         return std::log((lsum*lsum - l2*l2) / (l1*l1 - ldiff*ldiff));
     };
 
     double log0 = logN(l0, l1, l2), log1 = logN(l1, l2, l0), log2 = logN(l2, l0, l1);
+    double log3 = logN(l0, l2, l1), log4 = logN(l2, l1, l0), log5 = logN(l1, l0, l2);
 
-    selfInts[0] = (log0 / l0 + log1 / l1 + log2 / l2) / 3.0;
+    // Integral of \lambda_i * \lambda_i' / r
+    auto f0 = [](double l0, double l1, double l2, double log0, double log1, double log2) {
+        double l0sq = l0*l0, l1sq = l1*l1, l2sq = l2*l2;
+        return log0 / (20.0*l0)
+            + log1 * (l0sq + 5.0*l1sq - l2sq) / (120.0*l1sq*l1)
+            + log2 * (l0sq - l1sq + 5.0*l2sq) / (120.0*l2sq*l2)
+            + (l2-l0) / (60.0*l1sq) + (l1-l0) / (60.0*l2sq);
+    };
 
-    selfInts[1] = log0 / (20.0*l0) 
-        + log1 * (l0sq + 5.0*l1sq - l2sq) / (120.0*l1sq*l1)
-        + log2 * (l0sq - l1sq + 5.0*l2sq) / (120.0*l2sq*l2)
-        + (l2-l0) / (60.0*l1sq) + (l1-l0) / (60.0*l2sq);
+    // Integral of \lambda_i * \lambda_j' / r
+    auto f1 = [](double l0, double l1, double l2, double log0, double log1, double log2) {
+        double l0sq = l0*l0, l1sq = l1*l1, l2sq = l2*l2;
+        return log2 / (40.0*l2)
+            + log0 * (3.0*l0sq + l1sq - l2sq) / (80.0*l0sq*l0)
+            + log1 * (l0sq + 3.0*l1sq - l2sq) / (80.0*l1sq*l1)
+            + (l2-l1) / (40.0*l0sq) + (l2-l0) / (40.0*l1sq);
+    };
 
-    selfInts[2] = log2 / (40.0*l2)
-        + log0 * (3.0*l0sq + l1sq - l2sq) / (80.0*l0sq*l0)
-        + log1 * (l0sq + 3.0*l1sq - l2sq) / (80.0*l1sq*l1)
-        + (l2-l1) / (40.0*l0sq) + (l2-l0) / (40.0*l1sq);
+    // Integral of \lambda_i / r or \lambda_i' / r
+    auto f2 = [](double l0, double l1, double l2, double log0, double log1, double log2) {
+        double l0sq = l0*l0, l1sq = l1*l1, l2sq = l2*l2;
+        return log0 / (8.0*l0)
+            + log1 * (l0sq + 5.0*l1sq - l2sq) / (48.0*l1sq*l1)
+            + log2 * (l0sq - l1sq + 5.0*l2sq) / (48.0*l2sq*l2)
+            + (l2-l0) / (24.0*l1sq) + (l1-l0) / (24.0*l2sq);
+    };
 
-    selfInts[3] = log0 / (8.0*l0)
-        + log1 * (l0sq + 5.0*l1sq - l2sq) / (48.0*l1sq*l1)
-        + log2 * (l0sq - l1sq + 5.0*l2sq) / (48.0*l2sq*l2)
-        + (l2-l0) / (24.0*l1sq) + (l1-l0) / (24.0*l2sq);
+    selfInts[0] 
+        = f0(l0, l1, l2, log0, log1, log2) * (a00 - 2.0*a01 + a11)
+        + f0(l1, l2, l0, log1, log2, log0) * (a00 - 2.0*a02 + a22)
+        + f1(l0, l1, l2, log0, log1, log2) * (a00 - a02 - a01 + a12)
+        + f1(l0, l2, l1, log3, log4, log5) * (a00 - a01 - a02 + a12);
+
+    selfInts[1] = f2(l0, l1, l2, log0, log1, log2); 
+
+    selfInts[2] = f2(l1, l2, l0, log1, log2, log0);
+
+    selfInts[3] = (log0 / l0 + log1 / l1 + log2 / l2) / 3.0;
 }
 
 /*
