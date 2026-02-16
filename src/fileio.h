@@ -1,7 +1,7 @@
 #include <filesystem>
 #include <random>
-#include "sources/dipole.h"
-#include "sources/mesh/mesh.h"
+#include "dipole.h"
+#include "mesh/mesh.h"
 
 using namespace std; // TODO: Remove
 

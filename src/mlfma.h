@@ -10,6 +10,7 @@
 #include <vector>
 #include <utility>
 
+#include "dipole.cpp"
 #include "interp.cpp"
 #include "math.cpp"
 #include "solver.cpp"
@@ -20,13 +21,12 @@
 #include "fmm/node.cpp"
 #include "fmm/stem.cpp"
 #include "fmm/tables.cpp"
-#include "sources/dipole.cpp"
-#include "sources/mesh/bc.cpp"
-#include "sources/mesh/mesh.cpp"
-#include "sources/mesh/rwg.cpp"
-#include "sources/mesh/srcrwg.cpp"
-#include "sources/mesh/subrwg.cpp"
-#include "sources/mesh/triangle.cpp"
-#include "sources/mesh/triquads.cpp"
+#include "mesh/bc.cpp"
+#include "mesh/mesh.cpp"
+#include "mesh/rwg.cpp"
+#include "mesh/srcrwg.cpp"
+#include "mesh/subrwg.cpp"
+#include "mesh/triangle.cpp"
+#include "mesh/triquads.cpp"
 
 // TODO: Reference additional headers your program requires here.

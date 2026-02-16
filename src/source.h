@@ -1,8 +1,10 @@
 #pragma once
 
 #include <filesystem>
-#include "../excite.h"
-#include "../math.h"
+#include "config.h"
+#include "excite.h"
+#include "math.h"
+#include "phys.h"
 
 class Source;
 

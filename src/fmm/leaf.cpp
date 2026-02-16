@@ -1,5 +1,5 @@
 #include "leaf.h"
-#include "../sources/mesh/triangle.h"
+#include "../mesh/triangle.h"
 
 FMM::Leaf::Leaf(
     const SrcVec& srcs,

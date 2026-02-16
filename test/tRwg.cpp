@@ -3,7 +3,7 @@
 #include "../src/clock.h"
 #include "../src/config.h"
 #include "../src/fileio.h"
-#include "../src/sources/mesh/triangle.h"
+#include "../src/mesh/triangle.h"
 
 using namespace FMM;
 

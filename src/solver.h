@@ -2,7 +2,7 @@
 
 #include <filesystem>
 #include "fmm/fmm.h"
-#include "sources/source.h"
+#include "source.h"
 
 class Solver {
 
