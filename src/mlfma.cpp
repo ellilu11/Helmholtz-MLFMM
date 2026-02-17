@@ -21,7 +21,7 @@ int main() {
     auto [srcs, Einc] = importFromConfig(config);
     auto end = Clock::now();
     Time duration_ms = end - start;
-    // std::cout << "   Elapsed time: " << duration_ms.count() << " ms\n\n";
+    std::cout << "   Elapsed time: " << duration_ms.count() << " ms\n\n";
 
     auto nsrcs = srcs.size();
     initGlobal(config, Einc, nsrcs);
@@ -79,10 +79,10 @@ int main() {
         lvec, rvec, currents);
 
     start = Clock::now();
-    solver->updateRvec(0);
-    solver->printSols("rvec_far.txt");
-    //solver->solve();
-    //solver->printSols("curr_se.txt");
+    //solver->updateRvec(0);
+    //solver->printSols("rvec_far.txt");
+    solver->solve();
+    solver->printSols("curr_full.txt");
     end = Clock::now();
     duration_ms = end - start;
     std::cout << "   Total elapsed time: " << duration_ms.count() << " ms\n\n";
@@ -92,7 +92,6 @@ int main() {
     // ================== Solve iterative direct ================ //
     initGlobal(config, Einc, nsrcs);
 
-    /*
     root = std::make_shared<Leaf>(srcs, 0, nullptr);
     root->buildLists();
 
@@ -101,20 +100,18 @@ int main() {
     start = Clock::now();
     Leaf::buildNearRads();
     end = Clock::now();
-    
+
     duration_ms = end - start;
     std::cout << "   Elapsed time: " << duration_ms.count() << " ms\n\n";
-    */
 
-    doDirFar = true;
     std::cout << " Solving w/ direct...\n";
     solver = std::make_unique<Solver>(srcs, root, MAX_ITER, EPS,
         lvec, rvec, currents);
 
-    solver->updateRvec(0);
-    solver->printSols("rvecDir_far.txt");
-    //solver->solve();
-    //solver->printSols("currDir_se.txt");
+    //solver->updateRvec(0);
+    //solver->printSols("rvecDir_far.txt");
+    solver->solve();
+    solver->printSols("currDir_full.txt");
 
     return 0;
 }

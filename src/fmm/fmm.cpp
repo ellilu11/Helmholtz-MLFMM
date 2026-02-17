@@ -12,7 +12,7 @@ void FMM::initGlobal(
     rvec = std::make_shared<vecXcd>(vecXcd::Zero(nsrcs));
     currents = std::make_shared<vecXcd>(vecXcd::Zero(nsrcs)); // assume I = 0 initially
 
-    // resetLeaves();
+    resetLeaves();
 }
 
 void FMM::buildTables() {

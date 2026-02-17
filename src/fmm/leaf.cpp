@@ -121,10 +121,10 @@ void FMM::Leaf::buildNearRads() {
     }
 
     for (const auto& leaf : leaves) {
-        for (size_t iObs = 1; iObs < leaf->srcs.size(); ++iObs) { // iObs = 0
+        for (size_t iObs = 0; iObs < leaf->srcs.size(); ++iObs) { // iObs = 0
             const auto& obs = leaf->srcs[iObs];
 
-            for (size_t iSrc = 0; iSrc < iObs; ++iSrc) { // iSrc <= iObs 
+            for (size_t iSrc = 0; iSrc <= iObs; ++iSrc) { // iSrc <= iObs 
                 const auto& src = leaf->srcs[iSrc];
 
                 leaf->selfRads.push_back(obs->getIntegratedRad(src));
@@ -132,8 +132,6 @@ void FMM::Leaf::buildNearRads() {
             }
         }
     }
-
-    Mesh::glRadMoments.clear();
 }
 
 /* buildRadPats()
@@ -286,10 +284,9 @@ void FMM::Leaf::evalSelfSols() {
 
     cmplxVec solAtObss(nSrcs, 0.0);
 
-    // TODO: Handle self-interactions
     int pairIdx = 0;
-    for (size_t iObs = 1; iObs < nSrcs; ++iObs) { // iObs = 0
-        for (size_t iSrc = 0; iSrc < iObs; ++iSrc) { // iSrc <= iObs 
+    for (size_t iObs = 0; iObs < nSrcs; ++iObs) { // iObs = 0
+        for (size_t iSrc = 0; iSrc <= iObs; ++iSrc) { // iSrc <= iObs 
             auto obs = srcs[iObs], src = srcs[iSrc];
 
             const cmplx rad = selfRads[pairIdx++];
@@ -308,25 +305,25 @@ void FMM::Leaf::evalSelfSols() {
  */ 
 void FMM::Leaf::evaluateSols() {
     auto start = Clock::now();
-    /*
+  
     for (const auto& [obsLeaf, srcLeaf] : nearPairs) {
         auto pairIdx = obsLeaf->leafPairIdx++;
         obsLeaf->evalPairSols(srcLeaf, obsLeaf->nearRads[pairIdx]);
     }
-    */
 
-    if (doDirFar)
-        std::cout << "Evaluating farfield solutions directly...\n";
-    else
-        std::cout << "Evaluating farfield solutions from local expansions...\n";
+    //if (doDirFar)
+    //    std::cout << "Evaluating farfield solutions directly...\n";
+    //else
+    //    std::cout << "Evaluating farfield solutions from local expansions...\n";
 
     for (const auto& leaf : leaves) {
-        if (doDirFar) leaf->evalFarSolsDir();
-        else leaf->evalFarSols();
+        // if (doDirFar) leaf->evalFarSolsDir();
+        // else
+        leaf->evalFarSols();
 
-        // leaf->evalNearNonNborSols();
+        leaf->evalNearNonNborSols();
 
-        // leaf->evalSelfSols();
+        leaf->evalSelfSols();
 
         leaf->leafPairIdx = 0;
         leaf->nonNearPairIdx = 0;

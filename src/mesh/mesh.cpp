@@ -1,4 +1,5 @@
 #include "mesh.h"
+#include "srcrwg.h"
 
 void Mesh::importVertices(const std::filesystem::path& path) {
     std::ifstream file(path);
@@ -66,34 +67,7 @@ SrcVec Mesh::importMesh(
 
     importTriangles(tpath);
 
-    auto srcs = importRWGs(rpath, std::move(Einc));
-
-    // printRWGs(srcs, "rwgs_cyl558.txt");
-
-    return srcs;
-}
-
-void Mesh::refineMesh(const SrcVec& rwgs) {
-    Triangle::refineVertices();
-    Triangle::refineTriangles();
-    Triangle::buildEdgeToTri();
-
-    RWG::refineRWGs();
-
-    for (const auto& rwg : rwgs)
-        dynamic_pointer_cast<SrcRWG>(rwg)->findSubRWGs();
-
-    SubRWG::buildVertsToSubRWGs(nverts);
-
-    for (const auto& rwg : rwgs)
-        dynamic_pointer_cast<SrcRWG>(rwg)->buildBC();
-
-    SubRWG::buildMassCoeffs();
-
-    edgeToMid.clear();
-    fineEdgeToTri.clear();
-    fineEdgeToSub.clear();
-    vertToSubs.clear();
+    return importRWGs(rpath, std::move(Einc));
 }
 
 /*

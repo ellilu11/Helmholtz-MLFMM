@@ -20,7 +20,7 @@ public:
 
     void buildSelfIntegrated();
 
-    // cmplx getDuffyIntegrated(const vec3d&, const vec3d&, const vec3d&) const;
+    cmplx getDuffyIntegrated(const vec3d&, const vec3d&, const vec3d&) const;
 
     void buildTriQuads();
 

@@ -4,10 +4,11 @@ void Mesh::Triangle::buildQuadCoeffs(Precision prec) {
 
     numQuads = [&]() {
         switch (prec) {
-            case Precision::VERYLOW: return 1;
-            case Precision::LOW:     return 3;
-            case Precision::MEDIUM:  return 7;
-            case Precision::HIGH:    return 13;
+            case Precision::VERYLOW:  return 1;
+            case Precision::LOW:      return 3;
+            case Precision::MEDIUM:   return 7;
+            case Precision::HIGH:     return 13;
+            case Precision::VERYHIGH: return 19;
         };
         } ();
 
@@ -97,6 +98,56 @@ void Mesh::Triangle::buildQuadCoeffs(Precision prec) {
                 quadCoeffs.emplace_back(ws, weight3);
 
             constexpr double weightErr = weight0 + 3.0*(weight1+weight2) + 6.0*weight3 - 0.5;
+            static_assert(weightErr > -Math::FEPS && weightErr < Math::FEPS);
+            break;
+        }
+
+        case Precision::VERYHIGH: {
+            constexpr double weight0 = 0.048567898141400;
+            const vec3d ws0(1.0/3.0, 1.0/3.0, 1.0/3.0);
+            quadCoeffs.emplace_back(ws0, weight0);
+
+            constexpr double weight1 = 0.015667350113570;
+            constexpr double alpha1 = 0.020634961602525, beta1 = 0.489682519198738;
+            vec3d ws1(alpha1, beta1, beta1);
+            std::vector<vec3d> wss1;
+            Math::buildPermutations(ws1, wss1, 0);
+            for (const auto& ws : wss1)
+                quadCoeffs.emplace_back(ws, weight1);
+
+            constexpr double weight2 = 0.038913770502387;
+            constexpr double alpha2 = 0.125820817014127, beta2 = 0.437089591492937;
+            vec3d ws2(alpha2, beta2, beta2);
+            std::vector<vec3d> wss2;
+            Math::buildPermutations(ws2, wss2, 0);
+            for (const auto& ws : wss2)
+                quadCoeffs.emplace_back(ws, weight2);
+
+            constexpr double weight3 = 0.039823869463605;
+            constexpr double alpha3 = 0.623592928761935, beta3 = 0.188203535619033;
+            vec3d ws3(alpha3, beta3, beta3);
+            std::vector<vec3d> wss3;
+            Math::buildPermutations(ws3, wss3, 0);
+            for (const auto& ws : wss3)
+                quadCoeffs.emplace_back(ws, weight3);
+
+            constexpr double weight4 = 0.012788837829349;
+            constexpr double alpha4 = 0.910540973211095, beta4 = 0.044729513394453;
+            vec3d ws4(alpha4, beta4, beta4);
+            std::vector<vec3d> wss4;
+            Math::buildPermutations(ws4, wss4, 0);
+            for (const auto& ws : wss4)
+                quadCoeffs.emplace_back(ws, weight4);
+
+            constexpr double weight5 = 0.021641769688645;
+            constexpr double alpha5 = 0.036838412054736, beta5 = 0.221962989160766, gamma = 0.741198598784498;
+            vec3d ws5(alpha5, beta5, gamma);
+            std::vector<vec3d> wss5;
+            Math::buildPermutations(ws5, wss5, 0);
+            for (const auto& ws : wss5)
+                quadCoeffs.emplace_back(ws, weight5);
+
+            constexpr double weightErr = weight0 + 3.0*(weight1+weight2+weight3+weight4) + 6.0*weight5 - 0.5;
             static_assert(weightErr > -Math::FEPS && weightErr < Math::FEPS);
             break;
         }

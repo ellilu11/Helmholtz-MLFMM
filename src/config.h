@@ -7,7 +7,7 @@
 
 enum class Mode { READ, WRITE };
 
-enum class Precision { VERYLOW, LOW, MEDIUM, HIGH };
+enum class Precision { VERYLOW, LOW, MEDIUM, HIGH, VERYHIGH };
 
 enum class Dist { UNIFORM, GAUSSIAN, SPHERE, CYLINDER };
 

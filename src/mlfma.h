@@ -21,12 +21,13 @@
 #include "fmm/node.cpp"
 #include "fmm/stem.cpp"
 #include "fmm/tables.cpp"
-#include "mesh/bc.cpp"
 #include "mesh/mesh.cpp"
 #include "mesh/rwg.cpp"
 #include "mesh/srcrwg.cpp"
-#include "mesh/subrwg.cpp"
 #include "mesh/triangle.cpp"
 #include "mesh/triquads.cpp"
+#include "mesh/submesh/bc.cpp"
+#include "mesh/submesh/submesh.cpp"
+#include "mesh/submesh/subrwg.cpp"
 
 // TODO: Reference additional headers your program requires here.

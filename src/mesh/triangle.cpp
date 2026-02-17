@@ -31,7 +31,8 @@ Mesh::Triangle::Triangle(const vec3i& iVerts, int iTri)
 
     buildTriQuads();
     buildSelfIntegrated();
-    // std::cout << "Built triangle #" << iTri << " with nhat " << nhat << '\n';
+    //std::cout << "Built triangle #" << iTri << " with selfints: " 
+    //    << selfInts[0] << ", " << selfInts[1] << ", " << selfInts[2] << ", " << selfInts[3] << '\n';
 }
 
 // Return global indices of vertices shared by this and other triangle
@@ -108,7 +109,8 @@ void Mesh::Triangle::buildSelfIntegrated() {
     double a11 = V1.dot(V1), a12 = V1.dot(V2), a22 = V2.dot(V2);
 
     double l0 = (V1-V2).norm(), l1 = (V2-V0).norm(), l2 = (V0-V1).norm();
-    
+    // std::cout << l0 << ", " << l1 << ", " << l2 << '\n';
+
     auto logN = [](double l0, double l1, double l2) {
         double lsum = l0+l1, ldiff = l2-l0;
         return std::log((lsum*lsum - l2*l2) / (l1*l1 - ldiff*ldiff));
@@ -116,6 +118,16 @@ void Mesh::Triangle::buildSelfIntegrated() {
 
     double log0 = logN(l0, l1, l2), log1 = logN(l1, l2, l0), log2 = logN(l2, l0, l1);
     double log3 = logN(l0, l2, l1), log4 = logN(l2, l1, l0), log5 = logN(l1, l0, l2);
+
+    //double log0 = std::log(std::fabs(((l0+l1)*(l0+l1) - l2*l2) / (l1*l1 - (l2-l0)*(l2-l0))));
+    //double log1 = std::log(std::fabs(((l1+l2)*(l1+l2) - l0*l0) / (l2*l2 - (l0-l1)*(l0-l1))));
+    //double log2 = std::log(std::fabs(((l2+l0)*(l2+l0) - l1*l1) / (l0*l0 - (l1-l2)*(l1-l2))));
+    //double log3 = std::log(std::fabs(((l0+l2)*(l0+l2) - l1*l1) / (l2*l2 - (l1-l0)*(l1-l0))));
+    //double log4 = std::log(std::fabs(((l2+l1)*(l2+l1) - l0*l0) / (l1*l1 - (l1-l0)*(l1-l0)))); ???
+    //double log5 = std::log(std::fabs(((l1+l0)*(l1+l0) - l2*l2) / (l0*l0 - (l2-l1)*(l2-l1))));
+
+    //std::cout << log0 << ", " << log1 << ", " << log2 << '\n';
+    //std::cout << log3 << ", " << log4 << ", " << log5 << '\n';
 
     // Integral of \lambda_i * \lambda_i' / r
     auto f0 = [](double l0, double l1, double l2, double log0, double log1, double log2) {
@@ -146,15 +158,16 @@ void Mesh::Triangle::buildSelfIntegrated() {
 
     selfInts[0] 
         = f0(l0, l1, l2, log0, log1, log2) * (a00 - 2.0*a01 + a11)
-        + f0(l1, l2, l0, log1, log2, log0) * (a00 - 2.0*a02 + a22)
+        + f0(l0, l2, l1, log3, log4, log5) * (a00 - 2.0*a02 + a22)
         + f1(l0, l1, l2, log0, log1, log2) * (a00 - a02 - a01 + a12)
-        + f1(l0, l2, l1, log3, log4, log5) * (a00 - a01 - a02 + a12);
+        + f1(l0, l1, l2, log0, log1, log2) * (a00 - a01 - a02 + a12);
+    // std::cout << f0(l0, l1, l2, log0, log1, log2) << ' ' << f0(l0, l2, l1, log3, log4, log5) << '\n';
 
     selfInts[1] = f2(l0, l1, l2, log0, log1, log2); 
 
-    selfInts[2] = f2(l1, l2, l0, log1, log2, log0);
+    selfInts[2] = f2(l0, l2, l1, log3, log4, log5);
 
-    selfInts[3] = (log0 / l0 + log1 / l1 + log2 / l2) / 3.0;
+    selfInts[3] = (log0/l0 + log1/l1 + log2/l2) / 3.0;
 }
 
 /*
