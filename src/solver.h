@@ -23,7 +23,7 @@ public :
 
     void updateGvec(vecXcd&, vecXcd&, int);
 
-    void solve();
+    void solve(const std::string&);
 
     std::shared_ptr<vecXcd> getLvec() { return lvec; }
 

@@ -49,59 +49,6 @@ int Mesh::Triangle::getNumCommonVerts(const Triangle& other) const {
     return numVerts;
 }
 
-std::tuple<double,vec3d,vec3d> 
-    Mesh::Triangle::getNearIntegrated(const vec3d& obs, bool doNumeric) const
-{
-    using namespace Math;
-
-    double scaRad = 0.0;
-    vec3d vecRad = vec3d::Zero();
-    const vec3d& R = projectToPlane(obs);
-
-    if (doNumeric) {
-        for (const auto& [node, weight] : triQuads) {
-            const double dr = (obs-node).norm();
-            scaRad += weight / dr;
-            vecRad -= weight * (R-projectToPlane(node)) / dr;
-        }
-
-        return std::make_tuple(scaRad, vecRad, R);
-    }
-
-    const auto& verts = getVerts();
-    double d = std::fabs(nhat.dot(obs - verts[0])), dsq = d*d;
-
-    for (int i = 0; i < 3; ++i) {
-        const vec3d& V0 = verts[i];
-        const vec3d& V1 = verts[(i+1)%3];
-
-        const vec3d& P0 = projectToPlane(V0) - R;
-        const vec3d& P1 = projectToPlane(V1) - R;
-
-        const vec3d& lhat = (P1-P0).normalized();
-        const vec3d& uhat = lhat.cross(nhat); 
-        double l0 = P0.dot(lhat), l1 = P1.dot(lhat);
-
-        const vec3d& P = P0 - l0*lhat;
-        double p = P.norm(), p0 = P0.norm(), p1 = P1.norm();
-        const vec3d& phat = (approxZero(p) ? zeroVec : P.normalized()); 
-
-        double rsq = p*p + dsq, r0 = std::sqrt(p0*p0 + dsq), r1 = std::sqrt(p1*p1 + dsq);
-        double f2 = std::log((r1+l1)/(r0+l0)); // Consider using atanh
-        assert(!approxZero(r0+l0) && !approxZero(r1+l1));
-
-        scaRad += phat.dot(uhat) * (
-            p*f2 - d * (std::atan2(p*l1, rsq+d*r1) - std::atan2(p*l0, rsq+d*r0)));
-
-        vecRad += uhat * (rsq*f2 + l1*r1 - l0*r0);
-    }
-
-    scaRad /= 2.0*area;
-    vecRad /= 4.0*area;
-
-    return std::make_tuple(scaRad, vecRad, R);
-}
-
 void Mesh::Triangle::buildSelfIntegrated() {
     const auto& [V0, V1, V2] = getVerts();
 
@@ -114,10 +61,12 @@ void Mesh::Triangle::buildSelfIntegrated() {
     auto logN = [](double l0, double l1, double l2) {
         double lsum = l0+l1, ldiff = l2-l0;
         return std::log((lsum*lsum - l2*l2) / (l1*l1 - ldiff*ldiff));
-    };
+        };
 
     double log0 = logN(l0, l1, l2), log1 = logN(l1, l2, l0), log2 = logN(l2, l0, l1);
     double log3 = logN(l0, l2, l1), log4 = logN(l2, l1, l0), log5 = logN(l1, l0, l2);
+
+    // std::cout << log0-log3 << ", " << log1-log5 << ", " << log2-log4 << '\n';
 
     //double log0 = std::log(std::fabs(((l0+l1)*(l0+l1) - l2*l2) / (l1*l1 - (l2-l0)*(l2-l0))));
     //double log1 = std::log(std::fabs(((l1+l2)*(l1+l2) - l0*l0) / (l2*l2 - (l0-l1)*(l0-l1))));
@@ -136,7 +85,7 @@ void Mesh::Triangle::buildSelfIntegrated() {
             + log1 * (l0sq + 5.0*l1sq - l2sq) / (120.0*l1sq*l1)
             + log2 * (l0sq - l1sq + 5.0*l2sq) / (120.0*l2sq*l2)
             + (l2-l0) / (60.0*l1sq) + (l1-l0) / (60.0*l2sq);
-    };
+        };
 
     // Integral of \lambda_i * \lambda_j' / r
     auto f1 = [](double l0, double l1, double l2, double log0, double log1, double log2) {
@@ -145,7 +94,7 @@ void Mesh::Triangle::buildSelfIntegrated() {
             + log0 * (3.0*l0sq + l1sq - l2sq) / (80.0*l0sq*l0)
             + log1 * (l0sq + 3.0*l1sq - l2sq) / (80.0*l1sq*l1)
             + (l2-l1) / (40.0*l0sq) + (l2-l0) / (40.0*l1sq);
-    };
+        };
 
     // Integral of \lambda_i / r or \lambda_i' / r
     auto f2 = [](double l0, double l1, double l2, double log0, double log1, double log2) {
@@ -154,20 +103,107 @@ void Mesh::Triangle::buildSelfIntegrated() {
             + log1 * (l0sq + 5.0*l1sq - l2sq) / (48.0*l1sq*l1)
             + log2 * (l0sq - l1sq + 5.0*l2sq) / (48.0*l2sq*l2)
             + (l2-l0) / (24.0*l1sq) + (l1-l0) / (24.0*l2sq);
-    };
+        };
 
-    selfInts[0] 
+    selfInts[0]
         = f0(l0, l1, l2, log0, log1, log2) * (a00 - 2.0*a01 + a11)
         + f0(l0, l2, l1, log3, log4, log5) * (a00 - 2.0*a02 + a22)
         + f1(l0, l1, l2, log0, log1, log2) * (a00 - a02 - a01 + a12)
         + f1(l0, l1, l2, log0, log1, log2) * (a00 - a01 - a02 + a12);
     // std::cout << f0(l0, l1, l2, log0, log1, log2) << ' ' << f0(l0, l2, l1, log3, log4, log5) << '\n';
 
-    selfInts[1] = f2(l0, l1, l2, log0, log1, log2); 
+    selfInts[1] = f2(l0, l1, l2, log0, log1, log2);
 
     selfInts[2] = f2(l0, l2, l1, log3, log4, log5);
 
     selfInts[3] = (log0/l0 + log1/l1 + log2/l2) / 3.0;
+}
+
+std::pair<cmplx,vec3cd>
+    Mesh::Triangle::getPlaneWaveIntegrated(const vec3d& kvec) const 
+{
+    using namespace Math;
+
+    const auto& Xs = getVerts();
+    const double alpha = kvec.dot(Ds[0]), beta = -kvec.dot(Ds[2]), gamma = alpha-beta;
+    const double alphasq = alpha*alpha, betasq = beta*beta;
+    const cmplx expI_alpha = exp(iu*alpha), expI_beta = exp(iu*beta);
+    const cmplx // TODO: Only compute if gamma != 0
+        f0_alpha = (approxZero(alpha) ? -iu : (1.0 - expI_alpha) / alpha),
+        f0_beta = (approxZero(beta) ? -iu : (1.0 - expI_beta) / beta);
+    const cmplx
+        f1_alpha = (approxZero(alpha) ? -0.5 : (1.0 - (1.0 - iu*alpha) * expI_alpha) / alphasq),
+        f1_beta = (approxZero(beta) ? -0.5 : (1.0 - (1.0 - iu*beta) * expI_beta) / betasq);
+
+    cmplx scaRad; vec3cd vecRad;
+    if (approxZero(gamma)) {
+        const cmplx
+            f2 = (approxZero(alpha) ? iu/6.0 :
+                (expI_alpha*(alphasq + 2.0*iu*alpha - 2.0) + 2.0) / (2.0*alpha*alphasq));
+        scaRad = -f1_alpha;
+        vecRad = -iu*f2 * (Ds[0] - Ds[2]);
+        // radVec = -f1_alpha * (Xs[0] - Xnc[iTri]) - iu*f2 * (Ds[0] - Ds[2]);
+    } else {
+        const cmplx
+            I0 = (f0_alpha - f0_beta) / gamma,
+            I1 = iu * (I0 + f1_alpha),
+            I2 = -iu * (I0 + f1_beta);
+        scaRad = I0;
+        vecRad = (I1*Ds[0] - I2*Ds[2]) / gamma;
+        // radVec = I0 * (Xs[0] - Xnc[iTri]) + (I1*Ds[0] - I2*Ds[2]) / gamma;
+    }
+
+    return std::make_pair(scaRad, vecRad);
+}
+
+std::pair<double,vec3d> 
+    Mesh::Triangle::getNearIntegrated(const vec3d& obs, bool doNumeric) const
+{
+    using namespace Math;
+
+    double scaRad = 0.0;
+    vec3d vecRad = vec3d::Zero();
+    const vec3d& R = proj(obs);
+
+    if (doNumeric) {
+        for (const auto& [node, weight] : triQuads) {
+            const double dr = (obs-node).norm();
+            scaRad += weight / dr;
+            vecRad -= weight * (R-proj(node)) / dr;
+        }
+
+        return std::make_pair(scaRad, vecRad);
+    }
+
+    const auto& Xs = getVerts();
+    double d = std::fabs(nhat.dot(obs-Xs[0])), dsq = d*d;
+    std::array<vec3d,3> Ps =
+        { proj(Xs[0])-R, proj(Xs[1])-R, proj(Xs[2])-R };
+
+    for (int i = 0; i < 3; ++i) {
+        const vec3d& P0 = Ps[i];
+        const vec3d& P1 = Ps[(i+1)%3];
+
+        const vec3d& lhat = (P1-P0).normalized();
+        const vec3d& uhat = lhat.cross(nhat);
+        double l0 = P0.dot(lhat), l1 = P1.dot(lhat);
+
+        const vec3d& P = P0 - l0*lhat;
+        double p = P.norm(), p0 = P0.norm(), p1 = P1.norm();
+        const vec3d& phat = (approxZero(p) ? zeroVec : P.normalized());
+
+        double rsq = p*p + dsq, r0 = std::sqrt(p0*p0 + dsq), r1 = std::sqrt(p1*p1 + dsq);
+        double f2 = std::log((r1+l1)/(r0+l0)); // Consider using atanh
+        assert(!approxZero(r0+l0) && !approxZero(r1+l1));
+
+        scaRad += phat.dot(uhat) * (
+            p*f2 - d * (std::atan2(p*l1, rsq+d*r1) - std::atan2(p*l0, rsq+d*r0)));
+        vecRad += uhat * (rsq*f2 + l1*r1 - l0*r0);
+    }
+    scaRad /= 2.0*area;
+    vecRad /= 4.0*area;
+
+    return std::make_pair(scaRad, vecRad);
 }
 
 /*

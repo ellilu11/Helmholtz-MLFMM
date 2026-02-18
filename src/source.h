@@ -27,6 +27,9 @@ public:
 
     void addToRval(cmplx val) { rval += val; }
 
+    template <typename T>
+    bool isSrcType() const { return typeid(*this) == typeid(T); }
+
     virtual vec3d getCenter() const = 0;
 
     virtual void buildVoltage() = 0;

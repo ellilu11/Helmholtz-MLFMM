@@ -1,5 +1,4 @@
 #include "leaf.h"
-#include "../mesh/triangle.h"
 
 FMM::Leaf::Leaf(
     const SrcVec& srcs,
@@ -128,7 +127,6 @@ void FMM::Leaf::buildNearRads() {
                 const auto& src = leaf->srcs[iSrc];
 
                 leaf->selfRads.push_back(obs->getIntegratedRad(src));
-
             }
         }
     }
@@ -138,7 +136,6 @@ void FMM::Leaf::buildNearRads() {
  * Build radiation patterns due to sources in all leaves
  */
 void FMM::Leaf::buildRadPats() {
-
     for (const auto& leaf : leaves) {
         const int level = leaf->level;
         const auto& center = leaf->center;
@@ -151,7 +148,6 @@ void FMM::Leaf::buildRadPats() {
             const auto& toThPh = angles_lvl.toThPh[iDir];
 
             std::vector<vec2cd> radPat(leaf->srcs.size(), vec2cd::Zero());
-
             int iSrc = 0;
             for (const auto& src : leaf->srcs)
                 radPat[iSrc++] = toThPh * src->getRadAlongDir(center, kvec);
@@ -311,14 +307,7 @@ void FMM::Leaf::evaluateSols() {
         obsLeaf->evalPairSols(srcLeaf, obsLeaf->nearRads[pairIdx]);
     }
 
-    //if (doDirFar)
-    //    std::cout << "Evaluating farfield solutions directly...\n";
-    //else
-    //    std::cout << "Evaluating farfield solutions from local expansions...\n";
-
     for (const auto& leaf : leaves) {
-        // if (doDirFar) leaf->evalFarSolsDir();
-        // else
         leaf->evalFarSols();
 
         leaf->evalNearNonNborSols();
@@ -330,32 +319,4 @@ void FMM::Leaf::evaluateSols() {
     }
 
     t.L2T += Clock::now() - start;
-}
-
-// Directly compute only far interactions (debugging only)
-void FMM::Leaf::evalFarSolsDir() {
-    auto contains =
-        [](const NodeVec& vec, const std::shared_ptr<Leaf> val) {
-        return std::find(vec.begin(), vec.end(), val) != vec.end();
-        };
-
-    for (size_t iObs = 0; iObs < srcs.size(); ++iObs) {
-        const auto obs = srcs[iObs];
-
-        for (const auto& leaf : leaves) {
-            // Ignore if leaf is self, near neighbor, or near non-neighbor
-            if (leaf == shared_from_this() || contains(nearNbors, leaf) || contains(nearNonNbors, leaf))
-                continue;
-
-            const auto& srcSrcs = leaf->getSrcs();
-            for (size_t iSrc = 0; iSrc < srcSrcs.size(); ++iSrc) {
-                const auto src = srcSrcs[iSrc];
-                assert(obs != src);
-
-                const cmplx rad = obs->getIntegratedRad(src);
-
-                (*rvec)[obs->getIdx()] += Phys::C * wavenum * (*lvec)[src->getIdx()] * rad;
-            }
-        }
-    }
 }

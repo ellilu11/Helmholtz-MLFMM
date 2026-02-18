@@ -13,10 +13,10 @@ extern bool doDirFar = false;
 void testSingularityExtraction(const Mesh::Triangle& tri, const vec3d& obs) {
     std::cout << std::setprecision(15);
 
-    const auto [scaRad, vecRad, obsProj] = tri.getNearIntegrated(obs, 1);
+    const auto [scaRad, vecRad] = tri.getNearIntegrated(obs, 1);
     std::cout << "Numeric :\n   scaRad = " << scaRad << "\n   vecRad = " << vecRad.transpose() << "\n\n";
 
-    const auto [scaRadAnl, vecRadAnl, obsProjAnl] = tri.getNearIntegrated(obs, 0);
+    const auto [scaRadAnl, vecRadAnl] = tri.getNearIntegrated(obs, 0);
     std::cout << "Analytic :\n   scaRad = " << scaRadAnl << "\n   vecRad = " << vecRadAnl.transpose() << "\n";
 
     std::cout << scaRadAnl/scaRad << ' ' 
@@ -39,13 +39,13 @@ int main() {
     auto nsrcs = srcs.size();
     initGlobal(config, Einc, nsrcs);
 
-    /* Singularity extraction test
+    // Singularity extraction test
     const auto tri = dynamic_pointer_cast<Mesh::RWG>(srcs[0])->getTris()[0];
     const vec3d obs = { 0.0, 0.0, 5.0 };
     testSingularityExtraction(tri, obs);
-    */
+    //
 
-    // Nearfield integration test
+    /* Nearfield integration test
     auto rwg0 = dynamic_pointer_cast<Mesh::RWG>(srcs[0]);
     auto rwg1 = dynamic_pointer_cast<Mesh::RWG>(srcs[1]);
 
@@ -56,6 +56,7 @@ int main() {
         << "Self intRad: " << selfRad << '\n'
         << "Pair intRad: " << pairRad << '\n'
         << "Diff: " << pairRad - selfRad << '\n';
+    */
 
     return 0;
 }

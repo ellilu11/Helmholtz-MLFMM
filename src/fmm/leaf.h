@@ -2,6 +2,7 @@
 
 #include "node.h"
 #include "stem.h"
+#include "../mesh/srcrwg.h"
 
 class FMM::Leaf final : public Node, public std::enable_shared_from_this<Leaf> {
 
@@ -46,7 +47,6 @@ private:
     static void findNearNborPairs();
 
     void evalFarSols();
-    void evalFarSolsDir();
 
     void evalNearNonNborSols();
 
@@ -54,6 +54,7 @@ private:
 
     void evalSelfSols();
 
+private:
     inline static size_t glSrcIdx = 0;
 
     std::vector<cmplxVec> nearRads;

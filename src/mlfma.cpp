@@ -81,8 +81,7 @@ int main() {
     start = Clock::now();
     //solver->updateRvec(0);
     //solver->printSols("rvec_far.txt");
-    solver->solve();
-    solver->printSols("curr_full.txt");
+    solver->solve("curr.txt");
     end = Clock::now();
     duration_ms = end - start;
     std::cout << "   Total elapsed time: " << duration_ms.count() << " ms\n\n";
@@ -110,8 +109,7 @@ int main() {
 
     //solver->updateRvec(0);
     //solver->printSols("rvecDir_far.txt");
-    solver->solve();
-    solver->printSols("currDir_full.txt");
+    solver->solve("currDir.txt");
 
     return 0;
 }

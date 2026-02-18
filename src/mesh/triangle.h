@@ -16,11 +16,13 @@ public:
 
     int getNumCommonVerts(const Triangle&) const;
 
-    std::tuple<double,vec3d,vec3d> getNearIntegrated(const vec3d&, bool = 0) const;
-
     void buildSelfIntegrated();
 
-    cmplx getDuffyIntegrated(const vec3d&, const vec3d&, const vec3d&) const;
+    std::pair<double,vec3d> getNearIntegrated(const vec3d&, bool = 0) const;
+
+    std::pair<cmplx,vec3cd> getPlaneWaveIntegrated(const vec3d&) const;
+
+    // cmplx getDuffyIntegrated(const vec3d&, const vec3d&, const vec3d&) const;
 
     void buildTriQuads();
 
@@ -40,7 +42,7 @@ public:
 
     static int getNumQuads() { return numQuads; }
 
-    vec3d projectToPlane(const vec3d& X) const { return X - (nhat.dot(X))*nhat; }
+    vec3d proj(const vec3d& X) const { return X - (nhat.dot(X))*nhat; }
 
 private:
     static int numQuads;
@@ -53,10 +55,11 @@ private:
     vec3i iVerts; // indices of vertices
     int iCenter;  // index of center
 
-    // Store or compute these on the fly?
     vec3d center;           // barycentric center 
     std::array<vec3d,3> Ds; // edge displacements (Ds[i] = Xs[i+1] - Xs[i])
     vec3d nhat;             // surface normal unit vector
     double area;            // area
+
+    // Integral quantities
     std::array<double,4> selfInts;
 };

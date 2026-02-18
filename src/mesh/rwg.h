@@ -11,9 +11,11 @@ public:
 
     static void refineRWGs();
 
-    vec3cd getIntegratedPlaneWave(const vec3d&, bool = 0) const;
+    vec3cd getPlaneWaveIntegrated(const vec3d&, bool = 0) const;
 
     cmplx getIntegratedRad(const std::shared_ptr<Source>) const override;
+
+    std::array<int,2> getTrisIdx() const { return iTris; }
 
     std::array<Triangle,2> getTris() const {
         return { glTris[iTris[0]], glTris[iTris[1]] };
@@ -36,15 +38,15 @@ public:
 
     void buildVoltage() override {
         voltage = -Einc->amplitude
-            * conj(getIntegratedPlaneWave(Einc->wavevec).dot(Einc->pol)); // Hermitian dot!
+            * conj(getPlaneWaveIntegrated(Einc->wavevec).dot(Einc->pol)); // Hermitian dot!
     }
 
     vec3cd getRadAlongDir(const vec3d& X, const vec3d& kvec) const override {
-        return exp(iu*kvec.dot(X)) * getIntegratedPlaneWave(kvec).conjugate();
+        return exp(iu*kvec.dot(X)) * getPlaneWaveIntegrated(kvec).conjugate();
     }
 
     vec3cd getFarAlongDir(const vec3d& krhat) const override {
-        return getIntegratedPlaneWave(krhat).conjugate();
+        return getPlaneWaveIntegrated(krhat).conjugate();
     }
 
 protected:

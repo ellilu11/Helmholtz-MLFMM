@@ -118,8 +118,25 @@ void Solver::updateGvec(vecXcd& vcos, vecXcd& vsin, int k) {
     gvec[k] = vcos[k] * gvec[k];
 }
 
-//
-void Solver::solve() {
+void Solver::printSols(const std::string& fname) {
+    namespace fs = std::filesystem;
+    fs::path dir = "out/sol";
+    std::error_code ec;
+
+    if (fs::create_directory(dir, ec))
+        std::cout << " Created directory " << dir.generic_string() << "/\n";
+    else if (ec)
+        std::cerr << " Error creating directory " << ec.message() << "\n";
+
+    std::ofstream file(dir/fname);
+
+    file << std::setprecision(15) << std::scientific;
+
+    // for (const auto& sol : *rvec) file << sol << '\n';
+    for (const auto& curr : *currents) file << curr << '\n';
+}
+
+void Solver::solve(const std::string& fname) {
     // TODO: Member variables
     vecXcd vcos = vecXcd::Zero(maxIter);
     vecXcd vsin = vecXcd::Zero(maxIter);
@@ -147,65 +164,6 @@ void Solver::solve() {
     const auto& Hp = Hmat.block(0, 0, Hmat.rows()-1, Hmat.cols());
     vecXcd yvec = Hp.lu().solve(gvec.segment(0, iter));
     *currents = Qmat.leftCols(iter) * yvec;
+
+    printSols(fname);
 }
-//
-
-void Solver::printSols(const std::string& fname) {
-    namespace fs = std::filesystem;
-    fs::path dir = "out/sol";
-    std::error_code ec;
-
-    if (fs::create_directory(dir, ec))
-        std::cout << " Created directory " << dir.generic_string() << "/\n";
-    else if (ec)
-        std::cerr << " Error creating directory " << ec.message() << "\n";
-
-    std::ofstream file(dir/fname);
-
-    file << std::setprecision(15) << std::scientific;
-
-    // for (const auto& sol : *rvec) file << sol << '\n';
-    for (const auto& curr : *currents) file << curr << '\n';
-}
-
-/*void Solver::solve() {
-
-    // std::string outStr = "out/sol/sol.txt";
-    // std::filesystem::remove(outStr);
-    // std::ofstream outFile(outStr);
-
-    //
-    namespace fs = std::filesystem;
-    fs::path dir = "out/sol";
-
-    std::filesystem::remove(dir/"sol.txt");
-    std::ofstream file(dir/"sol.txt", std::ios::app);
-    //
-
-    vecXcd vcos = vecXcd::Zero(maxIter);
-    vecXcd vsin = vecXcd::Zero(maxIter);
-
-    for (int iter = 0; iter < maxIter; ++iter) {
-        updateSols(iter);
-
-        iterateArnoldi(iter);
-
-        updateGvec(vcos, vsin, iter);
-
-        resetSols();
-
-        //
-        const auto& Hp = Hmat.block(0, 0, Hmat.rows()-1, Hmat.cols());
-        vecXcd yvec = Hp.lu().solve(gvec.segment(0, iter+1));
-
-        currents = Qmat.leftCols(iter+1) * yvec;
-
-        for (const auto& curr : currents)
-            os << curr.real() << ' ';
-        os << '\n';
-        //
-
-        const double err = abs(gvec[iter+1])/g0;
-        if (err < EPS) break;
-    }
-}*/
