@@ -57,8 +57,8 @@ void FMM::Leaf::buildLists() {
 void FMM::Leaf::resizeCoeffs() {
     const auto [nth, nph] = angles[level].getNumAngles();
 
-    coeffs.resize(nth*nph, vec2cd::Zero());
-    localCoeffs.resize(nth*nph, vec2cd::Zero());
+    coeffs.resize(nth*nph);
+    localCoeffs.resize(nth*nph);
 }
 
 /* findNearNborPairs()
@@ -163,7 +163,7 @@ void FMM::Leaf::buildRadPats() {
 void FMM::Leaf::buildMpoleCoeffs() {
     if (isSrcless() || isRoot()) return;
 
-    std::fill(coeffs.begin(), coeffs.end(), vec2cd::Zero());
+    coeffs.fillZero();
 
     auto start = Clock::now();
 
@@ -174,7 +174,8 @@ void FMM::Leaf::buildMpoleCoeffs() {
         for (const auto& src : srcs)
             coeff += (*lvec)[src->getIdx()] * radPats[iDir][iSrc++];
 
-        coeffs[iDir] = coeff;
+        coeffs.theta[iDir] = coeff[0];
+        coeffs.phi[iDir] = coeff[1];
     }
 
     t.S2M += Clock::now() - start;
@@ -188,7 +189,7 @@ void FMM::Leaf::buildLocalCoeffs() {
     if (isRoot()) return;
 
     auto start = Clock::now();
-    buildMpoleToLocalCoeffs();
+    translateCoeffs();
     t.M2L += Clock::now() - start;
 
     evalLeafIlistSols();
@@ -218,7 +219,8 @@ void FMM::Leaf::evalFarSols() {
         for (int ith = 0; ith < nth; ++ith) {
             for (int iph = 0; iph < nph; ++iph) {
                 // Do the angular integration
-                intRad += radPats[iDir][iObs].dot(localCoeffs[iDir]); // Hermitian dot!
+                const vec2cd& localCoeff = localCoeffs.getVecAlongDir(iDir);
+                intRad += radPats[iDir][iObs].dot(localCoeff); // Hermitian dot!
 
                 ++iDir;
             }

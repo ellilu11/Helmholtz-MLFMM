@@ -15,13 +15,11 @@ public:
 
     void buildMpoleCoeffs() override;
 
-    std::vector<vec2cd> getShiftedLocalCoeffs(int) const;
+    Coeffs getShiftedLocalCoeffs(int) const;
 
-    template <typename T>
-    static void addInterpCoeffs(const std::vector<T>&, std::vector<T>&, int, int);
+    static void addInterpCoeffs(const Coeffs&, Coeffs&, int, int);
 
-    template <typename T>
-    static void addAnterpCoeffs(const std::vector<T>&, std::vector<T>&, int, int);
+    static void addAnterpCoeffs(const Coeffs&, Coeffs&, int, int);
 
     void buildLocalCoeffs() override;
 

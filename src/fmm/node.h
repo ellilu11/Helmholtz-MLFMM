@@ -5,6 +5,7 @@
 #include <queue>
 
 #include "angles.h"
+#include "coeffs.h"
 #include "fmm.h"
 #include "tables.h"
 
@@ -41,9 +42,9 @@ public:
 
     vec3d getCenter() const { return center; }
     
-    std::vector<vec2cd> getMpoleCoeffs() const { return coeffs; }
+    Coeffs getMpoleCoeffs() const { return coeffs; }
     
-    std::vector<vec2cd> getLocalCoeffs() const { return localCoeffs; }
+    Coeffs getLocalCoeffs() const { return localCoeffs; }
 
     bool isRoot() const { return base == nullptr; }
     
@@ -67,7 +68,7 @@ protected:
     
     void pushSelfToNearNonNbors();
 
-    void buildMpoleToLocalCoeffs();
+    void translateCoeffs();
 
     void evalLeafIlistSols();
    
@@ -78,8 +79,8 @@ protected:
 protected:
     inline static int numNodes = 0;
 
-    std::vector<vec2cd> coeffs;
-    std::vector<vec2cd> localCoeffs;
+    Coeffs coeffs;
+    Coeffs localCoeffs;
 
     NodeVec branches;
     NodeVec nbors; // list 1

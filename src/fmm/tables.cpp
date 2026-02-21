@@ -1,10 +1,11 @@
+
 #include "tables.h"
 
 realVec FMM::Tables::dists;
 std::vector<vec3d> FMM::Tables::rhats;
-std::array<vec3d,316> FMM::Tables::dXs;
+std::array<vec3d, 316> FMM::Tables::dXs;
 
-std::vector<interpPair> FMM::Tables::getInterpTheta(int srcLvl, int tgtLvl) 
+std::vector<interpPair> FMM::Tables::getInterpTheta(int srcLvl, int tgtLvl)
 {
     const int order = config.interpOrder;
 
@@ -37,8 +38,8 @@ std::vector<interpPair> FMM::Tables::getInterpTheta(int srcLvl, int tgtLvl)
 
         vecXd coeffs(2*order);
         for (int k = 0; k < 2*order; ++k)
-            coeffs[k] = 
-                Interp::evalLagrangeBasis(tgtTheta, interpThetas, k);
+            coeffs[k] =
+            Interp::evalLagrangeBasis(tgtTheta, interpThetas, k);
 
         interpPairs.emplace_back(coeffs, nearIdx);
     }
@@ -69,7 +70,7 @@ std::vector<interpPair> FMM::Tables::getInterpPhi(int srcLvl, int tgtLvl)
         vecXd coeffs(2*order);
         for (int k = 0; k < 2*order; ++k)
             coeffs[k] =
-                Interp::evalLagrangeBasis(tgtPhi, interpPhis, k);
+            Interp::evalLagrangeBasis(tgtPhi, interpPhis, k);
 
         interpPairs.emplace_back(coeffs, nearIdx);
     }
@@ -96,7 +97,7 @@ Map<vecXcd> FMM::Tables::getAlpha() {
     const double nodeLeng = config.rootLeng / pow(2.0, level);
 
     Map<vecXcd> alpha;
-        
+
     for (const auto& dist : dists) {
         const double kr = wavenum * dist * nodeLeng;
 
@@ -108,10 +109,10 @@ Map<vecXcd> FMM::Tables::getAlpha() {
             cmplx coeff = 0.0;
 
             for (int l = 0; l <= L; ++l)
-                coeff += 
-                    powI(l) * (2.0*l+1.0)
-                    * sphericalHankel1(kr, l) 
-                    * legendreP(xi, l).first;
+                coeff +=
+                powI(l) * (2.0*l+1.0)
+                * sphericalHankel1(kr, l)
+                * legendreP(xi, l).first;
 
             transl_dist[ips] = iu * wavenum / (4.0*PI) * coeff;
         }
@@ -142,7 +143,7 @@ HashMap<interpPair> FMM::Tables::getInterpPsi() {
             psis[m++] = acos(khat.dot(rhat));
     }
 
-    std::sort(psis.begin(), psis.end()); 
+    std::sort(psis.begin(), psis.end());
     psis.erase(std::unique(psis.begin(), psis.end()), psis.end());
 
     // Compute Lagrange coefficients for each possible psi
@@ -163,7 +164,7 @@ HashMap<interpPair> FMM::Tables::getInterpPsi() {
         // CONSIDER: Barycentric coordinates
         vecXd coeffs(2*order);
         for (size_t k = 0; k < 2*order; ++k)
-            coeffs[k] = Interp::evalLagrangeBasis(psi, psis, k); 
+            coeffs[k] = Interp::evalLagrangeBasis(psi, psis, k);
 
         interpPairs.emplace(psi, std::make_pair(coeffs, nearIdx));
     }
@@ -177,7 +178,7 @@ void FMM::Tables::buildTranslationTable() {
     const int order = config.interpOrder;
 
     const auto& alphas = getAlpha();
-    const auto& interpPsis = getInterpPsi(); 
+    const auto& interpPsis = getInterpPsi();
 
     const auto& angles_lvl = angles[level];
     const auto [nth, nph] = angles_lvl.getNumAngles();
@@ -193,7 +194,7 @@ void FMM::Tables::buildTranslationTable() {
 
         const auto& alpha_dX = alphas.at(r);
 
-        vecXcd transl_dX(nth*nph);
+        arrXcd transl_dX(nDir);
 
         for (int iDir = 0; iDir < nDir; ++iDir) {
             const auto& khat = angles_lvl.khat[iDir];
@@ -208,7 +209,7 @@ void FMM::Tables::buildTranslationTable() {
                 translCoeff += alpha_dX[ips_flipped] * interpPsi[k];
             }
 
-            transl_dX[iDir] = translCoeff;
+            transl_dX(iDir) = translCoeff;
         }
 
         transl.emplace(dX, transl_dX);

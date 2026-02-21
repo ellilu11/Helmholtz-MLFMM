@@ -23,6 +23,9 @@ using vec2cd = Eigen::Vector2cd;
 using vec3cd = Eigen::Vector3cd;
 using vecXcd = Eigen::VectorXcd;
 
+using arrXcd = Eigen::ArrayXcd;
+using arrX2cd = Eigen::Array<cmplx, Eigen::Dynamic, 2>;
+
 using mat3d = Eigen::Matrix3d;
 using mat23d = Eigen::Matrix<double, 2, 3>;
 using matXcd = Eigen::MatrixXcd;
@@ -33,13 +36,17 @@ template <typename T>
 using quadPair = std::pair<T, double>;
 
 template <typename T>
-std::vector<T> operator+ (const std::vector<T>& zs, const std::vector<T>& ws) {
-    assert(zs.size() == ws.size());
+std::vector<T> operator+= (std::vector<T>& lhs, const std::vector<T>& rhs) {
+    assert(lhs.size() == rhs.size());
+    for (size_t i = 0; i < lhs.size(); ++i)
+        lhs[i] += rhs[i];
+    return lhs;
+}
 
-    std::vector<T> sum;
-    for (size_t i = 0; i < zs.size(); ++i)
-        sum.push_back(zs[i] + ws[i]);
-    return sum;
+template <typename T>
+std::vector<T> operator+ (const std::vector<T>& lhs, const std::vector<T>& rhs) {
+    lhs += rhs;
+    return lhs;
 }
 
 template <typename T>

@@ -61,14 +61,14 @@ void FMM::Node::pushSelfToNearNonNbors() {
     }
 }
 
-/* buildMpoleToLocalCoeffs()
+/* translateCoeffs()
  * (M2L) Translate mpole coeffs of interaction nodes into local coeffs at center,
  * then apply integration weights for anterpolation
  */
-void FMM::Node::buildMpoleToLocalCoeffs() {
+void FMM::Node::translateCoeffs() {
     if (iList.empty()) return;
 
-    std::fill(localCoeffs.begin(), localCoeffs.end(), vec2cd::Zero());
+    localCoeffs.fillZero();
 
     const auto& transl = tables[level].transl;
     const size_t nDir = localCoeffs.size();
@@ -77,8 +77,14 @@ void FMM::Node::buildMpoleToLocalCoeffs() {
         const auto& dX = center - node->center;
         const auto& transl_dX = transl.at(dX/nodeLeng);
 
-        for (int iDir = 0; iDir < nDir; ++iDir) // TODO: use Eigen::Array
-            localCoeffs[iDir] += transl_dX[iDir] * node->coeffs[iDir];
+        Eigen::Map<arrXcd> thetaMpole(node->coeffs.theta.data(), nDir);
+        Eigen::Map<arrXcd> phiMpole(node->coeffs.phi.data(), nDir);
+
+        Eigen::Map<arrXcd> thetaLocal(localCoeffs.theta.data(), nDir);
+        Eigen::Map<arrXcd> phiLocal(localCoeffs.phi.data(), nDir);
+    
+        thetaLocal += transl_dX * thetaMpole;
+        phiLocal += transl_dX * phiMpole;
     }
 
     // Apply integration weights
@@ -90,8 +96,11 @@ void FMM::Node::buildMpoleToLocalCoeffs() {
     for (int ith = 0; ith < nth; ++ith) {
         const double thetaWeight = angles_lvl.weights[ith];
 
-        for (int iph = 0; iph < nph; ++iph)
-            localCoeffs[iDir++] *= thetaWeight * phiWeight;
+        for (int iph = 0; iph < nph; ++iph) {
+            localCoeffs.theta[iDir] *= thetaWeight * phiWeight;
+            localCoeffs.phi[iDir] *= thetaWeight * phiWeight;
+            ++iDir;
+        }
     }
 }
 

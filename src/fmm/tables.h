@@ -31,7 +31,7 @@ public:
     std::vector<interpPair> invInterpPhi;
 
     // M2L translation table
-    VecHashMap<vecXcd> transl;
+    VecHashMap<arrXcd> transl;
 
 private:
     std::vector<interpPair> getInterpTheta(int, int);

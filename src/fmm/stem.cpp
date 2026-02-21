@@ -59,8 +59,8 @@ void FMM::Stem::buildLists() {
 void FMM::Stem::resizeCoeffs() {
     const auto [nth, nph] = angles[level].getNumAngles();
 
-    coeffs.resize(nth*nph, vec2cd::Zero());
-    localCoeffs.resize(nth*nph, vec2cd::Zero());
+    coeffs.resize(nth*nph);
+    localCoeffs.resize(nth*nph);
 
     for (const auto& branch : branches)
         branch->resizeCoeffs();
@@ -74,7 +74,7 @@ void FMM::Stem::buildMpoleCoeffs() {
 
     const auto [mth, mph] = angles[level+1].getNumAngles();
 
-    std::fill(coeffs.begin(), coeffs.end(), vec2cd::Zero());
+    coeffs.fillZero();
 
     for (const auto& branch : branches) {
         if (branch->isSrcless()) continue;
@@ -88,11 +88,12 @@ void FMM::Stem::buildMpoleCoeffs() {
         // Shift branch coeffs to center of this node
         const auto& dX = center - branch->getCenter();
 
-        std::vector<vec2cd> shiftedCoeffs(mth*mph, vec2cd::Zero());
+        Coeffs shiftedCoeffs(mth*mph);
 
         for (int iDir = 0; iDir < mth*mph; ++iDir) {
             const auto& kvec = angles[level+1].khat[iDir] * wavenum;
-            shiftedCoeffs[iDir] = exp(iu*kvec.dot(dX)) * branchCoeffs[iDir];
+            shiftedCoeffs.theta[iDir] = exp(iu*kvec.dot(dX)) * branchCoeffs.theta[iDir];
+            shiftedCoeffs.phi[iDir] = exp(iu*kvec.dot(dX)) * branchCoeffs.phi[iDir];
         }
 
         // Interpolate shifted coeffs to this node's angular grid
@@ -106,22 +107,23 @@ void FMM::Stem::buildMpoleCoeffs() {
  * (L2L) Return local coeffs shifted to center of branch labeled by branchIdx
  * branchIdx : index of branch \in {0, ..., 7}
  */
-std::vector<vec2cd> FMM::Stem::getShiftedLocalCoeffs(int branchIdx) const {
+Coeffs FMM::Stem::getShiftedLocalCoeffs(int branchIdx) const {
 
     const auto [mth, mph] = angles[level].getNumAngles();
     const auto [nth, nph] = angles[level+1].getNumAngles();
 
-    std::vector<vec2cd> outCoeffs(nth*nph, vec2cd::Zero());
+    Coeffs outCoeffs(nth*nph, 0.0);
     if (iList.empty()) return outCoeffs;
 
     // Shift local coeffs to center of branch
     const auto& dX = branches[branchIdx]->getCenter() - center;
 
-    std::vector<vec2cd> shiftedCoeffs(mth*mph, vec2cd::Zero());
+    Coeffs shiftedCoeffs(mth*mph);
 
     for (int iDir = 0; iDir < mth*mph; ++iDir) {
         const auto& kvec = angles[level].khat[iDir] * wavenum;
-        shiftedCoeffs[iDir] = exp(iu*kvec.dot(dX)) * localCoeffs[iDir];
+        shiftedCoeffs.theta[iDir] = exp(iu*kvec.dot(dX)) * localCoeffs.theta[iDir];
+        shiftedCoeffs.phi[iDir] = exp(iu*kvec.dot(dX)) * localCoeffs.phi[iDir];
     }
 
     // Anterpolate shifted coeffs to branch's angular grid
@@ -130,9 +132,8 @@ std::vector<vec2cd> FMM::Stem::getShiftedLocalCoeffs(int branchIdx) const {
     return outCoeffs;
 }
 
-template <typename T>
 void FMM::Stem::addInterpCoeffs(
-    const std::vector<T>& inCoeffs, std::vector<T>& outCoeffs, int srcLvl, int tgtLvl)
+    const Coeffs& inCoeffs, Coeffs& outCoeffs, int srcLvl, int tgtLvl)
 {
     const int order = config.interpOrder;
 
@@ -145,7 +146,7 @@ void FMM::Stem::addInterpCoeffs(
     const auto& interpPhi = tables[tblLvl].interpPhi;
 
     // Interpolate over theta
-    std::vector<T> innerCoeffs(nth*mph, T{});
+    Coeffs innerCoeffs(nth*mph);
 
     for (int jth = 0; jth < nth; ++jth) {
         const auto [interp, nearIdx] = interpTheta[jth];
@@ -161,10 +162,14 @@ void FMM::Stem::addInterpCoeffs(
 
                 if (outOfRange) iph_shifted += ((iph < mph/2) ? mph/2 : -mph/2);
 
-                innerCoeffs[jthmph+iph] +=
-                    interp[k] * inCoeffs[ith_flipped*mph+iph_shifted]
+                innerCoeffs.theta[jthmph+iph] +=
+                    interp[k] * inCoeffs.theta[ith_flipped*mph+iph_shifted]
                     * Math::sign(outOfRange) // spherical vector components only
                     ; 
+                innerCoeffs.phi[jthmph+iph] +=
+                    interp[k] * inCoeffs.phi[ith_flipped*mph+iph_shifted]
+                    * Math::sign(outOfRange) // spherical vector components only
+                    ;
             }
         }
     }
@@ -176,16 +181,18 @@ void FMM::Stem::addInterpCoeffs(
         for (int iph = nearIdx+1-order, k = 0; iph <= nearIdx+order; ++iph, ++k) {
             const int iph_wrapped = Math::wrapIdxToRange(iph, mph);
 
-            for (int jth = 0; jth < nth; ++jth)
-                outCoeffs[jth*nph+jph] += 
-                    interp[k] * innerCoeffs[jth*mph+iph_wrapped];
+            for (int jth = 0; jth < nth; ++jth) {
+                outCoeffs.theta[jth*nph+jph] +=
+                    interp[k] * innerCoeffs.theta[jth*mph+iph_wrapped];
+                outCoeffs.phi[jth*nph+jph] +=
+                    interp[k] * innerCoeffs.phi[jth*mph+iph_wrapped];
+            }
         }
     }
 }
 
-template <typename T>
 void FMM::Stem::addAnterpCoeffs(
-    const std::vector<T>& inCoeffs, std::vector<T>& outCoeffs, int srcLvl, int tgtLvl)
+    const Coeffs& inCoeffs, Coeffs& outCoeffs, int srcLvl, int tgtLvl)
 {
     const int order = config.interpOrder;
 
@@ -198,7 +205,7 @@ void FMM::Stem::addAnterpCoeffs(
     const auto& interpPhi = tables[tblLvl].interpPhi;
 
     // Anterpolate over extended phi
-    std::vector<T> innerCoeffs(mth*nph, T{});
+    Coeffs innerCoeffs(mth*nph);
     for (int iph = 0; iph < mph; ++iph) {
         const auto [interp, nearIdx] = interpPhi[iph];
 
@@ -210,8 +217,10 @@ void FMM::Stem::addAnterpCoeffs(
 
             const int jph_wrapped = Math::wrapIdxToRange(jph,nph);
 
-            for (int ith = 0; ith < mth; ++ith)
-                innerCoeffs[ith*nph+jph_wrapped] += interp[k] * inCoeffs[ith*mph+iph];
+            for (int ith = 0; ith < mth; ++ith) {
+                innerCoeffs.theta[ith*nph+jph_wrapped] += interp[k] * inCoeffs.theta[ith*mph+iph];
+                innerCoeffs.phi[ith*nph+jph_wrapped] += interp[k] * inCoeffs.phi[ith*mph+iph];
+            }
         }
     }
 
@@ -234,8 +243,12 @@ void FMM::Stem::addAnterpCoeffs(
 
                 if (outOfRange) jph_shifted += ((jph < nph/2) ? nph/2 : -nph/2);
 
-                outCoeffs[jth_flipped*nph+jph_shifted] +=
-                    interp[k] * innerCoeffs[ith*nph+jph]
+                outCoeffs.theta[jth_flipped*nph+jph_shifted] +=
+                    interp[k] * innerCoeffs.theta[ith*nph+jph]
+                    * Math::sign(outOfRange) // spherical vector components only
+                    ;
+                outCoeffs.phi[jth_flipped*nph+jph_shifted] +=
+                    interp[k] * innerCoeffs.phi[ith*nph+jph]
                     * Math::sign(outOfRange) // spherical vector components only
                     ;
             }
@@ -250,7 +263,7 @@ void FMM::Stem::addAnterpCoeffs(
 void FMM::Stem::buildLocalCoeffs() {
     if (!isRoot()) {
         auto start = Clock::now();
-        buildMpoleToLocalCoeffs();
+        translateCoeffs();
         t.M2L += Clock::now() - start;
 
         evalLeafIlistSols();
