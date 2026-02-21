@@ -136,7 +136,7 @@ void FMM::Node::printFarFld(const std::string& fname) {
 
         vec3cd dirFar = vec3cd::Zero();
         for (const auto& src : srcs)
-            dirFar += (*currents)[src->getIdx()] * src->getFarAlongDir(krhat);
+            dirFar += states.currents[src->getIdx()] * src->getFarAlongDir(krhat);
 
         const vec3cd& far = Phys::C * k * angles_lvl.ImRR[iDir] * dirFar;
 

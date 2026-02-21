@@ -5,19 +5,15 @@
 Solver::Solver(
     SrcVec& srcs,
     std::shared_ptr<FMM::Node> root,
-    int maxIter, double EPS,
-    std::shared_ptr<vecXcd> lvec_,
-    std::shared_ptr<vecXcd> rvec_,
-    std::shared_ptr<vecXcd> currents_)
+    int maxIter, double EPS)
     : root(std::move(root)),
-      lvec(std::move(lvec_)),
-      rvec(std::move(rvec_)),
-      currents(std::move(currents_)),
       numSrcs(srcs.size()),
       maxIter(maxIter),
       EPS(EPS),
       Qmat(matXcd(numSrcs, 1)),
-      gvec(vecXcd::Zero(maxIter+1))
+      gvec(vecXcd::Zero(maxIter+1)),
+      vcos(vecXcd::Zero(maxIter)),
+      vsin(vecXcd::Zero(maxIter))
 {
     /* Sort sources by srcIdx
     std::sort(srcs.begin(), srcs.end(),
@@ -26,16 +22,16 @@ Solver::Solver(
     );
     */
 
-    // (*lvec) = r = ZI - w = -w assuming I = 0 initially
+    // states.lvec = r = ZI - w = -w assuming I = 0 initially
     // std::transform
     for (int idx = 0; idx < numSrcs; ++idx)
-        (*lvec)[idx] = -srcs[idx]->getVoltage();
+        states.lvec[idx] = -srcs[idx]->getVoltage();
 
-    g0 = (*lvec).norm(); // store g0 for use later
+    g0 = states.lvec.norm(); // store g0 for use later
     gvec[0] = g0;
 
-    (*lvec).normalize(); // lvec_0
-    Qmat.col(0) = *lvec; // store lvec as first column of Qmat
+    states.lvec.normalize(); // lvec_0
+    Qmat.col(0) = states.lvec; // store lvec as first column of Qmat
 }
 
 void Solver::updateRvec(int k) {
@@ -46,12 +42,6 @@ void Solver::updateRvec(int k) {
         root->buildLocalCoeffs();
     }
     FMM::Leaf::evaluateSols();
-
-    // Do RWG -> Fine RWG -> BC rval propagation
-
-    // Do inverse mass matrix
-
-    // Do 2nd ZI product
 
     if (!k) {
         std::cout << "   Elapsed time (S2M): " << t.S2M.count() << " ms\n";
@@ -65,22 +55,25 @@ void Solver::updateRvec(int k) {
 void Solver::iterateArnoldi(int k) {
     assert(Qmat.cols() == k+1);
 
+    auto& lvec = states.lvec;
+    auto& rvec = states.rvec;
+
     // Do Arnoldi iteration
     vecXcd hcol(k+2);
     for (int i = 0; i <= k; ++i) {
         const auto& q_i = Qmat.col(i); // get lvec_i
-        cmplx h = q_i.dot(*rvec); // Hermitian dot
-        *rvec -= h * q_i;
+        cmplx h = q_i.dot(rvec); // Hermitian dot
+        rvec -= h * q_i;
         hcol[i] = h;
     }
-    hcol[k+1] = (*rvec).norm();
+    hcol[k+1] = rvec.norm();
 
     // Replace present lvec with new lvec
-    *lvec = (*rvec) / hcol[k+1]; // .normalized();
+    lvec = rvec / hcol[k+1]; // .normalized();
 
     // Store new lvec as new column of Qmat
     Qmat.conservativeResize(numSrcs, k+2);
-    Qmat.col(k+1) = *lvec;
+    Qmat.col(k+1) = lvec;
 
     // Store new hcol as new column of Hmat
     Hmat.conservativeResize(k+2, k+1); // 2x1, 3x2, 4x3 ...
@@ -88,9 +81,7 @@ void Solver::iterateArnoldi(int k) {
     Hmat.col(k) = hcol;
 }
 
-void Solver::applyGivensRotation(
-    vecXcd& hcol, vecXcd& vcos, vecXcd& vsin, int k) {
-
+void Solver::applyGivensRotation(vecXcd& hcol, int k) {
     assert(hcol.size() == k+2);
 
     for (int i = 0; i <= k-1; ++i) {
@@ -108,10 +99,10 @@ void Solver::applyGivensRotation(
     vsin[k] = vsin_k;
 }
 
-void Solver::updateGvec(vecXcd& vcos, vecXcd& vsin, int k) {
+void Solver::updateGvec(int k) {
 
     vecXcd hcol_k = Hmat.col(k);
-    applyGivensRotation(hcol_k, vcos, vsin, k);
+    applyGivensRotation(hcol_k, k);
     Hmat.col(k) = hcol_k;
 
     gvec[k+1] = -vsin[k] * gvec[k];
@@ -132,16 +123,13 @@ void Solver::printSols(const std::string& fname) {
 
     file << std::setprecision(15) << std::scientific;
 
-    // for (const auto& sol : *rvec) file << sol << '\n';
-    for (const auto& curr : *currents) file << curr << '\n';
+    // for (const auto& sol : states.rvec) file << sol << '\n';
+    for (const auto& curr : states.currents) file << curr << '\n';
 }
 
 void Solver::solve(const std::string& fname) {
-    // TODO: Member variables
-    vecXcd vcos = vecXcd::Zero(maxIter);
-    vecXcd vsin = vecXcd::Zero(maxIter);
-
     int iter = 0;
+
     do {
         if (!(iter%5)) std::cout << " Do iteration #" << iter << '\n';
         auto iter_start = Clock::now();
@@ -150,9 +138,9 @@ void Solver::solve(const std::string& fname) {
 
         iterateArnoldi(iter);
 
-        updateGvec(vcos, vsin, iter);
+        updateGvec(iter);
 
-        resetRvec();
+        states.rvec = vecXcd::Zero(numSrcs); // reset rvec for next iteration
 
         Time fmm_duration_ms = Clock::now() - iter_start;
         // std::cout << "   Elapsed time: " << fmm_duration_ms.count() << " ms\n";
@@ -163,7 +151,7 @@ void Solver::solve(const std::string& fname) {
 
     const auto& Hp = Hmat.block(0, 0, Hmat.rows()-1, Hmat.cols());
     vecXcd yvec = Hp.lu().solve(gvec.segment(0, iter));
-    *currents = Qmat.leftCols(iter) * yvec;
+    states.currents = Qmat.leftCols(iter) * yvec;
 
     printSols(fname);
 }

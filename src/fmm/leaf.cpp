@@ -77,8 +77,6 @@ void FMM::Leaf::findNearNborPairs() {
 }
 
 void FMM::Leaf::buildNearRads() {
-    // Mesh::Triangle::buildRadMoments();
-
     findNearNborPairs();
 
     for (const auto& [obsLeaf, srcLeaf] : nearPairs) {
@@ -172,7 +170,7 @@ FMM::Coeffs FMM::Leaf::buildMpoleCoeffs() {
 
         int iSrc = 0;
         for (const auto& src : srcs)
-            coeff += (*lvec)[src->getIdx()] * radPats[iDir][iSrc++];
+            coeff += states.lvec[src->getIdx()] * radPats[iDir][iSrc++];
 
         coeffs.theta[iDir] = coeff[0];
         coeffs.phi[iDir] = coeff[1];
@@ -226,7 +224,7 @@ void FMM::Leaf::evalFarSols() {
             }
         }
 
-        (*rvec)[obs->getIdx()] += Phys::C * k * intRad;
+        states.rvec[obs->getIdx()] += Phys::C * k * intRad;
 
         ++iObs;
     }
@@ -261,16 +259,16 @@ void FMM::Leaf::evalPairSols(const std::shared_ptr<Node> srcNode, const cmplxVec
 
             const cmplx rad = rads[pairIdx++];
 
-            solAtObss[iObs] += (*lvec)[src->getIdx()] * rad;
-            solAtSrcs[iSrc] += (*lvec)[obs->getIdx()] * rad;
+            solAtObss[iObs] += states.lvec[src->getIdx()] * rad;
+            solAtSrcs[iSrc] += states.lvec[obs->getIdx()] * rad;
         }
     }
 
     for (int n = 0; n < nObs; ++n)
-        (*rvec)[srcs[n]->getIdx()] += Phys::C * k * solAtObss[n];
+        states.rvec[srcs[n]->getIdx()] += Phys::C * k * solAtObss[n];
 
     for (int n = 0; n < nSrcs; ++n)
-        (*rvec)[srcSrcs[n]->getIdx()] += Phys::C * k * solAtSrcs[n];
+        states.rvec[srcSrcs[n]->getIdx()] += Phys::C * k * solAtSrcs[n];
 }
 
 /* evalSelfSols()
@@ -289,13 +287,13 @@ void FMM::Leaf::evalSelfSols() {
 
             const cmplx rad = selfRads[pairIdx++];
 
-            solAtObss[iObs] += (*lvec)[src->getIdx()] * rad;
-            solAtObss[iSrc] += (*lvec)[obs->getIdx()] * rad;
+            solAtObss[iObs] += states.lvec[src->getIdx()] * rad;
+            solAtObss[iSrc] += states.lvec[obs->getIdx()] * rad;
         }
     }
 
     for (int n = 0; n < nSrcs; ++n)
-        (*rvec)[srcs[n]->getIdx()] += Phys::C * k * solAtObss[n];
+        states.rvec[srcs[n]->getIdx()] += Phys::C * k * solAtObss[n];
 }
 
 /* evaluateSols()

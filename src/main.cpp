@@ -3,22 +3,25 @@
 #include "clock.h"
 #include "config.h"
 #include "fileio.h"
+#include "states.h"
 #include "fmm/fmm.h"
 
 using namespace FMM;
 
 extern const Config config("config/config.txt");
 extern double k = 0.0;
+extern auto states = States();
+
 extern auto t = ClockTimes();
 
 int main() {
     // ===================== Build sources ==================== //
     std::cout << " Building sources...\n";
 
-    auto [srcs, Einc] = importFromConfig(config);
-    auto nsrcs = srcs.size();
+    auto [srcs, Einc] = importSources();
+    size_t nsrcs = srcs.size();
 
-    initGlobal(Einc, nsrcs);
+    states = States(nsrcs);
 
     // ==================== Build nodes ==================== //
     std::cout << " Building nodes...\n";
@@ -69,8 +72,7 @@ int main() {
     constexpr int MAX_ITER = 500;
     constexpr double EPS = 1.0E-6;
 
-    auto solver = std::make_unique<Solver>(srcs, root, MAX_ITER, EPS,
-        lvec, rvec, currents);
+    auto solver = std::make_unique<Solver>(srcs, root, MAX_ITER, EPS);
 
     start = Clock::now();
     solver->solve("curr.txt");
@@ -83,7 +85,8 @@ int main() {
     if (!config.evalDirect) return 0;
 
     // ================== Solve iterative direct ================ //
-    initGlobal(Einc, nsrcs);
+    states = States(nsrcs);
+    resetLeaves();
 
     root = std::make_shared<Leaf>(srcs, 0, nullptr);
     root->buildLists();
@@ -98,8 +101,7 @@ int main() {
     std::cout << "   Elapsed time: " << duration_ms.count() << " ms\n\n";
 
     std::cout << " Solving w/ direct...\n";
-    solver = std::make_unique<Solver>(srcs, root, MAX_ITER, EPS,
-        lvec, rvec, currents);
+    solver = std::make_unique<Solver>(srcs, root, MAX_ITER, EPS);
 
     solver->solve("currDir.txt");
 

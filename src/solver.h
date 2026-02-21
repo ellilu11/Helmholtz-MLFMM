@@ -10,37 +10,22 @@ public :
     Solver(
         SrcVec& srcs, 
         std::shared_ptr<FMM::Node>, 
-        int, double,
-        std::shared_ptr<vecXcd>,
-        std::shared_ptr<vecXcd>,
-        std::shared_ptr<vecXcd>);
+        int, double);
 
     void updateRvec(int);
 
     void iterateArnoldi(int);
 
-    void applyGivensRotation(vecXcd&, vecXcd&, vecXcd&, int);
+    void applyGivensRotation(vecXcd&, int);
 
-    void updateGvec(vecXcd&, vecXcd&, int);
+    void updateGvec(int);
 
     void solve(const std::string&);
-
-    std::shared_ptr<vecXcd> getLvec() { return lvec; }
-
-    std::shared_ptr<vecXcd> getRvec() { return rvec; }
-
-    std::shared_ptr<vecXcd> getCurrents() { return currents; }
-
-    void resetRvec() { (*rvec) = vecXcd::Zero(numSrcs); }
 
     void printSols(const std::string&);
 
 private :
     std::shared_ptr<FMM::Node> root;
-
-    std::shared_ptr<vecXcd> lvec;
-    std::shared_ptr<vecXcd> rvec;
-    std::shared_ptr<vecXcd> currents;
 
     int numSrcs;
     int maxIter;
@@ -50,4 +35,7 @@ private :
     matXcd Hmat;
     vecXcd gvec;
     double g0;
+
+    vecXcd vcos;
+    vecXcd vsin;
 };

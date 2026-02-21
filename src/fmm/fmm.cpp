@@ -1,18 +1,5 @@
 #include "fmm.h"
 
-void FMM::initGlobal(
-    const std::shared_ptr<Excitation::PlaneWave>& Einc,
-    int nsrcs)
-{
-    ::k = Einc->wavenum;
-
-    lvec = std::make_shared<vecXcd>(vecXcd::Zero(nsrcs));
-    rvec = std::make_shared<vecXcd>(vecXcd::Zero(nsrcs));
-    currents = std::make_shared<vecXcd>(vecXcd::Zero(nsrcs)); // assume I = 0 initially
-
-    resetLeaves();
-}
-
 void FMM::buildTables() {
     // std::cout << "   (Lvl,Nth,Nph) =\n";
     angles.reserve(maxLevel+1);

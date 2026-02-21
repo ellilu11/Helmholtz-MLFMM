@@ -5,10 +5,13 @@
 #include "../excite.h"
 #include "../interp.h"
 #include "../phys.h"
+#include "../states.h"
 #include "../types.h"
 
 extern const Config config;
 extern double k;
+extern States states;
+
 extern ClockTimes t;
 
 namespace FMM {
@@ -45,16 +48,7 @@ namespace FMM {
     std::vector<NodePair> nonNearPairs;
     std::vector<LeafPair> nearPairs;
 
-    // Move to global namespace?
-    std::shared_ptr<vecXcd> lvec;
-    std::shared_ptr<vecXcd> rvec;
-    std::shared_ptr<vecXcd> currents;
-
     // Functions
-    void initGlobal(
-        const std::shared_ptr<Excitation::PlaneWave>&,
-        int);
-
     void buildTables();
 
     void resetLeaves() {

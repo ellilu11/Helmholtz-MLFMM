@@ -9,9 +9,11 @@ using namespace FMM;
 
 extern const Config config("config/config.txt");
 extern double k = 0.0;
+extern auto states = States();
+
 extern auto t = ClockTimes();
 
-void testSingularityExtraction(const Mesh::Triangle& tri, const vec3d& obs) {
+void testNumVsAnlNear(const Mesh::Triangle& tri, const vec3d& obs) {
     std::cout << std::setprecision(15);
 
     const auto [scaRad, vecRad] = tri.getNearIntegrated(obs, 1);
@@ -26,23 +28,56 @@ void testSingularityExtraction(const Mesh::Triangle& tri, const vec3d& obs) {
         << vecRadAnl[2]/vecRad[2] << '\n';
 }
 
+void testNearVsFull(const Mesh::Triangle& obsTri, const Mesh::Triangle& srcTri) {
+    
+    const auto& obsNC = obsTri.getVerts()[0];
+    const auto& srcNC = srcTri.getVerts()[0];
+    const auto& srcNCproj = srcTri.proj(srcNC);
+    
+    const int nCommon = obsTri.getNumCommonVerts(srcTri);
+    std::cout << "nCommon = " << nCommon << '\n';
+    
+    cmplx nearRad = 0.0, fullRad = 0.0;
+    for (const auto& [obs, obsWeight] : obsTri.getQuads()) {
+        const auto& obsProj = srcTri.proj(obs);
+
+        for (const auto& [src, srcWeight] : srcTri.getQuads()) {
+            const double r = (obs-src).norm();
+            cmplx G = 1.0 / r;
+
+            fullRad += ((obs-obsNC).dot(src-srcNC) - 4.0 / (k*k)) * G
+                * obsWeight * srcWeight;
+        }
+
+        const auto& [scaRad, vecRad] = srcTri.getNearIntegrated(obs);
+        nearRad +=
+            ((obs-obsNC).dot(vecRad+(obsProj-srcNCproj)*scaRad) - 4.0/(k*k)*scaRad)
+            * obsWeight;
+    }
+
+    std::cout << std::setprecision(15)
+        << "Full Rad: " << fullRad << '\n'
+        << "Near Rad: " << nearRad << '\n'
+        << "Diff: " << fullRad-nearRad << '\n';
+}
+
 int main() {
-    // ===================== Read config ==================== //
+    // ===================== Build sources ==================== //
     std::cout << " Building sources...\n";
 
-    auto start = Clock::now();
-    auto [srcs, Einc] = importFromConfig(config);
-    auto end = Clock::now();
-    Time duration_ms = end - start;
+    auto [srcs, Einc] = importSources();
+    size_t nsrcs = srcs.size();
 
-    auto nsrcs = srcs.size();
-    initGlobal(Einc, nsrcs);
-
-    // Singularity extraction test
+    /* Numeric vs analytic 1/R near integration test
     const auto tri = dynamic_pointer_cast<Mesh::RWG>(srcs[0])->getTris()[0];
     const vec3d obs = { 0.0, 0.0, 5.0 };
-    testSingularityExtraction(tri, obs);
-    //
+    testNumVsAnlNear(tri, obs);
+    */
+
+    // Numeric full vs analytic near 1/R integration test
+    const auto obsTri = dynamic_pointer_cast<Mesh::RWG>(srcs[0])->getTris()[0];
+    const auto srcTri = dynamic_pointer_cast<Mesh::RWG>(srcs[1])->getTris()[0];
+    testNearVsFull(obsTri, srcTri);
 
     /* Nearfield integration test
     auto rwg0 = dynamic_pointer_cast<Mesh::RWG>(srcs[0]);

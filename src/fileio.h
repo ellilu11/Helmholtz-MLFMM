@@ -21,9 +21,10 @@ std::filesystem::path makePath(const Config& config) {
         (distStr + "_n" + std::to_string(config.nsrcs) + ".txt");
 }
 
-pair<SrcVec, shared_ptr<Excitation::PlaneWave>> importFromConfig(const Config& config) 
+pair<SrcVec, shared_ptr<Excitation::PlaneWave>> importSources() 
 {
     auto Einc = Excitation::importPlaneWave("config/pwave.txt");
+    ::k = Einc->wavenum;
 
     /* Dipole sources
     const auto fpath = makePath(config);
@@ -47,8 +48,8 @@ pair<SrcVec, shared_ptr<Excitation::PlaneWave>> importFromConfig(const Config& c
     // RWG sources
     Mesh::Triangle::buildQuadCoeffs(config.quadPrec); // build triangle quadrature coeffs
 
-    // const string configPath = "config/rwg/test/n"+to_string(config.nsrcs)+"adj/";
-    const string configPath = "config/rwg/sph"+to_string(config.nsrcs)+"/";
+    const string configPath = "config/rwg/test/n"+to_string(config.nsrcs)+"adj/";
+    // const string configPath = "config/rwg/sph"+to_string(config.nsrcs)+"/";
     auto srcs = Mesh::importMesh(
         configPath+"vertices.txt",
         configPath+"faces.txt",
@@ -65,7 +66,7 @@ pair<SrcVec, shared_ptr<Excitation::PlaneWave>> importFromConfig(const Config& c
     cout << "   RWG quad rule:   " << Mesh::Triangle::getNumQuads() << "-point\n";
     cout << "   Max node RWGs:   " << config.maxNodeSrcs << '\n';
     cout << "   Root length:     " << config.rootLeng << '\n';
-    cout << "   Wave number:     " << Einc->wavenum << "\n\n";
+    cout << "   Wave number:     " << ::k << "\n\n";
 
     return make_pair(srcs, Einc);
 }
