@@ -40,8 +40,6 @@ public:
 
     std::vector<quadPair<vec3d>> getQuads() const { return triQuads; }
 
-    static int getNumQuads() { return numQuads; }
-
     vec3d proj(const vec3d& X) const { return X - (nhat.dot(X))*nhat; }
 
 private:

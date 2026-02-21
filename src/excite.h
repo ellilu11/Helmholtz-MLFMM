@@ -2,7 +2,9 @@
 
 #include "types.h"
 
-namespace Excitation {
+extern double k;
+
+namespace Exc {
     struct PlaneWave {
         PlaneWave()
             : pol(vec3d{ 1,0,0 }),
@@ -29,11 +31,11 @@ namespace Excitation {
 
     // struct HertzDipole;
 
-    std::shared_ptr<PlaneWave> importPlaneWave(const std::filesystem::path&);
+    std::shared_ptr<PlaneWave> importPlaneWaves(const std::filesystem::path&);
 }
 
-std::shared_ptr<Excitation::PlaneWave> 
-    Excitation::importPlaneWave(const std::filesystem::path& fpath)
+std::shared_ptr<Exc::PlaneWave> 
+    Exc::importPlaneWaves(const std::filesystem::path& fpath)
 {
     std::ifstream inFile(fpath);
     if (!inFile) throw std::runtime_error("Unable to find file");
@@ -42,14 +44,17 @@ std::shared_ptr<Excitation::PlaneWave>
     std::getline(inFile, line);
     std::istringstream iss(line);
 
-    std::shared_ptr<Excitation::PlaneWave> Einc;
+    std::shared_ptr<Exc::PlaneWave> Einc;
 
     vec3d pol, wavehat;
     double wavenum, amplitude;
     if (iss >> amplitude >> pol >> wavehat >> wavenum)
-        Einc = std::make_shared<Excitation::PlaneWave>(pol, wavehat, wavenum, amplitude);
+        Einc = std::make_shared<Exc::PlaneWave>(pol, wavehat, wavenum, amplitude);
     else
         throw std::runtime_error("Unable to parse line");
+
+    ::k = Einc->wavenum; // set global wavenumber
+    std::cout << "   Wave number:     " << k << "\n\n";
 
     return Einc;
 }

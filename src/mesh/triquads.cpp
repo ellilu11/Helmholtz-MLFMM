@@ -1,7 +1,6 @@
 #include "triangle.h"
 
 void Mesh::Triangle::buildQuadCoeffs(Precision prec) {
-
     numQuads = [&]() {
         switch (prec) {
             case Precision::VERYLOW:  return 1;

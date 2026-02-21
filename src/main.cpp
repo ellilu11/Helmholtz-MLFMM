@@ -2,7 +2,7 @@
 #include "main.h"
 #include "clock.h"
 #include "config.h"
-#include "fileio.h"
+#include "source.h"
 #include "states.h"
 #include "fmm/fmm.h"
 
@@ -16,9 +16,11 @@ extern auto t = ClockTimes();
 
 int main() {
     // ===================== Build sources ==================== //
-    std::cout << " Building sources...\n";
+    std::cout << " Building excitation and sources...\n";
 
-    auto [srcs, Einc] = importSources();
+    auto Einc = Exc::importPlaneWaves("config/pwave.txt");
+
+    auto srcs = importSources(Einc);
     size_t nsrcs = srcs.size();
 
     states = States(nsrcs);

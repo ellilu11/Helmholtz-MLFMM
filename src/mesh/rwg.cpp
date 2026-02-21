@@ -1,7 +1,7 @@
 #include "rwg.h"
 
 Mesh::RWG::RWG(
-    std::shared_ptr<Excitation::PlaneWave> Einc, size_t iSrc, const vec4i& idx4)
+    std::shared_ptr<Exc::PlaneWave> Einc, size_t iSrc, const vec4i& idx4)
     : Source(std::move(Einc), iSrc),
     iTris({ idx4[2], idx4[3] }),
     iVertsC({ idx4[0], idx4[1] })

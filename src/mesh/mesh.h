@@ -42,13 +42,13 @@ namespace Mesh {
 
     SrcVec importRWGs(
         const std::filesystem::path&,
-        const std::shared_ptr<Excitation::PlaneWave>);
+        const std::shared_ptr<Exc::PlaneWave>);
 
     SrcVec importMesh(
         const std::filesystem::path&,
         const std::filesystem::path&,
         const std::filesystem::path&,
-        std::shared_ptr<Excitation::PlaneWave>);
+        std::shared_ptr<Exc::PlaneWave>);
 
     void refineMesh(const SrcVec&);
 

@@ -2,7 +2,7 @@
 #include "../src/main.h"
 #include "../src/clock.h"
 #include "../src/config.h"
-#include "../src/fileio.h"
+#include "../src/source.h"
 #include "../src/mesh/triangle.h"
 
 using namespace FMM;
@@ -39,7 +39,6 @@ void testNearVsFull(const Mesh::Triangle& obsTri, const Mesh::Triangle& srcTri) 
     
     cmplx nearRad = 0.0, fullRad = 0.0;
     for (const auto& [obs, obsWeight] : obsTri.getQuads()) {
-        const auto& obsProj = srcTri.proj(obs);
 
         for (const auto& [src, srcWeight] : srcTri.getQuads()) {
             const double r = (obs-src).norm();
@@ -49,6 +48,7 @@ void testNearVsFull(const Mesh::Triangle& obsTri, const Mesh::Triangle& srcTri) 
                 * obsWeight * srcWeight;
         }
 
+        const auto& obsProj = srcTri.proj(obs);
         const auto& [scaRad, vecRad] = srcTri.getNearIntegrated(obs);
         nearRad +=
             ((obs-obsNC).dot(vecRad+(obsProj-srcNCproj)*scaRad) - 4.0/(k*k)*scaRad)
@@ -65,7 +65,8 @@ int main() {
     // ===================== Build sources ==================== //
     std::cout << " Building sources...\n";
 
-    auto [srcs, Einc] = importSources();
+    const auto Einc = Exc::importPlaneWaves("config/pwave.txt");
+    const auto srcs = importSources(Einc);
     size_t nsrcs = srcs.size();
 
     /* Numeric vs analytic 1/R near integration test

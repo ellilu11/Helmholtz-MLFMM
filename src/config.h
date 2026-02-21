@@ -47,6 +47,18 @@ std::ifstream& operator>>(std::ifstream& is, T& val) {
     return is;
 }
 
+int getNumQuads(Precision prec) {
+    return [&]() {
+        switch (prec) {
+            case Precision::VERYLOW:  return 1;
+            case Precision::LOW:      return 3;
+            case Precision::MEDIUM:   return 7;
+            case Precision::HIGH:     return 13;
+            case Precision::VERYHIGH: return 19;
+        };
+        } ();
+}
+
 struct Config {
     Config() = default;
     Config(const std::string& fileName) {
@@ -55,6 +67,17 @@ struct Config {
             >> digits >> interpOrder >> overInterp
             >> rootLeng >> maxNodeSrcs  >> evalDirect
             >> nsrcs;
+
+        std::cout << std::fixed << std::setprecision(3);
+        std::cout << " Reading from config file...\n";
+        std::cout << "   Mode:            " << (mode == Mode::READ ? "READ" : "WRITE") << '\n';
+        std::cout << "   # Sources:       " << nsrcs << '\n';
+        std::cout << "   Digit precision: " << digits << '\n';
+        std::cout << "   Interp order:    " << interpOrder << '\n';
+        std::cout << "   Overinterp:      " << overInterp << '\n';
+        std::cout << "   Max node srcs:   " << maxNodeSrcs << '\n';
+        std::cout << "   Root length:     " << rootLeng << '\n';
+        std::cout << "   RWG quad rule:   " << getNumQuads(quadPrec) << "-point\n\n";
     }
 
     Mode mode;

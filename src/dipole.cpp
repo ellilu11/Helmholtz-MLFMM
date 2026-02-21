@@ -3,7 +3,7 @@
 using namespace std;
 
 template <class dist0, class dist1 = dist0, class dist2 = dist0>
-SrcVec makeDipoles(const Config& config, const shared_ptr<Excitation::PlaneWave> Einc)
+SrcVec makeDipoles(const Config& config, const shared_ptr<Exc::PlaneWave> Einc)
 {
     SrcVec dipoles;
 
@@ -85,7 +85,7 @@ SrcVec makeDipoles(const Config& config, const shared_ptr<Excitation::PlaneWave>
 // TODO: Make Dipole static method
 SrcVec importDipoles(
     const filesystem::path& fpath,
-    const shared_ptr<Excitation::PlaneWave>& Einc)
+    const shared_ptr<Exc::PlaneWave>& Einc)
 {
     ifstream inFile(fpath);
     if (!inFile) throw runtime_error("Unable to find file");

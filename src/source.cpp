@@ -3,8 +3,6 @@
 #include "dipole.h"
 #include "mesh/mesh.h"
 
-using namespace std; // TODO: Remove
-
 std::filesystem::path makePath(const Config& config) {
     std::string distStr =
         [&]() -> std::string {
@@ -21,11 +19,8 @@ std::filesystem::path makePath(const Config& config) {
         (distStr + "_n" + std::to_string(config.nsrcs) + ".txt");
 }
 
-pair<SrcVec, shared_ptr<Excitation::PlaneWave>> importSources() 
+SrcVec importSources(std::shared_ptr<Exc::PlaneWave> Einc)
 {
-    auto Einc = Excitation::importPlaneWave("config/pwave.txt");
-    ::k = Einc->wavenum;
-
     /* Dipole sources
     const auto fpath = makePath(config);
     SrcVec srcs;
@@ -46,28 +41,18 @@ pair<SrcVec, shared_ptr<Excitation::PlaneWave>> importSources()
     */
 
     // RWG sources
-    Mesh::Triangle::buildQuadCoeffs(config.quadPrec); // build triangle quadrature coeffs
+    Mesh::Triangle::buildQuadCoeffs(config.quadPrec);
 
-    const string configPath = "config/rwg/test/n"+to_string(config.nsrcs)+"adj/";
-    // const string configPath = "config/rwg/sph"+to_string(config.nsrcs)+"/";
+    // const string configPath = "config/rwg/test/n"+to_string(config.nsrcs)+"adj/";
+    const string configPath = "config/rwg/sph"+to_string(config.nsrcs)+"/";
     auto srcs = Mesh::importMesh(
         configPath+"vertices.txt",
         configPath+"faces.txt",
         configPath+"rwgs.txt",
         Einc);
+
     // Mesh::refineMesh(srcs);
-    //
 
-    cout << fixed << setprecision(3);
-    cout << "   Mode:            " << (config.mode == Mode::READ ? "READ" : "WRITE") << '\n';
-    cout << "   # Sources:       " << srcs.size() << '\n';
-    cout << "   Digit precision: " << config.digits << '\n';
-    cout << "   Interp order:    " << config.interpOrder << '\n';
-    cout << "   RWG quad rule:   " << Mesh::Triangle::getNumQuads() << "-point\n";
-    cout << "   Max node RWGs:   " << config.maxNodeSrcs << '\n';
-    cout << "   Root length:     " << config.rootLeng << '\n';
-    cout << "   Wave number:     " << ::k << "\n\n";
-
-    return make_pair(srcs, Einc);
+    return srcs;
 }
 
