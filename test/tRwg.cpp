@@ -1,5 +1,5 @@
 #include <fstream>
-#include "../src/MLFMA.h"
+#include "../src/main.h"
 #include "../src/clock.h"
 #include "../src/config.h"
 #include "../src/fileio.h"
@@ -7,8 +7,9 @@
 
 using namespace FMM;
 
+extern const Config config("config/config.txt");
+extern double k = 0.0;
 extern auto t = ClockTimes();
-extern bool doDirFar = false;
 
 void testSingularityExtraction(const Mesh::Triangle& tri, const vec3d& obs) {
     std::cout << std::setprecision(15);
@@ -29,15 +30,13 @@ int main() {
     // ===================== Read config ==================== //
     std::cout << " Building sources...\n";
 
-    Config config("config/config.txt");
-
     auto start = Clock::now();
     auto [srcs, Einc] = importFromConfig(config);
     auto end = Clock::now();
     Time duration_ms = end - start;
 
     auto nsrcs = srcs.size();
-    initGlobal(config, Einc, nsrcs);
+    initGlobal(Einc, nsrcs);
 
     // Singularity extraction test
     const auto tri = dynamic_pointer_cast<Mesh::RWG>(srcs[0])->getTris()[0];

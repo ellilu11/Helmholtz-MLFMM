@@ -69,27 +69,25 @@ void FMM::Stem::resizeCoeffs() {
 /* buildMpoleCoeffs()
  * (M2M) Build mpole coeffs by merging branch mpole coeffs
  */
-void FMM::Stem::buildMpoleCoeffs() {
-    const int order = config.interpOrder;
-
-    const auto [mth, mph] = angles[level+1].getNumAngles();
+FMM::Coeffs FMM::Stem::buildMpoleCoeffs() {
+    int order = config.interpOrder;
+    size_t mDir = angles[level+1].getNumAllAngles();
 
     coeffs.fillZero();
 
     for (const auto& branch : branches) {
         if (branch->isSrcless()) continue;
 
-        branch->buildMpoleCoeffs();
-        const auto& branchCoeffs = branch->getMpoleCoeffs();
+        const auto& branchCoeffs = branch->buildMpoleCoeffs();
 
         auto start = Clock::now();
 
         // Shift branch coeffs to center of this node
         const auto& dX = center - branch->getCenter();
 
-        Coeffs shiftedCoeffs(mth*mph);
-        for (int iDir = 0; iDir < mth*mph; ++iDir) {
-            const vec3d& kvec = angles[level+1].khat[iDir] * wavenum;
+        Coeffs shiftedCoeffs(mDir);
+        for (int iDir = 0; iDir < mDir; ++iDir) {
+            const vec3d& kvec = angles[level+1].khat[iDir] * k;
             cmplx shift = exp(iu*kvec.dot(dX));
 
             shiftedCoeffs.theta[iDir] = shift * branchCoeffs.theta[iDir];
@@ -101,6 +99,8 @@ void FMM::Stem::buildMpoleCoeffs() {
 
         t.M2M += Clock::now() - start;
     }
+
+    return coeffs;
 }
 
 /* getShiftedLocalCoeffs(branchIdx)
@@ -108,19 +108,18 @@ void FMM::Stem::buildMpoleCoeffs() {
  * branchIdx : index of branch \in {0, ..., 7}
  */
 FMM::Coeffs FMM::Stem::getShiftedLocalCoeffs(int branchIdx) const {
+    size_t mDir = angles[level].getNumAllAngles();
+    size_t nDir = angles[level+1].getNumAllAngles();
 
-    const auto [mth, mph] = angles[level].getNumAngles();
-    const auto [nth, nph] = angles[level+1].getNumAngles();
-
-    Coeffs outCoeffs(nth*nph, 0.0);
+    Coeffs outCoeffs(nDir);
     if (iList.empty()) return outCoeffs;
 
     // Shift local coeffs to center of branch
     const auto& dX = branches[branchIdx]->getCenter() - center;
 
-    Coeffs shiftedCoeffs(mth*mph);
-    for (int iDir = 0; iDir < mth*mph; ++iDir) {
-        const vec3d& kvec = angles[level].khat[iDir] * wavenum;
+    Coeffs shiftedCoeffs(mDir);
+    for (int iDir = 0; iDir < mDir; ++iDir) {
+        const vec3d& kvec = angles[level].khat[iDir] * k;
         cmplx shift = exp(iu*kvec.dot(dX));
 
         shiftedCoeffs.theta[iDir] = shift * localCoeffs.theta[iDir];
@@ -136,13 +135,13 @@ FMM::Coeffs FMM::Stem::getShiftedLocalCoeffs(int branchIdx) const {
 void FMM::Stem::addInterpCoeffs(
     const Coeffs& inCoeffs, Coeffs& outCoeffs, int srcLvl, int tgtLvl)
 {
-    const int order = config.interpOrder;
+    int order = config.interpOrder;
 
-    const auto [mth, mph] = angles[srcLvl].getNumAngles();
-    const auto [nth, nph] = angles[tgtLvl].getNumAngles();
+    auto [mth, mph] = angles[srcLvl].getNumAngles();
+    auto [nth, nph] = angles[tgtLvl].getNumAngles();
     assert(!(mph%2)); // mph needs to be even
 
-    const int tblLvl = std::min(srcLvl, tgtLvl);
+    int tblLvl = std::min(srcLvl, tgtLvl);
     const auto& interpTheta = tables[tblLvl].interpTheta;
     const auto& interpPhi = tables[tblLvl].interpPhi;
 
@@ -153,9 +152,9 @@ void FMM::Stem::addInterpCoeffs(
         const auto [interp, nearIdx] = interpTheta[jth];
 
         for (int ith = nearIdx+1-order, k = 0; ith <= nearIdx+order; ++ith, ++k) {
-            const int ith_flipped = Math::flipIdxToRange(ith, mth);
+            int ith_flipped = Math::flipIdxToRange(ith, mth);
 
-            const bool outOfRange = ith != ith_flipped; // jth < 0 || jth >= mth;
+            bool outOfRange = ith != ith_flipped; // jth < 0 || jth >= mth;
 
             for (int iph = 0; iph < mph; ++iph) {
                 int iph_shifted = iph;
@@ -176,7 +175,7 @@ void FMM::Stem::addInterpCoeffs(
         const auto [interp, nearIdx] = interpPhi[jph];
 
         for (int iph = nearIdx+1-order, k = 0; iph <= nearIdx+order; ++iph, ++k) {
-            const int iph_wrapped = Math::wrapIdxToRange(iph, mph);
+            int iph_wrapped = Math::wrapIdxToRange(iph, mph);
 
             for (int jth = 0; jth < nth; ++jth) {
                 size_t idxOut = jth*nph+jph, idxInner = jth*mph+iph_wrapped;
@@ -191,10 +190,10 @@ void FMM::Stem::addInterpCoeffs(
 void FMM::Stem::addAnterpCoeffs(
     const Coeffs& inCoeffs, Coeffs& outCoeffs, int srcLvl, int tgtLvl)
 {
-    const int order = config.interpOrder;
+    int order = config.interpOrder;
 
-    const auto [mth, mph] = angles[srcLvl].getNumAngles();
-    const auto [nth, nph] = angles[tgtLvl].getNumAngles();
+    auto [mth, mph] = angles[srcLvl].getNumAngles();
+    auto [nth, nph] = angles[tgtLvl].getNumAngles();
     assert(!(nph%2)); // nph needs to be even
 
     const int tblLvl = std::min(srcLvl, tgtLvl);
@@ -207,12 +206,12 @@ void FMM::Stem::addAnterpCoeffs(
         const auto [interp, nearIdx] = interpPhi[iph];
 
         for (int jph = -order; jph < nph+order; ++jph) {
-            const int k = jph - (nearIdx+1-order);
+            int k = jph - (nearIdx+1-order);
 
             // If iph \notin [nearIdx+1-order,nearIdx+order], matrix element is zero
             if (k < 0 || k >= 2*order) continue;
 
-            const int jph_wrapped = Math::wrapIdxToRange(jph,nph);
+            int jph_wrapped = Math::wrapIdxToRange(jph,nph);
 
             for (int ith = 0; ith < mth; ++ith) {
                 size_t idxInner = ith*nph+jph_wrapped, idxIn = ith*mph+iph;
@@ -228,14 +227,14 @@ void FMM::Stem::addAnterpCoeffs(
         const auto [interp, nearIdx] = interpTheta[ith];
 
         for (int jth = -order; jth < nth+order; ++jth) {  
-            const int k = jth - (nearIdx+1-order);
+            int k = jth - (nearIdx+1-order);
 
             // If ith \notin [nearIdx+1-order,nearIdx+order], matrix element is zero
             if (k < 0 || k >= 2*order) continue;
 
-            const int jth_flipped = Math::flipIdxToRange(jth, nth);
+            int jth_flipped = Math::flipIdxToRange(jth, nth);
 
-            const bool outOfRange = jth != jth_flipped; // jth < 0 || jth >= nth;
+            bool outOfRange = jth != jth_flipped; // jth < 0 || jth >= nth;
 
             for (int jph = 0; jph < nph; ++jph) {
                 int jph_shifted = jph;

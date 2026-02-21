@@ -20,7 +20,7 @@ public:
 
     virtual void resizeCoeffs() = 0;
 
-    virtual void buildMpoleCoeffs() = 0;
+    virtual Coeffs buildMpoleCoeffs() = 0;
 
     virtual void buildLocalCoeffs() = 0;
 

@@ -144,7 +144,7 @@ void FMM::Leaf::buildRadPats() {
         const auto [nth, nph] = angles_lvl.getNumAngles();
 
         for (int iDir = 0; iDir < nth*nph; ++iDir) {
-            const auto& kvec = angles_lvl.khat[iDir] * wavenum;
+            const auto& kvec = angles_lvl.khat[iDir] * k;
             const auto& toThPh = angles_lvl.toThPh[iDir];
 
             std::vector<vec2cd> radPat(leaf->srcs.size(), vec2cd::Zero());
@@ -160,10 +160,10 @@ void FMM::Leaf::buildRadPats() {
 /* buildMpoleCoeffs()
  * (S2M) Build multipole coefficients from sources in this node  
  */
-void FMM::Leaf::buildMpoleCoeffs() {
-    if (isSrcless() || isRoot()) return;
-
+FMM::Coeffs FMM::Leaf::buildMpoleCoeffs() {
     coeffs.fillZero();
+
+    if (isSrcless() || isRoot()) return coeffs;
 
     auto start = Clock::now();
 
@@ -179,6 +179,8 @@ void FMM::Leaf::buildMpoleCoeffs() {
     }
 
     t.S2M += Clock::now() - start;
+
+    return coeffs;
 }
 
 /* buildLocalCoeffs()
@@ -224,7 +226,7 @@ void FMM::Leaf::evalFarSols() {
             }
         }
 
-        (*rvec)[obs->getIdx()] += Phys::C * wavenum * intRad;
+        (*rvec)[obs->getIdx()] += Phys::C * k * intRad;
 
         ++iObs;
     }
@@ -265,10 +267,10 @@ void FMM::Leaf::evalPairSols(const std::shared_ptr<Node> srcNode, const cmplxVec
     }
 
     for (int n = 0; n < nObs; ++n)
-        (*rvec)[srcs[n]->getIdx()] += Phys::C * wavenum * solAtObss[n];
+        (*rvec)[srcs[n]->getIdx()] += Phys::C * k * solAtObss[n];
 
     for (int n = 0; n < nSrcs; ++n)
-        (*rvec)[srcSrcs[n]->getIdx()] += Phys::C * wavenum * solAtSrcs[n];
+        (*rvec)[srcSrcs[n]->getIdx()] += Phys::C * k * solAtSrcs[n];
 }
 
 /* evalSelfSols()
@@ -293,7 +295,7 @@ void FMM::Leaf::evalSelfSols() {
     }
 
     for (int n = 0; n < nSrcs; ++n)
-        (*rvec)[srcs[n]->getIdx()] += Phys::C * wavenum * solAtObss[n];
+        (*rvec)[srcs[n]->getIdx()] += Phys::C * k * solAtObss[n];
 }
 
 /* evaluateSols()

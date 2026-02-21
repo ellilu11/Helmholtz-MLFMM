@@ -19,12 +19,12 @@ target_include_directories(eigen
 )
 
 # Add source executable
-add_executable (MLFMA "src/MLFMA.cpp" "src/mlfma.h")
+add_executable (MLFMA "src/main.cpp" "src/main.h")
 
 target_link_libraries(MLFMA PRIVATE eigen)
 
 # Add test executable
-add_executable (test "test/tRwg.cpp" "src/mlfma.h")
+add_executable (test "test/tRwg.cpp" "src/main.h")
 
 target_link_libraries(test PRIVATE eigen)
 

@@ -13,7 +13,7 @@ public:
 
     void resizeCoeffs() override;
 
-    void buildMpoleCoeffs() override;
+    Coeffs buildMpoleCoeffs() override;
 
     Coeffs getShiftedLocalCoeffs(int) const;
 

@@ -1,5 +1,5 @@
 ﻿#include <fstream>
-#include "MLFMA.h"
+#include "main.h"
 #include "clock.h"
 #include "config.h"
 #include "fileio.h"
@@ -7,26 +7,20 @@
 
 using namespace FMM;
 
+extern const Config config("config/config.txt");
+extern double k = 0.0;
 extern auto t = ClockTimes();
-extern bool doDirFar = false;
-// extern int numNearTriPairs = 0;
 
 int main() {
-    // ===================== Read config ==================== //
+    // ===================== Build sources ==================== //
     std::cout << " Building sources...\n";
 
-    Config config("config/config.txt");
-
-    auto start = Clock::now();
     auto [srcs, Einc] = importFromConfig(config);
-    auto end = Clock::now();
-    Time duration_ms = end - start;
-    std::cout << "   Elapsed time: " << duration_ms.count() << " ms\n\n";
-
     auto nsrcs = srcs.size();
-    initGlobal(config, Einc, nsrcs);
 
-    // ==================== Set up nodes ==================== //
+    initGlobal(Einc, nsrcs);
+
+    // ==================== Build nodes ==================== //
     std::cout << " Building nodes...\n";
 
     shared_ptr<Node> root;
@@ -44,10 +38,10 @@ int main() {
     // ==================== Build nearfield ===================== //
     std::cout << " Building nearfield interactions...\n";
 
-    start = Clock::now();
+    auto start = Clock::now();
     Leaf::buildNearRads();
-    end = Clock::now();
-    duration_ms = end - start;
+    auto end = Clock::now();
+    Time duration_ms = end - start;
     std::cout << "   Elapsed time: " << duration_ms.count() << " ms\n\n";
 
     // ==================== Build FMM operators =============== //
@@ -79,17 +73,17 @@ int main() {
         lvec, rvec, currents);
 
     start = Clock::now();
-    //solver->updateRvec(0);
-    //solver->printSols("rvec_far.txt");
     solver->solve("curr.txt");
     end = Clock::now();
     duration_ms = end - start;
     std::cout << "   Total elapsed time: " << duration_ms.count() << " ms\n\n";
 
+    // root->printFarFld("ff.txt");
+
     if (!config.evalDirect) return 0;
 
     // ================== Solve iterative direct ================ //
-    initGlobal(config, Einc, nsrcs);
+    initGlobal(Einc, nsrcs);
 
     root = std::make_shared<Leaf>(srcs, 0, nullptr);
     root->buildLists();
@@ -107,8 +101,6 @@ int main() {
     solver = std::make_unique<Solver>(srcs, root, MAX_ITER, EPS,
         lvec, rvec, currents);
 
-    //solver->updateRvec(0);
-    //solver->printSols("rvecDir_far.txt");
     solver->solve("currDir.txt");
 
     return 0;

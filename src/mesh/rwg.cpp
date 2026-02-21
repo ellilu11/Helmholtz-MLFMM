@@ -54,7 +54,6 @@ vec3cd Mesh::RWG::getPlaneWaveIntegrated(const vec3d& kvec, bool doNumeric) cons
  */
 cmplx Mesh::RWG::getIntegratedRad(const std::shared_ptr<Source> src) const {
     const auto srcRWG = dynamic_pointer_cast<RWG>(src);
-    double k = Einc->wavenum;
     cmplx intRad = 0.0;
 
     int iObsTri = 0;

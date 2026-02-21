@@ -1,12 +1,10 @@
 #include "fmm.h"
 
 void FMM::initGlobal(
-    const Config& config_,
     const std::shared_ptr<Excitation::PlaneWave>& Einc,
     int nsrcs)
 {
-    config = config_;
-    wavenum = Einc->wavenum;
+    ::k = Einc->wavenum;
 
     lvec = std::make_shared<vecXcd>(vecXcd::Zero(nsrcs));
     rvec = std::make_shared<vecXcd>(vecXcd::Zero(nsrcs));

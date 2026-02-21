@@ -19,7 +19,7 @@ public:
 
     static void buildRadPats();
 
-    void buildMpoleCoeffs() override;
+    Coeffs buildMpoleCoeffs() override;
 
     void buildLocalCoeffs() override;
 

@@ -99,7 +99,7 @@ Map<vecXcd> FMM::Tables::getAlpha() {
     Map<vecXcd> alpha;
 
     for (const auto& dist : dists) {
-        const double kr = wavenum * dist * nodeLeng;
+        const double kr = k * dist * nodeLeng;
 
         vecXcd transl_dist(nps);
 
@@ -114,7 +114,7 @@ Map<vecXcd> FMM::Tables::getAlpha() {
                 * sphericalHankel1(kr, l)
                 * legendreP(xi, l).first;
 
-            transl_dist[ips] = iu * wavenum / (4.0*PI) * coeff;
+            transl_dist[ips] = iu * k / (4.0*PI) * coeff;
         }
 
         alpha.emplace(dist, transl_dist);

@@ -7,8 +7,9 @@
 #include "../phys.h"
 #include "../types.h"
 
+extern const Config config;
+extern double k;
 extern ClockTimes t;
-extern bool doDirFar;
 
 namespace FMM {
     // Constants
@@ -36,8 +37,6 @@ namespace FMM {
     using LeafPair = std::pair<std::shared_ptr<Leaf>, std::shared_ptr<Leaf>>;
 
     // Global data
-    Config config; // move into global namespace
-    double wavenum; // move into global namespace
     std::vector<Angles> angles;
     std::vector<Tables> tables;
     inline int maxLevel = 0;
@@ -53,7 +52,6 @@ namespace FMM {
 
     // Functions
     void initGlobal(
-        const Config&,
         const std::shared_ptr<Excitation::PlaneWave>&,
         int);
 

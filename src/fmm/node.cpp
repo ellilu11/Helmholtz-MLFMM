@@ -77,24 +77,24 @@ void FMM::Node::translateCoeffs() {
         const auto& dX = center - node->center;
         const auto& transl_dX = transl.at(dX/nodeLeng);
 
-        Eigen::Map<arrXcd> thetaMpole(node->coeffs.theta.data(), nDir);
-        Eigen::Map<arrXcd> phiMpole(node->coeffs.phi.data(), nDir);
+        Eigen::Map<arrXcd> mpoleTheta(node->coeffs.theta.data(), nDir);
+        Eigen::Map<arrXcd> mpolePhi(node->coeffs.phi.data(), nDir);
 
         Eigen::Map<arrXcd> thetaLocal(localCoeffs.theta.data(), nDir);
         Eigen::Map<arrXcd> phiLocal(localCoeffs.phi.data(), nDir);
     
-        thetaLocal += transl_dX * thetaMpole;
-        phiLocal += transl_dX * phiMpole;
+        thetaLocal += transl_dX * mpoleTheta;
+        phiLocal += transl_dX * mpolePhi;
     }
 
     // Apply integration weights
     const auto& angles_lvl = angles[level];
-    const auto [nth, nph] = angles_lvl.getNumAngles();
-    const double phiWeight = 2.0*PI / static_cast<double>(nph);
+    auto [nth, nph] = angles_lvl.getNumAngles();
+    double phiWeight = 2.0*PI / static_cast<double>(nph);
 
     size_t iDir = 0;
     for (int ith = 0; ith < nth; ++ith) {
-        const double thetaWeight = angles_lvl.weights[ith];
+        double thetaWeight = angles_lvl.weights[ith];
 
         for (int iph = 0; iph < nph; ++iph) {
             localCoeffs.theta[iDir] *= thetaWeight * phiWeight;
@@ -117,7 +117,7 @@ void FMM::Node::evalLeafIlistSols() {
 
 void FMM::Node::printFarFld(const std::string& fname) {
     namespace fs = std::filesystem;
-    fs::path dir = "out/sol";
+    fs::path dir = "out/ff";
     std::error_code ec;
 
     if (fs::create_directory(dir, ec))
@@ -129,16 +129,16 @@ void FMM::Node::printFarFld(const std::string& fname) {
     farfile << std::setprecision(15) << std::scientific;
 
     const auto& angles_lvl = angles[level];
-    const auto [nth, nph] = angles_lvl.getNumAngles();
+    size_t nDir = angles_lvl.getNumAllAngles();
 
-    for (int iDir = 0; iDir < nth*nph; ++iDir) {
-        const auto& krhat = angles_lvl.khat[iDir] * wavenum;
+    for (int iDir = 0; iDir < nDir; ++iDir) {
+        const auto& krhat = angles_lvl.khat[iDir] * k;
 
         vec3cd dirFar = vec3cd::Zero();
         for (const auto& src : srcs)
             dirFar += (*currents)[src->getIdx()] * src->getFarAlongDir(krhat);
 
-        const vec3cd& far = Phys::C * wavenum * angles_lvl.ImRR[iDir] * dirFar;
+        const vec3cd& far = Phys::C * k * angles_lvl.ImRR[iDir] * dirFar;
 
         farfile << far << '\n';
     }
