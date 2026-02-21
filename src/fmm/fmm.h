@@ -25,6 +25,7 @@ namespace FMM {
     class Node;
     class Stem;
     class Leaf;
+    struct Coeffs;
     struct Angles;
     class Tables;
 

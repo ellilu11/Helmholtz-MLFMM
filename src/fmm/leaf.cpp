@@ -216,13 +216,11 @@ void FMM::Leaf::evalFarSols() {
         size_t iDir = 0;
         cmplx intRad = 0;
 
+        // Do the angular integration
         for (int ith = 0; ith < nth; ++ith) {
             for (int iph = 0; iph < nph; ++iph) {
-                // Do the angular integration
                 const vec2cd& localCoeff = localCoeffs.getVecAlongDir(iDir);
-                intRad += radPats[iDir][iObs].dot(localCoeff); // Hermitian dot!
-
-                ++iDir;
+                intRad += radPats[iDir++][iObs].dot(localCoeff); // Hermitian dot!
             }
         }
 

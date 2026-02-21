@@ -80,20 +80,20 @@ void FMM::Stem::buildMpoleCoeffs() {
         if (branch->isSrcless()) continue;
 
         branch->buildMpoleCoeffs();
+        const auto& branchCoeffs = branch->getMpoleCoeffs();
 
         auto start = Clock::now();
-
-        const auto& branchCoeffs = branch->getMpoleCoeffs();
 
         // Shift branch coeffs to center of this node
         const auto& dX = center - branch->getCenter();
 
         Coeffs shiftedCoeffs(mth*mph);
-
         for (int iDir = 0; iDir < mth*mph; ++iDir) {
-            const auto& kvec = angles[level+1].khat[iDir] * wavenum;
-            shiftedCoeffs.theta[iDir] = exp(iu*kvec.dot(dX)) * branchCoeffs.theta[iDir];
-            shiftedCoeffs.phi[iDir] = exp(iu*kvec.dot(dX)) * branchCoeffs.phi[iDir];
+            const vec3d& kvec = angles[level+1].khat[iDir] * wavenum;
+            cmplx shift = exp(iu*kvec.dot(dX));
+
+            shiftedCoeffs.theta[iDir] = shift * branchCoeffs.theta[iDir];
+            shiftedCoeffs.phi[iDir] = shift * branchCoeffs.phi[iDir];
         }
 
         // Interpolate shifted coeffs to this node's angular grid
@@ -107,7 +107,7 @@ void FMM::Stem::buildMpoleCoeffs() {
  * (L2L) Return local coeffs shifted to center of branch labeled by branchIdx
  * branchIdx : index of branch \in {0, ..., 7}
  */
-Coeffs FMM::Stem::getShiftedLocalCoeffs(int branchIdx) const {
+FMM::Coeffs FMM::Stem::getShiftedLocalCoeffs(int branchIdx) const {
 
     const auto [mth, mph] = angles[level].getNumAngles();
     const auto [nth, nph] = angles[level+1].getNumAngles();
@@ -119,11 +119,12 @@ Coeffs FMM::Stem::getShiftedLocalCoeffs(int branchIdx) const {
     const auto& dX = branches[branchIdx]->getCenter() - center;
 
     Coeffs shiftedCoeffs(mth*mph);
-
     for (int iDir = 0; iDir < mth*mph; ++iDir) {
-        const auto& kvec = angles[level].khat[iDir] * wavenum;
-        shiftedCoeffs.theta[iDir] = exp(iu*kvec.dot(dX)) * localCoeffs.theta[iDir];
-        shiftedCoeffs.phi[iDir] = exp(iu*kvec.dot(dX)) * localCoeffs.phi[iDir];
+        const vec3d& kvec = angles[level].khat[iDir] * wavenum;
+        cmplx shift = exp(iu*kvec.dot(dX));
+
+        shiftedCoeffs.theta[iDir] = shift * localCoeffs.theta[iDir];
+        shiftedCoeffs.phi[iDir] = shift * localCoeffs.phi[iDir];
     }
 
     // Anterpolate shifted coeffs to branch's angular grid
@@ -150,7 +151,6 @@ void FMM::Stem::addInterpCoeffs(
 
     for (int jth = 0; jth < nth; ++jth) {
         const auto [interp, nearIdx] = interpTheta[jth];
-        const int jthmph = jth*mph;
 
         for (int ith = nearIdx+1-order, k = 0; ith <= nearIdx+order; ++ith, ++k) {
             const int ith_flipped = Math::flipIdxToRange(ith, mth);
@@ -159,17 +159,14 @@ void FMM::Stem::addInterpCoeffs(
 
             for (int iph = 0; iph < mph; ++iph) {
                 int iph_shifted = iph;
-
                 if (outOfRange) iph_shifted += ((iph < mph/2) ? mph/2 : -mph/2);
 
-                innerCoeffs.theta[jthmph+iph] +=
-                    interp[k] * inCoeffs.theta[ith_flipped*mph+iph_shifted]
-                    * Math::sign(outOfRange) // spherical vector components only
-                    ; 
-                innerCoeffs.phi[jthmph+iph] +=
-                    interp[k] * inCoeffs.phi[ith_flipped*mph+iph_shifted]
-                    * Math::sign(outOfRange) // spherical vector components only
-                    ;
+                size_t idxInner = jth*mph+iph, idxIn = ith_flipped*mph+iph_shifted;
+
+                innerCoeffs.theta[idxInner] += 
+                    interp[k] * inCoeffs.theta[idxIn] * Math::sign(outOfRange); 
+                innerCoeffs.phi[idxInner] += 
+                    interp[k] * inCoeffs.phi[idxIn] * Math::sign(outOfRange);
             }
         }
     }
@@ -182,10 +179,10 @@ void FMM::Stem::addInterpCoeffs(
             const int iph_wrapped = Math::wrapIdxToRange(iph, mph);
 
             for (int jth = 0; jth < nth; ++jth) {
-                outCoeffs.theta[jth*nph+jph] +=
-                    interp[k] * innerCoeffs.theta[jth*mph+iph_wrapped];
-                outCoeffs.phi[jth*nph+jph] +=
-                    interp[k] * innerCoeffs.phi[jth*mph+iph_wrapped];
+                size_t idxOut = jth*nph+jph, idxInner = jth*mph+iph_wrapped;
+
+                outCoeffs.theta[idxOut] += interp[k] * innerCoeffs.theta[idxInner];
+                outCoeffs.phi[idxOut] += interp[k] * innerCoeffs.phi[idxInner];
             }
         }
     }
@@ -218,8 +215,10 @@ void FMM::Stem::addAnterpCoeffs(
             const int jph_wrapped = Math::wrapIdxToRange(jph,nph);
 
             for (int ith = 0; ith < mth; ++ith) {
-                innerCoeffs.theta[ith*nph+jph_wrapped] += interp[k] * inCoeffs.theta[ith*mph+iph];
-                innerCoeffs.phi[ith*nph+jph_wrapped] += interp[k] * inCoeffs.phi[ith*mph+iph];
+                size_t idxInner = ith*nph+jph_wrapped, idxIn = ith*mph+iph;
+
+                innerCoeffs.theta[idxInner] += interp[k] * inCoeffs.theta[idxIn];
+                innerCoeffs.phi[idxInner] += interp[k] * inCoeffs.phi[idxIn];
             }
         }
     }
@@ -240,17 +239,14 @@ void FMM::Stem::addAnterpCoeffs(
 
             for (int jph = 0; jph < nph; ++jph) {
                 int jph_shifted = jph;
-
                 if (outOfRange) jph_shifted += ((jph < nph/2) ? nph/2 : -nph/2);
 
-                outCoeffs.theta[jth_flipped*nph+jph_shifted] +=
-                    interp[k] * innerCoeffs.theta[ith*nph+jph]
-                    * Math::sign(outOfRange) // spherical vector components only
-                    ;
-                outCoeffs.phi[jth_flipped*nph+jph_shifted] +=
-                    interp[k] * innerCoeffs.phi[ith*nph+jph]
-                    * Math::sign(outOfRange) // spherical vector components only
-                    ;
+                size_t idxOut = jth_flipped*nph+jph_shifted, idxInner = ith*nph+jph;
+
+                outCoeffs.theta[idxOut] +=
+                    interp[k] * innerCoeffs.theta[idxInner] * Math::sign(outOfRange);
+                outCoeffs.phi[idxOut] +=
+                    interp[k] * innerCoeffs.phi[idxInner] * Math::sign(outOfRange);
             }
         }
     }

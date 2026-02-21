@@ -2,7 +2,7 @@
 
 #include "types.h"
 
-struct Coeffs {
+struct FMM::Coeffs {
     cmplxVec theta;
     cmplxVec phi;
 
