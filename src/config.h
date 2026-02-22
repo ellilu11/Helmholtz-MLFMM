@@ -85,7 +85,7 @@ struct Config {
         std::cout << "   Max node srcs:   " << maxNodeSrcs << '\n';
         std::cout << "   Root length:     " << rootLeng << '\n';
         std::cout << "   Tri quad rule:   " << getNumQuads(quadPrec) << "-point\n";
-        std::cout << "   Wavenumber:      " << k << "/m\n\n";
+        std::cout << "   Wavenumber:      " << ::k << "/m\n\n";
     }
 
     Mode mode;
@@ -99,7 +99,7 @@ struct Config {
     int nsrcs;
     double wavenum;
 
-    // For point sources only
+    // For point dipoles only
     Dist pdist;
     QDist qdist;
 };

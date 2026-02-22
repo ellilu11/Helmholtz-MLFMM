@@ -27,23 +27,22 @@ int main() {
     // ==================== Build nodes ==================== //
     std::cout << " Building nodes...\n";
 
-    shared_ptr<Node> root;
-    if (nsrcs > config.maxNodeSrcs)
-        root = std::make_shared<Stem>(srcs, 0, nullptr);
-    else
-        root = std::make_shared<Leaf>(srcs, 0, nullptr);
+    auto root = std::make_shared<Node>(srcs, 0, nullptr, 
+        nsrcs <= config.maxNodeSrcs);
 
     root->buildLists();
 
     std::cout << "   # Nodes: " << Node::getNumNodes() << '\n';
-    std::cout << "   # Leaves: " << Leaf::getNumLeaves() << '\n';
+    std::cout << "   # Leaves: " << leaves.size() << '\n';
     std::cout << "   Max node level: " << Node::getMaxLvl() << "\n\n";
+
+    return 0;
 
     // ==================== Build nearfield ===================== //
     std::cout << " Building nearfield interactions...\n";
 
     auto start = Clock::now();
-    Leaf::buildNearRads();
+    auto nf = std::make_shared<Nearfield>();
     auto end = Clock::now();
     Time duration_ms = end - start;
     std::cout << "   Elapsed time: " << duration_ms.count() << " ms\n\n";
@@ -62,7 +61,7 @@ int main() {
     std::cout << " Building radiation patterns...\n";
 
     start = Clock::now();
-    Leaf::buildRadPats();
+    Node::buildRadPats();
     end = Clock::now();
     duration_ms = end - start;
     std::cout << "   Elapsed time: " << duration_ms.count() << " ms\n\n";
@@ -73,7 +72,7 @@ int main() {
     constexpr int MAX_ITER = 500;
     constexpr double EPS = 1.0E-6;
 
-    auto solver = std::make_unique<Solver>(srcs, root, MAX_ITER, EPS);
+    auto solver = std::make_unique<Solver>(srcs, root, nf, MAX_ITER, EPS);
 
     start = Clock::now();
     solver->solve("curr.txt");
@@ -89,20 +88,20 @@ int main() {
     states = States(nsrcs);
     resetLeaves();
 
-    root = std::make_shared<Leaf>(srcs, 0, nullptr);
+    root = std::make_shared<Node>(srcs, 0, nullptr, 1);
     root->buildLists();
 
     std::cout << " Building nearfield interactions...\n";
 
     start = Clock::now();
-    Leaf::buildNearRads();
+    nf = std::make_shared<Nearfield>();
     end = Clock::now();
 
     duration_ms = end - start;
     std::cout << "   Elapsed time: " << duration_ms.count() << " ms\n\n";
 
     std::cout << " Solving w/ direct...\n";
-    solver = std::make_unique<Solver>(srcs, root, MAX_ITER, EPS);
+    solver = std::make_unique<Solver>(srcs, root, nf, MAX_ITER, EPS);
 
     solver->solve("currDir.txt");
 

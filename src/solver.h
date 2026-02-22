@@ -9,7 +9,8 @@ class Solver {
 public :
     Solver(
         SrcVec& srcs, 
-        std::shared_ptr<FMM::Node>, 
+        std::shared_ptr<FMM::Node>,
+        std::shared_ptr<FMM::Nearfield>,
         int, double);
 
     void updateRvec(int);
@@ -26,6 +27,7 @@ public :
 
 private :
     std::shared_ptr<FMM::Node> root;
+    std::shared_ptr<FMM::Nearfield> nf;
 
     int numSrcs;
     int maxIter;

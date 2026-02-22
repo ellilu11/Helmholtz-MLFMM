@@ -1,12 +1,14 @@
 #include "solver.h"
-#include "fmm/leaf.h"
+#include "fmm/nearfield.h"
 #include "fmm/node.h"
 
 Solver::Solver(
     SrcVec& srcs,
     std::shared_ptr<FMM::Node> root,
+    std::shared_ptr<FMM::Nearfield> nf,
     int maxIter, double EPS)
     : root(std::move(root)),
+      nf(std::move(nf)),
       numSrcs(srcs.size()),
       maxIter(maxIter),
       EPS(EPS),
@@ -37,11 +39,12 @@ Solver::Solver(
 void Solver::updateRvec(int k) {
     t.resetTimes();
 
-    if (root->isNodeType<FMM::Stem>()) {
-        root->buildMpoleCoeffs();
+    if (!root->isLeaf()) {
+        root->mergeMpoleCoeffs();
         root->buildLocalCoeffs();
+        FMM::Node::evaluateSols();
     }
-    FMM::Leaf::evaluateSols();
+    nf->evaluateSols();
 
     if (!k) {
         std::cout << "   Elapsed time (S2M): " << t.S2M.count() << " ms\n";

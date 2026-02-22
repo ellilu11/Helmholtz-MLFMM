@@ -8,19 +8,31 @@
 #include "coeffs.h"
 #include "fmm.h"
 #include "tables.h"
+#include "../source.h"
 
-class FMM::Node {
+class FMM::Node : public std::enable_shared_from_this<Node> {
+    friend class Nearfield;
 
 public:
-    Node(const SrcVec&, const int, Node* const);
+    Node(const SrcVec&, const int, Node* const, bool);
 
-    virtual void buildLists() = 0;
+    void buildLists();
 
-    virtual void resizeCoeffs() = 0;
+    void resizeCoeffs();
 
-    virtual Coeffs buildMpoleCoeffs() = 0;
+    static void buildRadPats();
 
-    virtual void buildLocalCoeffs() = 0;
+    Coeffs buildMpoleCoeffs();
+
+    Coeffs mergeMpoleCoeffs();
+
+    void buildLocalCoeffs();
+
+    static void evaluateSols();
+
+    static void addInterpCoeffs(const Coeffs&, Coeffs&, int, int);
+
+    static void addAnterpCoeffs(const Coeffs&, Coeffs&, int, int);
 
     void printFarFld(const std::string&);
 
@@ -48,42 +60,38 @@ public:
     
     bool isSrcless() const { return srcs.empty(); }
 
-    template <typename T>
-    bool isNodeType() const { return typeid(*this) == typeid(T); }
+    bool isLeaf() const { return branches.empty(); }
 
-    //void testFarfield(double);
-
-    //static std::shared_ptr<Node> getNode();
-
-    //std::vector<vec3cd> getFarSolsFromCoeffs(double);
-
-protected:
+private:
     std::shared_ptr<Node> getNeighborGeqSize(const Dir) const;
 
     NodeVec getNeighborsLeqSize(const std::shared_ptr<Node>, const Dir) const;
     
+    void buildNeighbors();
+
     void buildInteractionList();
     
-    void pushSelfToNearNonNbors();
+    // void pushSelfToNearNonNbors();
+
+    Coeffs getShiftedLocalCoeffs(int) const;
 
     void translateCoeffs();
 
-    void evalLeafIlistSols();
-   
-    virtual std::shared_ptr<Node> getSelf() = 0;
+    void evalFarSols();
     
-    virtual void buildNeighbors() = 0;
-
 protected:
     inline static int numNodes = 0;
+
+    std::vector<std::vector<vec2cd>> radPats; // TODO: Move into Farfield class
 
     Coeffs coeffs;
     Coeffs localCoeffs;
 
     NodeVec branches;
-    NodeVec nbors; // list 1
+    NodeVec nbors;
     NodeVec iList; // list 2
-    NodeVec leafIlist; // list 4
+    NodeVec nearNbors; // list 1
+    NodeVec nearNonNbors; // list 3
 
     SrcVec srcs;
     const int branchIdx;

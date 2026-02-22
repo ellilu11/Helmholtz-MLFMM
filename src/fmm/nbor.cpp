@@ -18,7 +18,7 @@ std::shared_ptr<FMM::Node> FMM::Node::getNeighborGeqSize(const Dir dir) const {
                 return base->branches[branchIdx+4];
             nbor = base->getNeighborGeqSize(dir);
             if (nbor == nullptr) return nbor;
-            if (nbor->isNodeType<Leaf>()) return nbor;
+            if (isLeaf()) return nbor;
             return nbor->branches[branchIdx-4];
             break;
 
@@ -27,7 +27,7 @@ std::shared_ptr<FMM::Node> FMM::Node::getNeighborGeqSize(const Dir dir) const {
                 return base->branches[branchIdx+2];
             nbor = base->getNeighborGeqSize(dir);
             if (nbor == nullptr) return nbor;
-            if (nbor->isNodeType<Leaf>()) return nbor;
+            if (isLeaf()) return nbor;
             return nbor->branches[branchIdx-2];
             break;
 
@@ -36,7 +36,7 @@ std::shared_ptr<FMM::Node> FMM::Node::getNeighborGeqSize(const Dir dir) const {
                 return base->branches[branchIdx+1];
             nbor = base->getNeighborGeqSize(dir);
             if (nbor == nullptr) return nbor;
-            if (nbor->isNodeType<Leaf>()) return nbor;
+            if (isLeaf()) return nbor;
             return nbor->branches[branchIdx-1];
             break;
 
@@ -45,7 +45,7 @@ std::shared_ptr<FMM::Node> FMM::Node::getNeighborGeqSize(const Dir dir) const {
                 return base->branches[branchIdx-1];
             nbor = base->getNeighborGeqSize(dir);
             if (nbor == nullptr) return nbor;
-            if (nbor->isNodeType<Leaf>()) return nbor;
+            if (isLeaf()) return nbor;
             return nbor->branches[branchIdx+1];
             break;
 
@@ -54,7 +54,7 @@ std::shared_ptr<FMM::Node> FMM::Node::getNeighborGeqSize(const Dir dir) const {
                 return base->branches[branchIdx-2];
             nbor = base->getNeighborGeqSize(dir);
             if (nbor == nullptr) return nbor;
-            if (nbor->isNodeType<Leaf>()) return nbor;
+            if (isLeaf()) return nbor;
             return nbor->branches[branchIdx+2];
             break;
 
@@ -63,7 +63,7 @@ std::shared_ptr<FMM::Node> FMM::Node::getNeighborGeqSize(const Dir dir) const {
                 return base->branches[branchIdx-4];
             nbor = base->getNeighborGeqSize(dir);
             if (nbor == nullptr) return nbor;
-            if (nbor->isNodeType<Leaf>()) return nbor;
+            if (isLeaf()) return nbor;
             return nbor->branches[branchIdx+4];
             break;
 
@@ -73,7 +73,7 @@ std::shared_ptr<FMM::Node> FMM::Node::getNeighborGeqSize(const Dir dir) const {
             if (branchIdx == 6 || branchIdx == 7) {
                 nbor = base->getNeighborGeqSize(dir);
                 if (nbor == nullptr) return nbor;
-                if (nbor->isNodeType<Leaf>()) return nbor;
+                if (isLeaf()) return nbor;
                 return nbor->branches[branchIdx-6];
             } 
             nbor = (branchIdx == 4 || branchIdx == 5) ?
@@ -81,7 +81,7 @@ std::shared_ptr<FMM::Node> FMM::Node::getNeighborGeqSize(const Dir dir) const {
                 base->getNeighborGeqSize(N);
             if (nbor == nullptr) return nbor;
             // do not double count neighbor that will be found along a cardinal direction
-            if (nbor->isNodeType<Leaf>()) return nullptr;
+            if (isLeaf()) return nullptr;
             return (branchIdx == 2 || branchIdx == 4) ?
                 nbor->branches[6-branchIdx] :
                 nbor->branches[8-branchIdx];
@@ -93,14 +93,14 @@ std::shared_ptr<FMM::Node> FMM::Node::getNeighborGeqSize(const Dir dir) const {
             if (branchIdx == 0 || branchIdx == 1) {
                 nbor = base->getNeighborGeqSize(dir);
                 if (nbor == nullptr) return nbor;
-                if (nbor->isNodeType<Leaf>()) return nbor;
+                if (isLeaf()) return nbor;
                 return nbor->branches[branchIdx+6];
             } 
             nbor = (branchIdx == 2 || branchIdx == 3) ?
                 base->getNeighborGeqSize(D) :
                 base->getNeighborGeqSize(S);
             if (nbor == nullptr) return nbor;
-            if (nbor->isNodeType<Leaf>()) return nullptr;
+            if (isLeaf()) return nullptr;
             return (branchIdx == 2 || branchIdx == 4) ?
                 nbor->branches[6-branchIdx] :
                 nbor->branches[8-branchIdx];
@@ -112,14 +112,14 @@ std::shared_ptr<FMM::Node> FMM::Node::getNeighborGeqSize(const Dir dir) const {
             if (branchIdx == 4 || branchIdx == 5) {
                 nbor = base->getNeighborGeqSize(dir);
                 if (nbor == nullptr) return nbor;
-                if (nbor->isNodeType<Leaf>()) return nbor;
+                if (isLeaf()) return nbor;
                 return nbor->branches[branchIdx-2];
             }
             nbor = (branchIdx == 6 || branchIdx == 7) ?
                 base->getNeighborGeqSize(U) :
                 base->getNeighborGeqSize(S);
             if (nbor == nullptr) return nbor;
-            if (nbor->isNodeType<Leaf>()) return nullptr;
+            if (isLeaf()) return nullptr;
             return (branchIdx == 0 || branchIdx == 6) ?
                 nbor->branches[6-branchIdx] :
                 nbor->branches[8-branchIdx];
@@ -131,14 +131,14 @@ std::shared_ptr<FMM::Node> FMM::Node::getNeighborGeqSize(const Dir dir) const {
             if (branchIdx == 2 || branchIdx == 3) {
             nbor = base->getNeighborGeqSize(dir);
                 if (nbor == nullptr) return nbor;
-                if (nbor->isNodeType<Leaf>()) return nbor;
+                if (isLeaf()) return nbor;
             return nbor->branches[branchIdx+2];
             }
             nbor = (branchIdx == 0 || branchIdx == 1) ?
                 base->getNeighborGeqSize(D) :
                 base->getNeighborGeqSize(N);
             if (nbor == nullptr) return nbor;
-            if (nbor->isNodeType<Leaf>()) return nullptr;
+            if (isLeaf()) return nullptr;
             return (branchIdx == 0 || branchIdx == 6) ?
                 nbor->branches[6-branchIdx] :
                 nbor->branches[8-branchIdx];
@@ -150,14 +150,14 @@ std::shared_ptr<FMM::Node> FMM::Node::getNeighborGeqSize(const Dir dir) const {
             if (branchIdx == 5 || branchIdx == 7) {
                 nbor = base->getNeighborGeqSize(dir);
                 if (nbor == nullptr) return nbor;
-                if (nbor->isNodeType<Leaf>()) return nbor;
+                if (isLeaf()) return nbor;
                 return nbor->branches[branchIdx-5];
             }
             nbor = (branchIdx == 4 || branchIdx == 6) ?
                 base->getNeighborGeqSize(U) :
                 base->getNeighborGeqSize(E);
             if (nbor == nullptr) return nbor;
-            if (nbor->isNodeType<Leaf>()) return nullptr;
+            if (isLeaf()) return nullptr;
             return (branchIdx == 1 || branchIdx == 4) ?
                 nbor->branches[5-branchIdx] :
                 nbor->branches[9-branchIdx];
@@ -169,14 +169,14 @@ std::shared_ptr<FMM::Node> FMM::Node::getNeighborGeqSize(const Dir dir) const {
             if (branchIdx == 0 || branchIdx == 2) {
                 nbor = base->getNeighborGeqSize(dir);
                 if (nbor == nullptr) return nbor;
-                if (nbor->isNodeType<Leaf>()) return nbor;
+                if (isLeaf()) return nbor;
                 return nbor->branches[branchIdx+5];
             }
             nbor = (branchIdx == 1 || branchIdx == 3) ?
                 base->getNeighborGeqSize(D) :
                 base->getNeighborGeqSize(W);
             if (nbor == nullptr) return nbor;
-            if (nbor->isNodeType<Leaf>()) return nullptr;
+            if (isLeaf()) return nullptr;
             return (branchIdx == 1 || branchIdx == 4) ?
                 nbor->branches[5-branchIdx] :
                 nbor->branches[9-branchIdx];
@@ -188,14 +188,14 @@ std::shared_ptr<FMM::Node> FMM::Node::getNeighborGeqSize(const Dir dir) const {
             if (branchIdx == 4 || branchIdx == 6) {
                 nbor = base->getNeighborGeqSize(dir);
                 if (nbor == nullptr) return nbor;
-                if (nbor->isNodeType<Leaf>()) return nbor;
+                if (isLeaf()) return nbor;
                 return nbor->branches[branchIdx-3];
             }
             nbor = (branchIdx == 5 || branchIdx == 7) ?
                 base->getNeighborGeqSize(U) :
                 base->getNeighborGeqSize(W);
             if (nbor == nullptr) return nbor;
-            if (nbor->isNodeType<Leaf>()) return nullptr;
+            if (isLeaf()) return nullptr;
             return (branchIdx == 0 || branchIdx == 5) ?
                 nbor->branches[5-branchIdx] :
                 nbor->branches[9-branchIdx];
@@ -207,14 +207,14 @@ std::shared_ptr<FMM::Node> FMM::Node::getNeighborGeqSize(const Dir dir) const {
             if (branchIdx == 1 || branchIdx == 3) {
                 nbor = base->getNeighborGeqSize(dir);
                 if (nbor == nullptr) return nbor;
-                if (nbor->isNodeType<Leaf>()) return nbor;
+                if (isLeaf()) return nbor;
                 return nbor->branches[branchIdx+3];
             }
             nbor = (branchIdx == 0 || branchIdx == 2) ?
                 base->getNeighborGeqSize(D) :
                 base->getNeighborGeqSize(E);
             if (nbor == nullptr) return nbor;
-            if (nbor->isNodeType<Leaf>()) return nullptr;
+            if (isLeaf()) return nullptr;
             return (branchIdx == 0 || branchIdx == 5) ?
                 nbor->branches[5-branchIdx] :
                 nbor->branches[9-branchIdx];
@@ -226,14 +226,14 @@ std::shared_ptr<FMM::Node> FMM::Node::getNeighborGeqSize(const Dir dir) const {
             if (branchIdx == 3 || branchIdx == 7) {
                 nbor = base->getNeighborGeqSize(dir);
                 if (nbor == nullptr) return nbor;
-                if (nbor->isNodeType<Leaf>()) return nbor;
+                if (isLeaf()) return nbor;
                 return nbor->branches[branchIdx-3];
             }
             nbor = (branchIdx == 2 || branchIdx == 6) ?
                 base->getNeighborGeqSize(N) :
                 base->getNeighborGeqSize(E);
             if (nbor == nullptr) return nbor;
-            if (nbor->isNodeType<Leaf>()) return nullptr;
+            if (isLeaf()) return nullptr;
             return (branchIdx == 1 || branchIdx == 2) ?
                 nbor->branches[3-branchIdx] :
                 nbor->branches[11-branchIdx];
@@ -245,14 +245,14 @@ std::shared_ptr<FMM::Node> FMM::Node::getNeighborGeqSize(const Dir dir) const {
             if (branchIdx == 0 || branchIdx == 4) {
                 nbor = base->getNeighborGeqSize(dir);
                 if (nbor == nullptr) return nbor;
-                if (nbor->isNodeType<Leaf>()) return nbor;
+                if (isLeaf()) return nbor;
                 return nbor->branches[branchIdx+3];
             }
             nbor = (branchIdx == 1 || branchIdx == 5) ?
                 base->getNeighborGeqSize(S) :
                 base->getNeighborGeqSize(W);
             if (nbor == nullptr) return nbor;
-            if (nbor->isNodeType<Leaf>()) return nullptr;
+            if (isLeaf()) return nullptr;
             return (branchIdx == 1 || branchIdx == 2) ?
                 nbor->branches[3-branchIdx] :
                 nbor->branches[11-branchIdx];
@@ -264,14 +264,14 @@ std::shared_ptr<FMM::Node> FMM::Node::getNeighborGeqSize(const Dir dir) const {
             if (branchIdx == 2 || branchIdx == 6) {
                 nbor = base->getNeighborGeqSize(dir);
                 if (nbor == nullptr) return nbor;
-                if (nbor->isNodeType<Leaf>()) return nbor;
+                if (isLeaf()) return nbor;
                 return nbor->branches[branchIdx-1];
             } 
             nbor = (branchIdx == 3 || branchIdx == 7) ?
                 base->getNeighborGeqSize(N) :
                 base->getNeighborGeqSize(W);
             if (nbor == nullptr) return nbor;
-            if (nbor->isNodeType<Leaf>()) return nullptr;
+            if (isLeaf()) return nullptr;
             return (branchIdx == 0 || branchIdx == 3) ?
                 nbor->branches[3-branchIdx] :
                 nbor->branches[11-branchIdx];
@@ -283,14 +283,14 @@ std::shared_ptr<FMM::Node> FMM::Node::getNeighborGeqSize(const Dir dir) const {
             if (branchIdx == 1 || branchIdx == 5) {
                 nbor = base->getNeighborGeqSize(dir);
                 if (nbor == nullptr) return nbor;
-                if (nbor->isNodeType<Leaf>()) return nbor;
+                if (isLeaf()) return nbor;
                 return nbor->branches[branchIdx+1];
             }
             nbor = (branchIdx == 0 || branchIdx == 4) ?
                 base->getNeighborGeqSize(S) :
                 base->getNeighborGeqSize(E);
             if (nbor == nullptr) return nbor;
-            if (nbor->isNodeType<Leaf>()) return nullptr;
+            if (isLeaf()) return nullptr;
             return (branchIdx == 0 || branchIdx == 3) ?
                 nbor->branches[3-branchIdx] :
                 nbor->branches[11-branchIdx];
@@ -302,7 +302,7 @@ std::shared_ptr<FMM::Node> FMM::Node::getNeighborGeqSize(const Dir dir) const {
             if (branchIdx == 7) {
                 nbor = base->getNeighborGeqSize(dir);
                 if (nbor == nullptr) return nbor;
-                if (nbor->isNodeType<Leaf>()) return nbor;
+                if (isLeaf()) return nbor;
                 return nbor->branches[0];
             }
             nbor = [this] {
@@ -315,7 +315,7 @@ std::shared_ptr<FMM::Node> FMM::Node::getNeighborGeqSize(const Dir dir) const {
                     case 6: return base->getNeighborGeqSize(UN);
                 } } ();
             if (nbor == nullptr) return nbor;
-            if (nbor->isNodeType<Leaf>()) return nullptr;
+            if (isLeaf()) return nullptr;
             return nbor->branches[7-branchIdx];
             break;
 
@@ -325,7 +325,7 @@ std::shared_ptr<FMM::Node> FMM::Node::getNeighborGeqSize(const Dir dir) const {
             if (branchIdx == 0) {
                 nbor = base->getNeighborGeqSize(dir);
                 if (nbor == nullptr) return nbor;
-                if (nbor->isNodeType<Leaf>()) return nbor;
+                if (isLeaf()) return nbor;
                 return nbor->branches[7];
             } 
             nbor = [this] {
@@ -338,7 +338,7 @@ std::shared_ptr<FMM::Node> FMM::Node::getNeighborGeqSize(const Dir dir) const {
                     case 6: return base->getNeighborGeqSize(W);
                 } } ();
             if (nbor == nullptr) return nbor;
-            if (nbor->isNodeType<Leaf>()) return nullptr;
+            if (isLeaf()) return nullptr;
             return nbor->branches[7-branchIdx];
             break;
 
@@ -348,7 +348,7 @@ std::shared_ptr<FMM::Node> FMM::Node::getNeighborGeqSize(const Dir dir) const {
             if (branchIdx == 6) {
                 nbor = base->getNeighborGeqSize(dir);
                 if (nbor == nullptr) return nbor;
-                if (nbor->isNodeType<Leaf>()) return nbor;
+                if (isLeaf()) return nbor;
                 return nbor->branches[1];
             } 
             nbor = [this] {
@@ -361,7 +361,7 @@ std::shared_ptr<FMM::Node> FMM::Node::getNeighborGeqSize(const Dir dir) const {
                     case 7: return base->getNeighborGeqSize(UN);
                 } } ();
             if (nbor == nullptr) return nbor;
-            if (nbor->isNodeType<Leaf>()) return nullptr;
+            if (isLeaf()) return nullptr;
             return nbor->branches[7-branchIdx];
             break;
 
@@ -371,7 +371,7 @@ std::shared_ptr<FMM::Node> FMM::Node::getNeighborGeqSize(const Dir dir) const {
             if (branchIdx == 1) {
                 nbor = base->getNeighborGeqSize(dir);
                 if (nbor == nullptr) return nbor;
-                if (nbor->isNodeType<Leaf>()) return nbor;
+                if (isLeaf()) return nbor;
                 return nbor->branches[6];
             }
             nbor = [this] {
@@ -384,7 +384,7 @@ std::shared_ptr<FMM::Node> FMM::Node::getNeighborGeqSize(const Dir dir) const {
                     case 7: return base->getNeighborGeqSize(E);
                 } } ();
                 if (nbor == nullptr) return nbor;
-                if (nbor->isNodeType<Leaf>()) return nullptr;
+                if (isLeaf()) return nullptr;
                 return nbor->branches[7-branchIdx];
             break;
 
@@ -394,7 +394,7 @@ std::shared_ptr<FMM::Node> FMM::Node::getNeighborGeqSize(const Dir dir) const {
             if (branchIdx == 5) {
                 nbor = base->getNeighborGeqSize(dir);
                 if (nbor == nullptr) return nbor;
-                if (nbor->isNodeType<Leaf>()) return nbor;
+                if (isLeaf()) return nbor;
                 return nbor->branches[2];
             }
             nbor = [this] {
@@ -407,7 +407,7 @@ std::shared_ptr<FMM::Node> FMM::Node::getNeighborGeqSize(const Dir dir) const {
                     case 7: return base->getNeighborGeqSize(UE);
                 } } ();
             if (nbor == nullptr) return nbor;
-            if (nbor->isNodeType<Leaf>()) return nullptr;
+            if (isLeaf()) return nullptr;
             return nbor->branches[7-branchIdx];
             break;
 
@@ -417,7 +417,7 @@ std::shared_ptr<FMM::Node> FMM::Node::getNeighborGeqSize(const Dir dir) const {
             if (branchIdx == 2) {
                 nbor = base->getNeighborGeqSize(dir);
                 if (nbor == nullptr) return nbor;
-                if (nbor->isNodeType<Leaf>()) return nbor;
+                if (isLeaf()) return nbor;
                 return nbor->branches[5];
             }
             nbor = [this] {
@@ -430,7 +430,7 @@ std::shared_ptr<FMM::Node> FMM::Node::getNeighborGeqSize(const Dir dir) const {
                     case 7: return base->getNeighborGeqSize(N);
                 } } ();
             if (nbor == nullptr) return nbor;
-            if (nbor->isNodeType<Leaf>()) return nullptr;
+            if (isLeaf()) return nullptr;
             return nbor->branches[7-branchIdx];
             break;
 
@@ -440,7 +440,7 @@ std::shared_ptr<FMM::Node> FMM::Node::getNeighborGeqSize(const Dir dir) const {
             if (branchIdx == 4) {
                 nbor = base->getNeighborGeqSize(dir);
                 if (nbor == nullptr) return nbor;
-                if (nbor->isNodeType<Leaf>()) return nbor;
+                if (isLeaf()) return nbor;
                 return nbor->branches[3];
             }
             nbor = [this] {
@@ -453,7 +453,7 @@ std::shared_ptr<FMM::Node> FMM::Node::getNeighborGeqSize(const Dir dir) const {
                     case 7: return base->getNeighborGeqSize(U);
                 } } ();
             if (nbor == nullptr) return nbor;
-            if (nbor->isNodeType<Leaf>()) return nullptr;
+            if (isLeaf()) return nullptr;
             return nbor->branches[7-branchIdx];
             break;
 
@@ -463,7 +463,7 @@ std::shared_ptr<FMM::Node> FMM::Node::getNeighborGeqSize(const Dir dir) const {
             if (branchIdx == 3) {
                 nbor = base->getNeighborGeqSize(dir);
                 if (nbor == nullptr) return nbor;
-                if (nbor->isNodeType<Leaf>()) return nbor;
+                if (isLeaf()) return nbor;
                 return nbor->branches[4];
             } 
             nbor = [this] {
@@ -476,7 +476,7 @@ std::shared_ptr<FMM::Node> FMM::Node::getNeighborGeqSize(const Dir dir) const {
                     case 7: return base->getNeighborGeqSize(NE);
                 } } ();
             if (nbor == nullptr) return nbor;
-            if (nbor->isNodeType<Leaf>()) return nullptr;
+            if (isLeaf()) return nullptr;
             return nbor->branches[7-branchIdx];
             break;
     }
@@ -497,7 +497,7 @@ FMM::NodeVec FMM::Node::getNeighborsLeqSize(
     while (!queue.empty()) {
         auto nbor = queue.front();
 
-        if (nbor->isNodeType<Leaf>())
+        if (isLeaf())
             nbors.push_back(nbor);
         else {
             switch (dir) {

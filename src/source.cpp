@@ -1,7 +1,7 @@
 #include <filesystem>
 #include <random>
 #include "dipole.h"
-#include "mesh/mesh.h"
+#include "mesh/triangle.h"
 
 std::filesystem::path makePath(const Config& config) {
     std::string distStr =

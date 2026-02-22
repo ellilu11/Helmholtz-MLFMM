@@ -8,7 +8,8 @@
 FMM::Node::Node(
     const SrcVec& srcs,
     const int branchIdx,
-    Node* const base)
+    Node* const base,
+    bool buildLeaf)
     : srcs(srcs), branchIdx(branchIdx), base(base),
     nodeLeng(base == nullptr ? config.rootLeng : base->nodeLeng/2.0),
     level(base == nullptr ? 0 : base->level + 1),
@@ -16,6 +17,60 @@ FMM::Node::Node(
         base->center + nodeLeng/2.0 * Math::idx2pm(branchIdx))
 {
     ++numNodes;
+
+    if (buildLeaf) {
+        branches = {};
+        //std::cout << "   Built leaf node at level " << level << " with " 
+        //    << branches.empty() << " branches\n";
+        maxLevel = std::max(level, maxLevel);
+        return;
+    }
+
+    // Assign every src to a branch based on src center relative to node center
+    std::array<SrcVec,8> branchSrcs;
+    for (const auto& src : srcs) {
+        size_t idx = Math::bools2Idx(src->getCenter() > center);
+        branchSrcs[idx].push_back(src);
+    }
+
+    // Construct branch nodes
+    for (size_t k = 0; k < branchSrcs.size(); ++k) {
+        bool buildLeaf = branchSrcs[k].size() <= config.maxNodeSrcs;
+        
+        auto branch = std::make_shared<Node>(branchSrcs[k], k, this, buildLeaf);
+
+        branches.push_back(std::move(branch));
+    }
+
+    //std::cout << "   Built stem node at level " << level << " with "
+    //    << branches.empty() << " branches\n";
+}
+
+/* buildNeighbors()
+ * Find all neighbor nodes of equal or greater size
+ * If node is leaf, find all neighbor leaves of equal or lesser size (list 1)
+ */
+void FMM::Node::buildNeighbors() {
+    assert(!isRoot());
+
+    for (int i = 0; i < numDir; ++i) {
+        Dir dir = static_cast<Dir>(i);
+        auto nbor = getNeighborGeqSize(dir);
+
+        if (nbor) nbors.push_back(nbor);
+
+        if (!isLeaf()) continue;
+        auto nbors = getNeighborsLeqSize(nbor, dir);
+        nearNbors.insert(nearNbors.end(), nbors.begin(), nbors.end());
+    }
+
+    for (const auto& nbor : nearNbors) {
+        // assert(nbor->isLeaf());
+        std::cout << nbor->branches.size() << ' ';
+    }
+    std::cout << '\n';
+
+    assert(nbors.size() <= numDir);
 }
 
 /* buildInteractionList()
@@ -33,8 +88,8 @@ void FMM::Node::buildInteractionList() {
     for (const auto& baseNbor : base->nbors) {
         if (baseNbor->isSrcless()) continue;
 
-        if (baseNbor->isNodeType<Leaf>() && notContains(nbors, baseNbor)) {
-            leafIlist.push_back(baseNbor); // TODO: Subdivide baseNbor instead of adding to leafIlist
+        if (baseNbor->isLeaf() && notContains(nbors, baseNbor)) {
+            // TODO: Subdivide baseNbor instead of adding to leafIlist
             continue;
         }
 
@@ -49,7 +104,6 @@ void FMM::Node::buildInteractionList() {
 /* pushSelfToNearNonNbors()
  * Add this node to list 3 of leaf.
  * (if leaf is in list 4 of self, self is in list 3 of leaf) 
- */
 void FMM::Node::pushSelfToNearNonNbors() {
     if (leafIlist.empty()) return;
 
@@ -60,91 +114,31 @@ void FMM::Node::pushSelfToNearNonNbors() {
         nonNearPairs.emplace_back(leaf, getSelf()); // record list4-list3 pair
     }
 }
+*/
 
-/* translateCoeffs()
- * (M2L) Translate mpole coeffs of interaction nodes into local coeffs at center,
- * then apply integration weights for anterpolation
+/* buildLists()
+ * Find neighbor and interaction lists.
+ * Add self as near non-neighbor (list 3 node) of any list 4 nodes
  */
-void FMM::Node::translateCoeffs() {
-    if (iList.empty()) return;
-
-    localCoeffs.fillZero();
-    const size_t nDir = localCoeffs.size();
-
-    // Translate mpole coeffs into local coeffs
-    const auto& transl = tables[level].transl;
-
-    for (const auto& node : iList) {
-        const auto& dX = center - node->center;
-        const auto& transl_dX = transl.at(dX/nodeLeng);
-
-        Eigen::Map<arrXcd> mpoleTheta(node->coeffs.theta.data(), nDir);
-        Eigen::Map<arrXcd> mpolePhi(node->coeffs.phi.data(), nDir);
-
-        Eigen::Map<arrXcd> localTheta(localCoeffs.theta.data(), nDir);
-        Eigen::Map<arrXcd> localPhi(localCoeffs.phi.data(), nDir);
-    
-        localTheta += transl_dX * mpoleTheta;
-        localPhi += transl_dX * mpolePhi;
+void FMM::Node::buildLists() {
+    if (!isRoot()) {
+        buildNeighbors();
+        buildInteractionList();
+        // pushSelfToNearNonNbors();
     }
 
-    // Apply integration weights
-    const auto& angles_lvl = angles[level];
-    auto [nth, nph] = angles_lvl.getNumAngles();
-    double phiWeight = 2.0*PI / static_cast<double>(nph);
+    if (isLeaf()) leaves.push_back(shared_from_this());
 
-    size_t iDir = 0;
-    for (int ith = 0; ith < nth; ++ith) {
-        double thetaWeight = angles_lvl.weights[ith];
-
-        for (int iph = 0; iph < nph; ++iph) {
-            localCoeffs.theta[iDir] *= thetaWeight * phiWeight;
-            localCoeffs.phi[iDir] *= thetaWeight * phiWeight;
-            ++iDir;
-        }
-    }
+    for (const auto& branch : branches)
+        branch->buildLists();
 }
 
-/* evalLeafIlistSols()
- * (S2L/S2T) Add contribution from list 4 to local coeffs
- */
-void FMM::Node::evalLeafIlistSols() {
-    // Do nothing! Contribution from list 4 node is 
-    // to be evaluated by Leaf::evalNearNonNborSols()
-    //for (const auto& node : leafIlist)
-    //    evalPairSols(node, nonNearRads[nonNearPairIdx++]);
-    //return;
-}
+void FMM::Node::resizeCoeffs() {
+    const auto [nth, nph] = angles[level].getNumAngles();
 
-void FMM::Node::printFarFld(const std::string& fname) {
-    namespace fs = std::filesystem;
-    fs::path dir = "out/ff";
-    std::error_code ec;
+    coeffs.resize(nth*nph);
+    localCoeffs.resize(nth*nph);
 
-    if (fs::create_directory(dir, ec))
-        std::cout << " Created directory " << dir.generic_string() << "/\n";
-    else if (ec)
-        std::cerr << " Error creating directory " << ec.message() << "\n";
-
-    std::ofstream farfile(dir/fname);
-    farfile << std::setprecision(15) << std::scientific;
-
-    const auto& angles_lvl = angles[level];
-    size_t nDir = angles_lvl.getNumDirs();
-
-    for (int iDir = 0; iDir < nDir; ++iDir) {
-        const auto& krhat = angles_lvl.khat[iDir] * k;
-
-        vec3cd dirFar = vec3cd::Zero();
-        for (const auto& src : srcs)
-            dirFar += states.currents[src->getIdx()] * src->getFarAlongDir(krhat);
-
-        const vec3cd& far = Phys::C * k * angles_lvl.ImRR[iDir] * dirFar;
-
-        farfile << far << '\n';
-    }
-
-    // Also print out angles (coordinates of farsols)
-    std::ofstream thfile(dir/"thetas.txt"), phfile(dir/"phis.txt");
-    angles[level].printAngles(thfile, phfile);
+    for (const auto& branch : branches)
+        branch->resizeCoeffs();
 }

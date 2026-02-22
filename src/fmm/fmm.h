@@ -26,8 +26,9 @@ namespace FMM {
     };
 
     class Node;
-    class Stem;
-    class Leaf;
+    class Nearfield;
+    struct NearPair;
+    struct NearSelf;
     struct Coeffs;
     struct Angles;
     class Tables;
@@ -35,23 +36,16 @@ namespace FMM {
     using NodeVec = std::vector<std::shared_ptr<Node>>;
     using NodePair = std::pair<std::shared_ptr<Node>, std::shared_ptr<Node>>;
 
-    using LeafVec = std::vector<std::shared_ptr<Leaf>>;
-    using LeafPair = std::pair<std::shared_ptr<Leaf>, std::shared_ptr<Leaf>>;
-
     // Global data
     std::vector<Angles> angles;
     std::vector<Tables> tables;
-    inline int maxLevel = 0;
 
-    LeafVec leaves;
-    std::vector<NodePair> nonNearPairs;
-    std::vector<LeafPair> nearPairs;
+    NodeVec leaves;
+
+    inline int maxLevel = 0;
 
     // Functions
     void buildTables();
 
-    void resetLeaves() {
-        leaves.clear();
-        nearPairs.clear();
-    }
+    void resetLeaves() { leaves.clear(); }
 }
