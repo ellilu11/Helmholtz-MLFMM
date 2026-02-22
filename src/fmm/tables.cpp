@@ -143,8 +143,6 @@ HashMap<interpPair> FMM::Tables::getInterpPsi() {
     const int nps = std::floor(config.overInterp*(nth-1));
 
     HashMap<interpPair> interpPairs;
-
-    size_t idx = 0;
     for (auto psi : psis) {
         // Find idx of psi node nearest this psi
         const int nearIdx = std::floor((nps-1) * psi / PI);
@@ -180,7 +178,6 @@ void FMM::Tables::buildTranslationTable() {
     const int nps = std::floor(config.overInterp*(nth-1));
 
     transl.reserve(dXs.size());
-
     for (const auto& dX : dXs) {
         const double r = dX.norm();
         const auto& rhat = dX / r;
@@ -188,14 +185,12 @@ void FMM::Tables::buildTranslationTable() {
         const auto& alpha_dX = alphas.at(r);
 
         arrXcd transl_dX(nDir);
-
         for (int iDir = 0; iDir < nDir; ++iDir) {
             const auto& khat = angles_lvl.khat[iDir];
-            const double psi = acos(khat.dot(rhat));
+            double psi = acos(khat.dot(rhat));
             const auto [interpPsi, nearIdx] = interpPsis.at(psi);
 
             cmplx translCoeff = 0.0;
-
             for (int ips = nearIdx+1-order, k = 0; k < 2*order; ++ips, ++k) {
                 const int ips_flipped = Math::flipIdxToRange(ips, nps);
 

@@ -80,7 +80,7 @@ struct Config {
         std::cout << "   Overinterp:      " << overInterp << '\n';
         std::cout << "   Max node srcs:   " << maxNodeSrcs << '\n';
         std::cout << "   Root length:     " << rootLeng << '\n';
-        std::cout << "   RWG quad rule:   " << getNumQuads(quadPrec) << "-point\n\n";
+        std::cout << "   Tri quad rule:   " << getNumQuads(quadPrec) << "-point\n\n";
     }
 
     Mode mode;

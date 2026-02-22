@@ -34,7 +34,7 @@ void FMM::Node::buildInteractionList() {
         if (baseNbor->isSrcless()) continue;
 
         if (baseNbor->isNodeType<Leaf>() && notContains(nbors, baseNbor)) {
-            leafIlist.push_back(baseNbor);
+            leafIlist.push_back(baseNbor); // TODO: Subdivide baseNbor instead of adding to leafIlist
             continue;
         }
 
@@ -71,6 +71,7 @@ void FMM::Node::translateCoeffs() {
     localCoeffs.fillZero();
     const size_t nDir = localCoeffs.size();
 
+    // Translate mpole coeffs into local coeffs
     const auto& transl = tables[level].transl;
 
     for (const auto& node : iList) {

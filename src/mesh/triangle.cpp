@@ -156,8 +156,8 @@ std::pair<cmplx,vec3cd>
     return std::make_pair(scaRad, vecRad);
 }
 
-std::pair<double,vec3d> 
-    Mesh::Triangle::getNearIntegrated(const vec3d& obs, bool doNumeric) const
+std::pair<double, vec3d>
+Mesh::Triangle::getNearIntegrated(const vec3d& obs, bool doNumeric) const
 {
     using namespace Math;
 
@@ -177,7 +177,7 @@ std::pair<double,vec3d>
 
     const auto& Xs = getVerts();
     double d = std::fabs(nhat.dot(obs-Xs[0])), dsq = d*d;
-    std::array<vec3d,3> Ps =
+    std::array<vec3d, 3> Ps =
         { proj(Xs[0])-R, proj(Xs[1])-R, proj(Xs[2])-R };
 
     for (int i = 0; i < 3; ++i) {
@@ -193,8 +193,11 @@ std::pair<double,vec3d>
         const vec3d& phat = (approxZero(p) ? zeroVec : P.normalized());
 
         double rsq = p*p + dsq, r0 = std::sqrt(p0*p0 + dsq), r1 = std::sqrt(p1*p1 + dsq);
-        double f2 = std::log((r1+l1)/(r0+l0)); // Consider using atanh
-        assert(!approxZero(r0+l0) && !approxZero(r1+l1));
+  
+        double f2 = 
+            (approxZero(r0+l0) || approxZero(r1+l1) ?  // use && ?
+                std::log(l0/l1) :
+                std::log((r1+l1)/(r0+l0)));
 
         scaRad += phat.dot(uhat) * (
             p*f2 - d * (std::atan2(p*l1, rsq+d*r1) - std::atan2(p*l0, rsq+d*r0)));

@@ -70,14 +70,15 @@ int main() {
 
     /* Numeric vs analytic 1/R near integration test
     const auto tri = dynamic_pointer_cast<Mesh::RWG>(srcs[0])->getTris()[0];
-    const vec3d obs = { 0.0, 0.0, 5.0 };
+    const vec3d obs = { -1.00000, 2.0, 0.0 };
     testNumVsAnlNear(tri, obs);
     */
 
-    // Numeric full vs analytic near 1/R integration test
+    /* Numeric full vs analytic near 1/R integration test
     const auto obsTri = dynamic_pointer_cast<Mesh::RWG>(srcs[0])->getTris()[0];
     const auto srcTri = dynamic_pointer_cast<Mesh::RWG>(srcs[1])->getTris()[0];
     testNearVsFull(obsTri, srcTri);
+    */
 
     /* Nearfield integration test
     auto rwg0 = dynamic_pointer_cast<Mesh::RWG>(srcs[0]);

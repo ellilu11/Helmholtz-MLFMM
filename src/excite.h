@@ -18,7 +18,7 @@ namespace Exc {
             const vec3d& wavehat,
             double wavenum, double amplitude)
             : pol(pol),
-            wavevec(wavenum* wavehat),
+            wavevec(wavenum*wavehat),
             wavenum(wavenum),
             amplitude(amplitude)
         {};
@@ -28,8 +28,6 @@ namespace Exc {
         double wavenum;     // wavenumber
         double amplitude;   // amplitude
     };
-
-    // struct HertzDipole;
 
     std::shared_ptr<PlaneWave> importPlaneWaves(const std::filesystem::path&);
 }
@@ -54,7 +52,9 @@ std::shared_ptr<Exc::PlaneWave>
         throw std::runtime_error("Unable to parse line");
 
     ::k = Einc->wavenum; // set global wavenumber
-    std::cout << "   Wave number:     " << k << "\n\n";
+    std::cout << "   Polarization:    " << pol << '\n';
+    std::cout << "   Unit wavenum:    " << wavehat << '\n';
+    std::cout << "   Wave number:     " << k << "/m\n\n";
 
     return Einc;
 }
