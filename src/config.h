@@ -5,6 +5,8 @@
 #include <iostream>
 #include <type_traits>
 
+extern double k;
+
 enum class Mode { READ, WRITE };
 
 enum class Precision { VERYLOW, LOW, MEDIUM, HIGH, VERYHIGH };
@@ -66,7 +68,9 @@ struct Config {
         is >> mode >> pdist >> qdist >> quadPrec // enums first
             >> digits >> interpOrder >> overInterp
             >> rootLeng >> maxNodeSrcs  >> evalDirect
-            >> nsrcs;
+            >> nsrcs >> wavenum;
+
+        ::k = wavenum; // set global wavenumber
 
         std::cout << " *********************** \n";
         std::cout << " *** Helmholtz-MLFMM *** \n";
@@ -80,7 +84,8 @@ struct Config {
         std::cout << "   Overinterp:      " << overInterp << '\n';
         std::cout << "   Max node srcs:   " << maxNodeSrcs << '\n';
         std::cout << "   Root length:     " << rootLeng << '\n';
-        std::cout << "   Tri quad rule:   " << getNumQuads(quadPrec) << "-point\n\n";
+        std::cout << "   Tri quad rule:   " << getNumQuads(quadPrec) << "-point\n";
+        std::cout << "   Wavenumber:      " << k << "/m\n\n";
     }
 
     Mode mode;
@@ -92,6 +97,7 @@ struct Config {
     int maxNodeSrcs;
     bool evalDirect;
     int nsrcs;
+    double wavenum;
 
     // For point sources only
     Dist pdist;

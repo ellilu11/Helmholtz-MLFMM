@@ -64,7 +64,7 @@ public:
 
         if (pos == srcDip->pos) return 0.0; // TODO: Radiation reaction field
 
-        const auto& rad = Math::dyadicG(pos - srcDip->pos, Einc->wavenum) * srcDip->phat;
+        const auto& rad = Math::dyadicG(pos - srcDip->pos, k) * srcDip->phat;
 
         return conj(rad.dot(phat));
     }
