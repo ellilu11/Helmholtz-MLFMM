@@ -43,7 +43,7 @@ Mesh::BC::BC(SrcRWG* const rwg) : base(rwg) {
         assert(nSubs%2); // for closed mesh, vertex should have odd # of subRWGs
         const double nTris = (nSubs+1.0)/2.0;
 
-        realVec pcoeffs(iSubs.size());
+        std::vector<double> pcoeffs(iSubs.size());
         for (size_t j = 0; j < nSubs; ++j)
             pcoeffs[j] = (nTris - j - 1) / (2.0 * nTris);
 

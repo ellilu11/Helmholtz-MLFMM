@@ -50,16 +50,16 @@ private:
 
     void evalNearNonNborSols();
 
-    void evalPairSols(const std::shared_ptr<Node>, const cmplxVec&);
+    void evalPairSols(const std::shared_ptr<Node>, const std::vector<cmplx>&);
 
     void evalSelfSols();
 
 private:
     inline static size_t glSrcIdx = 0;
 
-    std::vector<cmplxVec> nearRads;
-    std::vector<cmplxVec> nonNearRads;
-    cmplxVec selfRads;
+    std::vector<std::vector<cmplx>> nearRads;
+    std::vector<std::vector<cmplx>> nonNearRads;
+    std::vector<cmplx> selfRads;
 
     std::vector<std::vector<vec2cd>> radPats;
     std::array<std::vector<vec2cd>, 2> polarRadPats;

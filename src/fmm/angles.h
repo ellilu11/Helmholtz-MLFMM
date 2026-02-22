@@ -20,7 +20,7 @@ struct FMM::Angles {
         return std::make_pair(thetas.size(), phis.size());
     }
 
-    size_t getNumAllAngles() const {
+    size_t getNumDirs() const {
         return thetas.size() * phis.size();
     }
 
@@ -28,8 +28,8 @@ struct FMM::Angles {
     std::vector<mat23d> toThPh;
     std::vector<mat3d> ImRR;
 
-    realVec thetas;  // theta samples
-    realVec weights; // weights of theta samples
-    realVec phis;    // phi samples
+    std::vector<double> thetas;  // theta samples
+    std::vector<double> weights; // weights of theta samples
+    std::vector<double> phis;    // phi samples
     int L;           // M2L series truncation number
 };

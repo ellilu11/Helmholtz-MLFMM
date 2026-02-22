@@ -11,7 +11,6 @@ using namespace FMM;
 extern const Config config("config/config.txt");
 extern double k = 0.0;
 extern auto states = States();
-
 extern auto t = ClockTimes();
 
 int main() {
@@ -80,7 +79,7 @@ int main() {
     solver->solve("curr.txt");
     end = Clock::now();
     duration_ms = end - start;
-    std::cout << "   Total elapsed time: " << duration_ms.count() << " ms\n\n";
+    std::cout << "   FMM total elapsed time: " << duration_ms.count() << " ms\n\n";
 
     // root->printFarFld("ff.txt");
 

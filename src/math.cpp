@@ -50,13 +50,13 @@ pair2d Math::legendreP(double x, int n) {
     * nodes   : Gauss-Legendre nodes
     * weights : Gauss-Legendre weights
     */
-std::pair<realVec, realVec> Math::gaussLegendre(int l, double a, double b, double EPS) {
+std::pair<std::vector<double>, std::vector<double>> Math::gaussLegendre(int l, double a, double b, double EPS) {
     const double leng = b - a;
     const double mid = (a + b)/2.0;
     assert(leng > 0);
 
-    realVec nodes(l);
-    realVec weights(l);
+    std::vector<double> nodes(l);
+    std::vector<double> weights(l);
     const int kmax = l/2; // # positive nodes = integer part of l/2
 
     if (l%2) { // if order is odd, middle node is at (a+b)/2
@@ -90,6 +90,76 @@ std::pair<realVec, realVec> Math::gaussLegendre(int l, double a, double b, doubl
     return std::make_pair(nodes, weights);
 }
 
+/* idx = getNearGLNodeIdx(x, m)
+* Get the index of the Gauss-Legendre node of order m
+* nearest and less than the point x on the interval [a, b]
+* x : evaluation point
+* m : order of near nodes (less than order of x)
+* a : lower bound of interval
+* b : upper bound of interval
+* idx : Index of nearest/less Gauss-Legendre node
+*/
+int Math::getNearGLNodeIdx(
+    const double xi, const int m, const double a = -1.0, const double b = 1.0) {
+
+    const double leng = b - a;
+    const double mid = (a + b)/2.0;
+    assert(leng > 0);
+
+    const double x = 2.0*(xi - mid) / leng; // Change to interval [-1,1]
+
+    const int idx = m - floor(((4.0*m+2.0) * acos(x) / PI + 1.0)/4.0) - 1;
+
+    assert(idx >= -1 && idx < m);
+
+    return idx;
+}
+
+/* evalLagrangeBasis(x, xs, k)
+* Evaluate the Lagrange basis polynomial taking on 1 at xs[k]
+* and 0 at xs[j] for j \neq k, at the point x
+* x  : evaluation point
+* xs : interpolation nodes
+* k  : index of basis function \in {0,1,...,order}
+*/
+double Math::evalLagrangeBasis(
+    const double x, const std::vector<double>& xs, const int k) {
+
+    // assert(k < xs.size());
+
+    double product = 1.0;
+
+    for (int j = 0; j < xs.size(); ++j) {
+        if (j == k) continue;
+
+        product *= (x - xs[j]) / (xs[k] - xs[j]);
+    }
+
+    return product;
+}
+
+/* evalTrigBasis(x, xs, k)
+* Evaluate the trigonometric basis function taking on 1 at xs[k]
+* and 0 at xs[j] for j \neq k, at the point x
+* x  : evaluation point
+* xs : interpolation nodes
+* k  : index of basis function \in {0,1,...,N-1}
+*/
+double Math::evalTrigBasis(
+    const double x, const std::vector<double>& xs, const int k) {
+
+    const int N = xs.size();
+    assert(k <= N-1);
+
+    const double diff = x - xs[k];
+    const double denom =
+        N%2 ? N*sin(diff/2.0) : N*tan(diff/2.0);
+
+    return denom ?
+        sin(N*diff/2.0) / denom :
+        1.0;
+}
+
 /* sphericalHankel1(x,n)
  * Recursively evaluate the spherical Hankel function
  * of the 1st kind of order n at the point x
@@ -113,8 +183,8 @@ cmplx Math::sphericalHankel1(double x, int n) { // TODO: Double check
     return H1_n;
 }
 
-realVec Math::getINodeDistances() {
-    realVec dists;
+std::vector<double> Math::getINodeDistances() {
+    std::vector<double> dists;
 
     for (double dz = 0; dz <= 3; ++dz)
         for (double dy = 0; dy <= 3; ++dy)

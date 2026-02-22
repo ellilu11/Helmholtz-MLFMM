@@ -1,7 +1,7 @@
 
 #include "tables.h"
 
-realVec FMM::Tables::dists;
+std::vector<double> FMM::Tables::dists;
 std::vector<vec3d> FMM::Tables::rhats;
 std::array<vec3d, 316> FMM::Tables::dXs;
 
@@ -9,7 +9,7 @@ std::vector<interpPair> FMM::Tables::getInterpTheta(int srcLvl, int tgtLvl)
 {
     const int order = config.interpOrder;
 
-    const realVec& srcThetas = angles[srcLvl].thetas, tgtThetas = angles[tgtLvl].thetas;
+    const std::vector<double>& srcThetas = angles[srcLvl].thetas, tgtThetas = angles[tgtLvl].thetas;
     const int mth = srcThetas.size(), nth = tgtThetas.size();
 
     std::vector<interpPair> interpPairs;
@@ -18,10 +18,10 @@ std::vector<interpPair> FMM::Tables::getInterpTheta(int srcLvl, int tgtLvl)
     for (size_t jth = 0; jth < nth; ++jth) {
         const double tgtTheta = tgtThetas[jth];
 
-        const int nearIdx = Interp::getNearGLNodeIdx(tgtTheta, mth, 0.0, PI);
+        const int nearIdx = Math::getNearGLNodeIdx(tgtTheta, mth, 0.0, PI);
 
         // Assemble source thetas interpolating target theta
-        realVec interpThetas(2*order);
+        std::vector<double> interpThetas(2*order);
         for (int ith = nearIdx+1-order, k = 0; ith <= nearIdx+order; ++ith, ++k) {
 
             // Flip ith if not in [0, mth-1]
@@ -38,8 +38,7 @@ std::vector<interpPair> FMM::Tables::getInterpTheta(int srcLvl, int tgtLvl)
 
         vecXd coeffs(2*order);
         for (int k = 0; k < 2*order; ++k)
-            coeffs[k] =
-            Interp::evalLagrangeBasis(tgtTheta, interpThetas, k);
+            coeffs[k] = Math::evalLagrangeBasis(tgtTheta, interpThetas, k);
 
         interpPairs.emplace_back(coeffs, nearIdx);
     }
@@ -51,7 +50,7 @@ std::vector<interpPair> FMM::Tables::getInterpPhi(int srcLvl, int tgtLvl)
 {
     const int order = config.interpOrder;
 
-    const realVec& srcPhis = angles[srcLvl].phis, tgtPhis = angles[tgtLvl].phis;
+    const std::vector<double>& srcPhis = angles[srcLvl].phis, tgtPhis = angles[tgtLvl].phis;
     const int mph = srcPhis.size(), nph = tgtPhis.size();
 
     std::vector<interpPair> interpPairs;
@@ -63,14 +62,13 @@ std::vector<interpPair> FMM::Tables::getInterpPhi(int srcLvl, int tgtLvl)
         const int nearIdx = std::floor(mph * tgtPhi / (2.0*PI));
 
         // Assemble source phis interpolating target phi
-        realVec interpPhis(2*order);
+        std::vector<double> interpPhis(2*order);
         for (int iph = nearIdx+1-order, k = 0; iph <= nearIdx+order; ++iph, ++k)
             interpPhis[k] = 2.0*PI*iph/static_cast<double>(mph);
 
         vecXd coeffs(2*order);
         for (int k = 0; k < 2*order; ++k)
-            coeffs[k] =
-            Interp::evalLagrangeBasis(tgtPhi, interpPhis, k);
+            coeffs[k] = Math::evalLagrangeBasis(tgtPhi, interpPhis, k);
 
         interpPairs.emplace_back(coeffs, nearIdx);
     }
@@ -97,22 +95,18 @@ Map<vecXcd> FMM::Tables::getAlpha() {
     const double nodeLeng = config.rootLeng / pow(2.0, level);
 
     Map<vecXcd> alpha;
-
     for (const auto& dist : dists) {
         const double kr = k * dist * nodeLeng;
 
         vecXcd transl_dist(nps);
-
         for (int ips = 0; ips < nps; ++ips) {
-
             const double xi = cos(PI*ips/static_cast<double>(nps-1));
             cmplx coeff = 0.0;
 
             for (int l = 0; l <= L; ++l)
-                coeff +=
-                powI(l) * (2.0*l+1.0)
-                * sphericalHankel1(kr, l)
-                * legendreP(xi, l).first;
+                coeff += powI(l) * (2.0*l+1.0)
+                    * sphericalHankel1(kr, l)
+                    * legendreP(xi, l).first;
 
             transl_dist[ips] = iu * k / (4.0*PI) * coeff;
         }
@@ -121,7 +115,6 @@ Map<vecXcd> FMM::Tables::getAlpha() {
     }
 
     assert(alpha.size() == dists.size());
-
     return alpha;
 };
 
@@ -133,7 +126,7 @@ HashMap<interpPair> FMM::Tables::getInterpPsi() {
     const auto [nth, nph] = angles_lvl.getNumAngles();
     const int nDir = nth*nph;
 
-    realVec psis(nDir*rhats.size());
+    std::vector<double> psis(nDir*rhats.size());
 
     size_t m = 0;
     for (size_t iDir = 0; iDir < nDir; ++iDir) {
@@ -157,14 +150,14 @@ HashMap<interpPair> FMM::Tables::getInterpPsi() {
         const int nearIdx = std::floor((nps-1) * psi / PI);
 
         // Assemble psis interpolating this psi
-        realVec psis(2*order);
+        std::vector<double> psis(2*order);
         for (int ips = nearIdx+1-order, k = 0; ips <= nearIdx+order; ++ips, ++k)
             psis[k] = PI*ips/static_cast<double>(nps-1);
 
         // CONSIDER: Barycentric coordinates
         vecXd coeffs(2*order);
         for (size_t k = 0; k < 2*order; ++k)
-            coeffs[k] = Interp::evalLagrangeBasis(psi, psis, k);
+            coeffs[k] = Math::evalLagrangeBasis(psi, psis, k);
 
         interpPairs.emplace(psi, std::make_pair(coeffs, nearIdx));
     }

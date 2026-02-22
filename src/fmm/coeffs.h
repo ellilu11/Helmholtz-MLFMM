@@ -1,10 +1,10 @@
 #pragma once
 
-#include "types.h"
+#include "../types.h"
 
 struct FMM::Coeffs {
-    cmplxVec theta;
-    cmplxVec phi;
+    std::vector<cmplx> theta;
+    std::vector<cmplx> phi;
 
     Coeffs() = default;
 

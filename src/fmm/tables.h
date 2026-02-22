@@ -1,7 +1,7 @@
 #pragma once
 
-#include "../interp.h"
 #include "../maps.h"
+#include "../math.h"
 #include "fmm.h"
 
 class FMM::Tables {
@@ -46,7 +46,7 @@ private:
 
     void buildTranslationTable();
 
-    static realVec dists;
+    static std::vector<double> dists;
     static std::vector<vec3d> rhats;
     static std::array<vec3d,316> dXs;
 

@@ -17,7 +17,7 @@ public:
     void setOriented(int, const vec3d&, const vec3d&);
 
 private:
-    realVec coeffs;
+    std::vector<double> coeffs;
 
     // global index of vertex (if it exists) in coarse mesh contributing to BC
     std::optional<int> iVertsCoarse; 

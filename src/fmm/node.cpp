@@ -69,9 +69,9 @@ void FMM::Node::translateCoeffs() {
     if (iList.empty()) return;
 
     localCoeffs.fillZero();
+    const size_t nDir = localCoeffs.size();
 
     const auto& transl = tables[level].transl;
-    const size_t nDir = localCoeffs.size();
 
     for (const auto& node : iList) {
         const auto& dX = center - node->center;
@@ -80,11 +80,11 @@ void FMM::Node::translateCoeffs() {
         Eigen::Map<arrXcd> mpoleTheta(node->coeffs.theta.data(), nDir);
         Eigen::Map<arrXcd> mpolePhi(node->coeffs.phi.data(), nDir);
 
-        Eigen::Map<arrXcd> thetaLocal(localCoeffs.theta.data(), nDir);
-        Eigen::Map<arrXcd> phiLocal(localCoeffs.phi.data(), nDir);
+        Eigen::Map<arrXcd> localTheta(localCoeffs.theta.data(), nDir);
+        Eigen::Map<arrXcd> localPhi(localCoeffs.phi.data(), nDir);
     
-        thetaLocal += transl_dX * mpoleTheta;
-        phiLocal += transl_dX * mpolePhi;
+        localTheta += transl_dX * mpoleTheta;
+        localPhi += transl_dX * mpolePhi;
     }
 
     // Apply integration weights
@@ -129,7 +129,7 @@ void FMM::Node::printFarFld(const std::string& fname) {
     farfile << std::setprecision(15) << std::scientific;
 
     const auto& angles_lvl = angles[level];
-    size_t nDir = angles_lvl.getNumAllAngles();
+    size_t nDir = angles_lvl.getNumDirs();
 
     for (int iDir = 0; iDir < nDir; ++iDir) {
         const auto& krhat = angles_lvl.khat[iDir] * k;

@@ -30,7 +30,7 @@ void Stem::tInterpPhi(int srcLvl, int tgtLvl) {
 
     // Evaluate function at source nodes
     const auto mph = getNumAngles(srcLvl).second;
-    cmplxVec vals;
+    std::vector<cmplx> vals;
 
     for (int iph = 0; iph < mph; ++iph) {
         const double phi = phis[srcLvl][iph];
@@ -39,7 +39,7 @@ void Stem::tInterpPhi(int srcLvl, int tgtLvl) {
 
     // Interpolate over phi
     const auto nph = getNumAngles(tgtLvl).second;
-    cmplxVec interpVals(nph, 0.0);
+    std::vector<cmplx> interpVals(nph, 0.0);
     size_t n = 0;
 
     for (int jph = 0; jph < nph; ++jph) {
@@ -74,7 +74,7 @@ void Stem::tAnterpPhi(int srcLvl, int tgtLvl) {
     const auto mph = getNumAngles(srcLvl).second;
     const auto nph = getNumAngles(tgtLvl).second;
     const int Nph = nph+2*order;
-    cmplxVec vals;
+    std::vector<cmplx> vals;
 
     const double phiWeight = 2.0*PI / static_cast<double>(mph);
     for (int iph = 0; iph < mph; ++iph) {
@@ -84,7 +84,7 @@ void Stem::tAnterpPhi(int srcLvl, int tgtLvl) {
     }
 
     // Anterpolate over phi
-    cmplxVec extVals(Nph, 0.0);
+    std::vector<cmplx> extVals(Nph, 0.0);
     for (int iph = 0; iph < mph; ++iph) { // over parent phis anterpolating child phis
         const auto [interp, nearIdx] = tables.interpPhi[srcLvl][iph];
 
@@ -102,7 +102,7 @@ void Stem::tAnterpPhi(int srcLvl, int tgtLvl) {
     }
 
     // Contract extended theta
-    cmplxVec anterpVals(nph, 0.0);
+    std::vector<cmplx> anterpVals(nph, 0.0);
     for (int jph = 0; jph < nph; ++jph) {
         const int Jph = jph+order;
 
@@ -130,7 +130,7 @@ void Stem::tInterpTheta(int srcLvl, int tgtLvl) {
     // Evaluate function at source nodes
     const int mth = getNumAngles(srcLvl).first;
     const int nth = getNumAngles(tgtLvl).first;
-    cmplxVec vals;
+    std::vector<cmplx> vals;
 
     for (int ith = 0; ith < mth; ++ith) {
         const double theta = thetas[srcLvl].first[ith];
@@ -138,7 +138,7 @@ void Stem::tInterpTheta(int srcLvl, int tgtLvl) {
     }
 
     // Interpolate function values to target nodes
-    cmplxVec interpVals(nth, 0.0);
+    std::vector<cmplx> interpVals(nth, 0.0);
  
     for (int jth = 0; jth < nth; ++jth) {
 
@@ -172,7 +172,7 @@ void Stem::tAnterpTheta(int srcLvl, int tgtLvl) {
     const int mth = getNumAngles(srcLvl).first;
     const int nth = getNumAngles(tgtLvl).first;
     const int Nth = nth+2*order;
-    cmplxVec vals;
+    std::vector<cmplx> vals;
 
     for (int ith = 0; ith < mth; ++ith) {
         const double theta = thetas[srcLvl].first[ith];
@@ -181,7 +181,7 @@ void Stem::tAnterpTheta(int srcLvl, int tgtLvl) {
     }
 
     // Anterpolate function values to target nodes on extended grid
-    cmplxVec extVals(Nth, 0.0);
+    std::vector<cmplx> extVals(Nth, 0.0);
 
     for (int ith = 0; ith < mth; ++ith) { // over parent thetas anterpolating child thetas
         const auto [interp, nearIdx] = tables.interpTheta[srcLvl][ith];
@@ -200,7 +200,7 @@ void Stem::tAnterpTheta(int srcLvl, int tgtLvl) {
     }
 
     // Contract extended theta
-    cmplxVec anterpVals(nth, 0.0);
+    std::vector<cmplx> anterpVals(nth, 0.0);
     for (int jth = 0; jth < nth; ++jth) {
         const int Jth = jth+order;
 
@@ -378,7 +378,7 @@ int main() {
 
     // Evaluate function at source nodes
     const auto [mth, mph] = getNumAngles(level);
-    cmplxVec vals;
+    std::vector<cmplx> vals;
 
     for (int ith = 0; ith < mth; ++ith) {
         const double theta = thetas[level][ith];
@@ -393,7 +393,7 @@ int main() {
     // Interpolate function values to target nodes
     const auto [nth, nph] = getNumAngles(level+1);
     const int order = config.interpOrder;
-    cmplxVec innerVals(nth*mph, 0.0);
+    std::vector<cmplx> innerVals(nth*mph, 0.0);
 
     size_t m = 0;
     for (int jth = 0; jth < nth; ++jth) {
@@ -422,7 +422,7 @@ int main() {
         }
     }
 
-    cmplxVec interpedVals(nth*nph, 0.0);
+    std::vector<cmplx> interpedVals(nth*nph, 0.0);
     size_t n = 0;
     for (int jth = 0; jth < nth; ++jth) {
 

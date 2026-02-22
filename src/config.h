@@ -68,8 +68,11 @@ struct Config {
             >> rootLeng >> maxNodeSrcs  >> evalDirect
             >> nsrcs;
 
+        std::cout << " *********************** \n";
+        std::cout << " *** Helmholtz-MLFMM *** \n";
+        std::cout << " *********************** \n";
+
         std::cout << std::fixed << std::setprecision(3);
-        std::cout << " Reading from config file...\n";
         std::cout << "   Mode:            " << (mode == Mode::READ ? "READ" : "WRITE") << '\n';
         std::cout << "   # Sources:       " << nsrcs << '\n';
         std::cout << "   Digit precision: " << digits << '\n';

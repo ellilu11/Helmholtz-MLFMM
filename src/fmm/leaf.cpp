@@ -84,7 +84,7 @@ void FMM::Leaf::buildNearRads() {
 
         const size_t nObs = obsLeaf->srcs.size(), nSrcs = srcLeaf->srcs.size();
 
-        auto leafPairRads = cmplxVec(nObs*nSrcs);
+        auto leafPairRads = std::vector<cmplx>(nObs*nSrcs);
 
         int pairIdx = 0;
         for (size_t iObs = 0; iObs < nObs; ++iObs) {
@@ -103,7 +103,7 @@ void FMM::Leaf::buildNearRads() {
 
         const size_t nObs = obsLeaf->srcs.size(), nSrcs = srcNode->getSrcs().size();
 
-        auto nodePairRads = cmplxVec(nObs*nSrcs);
+        auto nodePairRads = std::vector<cmplx>(nObs*nSrcs);
 
         int pairIdx = 0;
         for (size_t iObs = 0; iObs < nObs; ++iObs) {
@@ -244,13 +244,15 @@ void FMM::Leaf::evalNearNonNborSols() {
  * srcNode : source node
  * rads    : precomputed radiation coefficients
  */
-void FMM::Leaf::evalPairSols(const std::shared_ptr<Node> srcNode, const cmplxVec& rads) {
+void FMM::Leaf::evalPairSols(
+    const std::shared_ptr<Node> srcNode, const std::vector<cmplx>& rads) 
+{
     const auto& srcSrcs = srcNode->getSrcs();
 
     const int nObs = srcs.size(), nSrcs = srcSrcs.size();
 
-    cmplxVec solAtObss(nObs, 0.0);
-    cmplxVec solAtSrcs(nSrcs, 0.0);
+    std::vector<cmplx> solAtObss(nObs, 0.0);
+    std::vector<cmplx> solAtSrcs(nSrcs, 0.0);
 
     int pairIdx = 0;
     for (size_t iObs = 0; iObs < nObs; ++iObs) {
@@ -278,7 +280,7 @@ void FMM::Leaf::evalPairSols(const std::shared_ptr<Node> srcNode, const cmplxVec
 void FMM::Leaf::evalSelfSols() {
     const int nSrcs = srcs.size();
 
-    cmplxVec solAtObss(nSrcs, 0.0);
+    std::vector<cmplx> solAtObss(nSrcs, 0.0);
 
     int pairIdx = 0;
     for (size_t iObs = 0; iObs < nSrcs; ++iObs) { // iObs = 0

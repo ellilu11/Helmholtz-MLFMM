@@ -6,7 +6,7 @@
 
 using namespace Math;
 
-void testLegendreP(const realVec& xs, const int nmax) {
+void testLegendreP(const std::vector<double>& xs, const int nmax) {
     std::cout << "\nTesting Legendre...\n";
 
     for (int i = 0; i < xs.size(); ++i) {
@@ -28,9 +28,9 @@ void testSphericalHankel1(const vecXd& xs, const int nmin, const int nmax) {
     }
 }
 
-std::vector<realVec> testGaussLegendre(const int maxOrder, double a, double b) {
+std::vector<std::vector<double>> testGaussLegendre(const int maxOrder, double a, double b) {
     std::cout << "\nTesting Gauss-Legendre...\n";
-    std::vector<realVec> nodesVec;
+    std::vector<std::vector<double>> nodesVec;
 
     for (int l = 1; l <= maxOrder; ++l) {
         auto [nodes, weights] = Math::gaussLegendre(l, a, b);
@@ -45,7 +45,7 @@ std::vector<realVec> testGaussLegendre(const int maxOrder, double a, double b) {
     return nodesVec;
 }
 
-void testLagrangeInterp(const realVec& xs) {
+void testLagrangeInterp(const std::vector<double>& xs) {
     std::cout << "\nTesting Lagrange interpolants...\n";
 
     const int order = xs.size()-1;
@@ -62,7 +62,7 @@ void testLagrangeInterp(const realVec& xs) {
 void testTrigInterp(const int N) {
     std::cout << "\nTesting trigonometric interpolants (N = " << N << ") ...\n";
 
-    realVec xs;
+    std::vector<double> xs;
     for (int j = 0; j < N; ++j)
         xs.push_back(2.0*PI*j/static_cast<double>(N));
 
@@ -79,7 +79,7 @@ void testTrigInterp(const int N) {
 }
 
 void testNearGLNodeIdx(
-    const std::vector<realVec>& nodesVec, const int m, const int lIdx, double a, double b) {
+    const std::vector<std::vector<double>>& nodesVec, const int m, const int lIdx, double a, double b) {
 
     std::cout << "\nTesting near node finding...\n";
 
@@ -149,7 +149,7 @@ void testPermutation(vec3d& xs) {
     // ==================== Test translation ===================== //
     std::cout << " Testing M2L translations...\n";
 
-    realVec testDists =
+    std::vector<double> testDists =
         { 2, 2.23607, 2.44949, 2.82843, 3, 3.16228, 3.31662, 3.4641,
           3.60555, 3.74166, 4.12311, 4.24264, 4.3589, 4.69042, 5.19615 };
 
@@ -162,7 +162,7 @@ void testPermutation(vec3d& xs) {
 int main() {
 
     /*
-    realVec xs;
+    std::vector<double> xs;
     const int nmax = 10;
     for (double x = -1.0; x <= 1.0; x += 0.1 )
         xs.push_back(x);

@@ -55,11 +55,8 @@ void FMM::Angles::buildAngularMatrices() {
 
 void FMM::Angles::printAngles(std::ofstream& thfile, std::ofstream& phfile) {
     thfile << std::setprecision(15);
+    for (const auto& theta : thetas) thfile << theta << '\n';
+
     phfile << std::setprecision(15);
-
-    for (const auto& theta : thetas)
-        thfile << theta << '\n';
-
-    for (const auto& phi : phis)
-        phfile << phi << '\n';
+    for (const auto& phi : phis) phfile << phi << '\n';
 }

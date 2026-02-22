@@ -154,12 +154,19 @@ namespace Math {
 
     pair2d legendreP(double, int);
 
-    std::pair<realVec, realVec> gaussLegendre(
+    std::pair<std::vector<double>, std::vector<double>> gaussLegendre(
         int, double = -1.0, double = 1.0, double = 1.0E-12);
+
+    int getNearGLNodeIdx(
+        const double, const int, const double, const double);
+
+    double evalLagrangeBasis(const double, const std::vector<double>&, const int);
+
+    double evalTrigBasis(const double, const std::vector<double>&, const int);
 
     cmplx sphericalHankel1(double, int);
 
-    realVec getINodeDistances();
+    std::vector<double> getINodeDistances();
 
     std::array<vec3d, 316> getINodeDistVecs();
 

@@ -25,15 +25,15 @@ namespace Mesh {
 
     // Fine mesh data
     std::vector<SubRWG> glSubrwgs;  // list of fine RWGs
-    realVec massCoeffs;             // mass coefficients between fine RWGs
+    std::vector<double> massCoeffs;             // mass coefficients between fine RWGs
     PairHashMap<int> idxMassCoeffs; // subRWG pairs to mass coeff indices
 
     // Fine mesh maps
     PairHashMap<int> edgeToMid;       // coarse edges to midpoint indices
     PairHashMap<vec2i> fineEdgeToTri; // fine edges to subtri indices 
     PairHashMap<int> fineEdgeToSub;   // fine edges to subrwg indices
-    std::vector<intVec> triToSubs;    // indices of subrwgs containing tri
-    std::vector<intVec> vertToSubs;   // indices of subrwgs containing vert
+    std::vector<std::vector<int>> triToSubs;    // indices of subrwgs containing tri
+    std::vector<std::vector<int>> vertToSubs;   // indices of subrwgs containing vert
 
     // Functions
     void importVertices(const std::filesystem::path&);

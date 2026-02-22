@@ -7,10 +7,11 @@ FMM::Stem::Stem(
     : Node(srcs, branchIdx, base)
 {
     // Assign every src to a branch based on src center relative to node center
-    std::array<SrcVec, 8> branchSrcs;
-
-    for (const auto& src : srcs)
-        branchSrcs[Math::bools2Idx(src->getCenter() > center)].push_back(src);
+    std::array<SrcVec,8> branchSrcs;
+    for (const auto& src : srcs) {
+        size_t idx = Math::bools2Idx(src->getCenter() > center);
+        branchSrcs[idx].push_back(src);
+    }
 
     // Construct branch nodes
     for (size_t k = 0; k < branchSrcs.size(); ++k) {
@@ -71,7 +72,7 @@ void FMM::Stem::resizeCoeffs() {
  */
 FMM::Coeffs FMM::Stem::buildMpoleCoeffs() {
     int order = config.interpOrder;
-    size_t mDir = angles[level+1].getNumAllAngles();
+    size_t mDir = angles[level+1].getNumDirs();
 
     coeffs.fillZero();
 
@@ -108,8 +109,8 @@ FMM::Coeffs FMM::Stem::buildMpoleCoeffs() {
  * branchIdx : index of branch \in {0, ..., 7}
  */
 FMM::Coeffs FMM::Stem::getShiftedLocalCoeffs(int branchIdx) const {
-    size_t mDir = angles[level].getNumAllAngles();
-    size_t nDir = angles[level+1].getNumAllAngles();
+    size_t mDir = angles[level].getNumDirs();
+    size_t nDir = angles[level+1].getNumDirs();
 
     Coeffs outCoeffs(nDir);
     if (iList.empty()) return outCoeffs;
@@ -268,7 +269,6 @@ void FMM::Stem::buildLocalCoeffs() {
             localCoeffs = localCoeffs
                 + dynamic_cast<Stem*>(base)->getShiftedLocalCoeffs(branchIdx);
         }
-
         t.L2L += Clock::now() - start;
     }
 

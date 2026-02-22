@@ -10,8 +10,6 @@
 #include "tables.h"
 
 class FMM::Node {
-    friend struct Angles;
-    friend class Tables;
 
 public:
     Node(const SrcVec&, const int, Node* const);

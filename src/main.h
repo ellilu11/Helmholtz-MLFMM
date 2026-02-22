@@ -11,7 +11,6 @@
 #include <utility>
 
 #include "dipole.cpp"
-#include "interp.cpp"
 #include "math.cpp"
 #include "solver.cpp"
 #include "source.cpp"

@@ -10,7 +10,6 @@ using namespace FMM;
 extern const Config config("config/config.txt");
 extern double k = 0.0;
 extern auto states = States();
-
 extern auto t = ClockTimes();
 
 void testNumVsAnlNear(const Mesh::Triangle& tri, const vec3d& obs) {

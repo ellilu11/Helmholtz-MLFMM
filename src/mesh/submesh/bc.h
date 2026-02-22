@@ -11,8 +11,8 @@ public:
 
 private:
     SrcRWG* const base;           // pointer to base srcRWG
-    std::array<intVec,2> iSubss;  // indices of subRWGs at both common vertices
-    std::array<realVec, 2> pcoeffss; // precomputed fine RWG -> BC coeffs
+    std::array<std::vector<int>,2> iSubss;  // indices of subRWGs at both common vertices
+    std::array<std::vector<double>, 2> pcoeffss; // precomputed fine RWG -> BC coeffs
 
     cmplx rval;
 };
