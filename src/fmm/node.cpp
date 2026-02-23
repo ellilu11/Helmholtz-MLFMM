@@ -73,6 +73,8 @@ void FMM::Node::translateCoeffs() {
 
     // Translate mpole coeffs into local coeffs
     const auto& transl = tables[level].transl;
+    Eigen::Map<arrXcd> localTheta(localCoeffs.theta.data(), nDir);
+    Eigen::Map<arrXcd> localPhi(localCoeffs.phi.data(), nDir);
 
     for (const auto& node : iList) {
         const auto& dX = center - node->center;
@@ -81,9 +83,6 @@ void FMM::Node::translateCoeffs() {
         Eigen::Map<arrXcd> mpoleTheta(node->coeffs.theta.data(), nDir);
         Eigen::Map<arrXcd> mpolePhi(node->coeffs.phi.data(), nDir);
 
-        Eigen::Map<arrXcd> localTheta(localCoeffs.theta.data(), nDir);
-        Eigen::Map<arrXcd> localPhi(localCoeffs.phi.data(), nDir);
-    
         localTheta += transl_dX * mpoleTheta;
         localPhi += transl_dX * mpolePhi;
     }

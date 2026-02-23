@@ -135,22 +135,23 @@ void FMM::Leaf::buildNearRads() {
  */
 void FMM::Leaf::buildRadPats() {
     for (const auto& leaf : leaves) {
-        const int level = leaf->level;
-        const auto& center = leaf->center;
+        const auto& angles_lvl = angles[leaf->level];
+        size_t nDir = angles_lvl.getNumDirs();
 
-        const auto& angles_lvl = angles[level];
-        const auto [nth, nph] = angles_lvl.getNumAngles();
+        leaf->radPats.resize(leaf->srcs.size());
+        size_t iSrc = 0;
+        for (const auto& src : leaf->srcs) {
+            Coeffs radPat(nDir);
 
-        for (int iDir = 0; iDir < nth*nph; ++iDir) {
-            const auto& kvec = angles_lvl.khat[iDir] * k;
-            const auto& toThPh = angles_lvl.toThPh[iDir];
+            for (int iDir = 0; iDir < nDir; ++iDir) {
+                const auto& kvec = angles_lvl.khat[iDir] * k;
+                const auto& toThPh = angles_lvl.toThPh[iDir];
 
-            std::vector<vec2cd> radPat(leaf->srcs.size(), vec2cd::Zero());
-            int iSrc = 0;
-            for (const auto& src : leaf->srcs)
-                radPat[iSrc++] = toThPh * src->getRadAlongDir(center, kvec);
+                radPat.setCoeffAlongDir(
+                    toThPh * src->getRadAlongDir(leaf->center, kvec), iDir);
+            }
 
-            leaf->radPats.push_back(radPat);
+            leaf->radPats[iSrc++] = std::move(radPat);
         }
     }
 }
@@ -159,23 +160,17 @@ void FMM::Leaf::buildRadPats() {
  * (S2M) Build multipole coefficients from sources in this node  
  */
 FMM::Coeffs FMM::Leaf::buildMpoleCoeffs() {
-    coeffs.fillZero();
-
-    if (isSrcless() || isRoot()) return coeffs;
-
     auto start = Clock::now();
 
-    for (int iDir = 0; iDir < coeffs.size(); ++iDir) {
-        vec2cd coeff = vec2cd::Zero();
+    coeffs.fillZero();
+    if (isSrcless() || isRoot()) return coeffs;
 
-        int iSrc = 0;
-        for (const auto& src : srcs)
-            coeff += states.lvec[src->getIdx()] * radPats[iDir][iSrc++];
+    size_t nDir = angles[level].getNumDirs();
+    size_t iSrc = 0;
 
-        coeffs.theta[iDir] = coeff[0];
-        coeffs.phi[iDir] = coeff[1];
-    }
-
+    for (const auto& src : srcs)
+        coeffs += states.lvec[src->getIdx()] * radPats[iSrc++];
+  
     t.S2M += Clock::now() - start;
 
     return coeffs;
@@ -205,28 +200,26 @@ void FMM::Leaf::buildLocalCoeffs() {
 /* evalFarSols()
  * (L2T) Evaluate sols from local expansion due to far nodes
  */
-//
 void FMM::Leaf::evalFarSols() {
     if (isSrcless() || level <= 1) return;
 
-    const auto [nth, nph] = angles[level].getNumAngles();
+    size_t nDir = angles[level].getNumDirs();
 
-    int iObs = 0;
+    Eigen::Map<arrXcd> localTheta(localCoeffs.theta.data(), nDir);
+    Eigen::Map<arrXcd> localPhi(localCoeffs.phi.data(), nDir);
+
+    size_t iObs = 0;
     for (const auto& obs : srcs) {
-        size_t iDir = 0;
         cmplx intRad = 0;
 
-        // Do the angular integration
-        for (int ith = 0; ith < nth; ++ith) {
-            for (int iph = 0; iph < nph; ++iph) {
-                const vec2cd& localCoeff = localCoeffs.getVecAlongDir(iDir);
-                intRad += radPats[iDir++][iObs].dot(localCoeff); // Hermitian dot!
-            }
-        }
+        auto& radPat = radPats[iObs++];
+        Eigen::Map<arrXcd> radPatTheta(radPat.theta.data(), nDir);
+        Eigen::Map<arrXcd> radPatPhi(radPat.phi.data(), nDir);
+
+        intRad += (radPatTheta.conjugate() * localTheta + 
+                   radPatPhi.conjugate() * localPhi).sum();
 
         states.rvec[obs->getIdx()] += Phys::C * k * intRad;
-
-        ++iObs;
     }
 }
 

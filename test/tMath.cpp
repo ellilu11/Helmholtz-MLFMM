@@ -1,6 +1,4 @@
 #include <iostream>
-#include "../src/interp.h"
-#include "../src/interp.cpp"
 #include "../src/math.cpp"
 // #include "../src/fmm/node.h"
 

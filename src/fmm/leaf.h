@@ -61,8 +61,7 @@ private:
     std::vector<std::vector<cmplx>> nonNearRads;
     std::vector<cmplx> selfRads;
 
-    std::vector<std::vector<vec2cd>> radPats;
-    std::array<std::vector<vec2cd>, 2> polarRadPats;
+    std::vector<Coeffs> radPats;
 
     NodeVec nearNbors; // list 1
     NodeVec nearNonNbors; // list 3
