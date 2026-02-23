@@ -9,7 +9,7 @@ FMM::Node::Node(
     const SrcVec& srcs,
     const int branchIdx,
     Node* const base,
-    bool isLeaf)
+    bool buildLeaf)
     : srcs(srcs), branchIdx(branchIdx), base(base),
     nodeLeng(base == nullptr ? config.rootLeng : base->nodeLeng/2.0),
     level(base == nullptr ? 0 : base->level + 1),
@@ -18,7 +18,7 @@ FMM::Node::Node(
 {
     ++numNodes;
 
-    if (isLeaf) {
+    if (buildLeaf) {
         //std::cout << "   Built leaf node at level " << level << " with " 
         //    << branches.empty() << " branches\n";
         maxLevel = std::max(level, maxLevel);
@@ -44,12 +44,8 @@ void FMM::Node::subdivideNode() {
     // Construct branch nodes
     branches.resize(8);
     for (size_t k = 0; k < 8; ++k) {
-        bool isLeaf = branchSrcs[k].size() <= config.maxNodeSrcs;
-
-        auto branch = std::make_shared<Node>(branchSrcs[k], k, this, isLeaf);
-
-        // branches.push_back(std::move(branch));
-        branches[k] = std::move(branch);
+        bool buildLeaf = branchSrcs[k].size() <= config.maxNodeSrcs;
+        branches[k] = std::make_shared<Node>(branchSrcs[k], k, this, buildLeaf);
     }
 }
 
@@ -63,22 +59,25 @@ void FMM::Node::buildNeighbors() {
     for (int i = 0; i < numDir; ++i) {
         Dir dir = static_cast<Dir>(i);
         auto nbor = getNeighborGeqSize(dir);
-
-        if (!nbor) continue; // check if nbor is nullptr
+        if (!nbor) continue; // continue if nbor is nullptr
         
         nbors.push_back(nbor);
 
-        //
         if (!isLeaf()) continue;
         auto nbors = getNeighborsLeqSize(nbor, dir);
         nearNbors.insert(nearNbors.end(), nbors.begin(), nbors.end());
-        //
     }
 
     assert(nbors.size() <= numDir);
 }
 
 void FMM::Node::balanceNeighbors() {
+    for (const auto& nbor : nbors) {
+        if (nbor->level < level - 1) {
+            nbor->subdivideNode();
+            nbor->balanceNeighbors();
+        }
+    }
 }
 
 /* buildInteractionList()
@@ -117,8 +116,6 @@ void FMM::Node::pushSelfToNearNonNbors() {
     if (leafIlist.empty()) return;
 
     for (const auto& node : leafIlist) {
-        assert(node->isLeaf());
-
         node->pushToNearNonNbors(shared_from_this());
         nonNearPairs.emplace_back(node, shared_from_this()); // record list4-list3 pair
     }

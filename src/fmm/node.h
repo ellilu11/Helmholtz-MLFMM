@@ -87,7 +87,6 @@ private:
         nearNonNbors.push_back(node);
     }
 
-    
 protected:
     inline static int numNodes = 0;
 

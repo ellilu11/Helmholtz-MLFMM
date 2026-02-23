@@ -497,7 +497,6 @@ FMM::NodeVec FMM::Node::getNeighborsLeqSize(
     while (!queue.empty()) {
         auto nbor = queue.front();
 
-        assert(nbor != nullptr);
         if (nbor->isLeaf())
             nbors.push_back(nbor);
         else {

@@ -65,7 +65,7 @@ cmplx Mesh::RWG::getIntegratedRad(const std::shared_ptr<Source> src) const {
             cmplx pairRad = 0.0;
             const auto& srcNC = srcRWG->getVertsNC()[iSrcTri];
             const auto& srcNCproj = srcTri.proj(srcNC);
-            const int nCommon = obsTri.getNumCommonVerts(srcTri);
+            int nCommon = obsTri.getNumCommonVerts(srcTri);
 
             for (const auto& [obs, obsWeight] : obsTri.triQuads) {
                 const auto& obsProj = srcTri.proj(obs);
@@ -75,7 +75,7 @@ cmplx Mesh::RWG::getIntegratedRad(const std::shared_ptr<Source> src) const {
                     const double r = (obs-src).norm();
 
                     cmplx G;
-                    if (!nCommon) G = exp(iu*k*r) / r; 
+                    if (nCommon < 2) G = exp(iu*k*r) / r; 
                     else G = (Math::approxZero(r) ? iu*k : (exp(iu*k*r)-1.0) / r);
 
                     pairRad += ((obs-obsNC).dot(src-srcNC) - 4.0 / (k*k)) * G
@@ -83,7 +83,7 @@ cmplx Mesh::RWG::getIntegratedRad(const std::shared_ptr<Source> src) const {
                 }
 
                 // For near triangles, add contribution from 1/R term (analytically)
-                if (nCommon == 1 || nCommon == 2) {
+                if (nCommon == 2) {
                     const auto& [scaRad, vecRad] = srcTri.getNearIntegrated(obs);
                     pairRad +=
                         ((obs-obsNC).dot(vecRad+(obsProj-srcNCproj)*scaRad) - 4.0/(k*k)*scaRad)

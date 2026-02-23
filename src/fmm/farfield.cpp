@@ -170,14 +170,15 @@ FMM::Coeffs FMM::Node::getShiftedLocalCoeffs(int branchIdx) const {
  */
 void FMM::Node::buildLocalCoeffs() {
     if (!isRoot()) {
+        // M2L
         auto start = Clock::now();
         translateCoeffs();
         t.M2L += Clock::now() - start;
 
+        // Add L2L to M2L
         start = Clock::now();
-        if (!base->isRoot()) {
+        if (!base->isRoot())
             localCoeffs += base->getShiftedLocalCoeffs(branchIdx);
-        }
         t.L2L += Clock::now() - start;
     }
 
@@ -194,12 +195,12 @@ void FMM::Node::evalFarSols() {
     size_t nDir = angles[level].getNumDirs();
 
     size_t iObs = 0;
-    for (const auto& obs : srcs) 
-    {
+    for (const auto& obs : srcs) {
         cmplx intRad = 0;
+
         for (int iDir = 0; iDir < nDir; ++iDir) {
             const vec2cd& localCoeff = localCoeffs.getVecAlongDir(iDir);
-            intRad += radPats[iDir++][iObs].dot(localCoeff); // Hermitian dot!
+            intRad += radPats[iDir][iObs].dot(localCoeff); // Hermitian dot!
         }
 
         states.rvec[obs->getIdx()] += Phys::C * k * intRad;

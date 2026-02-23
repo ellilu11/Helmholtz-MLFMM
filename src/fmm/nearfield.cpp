@@ -6,7 +6,7 @@ FMM::Nearfield::Nearfield() {
     buildSelfRads();
 }
 
-/* findNearNborPairs()
+/* findPairs()
  * From list of leaves, find all near neighbor leaf pairs
  */
 void FMM::Nearfield::findPairs() {
