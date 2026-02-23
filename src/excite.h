@@ -1,5 +1,6 @@
 #pragma once
 
+#include <filesystem>
 #include "types.h"
 
 extern double k;
@@ -39,7 +40,7 @@ std::shared_ptr<Exc::PlaneWave>
     std::shared_ptr<Exc::PlaneWave> Einc;
 
     vec3d pol, wavehat;
-    double wavenum, amplitude;
+    double amplitude;
     if (iss >> pol >> wavehat >> amplitude)
         Einc = std::make_shared<Exc::PlaneWave>(pol, wavehat, amplitude);
     else

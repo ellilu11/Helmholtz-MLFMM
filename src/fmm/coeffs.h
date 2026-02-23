@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../types.h"
+#include "fmm.h"
 
 struct FMM::Coeffs {
     std::vector<cmplx> theta;
@@ -22,9 +22,22 @@ struct FMM::Coeffs {
         std::fill(phi.begin(), phi.end(), 0.0);
     }
 
-    vec2cd getVecAlongDir(size_t idx) const {
-        return vec2cd(theta[idx], phi[idx]);
+    void setCoeffAlongDir(const vec2cd& vec, size_t iDir) {
+        theta[iDir] = vec[0];
+        phi[iDir] = vec[1];
     }
+
+    vec2cd getVecAlongDir(size_t iDir) const {
+        return vec2cd(theta[iDir], phi[iDir]);
+    }
+
+    /*
+    std::vector<cmplx> flattened() const {
+        std::vector<cmplx> flatVec = theta;
+        flatVec.insert(flatVec.end(), phi.begin(), phi.end());
+
+        return flatVec;
+    }*/
 
     size_t size() const { return theta.size(); }
 
@@ -34,8 +47,25 @@ struct FMM::Coeffs {
         return *this;
     }
 
+    Coeffs& operator*=(cmplx val) noexcept {
+        theta *= val;
+        phi *= val;
+        return *this;
+    }
+
     friend Coeffs operator+(Coeffs coeffs0, const Coeffs& coeffs1) noexcept {
         coeffs0 += coeffs1;
         return coeffs0;
+    }
+
+    friend Coeffs operator*(cmplx val, Coeffs coeffs) noexcept {
+        coeffs *= val;
+        return coeffs;
+    }
+
+    friend std::ostream& operator<<(std::ostream& os, const Coeffs& coeffs) {
+        os << coeffs.theta;
+        os << coeffs.phi;
+        return os;  
     }
 };

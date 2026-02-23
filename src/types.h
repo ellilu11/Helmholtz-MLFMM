@@ -14,13 +14,11 @@ using vec3i = Eigen::Vector3i;
 using vec4i = Eigen::Vector4i;
 using vec3d = Eigen::Vector3d;
 using vecXd = Eigen::VectorXd;
-
 using vec2cd = Eigen::Vector2cd;
 using vec3cd = Eigen::Vector3cd;
 using vecXcd = Eigen::VectorXcd;
 
 using arrXcd = Eigen::ArrayXcd;
-using arrX2cd = Eigen::Array<cmplx, Eigen::Dynamic, 2>;
 
 using mat3d = Eigen::Matrix3d;
 using mat23d = Eigen::Matrix<double, 2, 3>;
@@ -31,6 +29,7 @@ using interpPair = std::pair<vecXd, int>;
 template <typename T>
 using quadPair = std::pair<T, double>;
 
+// Vector addition
 template <typename T>
 std::vector<T> operator+= (std::vector<T>& lhs, const std::vector<T>& rhs) {
     assert(lhs.size() == rhs.size());
@@ -40,22 +39,36 @@ std::vector<T> operator+= (std::vector<T>& lhs, const std::vector<T>& rhs) {
 }
 
 template <typename T>
-std::vector<T> operator+ (const std::vector<T>& lhs, const std::vector<T>& rhs) {
+std::vector<T> operator+ (std::vector<T> lhs, const std::vector<T>& rhs) {
     lhs += rhs;
     return lhs;
 }
 
+// Scalar multiplication
 template <typename T>
-inline std::pair<T,T> makeUnordered(T x, T y) noexcept {
-    return (x < y ? std::make_pair(x,y) : std::make_pair(y,x));
+std::vector<T> operator*= (std::vector<T>& vec, T val) {
+    for (size_t i = 0; i < vec.size(); ++i)
+        vec[i] *= val;
+    return vec;
+}
+
+template <typename T>
+std::vector<T> operator* (T val, std::vector<T> vec) {
+    vec *= val;
+    return vec;
+}
+
+template <typename T>
+std::ostream& operator<< (std::ostream& os, const std::vector<T>& vec) {
+    for (const auto& val : vec) os << val << " ";
+    os << '\n';
+    return os;
 }
 
 std::ostream& operator<< (std::ostream& os, cmplx z) {
     //char sign = z.imag() >= 0.0 ? '+' : '-';
     //os << z.real() << sign << abs(z.imag()) << 'i';
-
     os << z.real() << ' ' << z.imag();
-
     return os;
 }
 
@@ -123,4 +136,9 @@ std::istream& operator>>(std::istream& is, std::vector<T>& X) {
 std::array<bool,3> operator> (const vec3d& x, const vec3d& y) {
     std::array<bool,3> bools{ x[0] > y[0], x[1] > y[1], x[2] > y[2] };
     return bools;
+}
+
+template <typename T>
+inline std::pair<T, T> makeUnordered(T x, T y) noexcept {
+    return (x < y ? std::make_pair(x, y) : std::make_pair(y, x));
 }
