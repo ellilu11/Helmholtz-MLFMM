@@ -57,27 +57,36 @@ public:
     Coeffs getLocalCoeffs() const { return localCoeffs; }
 
     bool isRoot() const { return base == nullptr; }
-    
-    bool isSrcless() const { return srcs.empty(); }
 
     bool isLeaf() const { return branches.empty(); }
+    
+    bool isSrcless() const { return srcs.empty(); }
 
 private:
     std::shared_ptr<Node> getNeighborGeqSize(const Dir) const;
 
     NodeVec getNeighborsLeqSize(const std::shared_ptr<Node>, const Dir) const;
     
+    void subdivideNode();
+
     void buildNeighbors();
+
+    void balanceNeighbors();
 
     void buildInteractionList();
     
-    // void pushSelfToNearNonNbors();
+    void pushSelfToNearNonNbors();
 
     Coeffs getShiftedLocalCoeffs(int) const;
 
     void translateCoeffs();
 
     void evalFarSols();
+
+    void pushToNearNonNbors(const std::shared_ptr<Node>& node) {
+        nearNonNbors.push_back(node);
+    }
+
     
 protected:
     inline static int numNodes = 0;
@@ -92,6 +101,7 @@ protected:
     NodeVec iList; // list 2
     NodeVec nearNbors; // list 1
     NodeVec nearNonNbors; // list 3
+    NodeVec leafIlist; // list 4
 
     SrcVec srcs;
     const int branchIdx;

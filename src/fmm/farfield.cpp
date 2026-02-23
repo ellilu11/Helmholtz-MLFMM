@@ -63,10 +63,8 @@ FMM::Coeffs FMM::Node::mergeMpoleCoeffs() {
     for (const auto& branch : branches) {
         if (branch->isSrcless()) continue;
 
-        const auto& branchCoeffs = (
-            isLeaf() ? 
-            branch->buildMpoleCoeffs() :
-            branch->mergeMpoleCoeffs() );
+        const auto& branchCoeffs = (branch->isLeaf() ? 
+            branch->buildMpoleCoeffs() : branch->mergeMpoleCoeffs() );
 
         auto start = Clock::now();
 
@@ -99,12 +97,14 @@ void FMM::Node::translateCoeffs() {
     if (iList.empty()) return;
 
     localCoeffs.fillZero();
-    const size_t nDir = localCoeffs.size();
+    size_t nDir = localCoeffs.size();
 
     // Translate mpole coeffs into local coeffs
     const auto& transl = tables[level].transl;
 
     for (const auto& node : iList) {
+        assert(level == node->level);
+
         const auto& dX = center - node->center;
         const auto& transl_dX = transl.at(dX/nodeLeng);
 
@@ -176,8 +176,7 @@ void FMM::Node::buildLocalCoeffs() {
 
         start = Clock::now();
         if (!base->isRoot()) {
-            localCoeffs = localCoeffs
-                + base->getShiftedLocalCoeffs(branchIdx);
+            localCoeffs += base->getShiftedLocalCoeffs(branchIdx);
         }
         t.L2L += Clock::now() - start;
     }
@@ -192,19 +191,15 @@ void FMM::Node::buildLocalCoeffs() {
 void FMM::Node::evalFarSols() {
     if (isSrcless() || level <= 1) return;
 
-    const auto [nth, nph] = angles[level].getNumAngles();
+    size_t nDir = angles[level].getNumDirs();
 
-    int iObs = 0;
-    for (const auto& obs : srcs) {
-        size_t iDir = 0;
+    size_t iObs = 0;
+    for (const auto& obs : srcs) 
+    {
         cmplx intRad = 0;
-
-        // Do the angular integration
-        for (int ith = 0; ith < nth; ++ith) {
-            for (int iph = 0; iph < nph; ++iph) {
-                const vec2cd& localCoeff = localCoeffs.getVecAlongDir(iDir);
-                intRad += radPats[iDir++][iObs].dot(localCoeff); // Hermitian dot!
-            }
+        for (int iDir = 0; iDir < nDir; ++iDir) {
+            const vec2cd& localCoeff = localCoeffs.getVecAlongDir(iDir);
+            intRad += radPats[iDir++][iObs].dot(localCoeff); // Hermitian dot!
         }
 
         states.rvec[obs->getIdx()] += Phys::C * k * intRad;
@@ -215,8 +210,12 @@ void FMM::Node::evalFarSols() {
 
 // TODO: Move into Farfield class
 void FMM::Node::evaluateSols() {
+    auto start = Clock::now();
+
     for (const auto& leaf : leaves)
         leaf->evalFarSols();
+
+    t.L2T += Clock::now() - start;
 }
 
 void FMM::Node::printFarFld(const std::string& fname) {

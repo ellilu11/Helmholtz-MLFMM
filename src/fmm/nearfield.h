@@ -25,7 +25,7 @@ public :
 private : 
     void findPairs();
 
-    void buildNearRads();
+    void buildPairRads();
 
     void buildSelfRads();
 

@@ -2,7 +2,7 @@
 
 FMM::Nearfield::Nearfield() {
     findPairs();
-    buildNearRads();
+    buildPairRads();
     buildSelfRads();
 }
 
@@ -11,29 +11,32 @@ FMM::Nearfield::Nearfield() {
  */
 void FMM::Nearfield::findPairs() {
     for (const auto& leaf : leaves) {
+        selfPairs.emplace_back(leaf, leaf);
+
         for (const auto& nbor : leaf->nearNbors) {
             assert(nbor->isLeaf());
-
-            if (leaf < nbor)
-                nearPairs.emplace_back(leaf, nbor);
+            if (leaf < nbor) nearPairs.emplace_back(leaf, nbor);
         }
+    }
 
-        selfPairs.emplace_back(leaf, leaf);
+    for (const auto& pair : nonNearPairs) {
+        const auto& [obsNode, srcNode] = pair;
+        nearPairs.emplace_back(obsNode, srcNode);
     }
 }
 
-void FMM::Nearfield::buildNearRads() {
+void FMM::Nearfield::buildPairRads() {
     for (auto& nearPair : nearPairs) {
-        const auto [obsLeaf, srcLeaf] = nearPair.pair;
-        assert(obsLeaf < srcLeaf);
+        const auto [obsLeaf, srcNode] = nearPair.pair;
+        // assert(obsLeaf < srcNode);
 
-        size_t nObss = obsLeaf->srcs.size(), nSrcs = srcLeaf->srcs.size();
+        size_t nObss = obsLeaf->srcs.size(), nSrcs = srcNode->srcs.size();
         nearPair.rads.resize(nObss*nSrcs);
 
         int pairIdx = 0;
         for (size_t iObs = 0; iObs < nObss; ++iObs) {
             for (size_t iSrc = 0; iSrc < nSrcs; ++iSrc) {
-                const auto obs = obsLeaf->srcs[iObs], src = srcLeaf->srcs[iSrc];
+                const auto obs = obsLeaf->srcs[iObs], src = srcNode->srcs[iSrc];
 
                 nearPair.rads[pairIdx++] = obs->getIntegratedRad(src);
             }

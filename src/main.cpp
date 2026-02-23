@@ -36,8 +36,6 @@ int main() {
     std::cout << "   # Leaves: " << leaves.size() << '\n';
     std::cout << "   Max node level: " << Node::getMaxLvl() << "\n\n";
 
-    return 0;
-
     // ==================== Build nearfield ===================== //
     std::cout << " Building nearfield interactions...\n";
 
@@ -75,7 +73,7 @@ int main() {
     auto solver = std::make_unique<Solver>(srcs, root, nf, MAX_ITER, EPS);
 
     start = Clock::now();
-    solver->solve("curr.txt");
+    solver->solve("curr_new.txt");
     end = Clock::now();
     duration_ms = end - start;
     std::cout << "   FMM total elapsed time: " << duration_ms.count() << " ms\n\n";
@@ -103,7 +101,7 @@ int main() {
     std::cout << " Solving w/ direct...\n";
     solver = std::make_unique<Solver>(srcs, root, nf, MAX_ITER, EPS);
 
-    solver->solve("currDir.txt");
+    solver->solve("currDir_new.txt");
 
     return 0;
 }

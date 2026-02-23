@@ -39,13 +39,15 @@ namespace FMM {
     // Global data
     std::vector<Angles> angles;
     std::vector<Tables> tables;
-
     NodeVec leaves;
-
+    std::vector<NodePair> nonNearPairs;
     inline int maxLevel = 0;
 
     // Functions
     void buildTables();
 
-    void resetLeaves() { leaves.clear(); }
+    void resetLeaves() { 
+        leaves.clear(); 
+        nonNearPairs.clear();
+    }
 }

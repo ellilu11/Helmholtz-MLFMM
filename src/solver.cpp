@@ -52,6 +52,7 @@ void Solver::updateRvec(int k) {
         std::cout << "   Elapsed time (M2L): " << t.M2L.count() << " ms\n";
         std::cout << "   Elapsed time (L2L): " << t.L2L.count() << " ms\n";
         std::cout << "   Elapsed time (L2T): " << t.L2T.count() << " ms\n";
+        std::cout << "   Elapsed time (S2T): " << t.S2T.count() << " ms\n";
     }
 }
 
