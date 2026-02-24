@@ -47,7 +47,7 @@ void Stem::tInterpPhi(int srcLvl, int tgtLvl) {
 
         for (int iph = nearIdx+1-order, k = 0; iph <= nearIdx+order; ++iph, ++k) {
 
-            const int iph_wrapped = Math::wrapIdxToRange(iph, mph);
+            const int iph_wrapped = iph%mph;
 
             interpVals[n] += interp[k] * vals[iph_wrapped];
         }

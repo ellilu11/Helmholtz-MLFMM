@@ -35,9 +35,7 @@ FMM::Coeffs FMM::Node::buildMpoleCoeffs() {
     coeffs.fillZero();
     if (isSrcless() || isRoot()) return coeffs;
 
-    size_t nDir = angles[level].getNumDirs();
     size_t iSrc = 0;
-
     for (const auto& src : srcs)
         coeffs += states.lvec[src->getIdx()] * radPats[iSrc++];
 
@@ -45,7 +43,6 @@ FMM::Coeffs FMM::Node::buildMpoleCoeffs() {
 
     return coeffs;
 }
-
 
 /* mergeMpoleCoeffs()
  * (M2M) Build mpole coeffs by merging branch mpole coeffs
@@ -93,7 +90,7 @@ void FMM::Node::translateCoeffs() {
     if (iList.empty()) return;
 
     localCoeffs.fillZero();
-    const size_t nDir = localCoeffs.size();
+    size_t nDir = localCoeffs.size();
 
     // Translate mpole coeffs into local coeffs
     const auto& transl = tables[level].transl;

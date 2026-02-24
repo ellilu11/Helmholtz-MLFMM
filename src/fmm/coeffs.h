@@ -12,6 +12,8 @@ struct FMM::Coeffs {
         : theta(N, val), phi(N, val) 
     {}
 
+    size_t size() const { return theta.size(); }
+
     void resize(size_t N) {
         theta.resize(N, 0.0);
         phi.resize(N, 0.0);
@@ -30,16 +32,6 @@ struct FMM::Coeffs {
     vec2cd getVecAlongDir(size_t iDir) const {
         return vec2cd(theta[iDir], phi[iDir]);
     }
-
-    /*
-    std::vector<cmplx> flattened() const {
-        std::vector<cmplx> flatVec = theta;
-        flatVec.insert(flatVec.end(), phi.begin(), phi.end());
-
-        return flatVec;
-    }*/
-
-    size_t size() const { return theta.size(); }
 
     Coeffs& operator+=(const Coeffs& coeffs) noexcept {
         theta += coeffs.theta;

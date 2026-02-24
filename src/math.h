@@ -120,26 +120,14 @@ namespace Math {
                 RR * (1.0 + 3.0*iinvkr - 3.0*invkrsq));
     };
 
-    inline size_t flipIdxToRange(int i, int size) noexcept {
-        int uint_i = i;
-
-        if (i < 0)
-            uint_i = -i-1;
-        else if (i >= size)
-            uint_i = 2*size-i-1;
-
+    inline int flipIdxToRange(int i, int size) noexcept {
+        int uint_i = (i >= 0 && i < size ? i : (i < 0 ? -i-1 : 2*size-i-1));
         assert(uint_i >= 0 && uint_i < size);
         return uint_i;
     }
 
-    inline size_t wrapIdxToRange(int i, int size) noexcept {
-        int uint_i = i;
-
-        if (i < 0)
-            uint_i = i + size;
-        else if (i >= size)
-            uint_i = i - size;
-
+    inline int wrapIdxToRange(int i, int size) noexcept {
+        int uint_i = (i % size + size) % size; // handles negative i correctly
         assert(uint_i >= 0 && uint_i < size);
         return uint_i;
     }

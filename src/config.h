@@ -4,6 +4,7 @@
 #include <fstream>
 #include <iostream>
 #include <type_traits>
+#include "phys.h"
 
 extern double k;
 
@@ -83,9 +84,9 @@ struct Config {
         std::cout << "   Interp order:    " << interpOrder << '\n';
         std::cout << "   Overinterp:      " << overInterp << '\n';
         std::cout << "   Max node srcs:   " << maxNodeSrcs << '\n';
-        std::cout << "   Root length:     " << rootLeng << '\n';
         std::cout << "   Tri quad rule:   " << getNumQuads(quadPrec) << "-point\n";
-        std::cout << "   Wavenumber:      " << ::k << "/m\n\n";
+        std::cout << "   Root length:     " << rootLeng << " m\n";
+        std::cout << "   Wavenumber:      " << k << " /m\n\n";
     }
 
     Mode mode;

@@ -15,12 +15,12 @@ void FMM::Node::addInterpCoeffs(
 
     // Interpolate over theta
     Coeffs innerCoeffs(nth*mph);
-
     for (int jth = 0; jth < nth; ++jth) {
         const auto [interp, nearIdx] = interpTheta[jth];
 
-        for (int ith = nearIdx+1-order, k = 0; ith <= nearIdx+order; ++ith, ++k) {
+        for (int ith = nearIdx+1-order; ith <= nearIdx+order; ++ith) {
             int ith_flipped = Math::flipIdxToRange(ith, mth);
+            int k = ith - (nearIdx+1-order);
 
             bool outOfRange = ith != ith_flipped; // jth < 0 || jth >= mth;
 
@@ -42,8 +42,9 @@ void FMM::Node::addInterpCoeffs(
     for (int jph = 0; jph < nph; ++jph) {
         const auto [interp, nearIdx] = interpPhi[jph];
 
-        for (int iph = nearIdx+1-order, k = 0; iph <= nearIdx+order; ++iph, ++k) {
+        for (int iph = nearIdx+1-order; iph <= nearIdx+order; ++iph) {
             int iph_wrapped = Math::wrapIdxToRange(iph, mph);
+            int k = iph - (nearIdx+1-order);
 
             for (int jth = 0; jth < nth; ++jth) {
                 size_t idxOut = jth*nph+jph, idxInner = jth*mph+iph_wrapped;

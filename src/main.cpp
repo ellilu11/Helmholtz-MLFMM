@@ -27,6 +27,7 @@ int main() {
     // ==================== Build nodes ==================== //
     std::cout << " Building nodes...\n";
 
+    auto start0 = Clock::now();
     auto root = std::make_shared<Node>(srcs, 0, nullptr, 
         nsrcs <= config.maxNodeSrcs);
 
@@ -37,7 +38,7 @@ int main() {
     std::cout << "   Max node level: " << Node::getMaxLvl() << "\n\n";
 
     // ==================== Build nearfield ===================== //
-    std::cout << " Building nearfield interactions...\n";
+    std::cout << " Building nearfield matrix...\n";
 
     auto start = Clock::now();
     auto nf = std::make_shared<Nearfield>();
@@ -76,7 +77,8 @@ int main() {
     solver->solve("curr_new.txt");
     end = Clock::now();
     duration_ms = end - start;
-    std::cout << "   FMM total elapsed time: " << duration_ms.count() << " ms\n\n";
+    Time duration_ms0 = end - start0;
+    std::cout << "   FMM total elapsed time: " << duration_ms0.count() << " ms\n\n";
 
     // root->printFarFld("ff.txt");
 
@@ -86,10 +88,11 @@ int main() {
     states = States(nsrcs);
     resetLeaves();
 
+    start0 = Clock::now();
     root = std::make_shared<Node>(srcs, 0, nullptr, 1);
     root->buildLists();
 
-    std::cout << " Building nearfield interactions...\n";
+    std::cout << " Building nearfield matrix...\n";
 
     start = Clock::now();
     nf = std::make_shared<Nearfield>();
@@ -102,6 +105,9 @@ int main() {
     solver = std::make_unique<Solver>(srcs, root, nf, MAX_ITER, EPS);
 
     solver->solve("currDir_new.txt");
+    end = Clock::now();
+    duration_ms0 = end - start0;
+    std::cout << "   Direct total elapsed time: " << duration_ms0.count() << " ms\n\n";
 
     return 0;
 }

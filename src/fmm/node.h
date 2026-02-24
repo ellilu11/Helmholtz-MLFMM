@@ -90,8 +90,7 @@ private:
 protected:
     inline static int numNodes = 0;
 
-    std::vector<Coeffs> radPats; // TODO: Move into Farfield class
-
+    std::vector<Coeffs> radPats;
     Coeffs coeffs;
     Coeffs localCoeffs;
 

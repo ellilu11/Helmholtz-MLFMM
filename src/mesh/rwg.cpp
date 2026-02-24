@@ -82,7 +82,7 @@ cmplx Mesh::RWG::getIntegratedRad(const std::shared_ptr<Source> src) const {
                         * obsWeight * srcWeight;
                 }
 
-                // For near triangles, add contribution from 1/R term (analytically)
+                // For edge adjacent triangles, add contribution from 1/R term (analytically)
                 if (nCommon == 2) {
                     const auto& [scaRad, vecRad] = srcTri.getNearIntegrated(obs);
                     pairRad +=
