@@ -8,7 +8,7 @@
 
 extern double k;
 
-enum class Mode { READ, WRITE };
+enum class Mode { FMM, FMMDIR };
 
 enum class Precision { VERYLOW, LOW, MEDIUM, HIGH, VERYHIGH };
 
@@ -50,6 +50,16 @@ std::ifstream& operator>>(std::ifstream& is, T& val) {
     return is;
 }
 
+std::string getModeStr(Mode mode) {
+    return [&]() {
+        switch (mode) {
+            case Mode::FMM:    return "FMM";
+            // case Mode::DIR:    return "DIRECT";
+            case Mode::FMMDIR: return "FMM+DIRECT";
+        };
+        } ();
+}
+
 int getNumQuads(Precision prec) {
     return [&]() {
         switch (prec) {
@@ -66,24 +76,24 @@ struct Config {
     Config() = default;
     Config(const std::string& fileName) {
         std::ifstream is(fileName);
-        is >> mode >> pdist >> qdist >> quadPrec // enums first
-            >> digits >> interpOrder >> overInterp
-            >> rootLeng >> maxNodeSrcs  >> evalDirect
-            >> nsrcs >> wavenum;
+        is >> mode >> quadPrec // TODO: fix enums first
+           >> nsrcs >> maxNodeSrcs
+           >> digits >> interpOrder >> overInterp
+           >> rootLeng >> wavenum;
 
         ::k = wavenum; // set global wavenumber
 
-        std::cout << " *********************** \n";
-        std::cout << " *** Helmholtz-MLFMM *** \n";
-        std::cout << " *********************** \n";
+        std::cout << " *************************** \n";
+        std::cout << " ***** Helmholtz-MLFMM ***** \n";
+        std::cout << " *************************** \n";
 
         std::cout << std::fixed << std::setprecision(3);
-        std::cout << "   Mode:            " << (mode == Mode::READ ? "READ" : "WRITE") << '\n';
+        std::cout << "   Mode:            " << getModeStr(mode) << '\n';
         std::cout << "   # Sources:       " << nsrcs << '\n';
+        std::cout << "   Max node srcs:   " << maxNodeSrcs << '\n';
         std::cout << "   Digit precision: " << digits << '\n';
         std::cout << "   Interp order:    " << interpOrder << '\n';
         std::cout << "   Overinterp:      " << overInterp << '\n';
-        std::cout << "   Max node srcs:   " << maxNodeSrcs << '\n';
         std::cout << "   Tri quad rule:   " << getNumQuads(quadPrec) << "-point\n";
         std::cout << "   Root length:     " << rootLeng << " m\n";
         std::cout << "   Wavenumber:      " << k << " /m\n\n";
@@ -91,16 +101,15 @@ struct Config {
 
     Mode mode;
     Precision quadPrec;
+    int nsrcs;
+    int maxNodeSrcs;
     int digits;
     int interpOrder;
     double overInterp;
     double rootLeng;
-    int maxNodeSrcs;
-    bool evalDirect;
-    int nsrcs;
     double wavenum;
 
-    // For point dipoles only
+    // Point dipoles only
     Dist pdist;
     QDist qdist;
 };

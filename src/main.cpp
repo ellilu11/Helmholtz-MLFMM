@@ -15,17 +15,16 @@ extern auto t = ClockTimes();
 
 int main() {
     // ===================== Build sources ==================== //
-    std::cout << " Building excitation and sources...\n";
+    std::cout << " Importing excitation and sources...\n";
 
     auto Einc = Exc::importPlaneWaves("config/pwave.txt");
-
     auto srcs = importSources(Einc);
     size_t nsrcs = srcs.size();
 
     states = States(nsrcs);
 
     // ==================== Build nodes ==================== //
-    std::cout << " Building nodes...\n";
+    std::cout << " Building FMM tree...\n";
 
     auto start0 = Clock::now();
     auto root = std::make_shared<Node>(srcs, 0, nullptr, 
@@ -42,8 +41,7 @@ int main() {
 
     auto start = Clock::now();
     auto nf = std::make_shared<Nearfield>();
-    auto end = Clock::now();
-    Time duration_ms = end - start;
+    Time duration_ms = Clock::now() - start;
     std::cout << "   Elapsed time: " << duration_ms.count() << " ms\n\n";
 
     // ==================== Build FMM operators =============== //
@@ -52,8 +50,7 @@ int main() {
     start = Clock::now();
     buildTables();
     root->resizeCoeffs(); // TODO: Hide this call
-    end = Clock::now();
-    duration_ms = end - start;
+    duration_ms = Clock::now() - start;
     std::cout << "   Elapsed time: " << duration_ms.count() << " ms\n\n";
 
     // ==================== Build radpats ===================== //
@@ -61,8 +58,7 @@ int main() {
 
     start = Clock::now();
     Node::buildRadPats();
-    end = Clock::now();
-    duration_ms = end - start;
+    duration_ms = Clock::now() - start;
     std::cout << "   Elapsed time: " << duration_ms.count() << " ms\n\n";
 
     // ==================== Solve iterative FMM ================ //
@@ -74,15 +70,14 @@ int main() {
     auto solver = std::make_unique<Solver>(srcs, root, nf, MAX_ITER, EPS);
 
     start = Clock::now();
-    solver->solve("curr_new.txt");
-    end = Clock::now();
-    duration_ms = end - start;
-    Time duration_ms0 = end - start0;
+    solver->solve("curr.txt");
+    duration_ms = Clock::now() - start;
+    Time duration_ms0 = Clock::now() - start0;
     std::cout << "   FMM total elapsed time: " << duration_ms0.count() << " ms\n\n";
 
-    // root->printFarFld("ff.txt");
+    root->printScatteredField("ff_n"+to_string(nsrcs)+"_selfint.txt", 200);
 
-    if (!config.evalDirect) return 0;
+    if (config.mode == Mode::FMM) return 0;
 
     // ================== Solve iterative direct ================ //
     states = States(nsrcs);
@@ -92,22 +87,21 @@ int main() {
     root = std::make_shared<Node>(srcs, 0, nullptr, 1);
     root->buildLists();
 
-    std::cout << " Building nearfield matrix...\n";
+    std::cout << "\n Building nearfield matrix...\n";
 
     start = Clock::now();
     nf = std::make_shared<Nearfield>();
-    end = Clock::now();
-
-    duration_ms = end - start;
+    duration_ms = Clock::now() - start;
     std::cout << "   Elapsed time: " << duration_ms.count() << " ms\n\n";
 
     std::cout << " Solving w/ direct...\n";
     solver = std::make_unique<Solver>(srcs, root, nf, MAX_ITER, EPS);
 
-    solver->solve("currDir_new.txt");
-    end = Clock::now();
-    duration_ms0 = end - start0;
+    solver->solve("currDir.txt");
+    duration_ms0 = Clock::now() - start0;
     std::cout << "   Direct total elapsed time: " << duration_ms0.count() << " ms\n\n";
+
+    root->printScatteredField("ffDir_n"+to_string(nsrcs)+"_selfint.txt", 200);
 
     return 0;
 }

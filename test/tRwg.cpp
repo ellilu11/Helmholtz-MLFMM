@@ -74,23 +74,28 @@ int main() {
     testNumVsAnlNear(tri, obs);
     */
 
-    /* Numeric full vs analytic near 1/R integration test
-    const auto obsTri = dynamic_pointer_cast<Mesh::RWG>(srcs[0])->getTris()[0];
+    // Numeric full vs analytic near 1/R integration test
+    const auto obsTri = dynamic_pointer_cast<Mesh::RWG>(srcs[0])->getTris()[1];
     const auto srcTri = dynamic_pointer_cast<Mesh::RWG>(srcs[1])->getTris()[0];
     testNearVsFull(obsTri, srcTri);
-    */
+    //
 
-    /* Nearfield integration test
+    /* Near/self integration test
     auto rwg0 = dynamic_pointer_cast<Mesh::RWG>(srcs[0]);
     auto rwg1 = dynamic_pointer_cast<Mesh::RWG>(srcs[1]);
 
     auto selfRad = rwg0->getIntegratedRad(rwg0);
     auto pairRad = rwg1->getIntegratedRad(rwg0);
 
+    //std::cout << std::setprecision(15)
+    //    << "Self intRad: " << selfRad << '\n'
+    //    << "Pair intRad: " << pairRad << '\n'
+    //    << "Diff: " << pairRad - selfRad << '\n';
+    
     std::cout << std::setprecision(15)
-        << "Self intRad: " << selfRad << '\n'
-        << "Pair intRad: " << pairRad << '\n'
-        << "Diff: " << pairRad - selfRad << '\n';
+        << rwg1->getTris()[0].getVerts()[0][2] - rwg0->getTris()[0].getVerts()[0][2] << ' '
+        << (pairRad-selfRad).real() << ' ' 
+        << pairRad.real() << '\n';
     */
 
     return 0;

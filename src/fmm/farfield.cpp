@@ -93,7 +93,7 @@ void FMM::Node::translateCoeffs() {
     size_t nDir = localCoeffs.size();
 
     // Translate mpole coeffs into local coeffs
-    const auto& transl = tables[level].transl;
+    const VecHashMap<arrXcd>& transl = tables[level].transl;
     Eigen::Map<arrXcd> localTheta(localCoeffs.theta.data(), nDir);
     Eigen::Map<arrXcd> localPhi(localCoeffs.phi.data(), nDir);
 
@@ -212,10 +212,12 @@ void FMM::Node::evaluateSols() {
     t.L2T += Clock::now() - start;
 }
 
-void FMM::Node::printFarFld(const std::string& fname) {
+void FMM::Node::printScatteredField(const std::string& fname, int nth, bool useMie) {
     namespace fs = std::filesystem;
     fs::path dir = "out/ff";
     std::error_code ec;
+
+    std::cout << " Computing scattered farfield...\n";
 
     if (fs::create_directory(dir, ec))
         std::cout << " Created directory " << dir.generic_string() << "/\n";
@@ -225,22 +227,22 @@ void FMM::Node::printFarFld(const std::string& fname) {
     std::ofstream farfile(dir/fname);
     farfile << std::setprecision(15) << std::scientific;
 
-    const auto& angles_lvl = angles[level];
-    size_t nDir = angles_lvl.getNumDirs();
+    // Also print out angles (coordinates of farsols)
+    std::ofstream thfile(dir/"thetas.txt"); // phfile(dir/"phis.txt");
+    thfile << std::setprecision(15) << std::scientific;
 
-    for (int iDir = 0; iDir < nDir; ++iDir) {
-        const auto& krhat = angles_lvl.khat[iDir] * k;
+    double phi = 0.0; // pick phi = 0
+    for (int ith = 0; ith < nth; ++ith) {
+        double theta = (ith+0.5)*PI/static_cast<double>(nth);
+        const auto& rhat = Math::fromSph(vec3d(1.0, theta, phi));
 
         vec3cd dirFar = vec3cd::Zero();
         for (const auto& src : srcs)
-            dirFar += states.currents[src->getIdx()] * src->getFarAlongDir(krhat);
+            dirFar += states.currents[src->getIdx()] * src->getFarAlongDir(k*rhat);
 
-        const vec3cd& far = Phys::C * k * angles_lvl.ImRR[iDir] * dirFar;
+        const vec2cd& far = Phys::C * k * Math::toThPh(theta, phi) * dirFar;
 
-        farfile << far << '\n';
+        farfile << norm(far[0]) << ' ' << norm(far[1]) << '\n'; // squared magnitude of theta and phi components
+        thfile << theta << '\n';
     }
-
-    // Also print out angles (coordinates of farsols)
-    std::ofstream thfile(dir/"thetas.txt"), phfile(dir/"phis.txt");
-    angles[level].printAngles(thfile, phfile);
 }

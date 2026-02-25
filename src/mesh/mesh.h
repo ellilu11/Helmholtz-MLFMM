@@ -13,19 +13,20 @@ namespace Mesh {
     class SrcRWG;
     class SubRWG;
     class BC;
+    struct TriToRWG;
 
     using QuadMoments = std::tuple<cmplx, vec3cd, vec3cd, cmplx>;
 
     // Coarse mesh data
     std::vector<vec3d> glVerts;   // list of vertices (including fine)
     std::vector<Triangle> glTris; // list of triangles (including fine)
-    PairHashMap<QuadMoments> glRadMoments;    // triangle pairs to rad field moments
+    std::vector<TriToRWG> triToRWGs; // coarse triangle to RWG mappings
     size_t nverts;                // number of coarse mesh vertices
     size_t ntris;                 // number of coarse mesh triangles
 
     // Fine mesh data
     std::vector<SubRWG> glSubrwgs;  // list of fine RWGs
-    std::vector<double> massCoeffs;             // mass coefficients between fine RWGs
+    std::vector<double> massCoeffs; // mass coefficients between fine RWGs
     PairHashMap<int> idxMassCoeffs; // subRWG pairs to mass coeff indices
 
     // Fine mesh maps
@@ -52,5 +53,9 @@ namespace Mesh {
 
     void refineMesh(const SrcVec&);
 
-    void printRWGs(const SrcVec& rwgs, const std::string&);
+    // void printFarField(const std::string&, int, bool = 0);
+
+    // void evaluateJ();
+
+    // void printRWGs(const SrcVec& rwgs, const std::string&);
 }

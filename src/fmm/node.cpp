@@ -16,24 +16,13 @@ FMM::Node::Node(
     center(base == nullptr ? zeroVec :
         base->center + nodeLeng/2.0 * Math::idx2pm(branchIdx))
 {
+    if (buildLeaf) maxLevel = std::max(level, maxLevel);
+    else subdivideNode();
+
     ++numNodes;
-
-    if (buildLeaf) {
-        //std::cout << "   Built leaf node at level " << level << " with " 
-        //    << branches.empty() << " branches\n";
-        maxLevel = std::max(level, maxLevel);
-        return;
-    }
-
-    subdivideNode();
-
-    //std::cout << "   Built stem node at level " << level << " with "
-    //    << branches.empty() << " branches\n";
 }
 
 void FMM::Node::subdivideNode() {
-    assert(isLeaf());
-
     // Assign every src to a branch based on src center relative to node center
     std::array<SrcVec, 8> branchSrcs;
     for (const auto& src : srcs) {
@@ -69,15 +58,6 @@ void FMM::Node::buildNeighbors() {
     }
 
     assert(nbors.size() <= numDir);
-}
-
-void FMM::Node::balanceNeighbors() {
-    for (const auto& nbor : nbors) {
-        if (nbor->level < level - 1) {
-            nbor->subdivideNode();
-            nbor->balanceNeighbors();
-        }
-    }
 }
 
 /* buildInteractionList()

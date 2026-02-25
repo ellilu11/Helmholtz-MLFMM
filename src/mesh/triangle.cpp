@@ -2,7 +2,7 @@
 
 int Mesh::Triangle::numQuads;
 std::vector<quadPair<vec3d>> Mesh::Triangle::quadCoeffs;
-std::vector<quadPair<double>> Mesh::Triangle::linQuads;
+// std::vector<quadPair<double>> Mesh::Triangle::linQuads;
 
 /* Triangle(iVerts)
  * Construct triangle from global indices of vertices
@@ -11,26 +11,17 @@ std::vector<quadPair<double>> Mesh::Triangle::linQuads;
 Mesh::Triangle::Triangle(const vec3i& iVerts, int iTri)
     : iVerts(iVerts), iTri(iTri)
 {
-    assert(iVerts.maxCoeff() < glVerts.size());
-
     const auto& Xs = getVerts();
     center = (Xs[0] + Xs[1] + Xs[2]) / 3.0;
 
     for (int i = 0; i < 3; ++i) Ds[i] = Xs[(i+1)%3] - Xs[i];
-    nhat = (Ds[0].cross(Ds[1])).normalized();
 
-    /* If nhat is pointing inward, reverse it
-    // Assume a closed, star-shaped mesh centered at and enclosing the origin
-    if (center.dot(nhat) < 0.0) {
-        nhat *= -1.0;
-        std::swap(this->iVerts[0], this->iVerts[2]); // Swap verts per RHR orientation
-    }
-    */
+    nhat = (Ds[0].cross(Ds[1])).normalized();
 
     area = (Ds[0].cross(-Ds[2])).norm() / 2.0;
 
     buildTriQuads();
-    buildSelfIntegrated();
+    // buildSelfIntegrated();
     //std::cout << "Built triangle #" << iTri << " with selfints: " 
     //    << selfInts[0] << ", " << selfInts[1] << ", " << selfInts[2] << ", " << selfInts[3] << '\n';
 }
@@ -51,6 +42,56 @@ int Mesh::Triangle::getNumCommonVerts(const Triangle& other) const {
 
 void Mesh::Triangle::buildSelfIntegrated() {
     const auto& [V0, V1, V2] = getVerts();
+    double a00 = V0.dot(V0), a01 = V0.dot(V1), a02 = V0.dot(V2);
+    double a11 = V1.dot(V1), a12 = V1.dot(V2), a22 = V2.dot(V2);
+    double l0 = (V1-V2).norm(), l1 = (V2-V0).norm(), l2 = (V0-V1).norm();
+
+    auto logN = [](double l0, double l1, double l2) {
+        double lsum = l0+l1, ldiff = l2-l0;
+        return std::log((lsum*lsum - l2*l2) / (l1*l1 - ldiff*ldiff));
+        };
+    double log0 = logN(l0, l1, l2), log1 = logN(l1, l2, l0), log2 = logN(l2, l0, l1);
+
+    // Integral of \lambda_i * \lambda_i' / r
+    auto f0 = [](double l0, double l1, double l2, double log0, double log1, double log2) {
+        double l0sq = l0*l0, l1sq = l1*l1, l2sq = l2*l2;
+        return log0 / (20.0*l0)
+            + log1 * (l0sq + 5.0*l1sq - l2sq) / (120.0*l1sq*l1)
+            + log2 * (l0sq - l1sq + 5.0*l2sq) / (120.0*l2sq*l2)
+            + (l2-l0) / (60.0*l1sq) + (l1-l0) / (60.0*l2sq);
+        };
+
+    // Integral of \lambda_i * \lambda_j' / r
+    auto f1 = [](double l0, double l1, double l2, double log0, double log1, double log2) {
+        double l0sq = l0*l0, l1sq = l1*l1, l2sq = l2*l2;
+        return log2 / (40.0*l2)
+            + log0 * (3.0*l0sq + l1sq - l2sq) / (80.0*l0sq*l0)
+            + log1 * (l0sq + 3.0*l1sq - l2sq) / (80.0*l1sq*l1)
+            + (l2-l1) / (40.0*l0sq) + (l2-l0) / (40.0*l1sq);
+        };
+
+    // Integral of \lambda_i / r or \lambda_i' / r
+    auto f2 = [](double l0, double l1, double l2, double log0, double log1, double log2) {
+        double l0sq = l0*l0, l1sq = l1*l1, l2sq = l2*l2;
+        return log0 / (8.0*l0)
+            + log1 * (l0sq + 5.0*l1sq - l2sq) / (48.0*l1sq*l1)
+            + log2 * (l0sq - l1sq + 5.0*l2sq) / (48.0*l2sq*l2)
+            + (l2-l0) / (24.0*l1sq) + (l1-l0) / (24.0*l2sq);
+        };
+
+    selfInts[0]
+        = f0(l0, l1, l2, log0, log1, log2) * (a00 - 2.0*a01 + a11)
+        + f0(l1, l2, l0, log1, log2, log0) * (a00 - 2.0*a02 + a22)
+        + f1(l0, l1, l2, log0, log1, log2) * (a00 - a02 - a01 + a12)
+        + f1(l0, l1, l2, log0, log1, log2) * (a00 - a01 - a02 + a12);
+    selfInts[1] = f2(l0, l1, l2, log0, log1, log2);
+    selfInts[2] = f2(l1, l2, l0, log1, log2, log0);
+    selfInts[3] = (log0/l0 + log1/l1 + log2/l2) / 3.0;
+}
+
+/*
+void Mesh::Triangle::buildSelfIntegrated() {
+    const auto& [V0, V1, V2] = getVerts();
 
     double a00 = V0.dot(V0), a01 = V0.dot(V1), a02 = V0.dot(V2);
     double a11 = V1.dot(V1), a12 = V1.dot(V2), a22 = V2.dot(V2);
@@ -65,18 +106,6 @@ void Mesh::Triangle::buildSelfIntegrated() {
 
     double log0 = logN(l0, l1, l2), log1 = logN(l1, l2, l0), log2 = logN(l2, l0, l1);
     double log3 = logN(l0, l2, l1), log4 = logN(l2, l1, l0), log5 = logN(l1, l0, l2);
-
-    // std::cout << log0-log3 << ", " << log1-log5 << ", " << log2-log4 << '\n';
-
-    //double log0 = std::log(std::fabs(((l0+l1)*(l0+l1) - l2*l2) / (l1*l1 - (l2-l0)*(l2-l0))));
-    //double log1 = std::log(std::fabs(((l1+l2)*(l1+l2) - l0*l0) / (l2*l2 - (l0-l1)*(l0-l1))));
-    //double log2 = std::log(std::fabs(((l2+l0)*(l2+l0) - l1*l1) / (l0*l0 - (l1-l2)*(l1-l2))));
-    //double log3 = std::log(std::fabs(((l0+l2)*(l0+l2) - l1*l1) / (l2*l2 - (l1-l0)*(l1-l0))));
-    //double log4 = std::log(std::fabs(((l2+l1)*(l2+l1) - l0*l0) / (l1*l1 - (l1-l0)*(l1-l0)))); ???
-    //double log5 = std::log(std::fabs(((l1+l0)*(l1+l0) - l2*l2) / (l0*l0 - (l2-l1)*(l2-l1))));
-
-    //std::cout << log0 << ", " << log1 << ", " << log2 << '\n';
-    //std::cout << log3 << ", " << log4 << ", " << log5 << '\n';
 
     // Integral of \lambda_i * \lambda_i' / r
     auto f0 = [](double l0, double l1, double l2, double log0, double log1, double log2) {
@@ -117,44 +146,7 @@ void Mesh::Triangle::buildSelfIntegrated() {
     selfInts[2] = f2(l0, l2, l1, log3, log4, log5);
 
     selfInts[3] = (log0/l0 + log1/l1 + log2/l2) / 3.0;
-}
-
-std::pair<cmplx,vec3cd>
-    Mesh::Triangle::getPlaneWaveIntegrated(const vec3d& kvec) const 
-{
-    using namespace Math;
-
-    const auto& Xs = getVerts();
-    const double alpha = kvec.dot(Ds[0]), beta = -kvec.dot(Ds[2]), gamma = alpha-beta;
-    const double alphasq = alpha*alpha, betasq = beta*beta;
-    const cmplx expI_alpha = exp(iu*alpha), expI_beta = exp(iu*beta);
-    const cmplx // TODO: Only compute if gamma != 0
-        f0_alpha = (approxZero(alpha) ? -iu : (1.0 - expI_alpha) / alpha),
-        f0_beta = (approxZero(beta) ? -iu : (1.0 - expI_beta) / beta);
-    const cmplx
-        f1_alpha = (approxZero(alpha) ? -0.5 : (1.0 - (1.0 - iu*alpha) * expI_alpha) / alphasq),
-        f1_beta = (approxZero(beta) ? -0.5 : (1.0 - (1.0 - iu*beta) * expI_beta) / betasq);
-
-    cmplx scaRad; vec3cd vecRad;
-    if (approxZero(gamma)) {
-        const cmplx
-            f2 = (approxZero(alpha) ? iu/6.0 :
-                (expI_alpha*(alphasq + 2.0*iu*alpha - 2.0) + 2.0) / (2.0*alpha*alphasq));
-        scaRad = -f1_alpha;
-        vecRad = -iu*f2 * (Ds[0] - Ds[2]);
-        // radVec = -f1_alpha * (Xs[0] - Xnc[iTri]) - iu*f2 * (Ds[0] - Ds[2]);
-    } else {
-        const cmplx
-            I0 = (f0_alpha - f0_beta) / gamma,
-            I1 = iu * (I0 + f1_alpha),
-            I2 = -iu * (I0 + f1_beta);
-        scaRad = I0;
-        vecRad = (I1*Ds[0] - I2*Ds[2]) / gamma;
-        // radVec = I0 * (Xs[0] - Xnc[iTri]) + (I1*Ds[0] - I2*Ds[2]) / gamma;
-    }
-
-    return std::make_pair(scaRad, vecRad);
-}
+}*/
 
 std::pair<double, vec3d>
 Mesh::Triangle::getNearIntegrated(const vec3d& obs, bool doNumeric) const
@@ -165,6 +157,7 @@ Mesh::Triangle::getNearIntegrated(const vec3d& obs, bool doNumeric) const
     vec3d vecRad = vec3d::Zero();
     const vec3d& R = proj(obs);
 
+    /*
     if (doNumeric) {
         for (const auto& [node, weight] : triQuads) {
             const double dr = (obs-node).norm();
@@ -173,7 +166,7 @@ Mesh::Triangle::getNearIntegrated(const vec3d& obs, bool doNumeric) const
         }
 
         return std::make_pair(scaRad, vecRad);
-    }
+    }*/
 
     const auto& Xs = getVerts();
     double d = std::fabs(nhat.dot(obs-Xs[0])), dsq = d*d;
@@ -208,6 +201,63 @@ Mesh::Triangle::getNearIntegrated(const vec3d& obs, bool doNumeric) const
 
     return std::make_pair(scaRad, vecRad);
 }
+
+std::pair<cmplx, vec3cd>
+Mesh::Triangle::getPlaneWaveIntegrated(const vec3d& kvec) const
+{
+    using namespace Math;
+
+    const auto& Xs = getVerts();
+    double alpha = kvec.dot(Ds[0]), beta = -kvec.dot(Ds[2]), gamma = alpha-beta;
+    double alphasq = alpha*alpha, betasq = beta*beta;
+    cmplx expI_alpha = exp(iu*alpha), expI_beta = exp(iu*beta);
+    cmplx // TODO: Only compute if gamma != 0
+        f0_alpha = (approxZero(alpha) ? -iu : (1.0 - expI_alpha) / alpha),
+        f0_beta = (approxZero(beta) ? -iu : (1.0 - expI_beta) / beta);
+    cmplx
+        f1_alpha = (approxZero(alpha) ? -0.5 : (1.0 - (1.0 - iu*alpha) * expI_alpha) / alphasq),
+        f1_beta = (approxZero(beta) ? -0.5 : (1.0 - (1.0 - iu*beta) * expI_beta) / betasq);
+
+    cmplx scaRad; vec3cd vecRad;
+    if (approxZero(gamma)) {
+        cmplx
+            f2 = (approxZero(alpha) ? iu/6.0 :
+                (expI_alpha*(alphasq + 2.0*iu*alpha - 2.0) + 2.0) / (2.0*alpha*alphasq));
+        scaRad = -f1_alpha;
+        vecRad = -iu*f2 * (Ds[0] - Ds[2]);
+        // radVec = -f1_alpha * (Xs[0] - Xnc[iTri]) - iu*f2 * (Ds[0] - Ds[2]);
+    } else {
+        cmplx
+            I0 = (f0_alpha - f0_beta) / gamma,
+            I1 = iu * (I0 + f1_alpha),
+            I2 = -iu * (I0 + f1_beta);
+        scaRad = I0;
+        vecRad = (I1*Ds[0] - I2*Ds[2]) / gamma;
+        // radVec = I0 * (Xs[0] - Xnc[iTri]) + (I1*Ds[0] - I2*Ds[2]) / gamma;
+    }
+
+    return std::make_pair(scaRad, vecRad);
+}
+
+/*
+cmplx Mesh::Triangle::getSurfaceCurrent() const {
+    auto triToRWG = triToRWGs[iTri];
+
+    cmplx J = 0.0;
+    for (int i = 0; i < 3; ++i) {
+        int iRWG = triToRWG.iRWGs[i];
+        int isMinus = triToRWG.isMinus[i];
+        auto rwg = glSrcs[iRWG];
+        const auto& Xnc = rwg->getVertsNC();
+
+        double rwgFunc =
+            Math::sign(isMinus) * rwg->leng / (2.0*area) * (center - Xnc[isMinus]);
+
+        J += states.currents[iRWG];
+    }
+    return J;
+}
+*/
 
 /*
 cmplx Mesh::Triangle::getDuffyIntegrated(
@@ -249,8 +299,9 @@ cmplx Mesh::Triangle::getDuffyIntegrated(
     return rad;
 }*/
 
+/*
 void Mesh::Triangle::buildRadMoments() {
-    /* TODO: Only loop over triangles in nearfield of each other
+    // TODO: Only loop over triangles in nearfield of each other
     for (size_t iObs = 0; iObs < glTris.size(); ++iObs) {
         for (size_t iSrc = 0; iSrc <= iObs; ++iSrc) {
             const auto& obsTri = glTris[iObs];
@@ -274,81 +325,7 @@ void Mesh::Triangle::buildRadMoments() {
             glRadMoments.emplace(key, moments);
         }
     }
-    */
-}
+}*/
 
-// Refine vertices: add centers and midpoints of coarse tris
-void Mesh::Triangle::refineVertices() {
-    int iVerts = nverts;
 
-    for (auto& tri : glTris) {
-        // Add center
-        tri.iCenter = iVerts++; // glVerts.size();
-        glVerts.push_back(tri.center);
-
-        // Add midpoints of edges
-        for (int i = 0; i < 3; ++i) {
-            const int idx0 = tri.iVerts[i], idx1 = tri.iVerts[(i+1)%3];
-            const vec3d mid = (glVerts[idx0] + glVerts[idx1]) / 2.0;
-            const auto& edge = makeUnordered(idx0, idx1);
-
-            // Check if midpoint already exists
-            if (edgeToMid.find(edge) != edgeToMid.end())
-                continue;
-
-            edgeToMid.emplace(edge, iVerts++); // glVerts.size();
-            glVerts.push_back(mid);
-        }
-    }
-
-    assert(iVerts == glVerts.size());
-}
-
-// Construct all 6 fine tris of all coarse tris and add to global list
-void Mesh::Triangle::refineTriangles() {
-    std::vector<Triangle> glSubtris;
-    glSubtris.reserve(6 * glTris.size());
-
-    int iSubtri = glTris.size();
-    for (const auto& tri : glTris) {
-        for (int i = 0; i < 3; ++i) {
-            const int idx0 = tri.iVerts[i], idx1 = tri.iVerts[(i+1)%3], idxCenter = tri.iCenter;
-            const int idxMid = edgeToMid[makeUnordered(idx0, idx1)];
-
-            for (int j = 0; j < 2; ++j) {
-                // Assign vertex on coarse mesh as first vertex of subtri
-                const auto& iVerts = (!j ?
-                    vec3i(idx0, idxMid, idxCenter) :
-                    vec3i(idx1, idxCenter, idxMid)
-                    );
-
-                glSubtris.emplace_back(iVerts, iSubtri);
-                assert(Math::vecEquals(tri.nhat, glSubtris[iSubtri-glTris.size()].nhat)); // Check orientation
-                ++iSubtri;
-            }
-        }
-    }
-
-    // Append list of subtris to global list of tris
-    glTris.insert(glTris.end(), glSubtris.begin(), glSubtris.end());
-}
-
-// TODO: Move into refineTriangles()
-// Build edge to subtri map
-void Mesh::Triangle::buildEdgeToTri() {
-    const auto glSubtris = glTris | std::views::drop(ntris);
-
-    for (const auto& tri : glSubtris) {
-
-        for (int i = 0; i < 3; ++i) {
-            const int idx0 = tri.iVerts[i], idx1 = tri.iVerts[(i+1)%3];
-            const auto& edge = makeUnordered(idx0, idx1);
-
-            if (fineEdgeToTri.find(edge) == fineEdgeToTri.end())
-                fineEdgeToTri.emplace(edge, vec2i(tri.iTri, -1));
-            else
-                fineEdgeToTri[edge][1] = tri.iTri;
-        }
-    }
-}
 

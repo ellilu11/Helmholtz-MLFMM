@@ -34,7 +34,7 @@ public:
 
     static void addAnterpCoeffs(const Coeffs&, Coeffs&, int, int);
 
-    void printFarFld(const std::string&);
+    void printScatteredField(const std::string&, int, bool = 0);
 
     static int getMaxLvl() { return maxLevel; }
 
@@ -87,7 +87,7 @@ private:
         nearNonNbors.push_back(node);
     }
 
-protected:
+private:
     inline static int numNodes = 0;
 
     std::vector<Coeffs> radPats;

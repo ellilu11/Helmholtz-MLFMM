@@ -55,7 +55,7 @@ struct FMM::Coeffs {
         return coeffs;
     }
 
-    friend std::ostream& operator<<(std::ostream& os, const Coeffs& coeffs) {
+    friend std::ostream& operator<<(std::ostream& os, const Coeffs& coeffs) noexcept {
         os << coeffs.theta;
         os << coeffs.phi;
         return os;  

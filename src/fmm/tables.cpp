@@ -7,18 +7,19 @@ std::array<vec3d, 316> FMM::Tables::dXs;
 
 std::vector<interpPair> FMM::Tables::getInterpTheta(int srcLvl, int tgtLvl)
 {
-    const int order = config.interpOrder;
+    int order = config.interpOrder;
 
-    const std::vector<double>& srcThetas = angles[srcLvl].thetas, tgtThetas = angles[tgtLvl].thetas;
-    const int mth = srcThetas.size(), nth = tgtThetas.size();
+    const std::vector<double>& 
+        srcThetas = angles[srcLvl].thetas, tgtThetas = angles[tgtLvl].thetas;
+    int mth = srcThetas.size(), nth = tgtThetas.size();
 
     std::vector<interpPair> interpPairs;
     interpPairs.reserve(nth);
 
     for (size_t jth = 0; jth < nth; ++jth) {
-        const double tgtTheta = tgtThetas[jth];
+        double tgtTheta = tgtThetas[jth];
 
-        const int nearIdx = Math::getNearGLNodeIdx(tgtTheta, mth, 0.0, PI);
+        int nearIdx = Math::getNearGLNodeIdx(tgtTheta, mth, 0.0, PI);
 
         // Assemble source thetas interpolating target theta
         std::vector<double> interpThetas(2*order);
@@ -48,18 +49,19 @@ std::vector<interpPair> FMM::Tables::getInterpTheta(int srcLvl, int tgtLvl)
 
 std::vector<interpPair> FMM::Tables::getInterpPhi(int srcLvl, int tgtLvl)
 {
-    const int order = config.interpOrder;
+    int order = config.interpOrder;
 
-    const std::vector<double>& srcPhis = angles[srcLvl].phis, tgtPhis = angles[tgtLvl].phis;
-    const int mph = srcPhis.size(), nph = tgtPhis.size();
+    const std::vector<double>& 
+        srcPhis = angles[srcLvl].phis, tgtPhis = angles[tgtLvl].phis;
+    int mph = srcPhis.size(), nph = tgtPhis.size();
 
     std::vector<interpPair> interpPairs;
     interpPairs.reserve(nph);
 
     for (size_t jph = 0; jph < nph; ++jph) {
-        const double tgtPhi = tgtPhis[jph];
+        double tgtPhi = tgtPhis[jph];
 
-        const int nearIdx = std::floor(mph * tgtPhi / (2.0*PI));
+        int nearIdx = std::floor(mph * tgtPhi / (2.0*PI));
 
         // Assemble source phis interpolating target phi
         std::vector<double> interpPhis(2*order);
@@ -77,30 +79,25 @@ std::vector<interpPair> FMM::Tables::getInterpPhi(int srcLvl, int tgtLvl)
 }
 
 void FMM::Tables::buildInterpTables() {
-    // M2M interpolation tables
     interpTheta = getInterpTheta(level+1, level);
     interpPhi = getInterpPhi(level+1, level);
-
-    // L2L interpolation tables
-    //invInterpTheta = getInterpTheta(level, level+1);
-    //invInterpPhi = getInterpPhi(level, level+1);
 }
 
 Map<vecXcd> FMM::Tables::getAlpha() {
     using namespace Math;
 
-    const int L = angles[level].L;
-    const int nth = angles[level].getNumAngles().first;
-    const int nps = std::floor(config.overInterp*(nth-1));
-    const double nodeLeng = config.rootLeng / pow(2.0, level);
+    int L = angles[level].L;
+    int nth = angles[level].getNumAngles().first;
+    int nps = std::floor(config.overInterp*(nth-1));
+    double nodeLeng = config.rootLeng / pow(2.0, level);
 
     Map<vecXcd> alpha;
     for (const auto& dist : dists) {
-        const double kr = k * dist * nodeLeng;
+        double kr = k * dist * nodeLeng;
 
         vecXcd transl_dist(nps);
         for (int ips = 0; ips < nps; ++ips) {
-            const double xi = cos(PI*ips/static_cast<double>(nps-1));
+            double xi = cos(PI*ips/static_cast<double>(nps-1));
             cmplx coeff = 0.0;
 
             for (int l = 0; l <= L; ++l)
@@ -119,12 +116,12 @@ Map<vecXcd> FMM::Tables::getAlpha() {
 };
 
 HashMap<interpPair> FMM::Tables::getInterpPsi() {
-    const int order = config.interpOrder;
+    int order = config.interpOrder;
 
     // Find all unique psi = acos(khat.dot(rhat))
     const auto& angles_lvl = angles[level];
     const auto [nth, nph] = angles_lvl.getNumAngles();
-    const int nDir = nth*nph;
+    int nDir = nth*nph;
 
     std::vector<double> psis(nDir*rhats.size());
 
@@ -140,12 +137,12 @@ HashMap<interpPair> FMM::Tables::getInterpPsi() {
     psis.erase(std::unique(psis.begin(), psis.end()), psis.end());
 
     // Compute Lagrange coefficients for each possible psi
-    const int nps = std::floor(config.overInterp*(nth-1));
+    int nps = std::floor(config.overInterp*(nth-1));
 
     HashMap<interpPair> interpPairs;
     for (auto psi : psis) {
         // Find idx of psi node nearest this psi
-        const int nearIdx = std::floor((nps-1) * psi / PI);
+        int nearIdx = std::floor((nps-1) * psi / PI);
 
         // Assemble psis interpolating this psi
         std::vector<double> psis(2*order);
@@ -166,20 +163,20 @@ HashMap<interpPair> FMM::Tables::getInterpPsi() {
 }
 
 void FMM::Tables::buildTranslationTable() {
-    const int order = config.interpOrder;
+    int order = config.interpOrder;
 
     const auto& alphas = getAlpha();
     const auto& interpPsis = getInterpPsi();
 
     const auto& angles_lvl = angles[level];
     const auto [nth, nph] = angles_lvl.getNumAngles();
-    const int nDir = nth*nph;
+    int nDir = nth*nph;
 
-    const int nps = std::floor(config.overInterp*(nth-1));
+    int nps = std::floor(config.overInterp*(nth-1));
 
     transl.reserve(dXs.size());
     for (const auto& dX : dXs) {
-        const double r = dX.norm();
+        double r = dX.norm();
         const auto& rhat = dX / r;
 
         const auto& alpha_dX = alphas.at(r);
@@ -192,7 +189,7 @@ void FMM::Tables::buildTranslationTable() {
 
             cmplx translCoeff = 0.0;
             for (int ips = nearIdx+1-order, k = 0; k < 2*order; ++ips, ++k) {
-                const int ips_flipped = Math::flipIdxToRange(ips, nps);
+                int ips_flipped = Math::flipIdxToRange(ips, nps);
 
                 translCoeff += alpha_dX[ips_flipped] * interpPsi[k];
             }

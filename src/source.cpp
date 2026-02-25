@@ -43,8 +43,8 @@ SrcVec importSources(std::shared_ptr<Exc::PlaneWave> Einc)
     // RWG sources
     Mesh::Triangle::buildQuadCoeffs(config.quadPrec);
 
-    // const string configPath = "config/rwg/test/n"+to_string(config.nsrcs)+"adj/";
-    const string configPath = "config/rwg/sph"+to_string(config.nsrcs)+"/";
+    const string configPath = "config/rwg/test/n"+to_string(config.nsrcs)+"adj/";
+    // const string configPath = "config/rwg/sph"+to_string(config.nsrcs)+"/";
     auto srcs = Mesh::importMesh(
         configPath+"vertices.txt",
         configPath+"faces.txt",

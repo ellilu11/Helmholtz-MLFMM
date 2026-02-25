@@ -32,6 +32,7 @@ void Mesh::importTriangles(const std::filesystem::path& path) {
     }
 
     ntris = glTris.size(); // record number of coarse triangles
+    triToRWGs.resize(ntris);
 }
 
 SrcVec Mesh::importRWGs(

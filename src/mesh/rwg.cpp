@@ -16,6 +16,18 @@ Mesh::RWG::RWG(
         for (const auto& iVert : tris[i].iVerts)
             if (iVert != iVertsC[0] && iVert != iVertsC[1])
                 iVertsNC[i] = iVert;
+
+    /* Update triToRWG
+    for (int i = 0; i < 2; ++i) {
+        int iTri = iTris[i];
+        auto& triToRWG = triToRWGs[iTri];
+        triToRWG.iRWGs.push_back(iSrc);
+
+        assert(iTri == idx4[2] || iTri == idx4[3]);
+        triToRWG.isMinus.push_back(iTri == idx4[3]);
+
+        assert(triToRWG.iRWGs.size() <= 3 && triToRWG.isMinus.size() <= 3);
+    }*/
 }
 
 vec3cd Mesh::RWG::getPlaneWaveIntegrated(const vec3d& kvec, bool doNumeric) const {
@@ -25,6 +37,7 @@ vec3cd Mesh::RWG::getPlaneWaveIntegrated(const vec3d& kvec, bool doNumeric) cons
     vec3cd rad = vec3cd::Zero();
     int iTri = 0;
 
+    /*
     if (doNumeric) {
         for (const auto& tri : getTris()) {
             for (const auto& [node, weight] : tri.triQuads)
@@ -35,7 +48,7 @@ vec3cd Mesh::RWG::getPlaneWaveIntegrated(const vec3d& kvec, bool doNumeric) cons
         }
 
         return leng * rad;
-    }
+    }*/
 
     for (const auto& tri : getTris()) {
         const vec3d& X0 = tri.getVerts()[0];
@@ -75,15 +88,16 @@ cmplx Mesh::RWG::getIntegratedRad(const std::shared_ptr<Source> src) const {
                     const double r = (obs-src).norm();
 
                     cmplx G;
-                    if (nCommon < 2) G = exp(iu*k*r) / r; 
-                    else G = (Math::approxZero(r) ? iu*k : (exp(iu*k*r)-1.0) / r);
+                    if (nCommon >= 2) G = (Math::approxZero(r) ? iu*k : (exp(iu*k*r)-1.0) / r); 
+                    else G = exp(iu*k*r) / r;
 
                     pairRad += ((obs-obsNC).dot(src-srcNC) - 4.0 / (k*k)) * G
                         * obsWeight * srcWeight;
                 }
+                //
 
                 // For edge adjacent triangles, add contribution from 1/R term (analytically)
-                if (nCommon == 2) {
+                if (nCommon >= 2) {
                     const auto& [scaRad, vecRad] = srcTri.getNearIntegrated(obs);
                     pairRad +=
                         ((obs-obsNC).dot(vecRad+(obsProj-srcNCproj)*scaRad) - 4.0/(k*k)*scaRad)
@@ -91,16 +105,18 @@ cmplx Mesh::RWG::getIntegratedRad(const std::shared_ptr<Source> src) const {
                 }
             }
 
-            // For common triangles, add contribution from 1/R term (analytically)
+            /* For common triangles, add contribution from 1/R term (analytically)
             if (nCommon == 3) {
                 const auto [V0, V1, V2] = obsTri.getVerts();
                 double a00 = V0.dot(V0), a01 = V0.dot(V1), a02 = V0.dot(V2); // cache?
+                const auto& sumNC = srcNC + obsNC;
 
                 pairRad += obsTri.selfInts[0]
-                    + obsTri.selfInts[1] * (-2.0*a00 + 2.0*a01 + (V0-V1).dot(srcNC+obsNC))
-                    + obsTri.selfInts[2] * (-2.0*a00 + 2.0*a02 + (V0-V2).dot(srcNC+obsNC))
-                    + obsTri.selfInts[3] * (a00 - V0.dot(srcNC+obsNC) + srcNC.dot(obsNC) - 4.0/(k*k));
+                    + obsTri.selfInts[1] * (-2.0*a00 + 2.0*a01 + (V0-V1).dot(sumNC))
+                    + obsTri.selfInts[2] * (-2.0*a00 + 2.0*a02 + (V0-V2).dot(sumNC))
+                    + obsTri.selfInts[3] * (a00 - V0.dot(sumNC) + srcNC.dot(obsNC) - 4.0/(k*k));
             }
+            */
             
             // Using precomputed moments
             //const auto [mm0, mm1, mm2, mm3] =

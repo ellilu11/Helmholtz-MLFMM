@@ -30,5 +30,6 @@
 #include "mesh/submesh/bc.cpp"
 #include "mesh/submesh/submesh.cpp"
 #include "mesh/submesh/subrwg.cpp"
+#include "mesh/submesh/subtri.cpp"
 
 // TODO: Reference additional headers your program requires here.
