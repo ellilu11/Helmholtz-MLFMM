@@ -1,33 +1,32 @@
 #include "node.h"
 
 /* buildRadPats()
- * Build radiation patterns due to sources in all leaves
+ * Build radiation patterns due to sources in this leaf
  */
 void FMM::Node::buildRadPats() {
-    for (const auto& leaf : leaves) {
-        const auto& angles_lvl = angles[leaf->level];
-        size_t nDir = angles_lvl.getNumDirs();
+    assert(isLeaf());
+    const auto& angles_lvl = angles[level];
+    size_t nDir = angles_lvl.getNumDirs();
 
-        leaf->radPats.resize(leaf->srcs.size());
-        size_t iSrc = 0;
-        for (const auto& src : leaf->srcs) {
-            Coeffs radPat(nDir);
+    radPats.resize(srcs.size());
+    size_t iSrc = 0;
+    for (const auto& src : srcs) {
+        Coeffs radPat(nDir);
 
-            for (int iDir = 0; iDir < nDir; ++iDir) {
-                const auto& kvec = angles_lvl.khat[iDir] * k;
-                const auto& toThPh = angles_lvl.toThPh[iDir];
+        for (int iDir = 0; iDir < nDir; ++iDir) {
+            const auto& kvec = angles_lvl.khat[iDir] * k;
+            const auto& toThPh = angles_lvl.toThPh[iDir];
 
-                radPat.setCoeffAlongDir(
-                    toThPh * src->getRadAlongDir(leaf->center, kvec), iDir);
-            }
-
-            leaf->radPats[iSrc++] = std::move(radPat);
+            radPat.setCoeffAlongDir(
+                toThPh * src->getRadAlongDir(center, kvec), iDir);
         }
+
+        radPats[iSrc++] = std::move(radPat);
     }
 }
 
 /* buildMpoleCoeffs()
- * (S2M) Build multipole coefficients from sources in this node
+ * (S2M) Build multipole coefficients from sources in this leaf
  */
 FMM::Coeffs FMM::Node::buildMpoleCoeffs() {
     auto start = Clock::now();
@@ -199,50 +198,5 @@ void FMM::Node::evalFarSols() {
             radPatPhi.conjugate() * localPhi).sum();
 
         states.rvec[obs->getIdx()] += Phys::C * k * intRad;
-    }
-}
-
-// TODO: Move into Farfield class
-void FMM::Node::evaluateSols() {
-    auto start = Clock::now();
-
-    for (const auto& leaf : leaves)
-        leaf->evalFarSols();
-
-    t.L2T += Clock::now() - start;
-}
-
-void FMM::Node::printScatteredField(const std::string& fname, int nth, bool useMie) {
-    namespace fs = std::filesystem;
-    fs::path dir = "out/ff";
-    std::error_code ec;
-
-    std::cout << " Computing scattered farfield...\n";
-
-    if (fs::create_directory(dir, ec))
-        std::cout << " Created directory " << dir.generic_string() << "/\n";
-    else if (ec)
-        std::cerr << " Error creating directory " << ec.message() << "\n";
-
-    std::ofstream farfile(dir/fname);
-    farfile << std::setprecision(15) << std::scientific;
-
-    // Also print out angles (coordinates of farsols)
-    std::ofstream thfile(dir/"thetas.txt"); // phfile(dir/"phis.txt");
-    thfile << std::setprecision(15) << std::scientific;
-
-    double phi = 0.0; // pick phi = 0
-    for (int ith = 0; ith < nth; ++ith) {
-        double theta = (ith+0.5)*PI/static_cast<double>(nth);
-        const auto& rhat = Math::fromSph(vec3d(1.0, theta, phi));
-
-        vec3cd dirFar = vec3cd::Zero();
-        for (const auto& src : srcs)
-            dirFar += states.currents[src->getIdx()] * src->getFarAlongDir(k*rhat);
-
-        const vec2cd& far = Phys::C * k * Math::toThPh(theta, phi) * dirFar;
-
-        farfile << norm(far[0]) << ' ' << norm(far[1]) << '\n'; // squared magnitude of theta and phi components
-        thfile << theta << '\n';
     }
 }

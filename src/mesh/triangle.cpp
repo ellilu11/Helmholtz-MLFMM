@@ -22,8 +22,8 @@ Mesh::Triangle::Triangle(const vec3i& iVerts, int iTri)
 
     buildTriQuads();
     // buildSelfIntegrated();
-    //std::cout << "Built triangle #" << iTri << " with selfints: " 
-    //    << selfInts[0] << ", " << selfInts[1] << ", " << selfInts[2] << ", " << selfInts[3] << '\n';
+    //std::cout << "Built triangle #" << iTri << " with edge lengths " 
+    //    << Ds[0].norm() << ", " << Ds[1].norm() << ", " << Ds[2].norm() << '\n';
 }
 
 // Return global indices of vertices shared by this and other triangle

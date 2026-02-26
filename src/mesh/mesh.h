@@ -53,7 +53,7 @@ namespace Mesh {
 
     void refineMesh(const SrcVec&);
 
-    // void printFarField(const std::string&, int, bool = 0);
+    void printScattered(const SrcVec&, const std::string&, int);
 
     // void evaluateJ();
 

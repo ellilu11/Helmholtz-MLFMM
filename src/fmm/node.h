@@ -20,7 +20,7 @@ public:
 
     void resizeCoeffs();
 
-    static void buildRadPats();
+    void buildRadPats();
 
     Coeffs buildMpoleCoeffs();
 
@@ -28,13 +28,7 @@ public:
 
     void buildLocalCoeffs();
 
-    static void evaluateSols();
-
-    static void addInterpCoeffs(const Coeffs&, Coeffs&, int, int);
-
-    static void addAnterpCoeffs(const Coeffs&, Coeffs&, int, int);
-
-    void printScatteredField(const std::string&, int, bool = 0);
+    void evalFarSols();
 
     static int getMaxLvl() { return maxLevel; }
 
@@ -71,8 +65,6 @@ private:
 
     void buildNeighbors();
 
-    void balanceNeighbors();
-
     void buildInteractionList();
     
     void pushSelfToNearNonNbors();
@@ -80,8 +72,6 @@ private:
     Coeffs getShiftedLocalCoeffs(int) const;
 
     void translateCoeffs();
-
-    void evalFarSols();
 
     void pushToNearNonNbors(const std::shared_ptr<Node>& node) {
         nearNonNbors.push_back(node);

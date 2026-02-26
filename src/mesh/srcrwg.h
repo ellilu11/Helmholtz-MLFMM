@@ -11,6 +11,8 @@ public:
            size_t,
            const Eigen::Vector4i&);
 
+    static void refineRWGs();
+
     void findSubRWGs();
 
     void propagateRvals();

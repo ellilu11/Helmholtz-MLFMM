@@ -90,7 +90,7 @@ struct Config {
         std::cout << std::fixed << std::setprecision(3);
         std::cout << "   Mode:            " << getModeStr(mode) << '\n';
         std::cout << "   # Sources:       " << nsrcs << '\n';
-        std::cout << "   Max node srcs:   " << maxNodeSrcs << '\n';
+        std::cout << "   Max in node:     " << maxNodeSrcs << '\n';
         std::cout << "   Digit precision: " << digits << '\n';
         std::cout << "   Interp order:    " << interpOrder << '\n';
         std::cout << "   Overinterp:      " << overInterp << '\n';

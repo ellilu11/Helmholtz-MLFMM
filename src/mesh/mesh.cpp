@@ -71,15 +71,48 @@ SrcVec Mesh::importMesh(
     return importRWGs(rpath, std::move(Einc));
 }
 
-/*
-void Mesh::printRWGs(const SrcVec& rwgs, const std::string& fname) {
+void Mesh::printScattered(const SrcVec& srcs, const std::string& fname, int nth) {
     namespace fs = std::filesystem;
-    fs::path dir = "out/sol";
+    fs::path dir = "out/ff/pz_kx_r5.0";
     std::error_code ec;
+
+    std::cout << " Computing scattered farfield...\n";
+
     if (fs::create_directory(dir, ec))
         std::cout << " Created directory " << dir.generic_string() << "/\n";
     else if (ec)
         std::cerr << " Error creating directory " << ec.message() << "\n";
+
+    std::ofstream farfile(dir/fname);
+    farfile << std::setprecision(15) << std::scientific;
+
+    // Also print out angles (coordinates of farsols)
+    std::ofstream thfile(dir/"thetas.txt"); // phfile(dir/"phis.txt");
+    thfile << std::setprecision(15) << std::scientific;
+
+    double phi = 0.0; // pick phi = 0
+    double rcsSum = 0.0;
+    for (int ith = 0; ith < nth; ++ith) {
+        double theta = (ith+0.5)*PI/static_cast<double>(nth);
+        const vec3d& rhat = Math::fromSph(vec3d(1.0, theta, phi));
+
+        vec3cd dirFar = vec3cd::Zero();
+        for (const auto& src : srcs)
+            dirFar += states.currents[src->getIdx()] * src->getFarAlongDir(k*rhat);
+
+        const vec2cd& far = Phys::C * k * Math::toThPh(theta, phi) * dirFar;
+
+        farfile << norm(far[0]) << ' ' << norm(far[1]) << '\n'; // squared magnitude of theta and phi components
+        thfile << theta << '\n';
+
+        rcsSum += norm(far[0]) + norm(far[1]);
+    }
+
+    std::cout << " Average RCS: " << rcsSum/nth << "\n";
+}
+
+/*
+void Mesh::printRWGs(const SrcVec& rwgs, const std::string& fname) {
     std::ofstream rwgfile(dir/fname);
 
     for (const auto& rwg : rwgs) {

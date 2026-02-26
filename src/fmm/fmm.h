@@ -46,6 +46,14 @@ namespace FMM {
     // Functions
     void buildTables();
 
+    void buildRadPats();
+
+    void evaluateSols();
+
+    void addInterpCoeffs(const Coeffs&, Coeffs&, int, int);
+
+    void addAnterpCoeffs(const Coeffs&, Coeffs&, int, int);
+
     void resetLeaves() { 
         leaves.clear(); 
         nonNearPairs.clear();

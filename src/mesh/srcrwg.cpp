@@ -13,6 +13,30 @@ Mesh::SrcRWG::SrcRWG(
     //    << iVertsNC[0] << ' ' << iVertsNC[1] << "\n";
 };
 
+void Mesh::SrcRWG::refineRWGs() {
+    triToSubs.resize(glTris.size());
+
+    int iSub = 0;
+    for (const auto& [edge, iTris] : fineEdgeToTri) {
+        const vec4i& idx4 =
+        { edge.first, edge.second, iTris[0], iTris[1] };
+
+        if (iTris[1] < 0) continue; // Ignore edges not shared by two tris
+        //std::cout << "Building SubRWG for edge ("
+        //    << edge.first << ',' << edge.second << ") with tris # "
+        //    << iTri[0] << ' ' << iTri[1] << '\n';
+
+        glSubrwgs.emplace_back(iSub, idx4);
+        fineEdgeToSub.emplace(edge, iSub);
+        ++iSub;
+    }
+
+    //for (const auto& [edge, iSub] : fineEdgeToSub) {
+    //    std::cout << "Edge (" << edge.first << ',' << edge.second
+    //        << ") maps to subRWG # " << iSub << '\n';
+    //}
+}
+
 void Mesh::SrcRWG::findSubRWGs() {
     auto getMidIdx = [&](int i0, int i1) {
         return edgeToMid.at(makeUnordered(i0, i1));

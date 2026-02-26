@@ -5,7 +5,7 @@ void Mesh::refineMesh(const SrcVec& rwgs) {
     Triangle::refineTriangles();
     Triangle::buildEdgeToTri();
 
-    RWG::refineRWGs();
+    SrcRWG::refineRWGs();
 
     for (const auto& rwg : rwgs)
         dynamic_pointer_cast<SrcRWG>(rwg)->findSubRWGs();

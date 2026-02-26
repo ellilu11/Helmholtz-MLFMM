@@ -94,7 +94,6 @@ cmplx Mesh::RWG::getIntegratedRad(const std::shared_ptr<Source> src) const {
                     pairRad += ((obs-obsNC).dot(src-srcNC) - 4.0 / (k*k)) * G
                         * obsWeight * srcWeight;
                 }
-                //
 
                 // For edge adjacent triangles, add contribution from 1/R term (analytically)
                 if (nCommon >= 2) {
@@ -133,28 +132,4 @@ cmplx Mesh::RWG::getIntegratedRad(const std::shared_ptr<Source> src) const {
 
     assert(!std::isnan(intRad.real()) && !std::isnan(intRad.imag()));
     return leng * srcRWG->leng * intRad;
-}
-
-void Mesh::RWG::refineRWGs() {
-    triToSubs.resize(glTris.size());
-
-    int iSub = 0;
-    for (const auto& [edge, iTris] : fineEdgeToTri) {
-        const vec4i& idx4 =
-        { edge.first, edge.second, iTris[0], iTris[1] };
-
-        if (iTris[1] < 0) continue; // Ignore edges not shared by two tris
-        //std::cout << "Building SubRWG for edge ("
-        //    << edge.first << ',' << edge.second << ") with tris # "
-        //    << iTri[0] << ' ' << iTri[1] << '\n';
-
-        glSubrwgs.emplace_back(iSub, idx4);
-        fineEdgeToSub.emplace(edge, iSub);
-        ++iSub;
-    }
-
-    //for (const auto& [edge, iSub] : fineEdgeToSub) {
-    //    std::cout << "Edge (" << edge.first << ',' << edge.second
-    //        << ") maps to subRWG # " << iSub << '\n';
-    //}
 }
