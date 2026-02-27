@@ -119,8 +119,9 @@ void FMM::Node::buildLists() {
 }
 
 void FMM::Node::resizeCoeffs() {
-    const auto [nth, nph] = angles[level].getNumAngles();
+    if (isRoot() && isLeaf()) return;
 
+    const auto [nth, nph] = angles[level].getNumAngles();
     coeffs.resize(nth*nph);
     localCoeffs.resize(nth*nph);
 

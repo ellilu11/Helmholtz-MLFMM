@@ -27,8 +27,8 @@ int main() {
     std::cout << " Building FMM tree...\n";
 
     auto start0 = Clock::now();
-    auto root = std::make_shared<Node>(srcs, 0, nullptr, 
-        nsrcs <= config.maxNodeSrcs);
+    bool isRootLeaf = nsrcs <= config.maxNodeSrcs;
+    auto root = std::make_shared<Node>(srcs, 0, nullptr, isRootLeaf);
 
     root->buildLists();
 
@@ -48,16 +48,16 @@ int main() {
     std::cout << " Building FMM operators...\n";
 
     start = Clock::now();
-    buildTables();
-    root->resizeCoeffs(); // TODO: Hide this call
+    if (!isRootLeaf) buildTables();
     duration_ms = Clock::now() - start;
     std::cout << "   Elapsed time: " << duration_ms.count() << " ms\n\n";
 
-    // ==================== Build radpats ===================== //
-    std::cout << " Building radiation patterns...\n";
+    // ==================== Build expansions ==================== //
+    std::cout << " Building plane wave expansions...\n";
 
     start = Clock::now();
-    buildRadPats();
+    root->resizeCoeffs(); // TODO: Hide this call
+    if(!isRootLeaf) buildRadPats();
     duration_ms = Clock::now() - start;
     std::cout << "   Elapsed time: " << duration_ms.count() << " ms\n\n";
 

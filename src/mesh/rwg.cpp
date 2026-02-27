@@ -30,6 +30,9 @@ Mesh::RWG::RWG(
     }*/
 }
 
+/* getPlaneWaveIntegrated(kvec, doNumeric)
+ * Return integral of exp(ik dot r'} * f(r') dr' at this RWG
+ */
 vec3cd Mesh::RWG::getPlaneWaveIntegrated(const vec3d& kvec, bool doNumeric) const {
     using namespace Math;
 
@@ -37,7 +40,6 @@ vec3cd Mesh::RWG::getPlaneWaveIntegrated(const vec3d& kvec, bool doNumeric) cons
     vec3cd rad = vec3cd::Zero();
     int iTri = 0;
 
-    /*
     if (doNumeric) {
         for (const auto& tri : getTris()) {
             for (const auto& [node, weight] : tri.triQuads)
@@ -48,7 +50,7 @@ vec3cd Mesh::RWG::getPlaneWaveIntegrated(const vec3d& kvec, bool doNumeric) cons
         }
 
         return leng * rad;
-    }*/
+    }
 
     for (const auto& tri : getTris()) {
         const vec3d& X0 = tri.getVerts()[0];
@@ -75,20 +77,21 @@ cmplx Mesh::RWG::getIntegratedRad(const std::shared_ptr<Source> src) const {
 
         int iSrcTri = 0;
         for (const auto& srcTri : srcRWG->getTris() ) {
-            cmplx pairRad = 0.0;
-            const auto& srcNC = srcRWG->getVertsNC()[iSrcTri];
-            const auto& srcNCproj = srcTri.proj(srcNC);
+            const auto 
+                &srcNC = srcRWG->getVertsNC()[iSrcTri],
+                &srcNCproj = srcTri.proj(srcNC);
             int nCommon = obsTri.getNumCommonVerts(srcTri);
 
+            cmplx pairRad = 0.0;
             for (const auto& [obs, obsWeight] : obsTri.triQuads) {
                 const auto& obsProj = srcTri.proj(obs);
 
                 // Add contribution from e^{ikR)/R or (e^(ikR)-1)/R term (numerically)
                 for (const auto& [src, srcWeight] : srcTri.triQuads) {
-                    const double r = (obs-src).norm();
+                    double r = (obs-src).norm();
 
                     cmplx G;
-                    if (nCommon >= 2) G = (Math::approxZero(r) ? iu*k : (exp(iu*k*r)-1.0) / r); 
+                    if (nCommon >= 2) G = (Math::fzero(r) ? iu*k : (exp(iu*k*r)-1.0) / r); 
                     else G = exp(iu*k*r) / r;
 
                     pairRad += ((obs-obsNC).dot(src-srcNC) - 4.0 / (k*k)) * G

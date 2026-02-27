@@ -29,7 +29,7 @@ Mesh::BC::BC(SrcRWG* const rwg) : base(rwg) {
                 return rwg0.oriented < rwg1.oriented;
             }
         );
-        assert(approxZero(subs[0].oriented)); // first RWG should be along common edge
+        assert(fzero(subs[0].oriented)); // first RWG should be along common edge
 
         // Recollect indices of sorted subRWGs at this vertex
         std::transform(subs.begin(), subs.end(), iSubs.begin(),

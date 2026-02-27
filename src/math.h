@@ -36,15 +36,15 @@ namespace Math {
         return n == 0 ? 1 : n * factorial(n-1);
     }
 
-    inline bool approxZero(double x) noexcept {
+    inline bool fzero(double x) noexcept {
         return fabs(x) < FEPS;
     }
 
-    inline bool approxEquals(double x, double y) noexcept {
+    inline bool fequals(double x, double y) noexcept {
         return fabs(x-y) < FEPS;
     }
 
-    inline bool approxLess(double x, double y) noexcept {
+    inline bool fless(double x, double y) noexcept {
         if (fabs(x-y) < FEPS) return false;
         return x < y;
     }
@@ -56,11 +56,11 @@ namespace Math {
     };
 
     inline bool vecLessThan(const vec3d& X, const vec3d& Y) noexcept {
-        if (approxLess(X[0], Y[0])) return true;
-        if (approxLess(Y[0], X[0])) return false;
+        if (fless(X[0], Y[0])) return true;
+        if (fless(Y[0], X[0])) return false;
 
-        if (approxLess(X[1], Y[1])) return true;
-        if (approxLess(Y[1], X[1])) return false;
+        if (fless(X[1], Y[1])) return true;
+        if (fless(Y[1], X[1])) return false;
 
         return X[2] < Y[2];
     };

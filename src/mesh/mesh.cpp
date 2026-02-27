@@ -14,6 +14,8 @@ void Mesh::importVertices(const std::filesystem::path& path) {
         else throw std::runtime_error("Unable to parse line");
     }
 
+    // std::cout << " Sphere radius: " << glVerts[0].norm() << '\n';
+
     nverts = glVerts.size(); // record number of coarse vertices
 }
 
@@ -73,7 +75,7 @@ SrcVec Mesh::importMesh(
 
 void Mesh::printScattered(const SrcVec& srcs, const std::string& fname, int nth) {
     namespace fs = std::filesystem;
-    fs::path dir = "out/ff/pz_kx_r5.0";
+    fs::path dir = "out/ff/px_kz_r5.0";
     std::error_code ec;
 
     std::cout << " Computing scattered farfield...\n";
@@ -102,23 +104,12 @@ void Mesh::printScattered(const SrcVec& srcs, const std::string& fname, int nth)
 
         const vec2cd& far = Phys::C * k * Math::toThPh(theta, phi) * dirFar;
 
-        farfile << norm(far[0]) << ' ' << norm(far[1]) << '\n'; // squared magnitude of theta and phi components
-        thfile << theta << '\n';
+        double rcs = 4.0*PI/(k*k) * far.squaredNorm();
+        rcsSum += rcs;
+        farfile << rcs << '\n'; // squared magnitude of theta and phi components
 
-        rcsSum += norm(far[0]) + norm(far[1]);
+        thfile << theta << '\n';
     }
 
     std::cout << " Average RCS: " << rcsSum/nth << "\n";
 }
-
-/*
-void Mesh::printRWGs(const SrcVec& rwgs, const std::string& fname) {
-    std::ofstream rwgfile(dir/fname);
-
-    for (const auto& rwg : rwgs) {
-        const auto& vertsC = dynamic_pointer_cast<RWG>(rwg)->getVertsC();
-        const vec3d center = (vertsC[0] + vertsC[1]) / 2.0;
-
-        rwgfile << center << '\n';
-    }
-}*/

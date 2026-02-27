@@ -31,11 +31,6 @@ public:
             * pol.dot(Einc->pol);
     }
 
-    //void buildCurrent() override {
-    //    current = iu * Phys::c0 * Einc->wavenum * pmag; // |J| = i \omega |P|
-    //    // std::cout << current << '\n';
-    //}
-
     vec3d getCenter() const override { return pos; }
 
     /* getRadAlongDir(X,kvec)

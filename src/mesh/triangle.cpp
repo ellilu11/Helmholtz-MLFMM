@@ -89,65 +89,6 @@ void Mesh::Triangle::buildSelfIntegrated() {
     selfInts[3] = (log0/l0 + log1/l1 + log2/l2) / 3.0;
 }
 
-/*
-void Mesh::Triangle::buildSelfIntegrated() {
-    const auto& [V0, V1, V2] = getVerts();
-
-    double a00 = V0.dot(V0), a01 = V0.dot(V1), a02 = V0.dot(V2);
-    double a11 = V1.dot(V1), a12 = V1.dot(V2), a22 = V2.dot(V2);
-
-    double l0 = (V1-V2).norm(), l1 = (V2-V0).norm(), l2 = (V0-V1).norm();
-    // std::cout << l0 << ", " << l1 << ", " << l2 << '\n';
-
-    auto logN = [](double l0, double l1, double l2) {
-        double lsum = l0+l1, ldiff = l2-l0;
-        return std::log((lsum*lsum - l2*l2) / (l1*l1 - ldiff*ldiff));
-        };
-
-    double log0 = logN(l0, l1, l2), log1 = logN(l1, l2, l0), log2 = logN(l2, l0, l1);
-    double log3 = logN(l0, l2, l1), log4 = logN(l2, l1, l0), log5 = logN(l1, l0, l2);
-
-    // Integral of \lambda_i * \lambda_i' / r
-    auto f0 = [](double l0, double l1, double l2, double log0, double log1, double log2) {
-        double l0sq = l0*l0, l1sq = l1*l1, l2sq = l2*l2;
-        return log0 / (20.0*l0)
-            + log1 * (l0sq + 5.0*l1sq - l2sq) / (120.0*l1sq*l1)
-            + log2 * (l0sq - l1sq + 5.0*l2sq) / (120.0*l2sq*l2)
-            + (l2-l0) / (60.0*l1sq) + (l1-l0) / (60.0*l2sq);
-        };
-
-    // Integral of \lambda_i * \lambda_j' / r
-    auto f1 = [](double l0, double l1, double l2, double log0, double log1, double log2) {
-        double l0sq = l0*l0, l1sq = l1*l1, l2sq = l2*l2;
-        return log2 / (40.0*l2)
-            + log0 * (3.0*l0sq + l1sq - l2sq) / (80.0*l0sq*l0)
-            + log1 * (l0sq + 3.0*l1sq - l2sq) / (80.0*l1sq*l1)
-            + (l2-l1) / (40.0*l0sq) + (l2-l0) / (40.0*l1sq);
-        };
-
-    // Integral of \lambda_i / r or \lambda_i' / r
-    auto f2 = [](double l0, double l1, double l2, double log0, double log1, double log2) {
-        double l0sq = l0*l0, l1sq = l1*l1, l2sq = l2*l2;
-        return log0 / (8.0*l0)
-            + log1 * (l0sq + 5.0*l1sq - l2sq) / (48.0*l1sq*l1)
-            + log2 * (l0sq - l1sq + 5.0*l2sq) / (48.0*l2sq*l2)
-            + (l2-l0) / (24.0*l1sq) + (l1-l0) / (24.0*l2sq);
-        };
-
-    selfInts[0]
-        = f0(l0, l1, l2, log0, log1, log2) * (a00 - 2.0*a01 + a11)
-        + f0(l0, l2, l1, log3, log4, log5) * (a00 - 2.0*a02 + a22)
-        + f1(l0, l1, l2, log0, log1, log2) * (a00 - a02 - a01 + a12)
-        + f1(l0, l1, l2, log0, log1, log2) * (a00 - a01 - a02 + a12);
-    // std::cout << f0(l0, l1, l2, log0, log1, log2) << ' ' << f0(l0, l2, l1, log3, log4, log5) << '\n';
-
-    selfInts[1] = f2(l0, l1, l2, log0, log1, log2);
-
-    selfInts[2] = f2(l0, l2, l1, log3, log4, log5);
-
-    selfInts[3] = (log0/l0 + log1/l1 + log2/l2) / 3.0;
-}*/
-
 std::pair<double, vec3d>
 Mesh::Triangle::getNearIntegrated(const vec3d& obs, bool doNumeric) const
 {
@@ -157,7 +98,6 @@ Mesh::Triangle::getNearIntegrated(const vec3d& obs, bool doNumeric) const
     vec3d vecRad = vec3d::Zero();
     const vec3d& R = proj(obs);
 
-    /*
     if (doNumeric) {
         for (const auto& [node, weight] : triQuads) {
             const double dr = (obs-node).norm();
@@ -166,7 +106,7 @@ Mesh::Triangle::getNearIntegrated(const vec3d& obs, bool doNumeric) const
         }
 
         return std::make_pair(scaRad, vecRad);
-    }*/
+    }
 
     const auto& Xs = getVerts();
     double d = std::fabs(nhat.dot(obs-Xs[0])), dsq = d*d;
@@ -183,12 +123,12 @@ Mesh::Triangle::getNearIntegrated(const vec3d& obs, bool doNumeric) const
 
         const vec3d& P = P0 - l0*lhat;
         double p = P.norm(), p0 = P0.norm(), p1 = P1.norm();
-        const vec3d& phat = (approxZero(p) ? zeroVec : P.normalized());
+        const vec3d& phat = (fzero(p) ? zeroVec : P.normalized());
 
         double rsq = p*p + dsq, r0 = std::sqrt(p0*p0 + dsq), r1 = std::sqrt(p1*p1 + dsq);
   
         double f2 = 
-            (approxZero(r0+l0) || approxZero(r1+l1) ?  // use && ?
+            (fzero(r0+l0) || fzero(r1+l1) ?  // use && ?
                 std::log(l0/l1) :
                 std::log((r1+l1)/(r0+l0)));
 
@@ -212,16 +152,16 @@ Mesh::Triangle::getPlaneWaveIntegrated(const vec3d& kvec) const
     double alphasq = alpha*alpha, betasq = beta*beta;
     cmplx expI_alpha = exp(iu*alpha), expI_beta = exp(iu*beta);
     cmplx // TODO: Only compute if gamma != 0
-        f0_alpha = (approxZero(alpha) ? -iu : (1.0 - expI_alpha) / alpha),
-        f0_beta = (approxZero(beta) ? -iu : (1.0 - expI_beta) / beta);
+        f0_alpha = (fzero(alpha) ? -iu : (1.0 - expI_alpha) / alpha),
+        f0_beta = (fzero(beta) ? -iu : (1.0 - expI_beta) / beta);
     cmplx
-        f1_alpha = (approxZero(alpha) ? -0.5 : (1.0 - (1.0 - iu*alpha) * expI_alpha) / alphasq),
-        f1_beta = (approxZero(beta) ? -0.5 : (1.0 - (1.0 - iu*beta) * expI_beta) / betasq);
+        f1_alpha = (fzero(alpha) ? -0.5 : (1.0 - (1.0 - iu*alpha) * expI_alpha) / alphasq),
+        f1_beta = (fzero(beta) ? -0.5 : (1.0 - (1.0 - iu*beta) * expI_beta) / betasq);
 
     cmplx scaRad; vec3cd vecRad;
-    if (approxZero(gamma)) {
+    if (fzero(gamma)) {
         cmplx
-            f2 = (approxZero(alpha) ? iu/6.0 :
+            f2 = (fzero(alpha) ? iu/6.0 :
                 (expI_alpha*(alphasq + 2.0*iu*alpha - 2.0) + 2.0) / (2.0*alpha*alphasq));
         scaRad = -f1_alpha;
         vecRad = -iu*f2 * (Ds[0] - Ds[2]);
@@ -271,7 +211,7 @@ cmplx Mesh::Triangle::getDuffyIntegrated(
         const auto& V0 = glVerts[iVerts[i]];
         const auto& V1 = glVerts[iVerts[(i+1)%3]];
         const double area = (V0-src).cross(V1-src).norm()/2.0; // cache?
-        if (Math::approxZero(area)) continue;
+        if (Math::fzero(area)) continue;
 
         // areaSum += area;
 
@@ -293,7 +233,7 @@ cmplx Mesh::Triangle::getDuffyIntegrated(
         rad += area * triRad;
     }
 
-    // assert(Math::approxZero(areaSum-area));
+    // assert(Math::fzero(areaSum-area));
     // std::cout << areaSum << ' ' << area << '\n';
 
     return rad;

@@ -158,5 +158,5 @@ void Mesh::SubRWG::setOriented(int iVert, const vec3d& nhat, const vec3d& ehat) 
 
     const vec3d& rhat = (i0 == iVert ? X1-X0 : X0-X1).normalized();
     const double angle = atan2(nhat.dot(ehat.cross(rhat)),ehat.dot(rhat));
-    oriented = (Math::approxLess(angle,0.0) ? angle+2.0*PI : angle);
+    oriented = (Math::fless(angle,0.0) ? angle+2.0*PI : angle);
 }
