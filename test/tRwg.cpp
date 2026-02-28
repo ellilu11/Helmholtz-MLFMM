@@ -12,13 +12,13 @@ extern double k = 0.0;
 extern auto states = States();
 extern auto t = ClockTimes();
 
-void testNumVsAnlNear(const Mesh::Triangle& tri, const vec3d& obs) {
+void testInvRNumVsAnl(const Mesh::Triangle& tri, const vec3d& obs) {
     std::cout << std::setprecision(15);
 
-    const auto [scaRad, vecRad] = tri.getNearIntegrated(obs, 1);
+    const auto [scaRad, vecRad] = tri.getIntegratedInvRcubed(obs, 1);
     std::cout << "Numeric :\n   scaRad = " << scaRad << "\n   vecRad = " << vecRad.transpose() << "\n\n";
 
-    const auto [scaRadAnl, vecRadAnl] = tri.getNearIntegrated(obs, 0);
+    const auto [scaRadAnl, vecRadAnl] = tri.getIntegratedInvRcubed(obs, 0);
     std::cout << "Analytic :\n   scaRad = " << scaRadAnl << "\n   vecRad = " << vecRadAnl.transpose() << "\n";
 
     std::cout << scaRadAnl/scaRad << ' ' 
@@ -27,7 +27,7 @@ void testNumVsAnlNear(const Mesh::Triangle& tri, const vec3d& obs) {
         << vecRadAnl[2]/vecRad[2] << '\n';
 }
 
-void testNearVsFull(const Mesh::Triangle& obsTri, const Mesh::Triangle& srcTri) {
+void testInvR(const Mesh::Triangle& obsTri, const Mesh::Triangle& srcTri) {
     
     const auto& obsNC = obsTri.getVerts()[0];
     const auto& srcNC = srcTri.getVerts()[0];
@@ -48,7 +48,7 @@ void testNearVsFull(const Mesh::Triangle& obsTri, const Mesh::Triangle& srcTri) 
         }
 
         const auto& obsProj = srcTri.proj(obs);
-        const auto& [scaRad, vecRad] = srcTri.getNearIntegrated(obs);
+        const auto& [scaRad, vecRad] = srcTri.getIntegratedInvR(obs);
         nearRad +=
             ((obs-obsNC).dot(vecRad+(obsProj-srcNCproj)*scaRad) - 4.0/(k*k)*scaRad)
             * obsWeight;
@@ -68,17 +68,17 @@ int main() {
     const auto srcs = importSources(Einc);
     size_t nsrcs = srcs.size();
 
-    /* Numeric vs analytic 1/R near integration test
+    // Numeric vs analytic 1/R near integration test
     const auto tri = dynamic_pointer_cast<Mesh::RWG>(srcs[0])->getTris()[0];
-    const vec3d obs = { -1.00000, 2.0, 0.0 };
-    testNumVsAnlNear(tri, obs);
-    */
+    const vec3d obs = { 0.0, 0.0, 0.25 };
+    testInvRNumVsAnl(tri, obs);
+    //
 
-    // Numeric full vs analytic near 1/R integration test
+    /* Numeric full vs analytic near 1/R integration test
     const auto obsTri = dynamic_pointer_cast<Mesh::RWG>(srcs[0])->getTris()[1];
     const auto srcTri = dynamic_pointer_cast<Mesh::RWG>(srcs[1])->getTris()[0];
-    testNearVsFull(obsTri, srcTri);
-    //
+    testInvR(obsTri, srcTri);
+    */
 
     /* Near/self integration test
     auto rwg0 = dynamic_pointer_cast<Mesh::RWG>(srcs[0]);

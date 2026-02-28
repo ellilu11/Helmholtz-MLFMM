@@ -51,10 +51,10 @@ public:
         return exp(-iu*pos.dot(krhat)) * phat;
     }
 
-    /* getIntegratedRad(src)
+    /* getIntegratedEFIE(src)
      * Return the radiated field due to src tested with this dipole
      */
-    cmplx getIntegratedRad(const std::shared_ptr<Source> src) const override {
+    cmplx getIntegratedEFIE(const std::shared_ptr<Source> src) const override {
         const auto srcDip = dynamic_pointer_cast<Dipole>(src);
 
         if (pos == srcDip->pos) return 0.0; // TODO: Radiation reaction field
@@ -62,6 +62,10 @@ public:
         const auto& rad = Math::dyadicG(pos - srcDip->pos, k) * srcDip->phat;
 
         return conj(rad.dot(phat));
+    }
+
+    cmplx getIntegratedMFIE(const std::shared_ptr<Source> src) const override {
+        return 0.0; // TODO: Magnetic field due to dipole
     }
 
     friend std::ostream& operator<<(std::ostream& os, Dipole& src) {

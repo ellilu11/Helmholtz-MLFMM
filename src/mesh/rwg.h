@@ -7,9 +7,11 @@ class Mesh::RWG : public Source {
 public:
     RWG(std::shared_ptr<Exc::PlaneWave>, size_t, const vec4i&);
 
-    vec3cd getPlaneWaveIntegrated(const vec3d&, bool = 0) const;
+    vec3cd getIntegratedPlaneWave(const vec3d&, bool = 0) const;
 
-    cmplx getIntegratedRad(const std::shared_ptr<Source>) const override;
+    cmplx getIntegratedEFIE(const std::shared_ptr<Source>) const override;
+
+    cmplx getIntegratedMFIE(const std::shared_ptr<Source>) const override;
 
     std::array<int,2> getTrisIdx() const { return iTris; }
 
@@ -33,16 +35,19 @@ public:
     double getLeng() const { return leng; }
 
     void buildVoltage() override {
-        voltage = -Einc->amplitude
-            * conj(getPlaneWaveIntegrated(Einc->wavevec).dot(Einc->pol)); // Hermitian dot!
+        const vec3d& polH = Einc->wavehat.cross(Einc->pol);
+        const vec3d& pol = config.alpha*Einc->pol + (1.0-config.alpha) * Phys::eta * polH;
+
+        voltage = -Einc->amplitude *
+            conj(getIntegratedPlaneWave(Einc->wavevec).dot(pol)); // Hermitian dot!;
     }
 
     vec3cd getRadAlongDir(const vec3d& X, const vec3d& kvec) const override {
-        return exp(iu*kvec.dot(X)) * getPlaneWaveIntegrated(kvec).conjugate();
+        return exp(iu*kvec.dot(X)) * getIntegratedPlaneWave(kvec).conjugate();
     }
 
     vec3cd getFarAlongDir(const vec3d& krhat) const override {
-        return getPlaneWaveIntegrated(krhat).conjugate();
+        return getIntegratedPlaneWave(krhat).conjugate();
     }
 
 protected:

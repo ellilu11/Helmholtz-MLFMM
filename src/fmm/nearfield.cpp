@@ -31,14 +31,19 @@ void FMM::Nearfield::buildPairRads() {
         // assert(obsLeaf < srcNode);
 
         size_t nObss = obsLeaf->srcs.size(), nSrcs = srcNode->srcs.size();
-        nearPair.rads.resize(nObss*nSrcs);
+        nearPair.efie.resize(nObss*nSrcs);
 
         int pairIdx = 0;
         for (size_t iObs = 0; iObs < nObss; ++iObs) {
             for (size_t iSrc = 0; iSrc < nSrcs; ++iSrc) {
                 const auto obs = obsLeaf->srcs[iObs], src = srcNode->srcs[iSrc];
 
-                nearPair.rads[pairIdx++] = obs->getIntegratedRad(src);
+                nearPair.efie[pairIdx] = obs->getIntegratedEFIE(src);
+
+                nearPair.mfie[pairIdx] = std::make_pair(
+                    obs->getIntegratedMFIE(src), src->getIntegratedMFIE(obs));
+                    
+                ++pairIdx;
             }
         }
     }
@@ -50,7 +55,7 @@ void FMM::Nearfield::buildSelfRads() {
         assert(leaf == srcLeaf);
 
         size_t nSrcs = leaf->srcs.size();
-        selfPair.rads.resize(nSrcs*(nSrcs+1)/2);
+        selfPair.efie.resize(nSrcs*(nSrcs+1)/2);
 
         int pairIdx = 0;
         for (size_t iObs = 0; iObs < leaf->srcs.size(); ++iObs) { // iObs = 0
@@ -59,7 +64,12 @@ void FMM::Nearfield::buildSelfRads() {
             for (size_t iSrc = 0; iSrc <= iObs; ++iSrc) { // iSrc <= iObs 
                 const auto& src = leaf->srcs[iSrc];
 
-                selfPair.rads[pairIdx++] = obs->getIntegratedRad(src);
+                selfPair.efie[pairIdx] = obs->getIntegratedEFIE(src);
+
+                selfPair.mfie[pairIdx] = std::make_pair(
+                    obs->getIntegratedMFIE(src), src->getIntegratedMFIE(obs));
+
+                ++pairIdx;
             }
         }
     }
@@ -85,10 +95,15 @@ void FMM::Nearfield::evalPairSols(const NearPair& nearPair) {
         for (size_t iSrc = 0; iSrc < nSrcs; ++iSrc) {
             const auto obs = srcs[iObs], src = srcSrcs[iSrc];
 
-            cmplx rad = nearPair.rads[pairIdx++];
+            cmplx radAtObs = config.alpha * nearPair.efie[pairIdx] 
+                + (1.0-config.alpha) * nearPair.mfie[pairIdx].first;
+            cmplx radAtSrc = config.alpha * nearPair.efie[pairIdx] 
+                + (1.0-config.alpha) * nearPair.mfie[pairIdx].second;
 
-            solAtObss[iObs] += states.lvec[src->getIdx()] * rad;
-            solAtSrcs[iSrc] += states.lvec[obs->getIdx()] * rad;
+            solAtObss[iObs] += states.lvec[src->getIdx()] * radAtObs;
+            solAtSrcs[iSrc] += states.lvec[obs->getIdx()] * radAtSrc;
+
+            ++pairIdx;
         }
     }
 
@@ -117,10 +132,15 @@ void FMM::Nearfield::evalSelfSols(const NearPair& selfPair) {
         for (size_t iSrc = 0; iSrc <= iObs; ++iSrc) { // iSrc <= iObs 
             auto obs = srcs[iObs], src = srcs[iSrc];
 
-            cmplx rad = selfPair.rads[pairIdx++];
+            cmplx radAtObs = config.alpha * selfPair.efie[pairIdx]
+                + (1.0-config.alpha) * selfPair.mfie[pairIdx].first;
+            cmplx radAtSrc = config.alpha * selfPair.efie[pairIdx]
+                + (1.0-config.alpha) * selfPair.mfie[pairIdx].second;
 
-            solAtObss[iObs] += states.lvec[src->getIdx()] * rad;
-            solAtObss[iSrc] += states.lvec[obs->getIdx()] * rad;
+            solAtObss[iObs] += states.lvec[src->getIdx()] * radAtObs;
+            solAtObss[iSrc] += states.lvec[obs->getIdx()] * radAtSrc;
+
+            ++pairIdx;
         }
     }
 

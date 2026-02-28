@@ -30,10 +30,10 @@ Mesh::RWG::RWG(
     }*/
 }
 
-/* getPlaneWaveIntegrated(kvec, doNumeric)
+/* getIntegratedPlaneWave(kvec, doNumeric)
  * Return integral of exp(ik dot r'} * f(r') dr' at this RWG
  */
-vec3cd Mesh::RWG::getPlaneWaveIntegrated(const vec3d& kvec, bool doNumeric) const {
+vec3cd Mesh::RWG::getIntegratedPlaneWave(const vec3d& kvec, bool doNumeric) const {
     using namespace Math;
 
     const auto& Xnc = getVertsNC();
@@ -54,7 +54,7 @@ vec3cd Mesh::RWG::getPlaneWaveIntegrated(const vec3d& kvec, bool doNumeric) cons
 
     for (const auto& tri : getTris()) {
         const vec3d& X0 = tri.getVerts()[0];
-        const auto& [scaRad, vecRad] = tri.getPlaneWaveIntegrated(kvec);
+        const auto& [scaRad, vecRad] = tri.getIntegratedPlaneWave(kvec);
         rad += exp(iu*kvec.dot(X0)) 
                 * (scaRad * (X0 - Xnc[iTri]) + vecRad) 
                 * sign(iTri++);
@@ -64,10 +64,11 @@ vec3cd Mesh::RWG::getPlaneWaveIntegrated(const vec3d& kvec, bool doNumeric) cons
     return leng * rad;
 }
 
-/* getIntegratedRad(src)
- * Return the radiated field due to src tested with this RWG
+/* getIntegratedEFIE(src)
+ * Return the electric field due to src tested with this RWG
  */
-cmplx Mesh::RWG::getIntegratedRad(const std::shared_ptr<Source> src) const {
+cmplx Mesh::RWG::getIntegratedEFIE(const std::shared_ptr<Source> src) const {
+    if (config.alpha == 0) return 0.0;
     const auto srcRWG = dynamic_pointer_cast<RWG>(src);
     cmplx intRad = 0.0;
 
@@ -86,7 +87,7 @@ cmplx Mesh::RWG::getIntegratedRad(const std::shared_ptr<Source> src) const {
             for (const auto& [obs, obsWeight] : obsTri.triQuads) {
                 const auto& obsProj = srcTri.proj(obs);
 
-                // Add contribution from e^{ikR)/R or (e^(ikR)-1)/R term (numerically)
+                // Integrate e^{ikR)/R or (e^(ikR)-1)/R term (numerically)
                 for (const auto& [src, srcWeight] : srcTri.triQuads) {
                     double r = (obs-src).norm();
 
@@ -98,16 +99,16 @@ cmplx Mesh::RWG::getIntegratedRad(const std::shared_ptr<Source> src) const {
                         * obsWeight * srcWeight;
                 }
 
-                // For edge adjacent triangles, add contribution from 1/R term (analytically)
+                // For edge adjacent triangles, integrate 1/R term (analytically)
                 if (nCommon >= 2) {
-                    const auto& [scaRad, vecRad] = srcTri.getNearIntegrated(obs);
+                    const auto& [scaRad, vecRad] = srcTri.getIntegratedInvR(obs);
                     pairRad +=
                         ((obs-obsNC).dot(vecRad+(obsProj-srcNCproj)*scaRad) - 4.0/(k*k)*scaRad)
                         * obsWeight;
                 }
             }
 
-            /* For common triangles, add contribution from 1/R term (analytically)
+            /* For common triangles, integrate 1/R term (analytically)
             if (nCommon == 3) {
                 const auto [V0, V1, V2] = obsTri.getVerts();
                 double a00 = V0.dot(V0), a01 = V0.dot(V1), a02 = V0.dot(V2); // cache?
@@ -125,6 +126,74 @@ cmplx Mesh::RWG::getIntegratedRad(const std::shared_ptr<Source> src) const {
             //    Mesh::glRadMoments.at(makeUnordered(obsTri.iTri, srcTri.iTri));
             //intRad +=
             //    (mm0 - obsNC.dot(mm1) - mm2.dot(srcNC) + mm3 * (obsNC.dot(srcNC) - 4.0/(k*k)));
+
+            intRad += pairRad * Math::sign(iSrcTri) * Math::sign(iObsTri);
+            ++iSrcTri;
+        }
+
+        ++iObsTri;
+    }
+
+    assert(!std::isnan(intRad.real()) && !std::isnan(intRad.imag()));
+    return leng * srcRWG->leng * intRad;
+}
+
+/* getIntegratedMFIE(src)
+ * Return the magnetic field due to src tested with this RWG
+ */
+cmplx Mesh::RWG::getIntegratedMFIE(const std::shared_ptr<Source> src) const {
+    if (config.alpha == 1) return 0.0;
+    const auto srcRWG = dynamic_pointer_cast<RWG>(src);
+    double k2 = k*k;
+    cmplx intRad = 0.0;
+
+    int iObsTri = 0;
+    for (const auto& obsTri : getTris()) {
+        const auto& obsNC = getVertsNC()[iObsTri];
+
+        int iSrcTri = 0;
+        for (const auto& srcTri : srcRWG->getTris()) {
+            const auto
+                &srcNC = srcRWG->getVertsNC()[iSrcTri],
+                &srcNCproj = srcTri.proj(srcNC);
+            int nCommon = obsTri.getNumCommonVerts(srcTri);
+
+            cmplx pairRad = 0.0;
+            for (const auto& [obs, obsWeight] : obsTri.triQuads) {
+                for (const auto& [src, srcWeight] : srcTri.triQuads) {
+                    const vec3d& rvec = obs-src;
+                    double r = rvec.norm(), r2 = r*r, r3 = r*r2;
+
+                    cmplx dG = 0.0;
+                    if (nCommon == 2) 
+                        dG = ((-1.0+iu*k*r)*exp(iu*k*r)+1.0+0.5*k2*r2) / r3; // double check
+                    else if (nCommon < 2)
+                        dG = (-1.0+iu*k*r)*exp(iu*k*r) / r3;
+
+                    pairRad -= (obs-obsNC).dot(rvec.cross(src-srcNC)) * dG
+                                * obsWeight * srcWeight;
+                }
+
+                if (nCommon == 2) {
+                    const vec3d& R = obs-srcNC;
+                    const vec3d& obsProj = srcTri.proj(obs);
+
+                    const auto& [scaRad, vecRad] = srcTri.getIntegratedInvR(obs);
+                    const auto& [scaRad3, vecRad3] = srcTri.getIntegratedInvRcubed(obs);
+
+                    // double check signs and factors
+                    pairRad += k2/2.0
+                        * ((obs-obsNC).dot(R.cross(vecRad+(obsProj-srcNCproj)*scaRad)))
+                        * obsWeight;
+                    pairRad +=
+                        ((obs-obsNC).dot(R.cross(vecRad3+(obsProj-srcNCproj)*scaRad3)))
+                        * obsWeight;
+
+                } else if (nCommon == 3) {
+                    pairRad -= 0.5 * (obs-obsNC).dot(obsTri.nhat.cross(obs-obsNC))
+                        * obsWeight;
+                }
+            }
 
             intRad += pairRad * Math::sign(iSrcTri) * Math::sign(iObsTri);
             ++iSrcTri;

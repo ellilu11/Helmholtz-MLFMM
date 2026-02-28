@@ -106,6 +106,7 @@ struct Config {
     int digits;
     int interpOrder;
     double overInterp;
+    double alpha;
     double rootLeng;
     double wavenum;
 

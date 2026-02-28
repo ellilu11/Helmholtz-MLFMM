@@ -12,7 +12,8 @@ struct FMM::NearPair {
     {}
 
     NodePair pair;
-    std::vector<cmplx> rads;
+    std::vector<cmplx> efie;
+    std::vector<pair2cd> mfie;
 };
 
 class FMM::Nearfield {

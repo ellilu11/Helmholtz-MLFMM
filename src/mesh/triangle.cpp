@@ -90,28 +90,27 @@ void Mesh::Triangle::buildSelfIntegrated() {
 }
 
 std::pair<double, vec3d>
-Mesh::Triangle::getNearIntegrated(const vec3d& obs, bool doNumeric) const
+Mesh::Triangle::getIntegratedInvR(const vec3d& obs, bool doNumeric) const
 {
     using namespace Math;
 
     double scaRad = 0.0;
     vec3d vecRad = vec3d::Zero();
-    const vec3d& R = proj(obs);
+    const vec3d& obsProj = proj(obs);
 
     if (doNumeric) {
         for (const auto& [node, weight] : triQuads) {
-            const double dr = (obs-node).norm();
+            double dr = (obs-node).norm();
             scaRad += weight / dr;
-            vecRad -= weight * (R-proj(node)) / dr;
+            vecRad -= weight * (obsProj-proj(node)) / dr;
         }
-
         return std::make_pair(scaRad, vecRad);
     }
 
     const auto& Xs = getVerts();
     double d = std::fabs(nhat.dot(obs-Xs[0])), dsq = d*d;
     std::array<vec3d, 3> Ps =
-        { proj(Xs[0])-R, proj(Xs[1])-R, proj(Xs[2])-R };
+        { proj(Xs[0])-obsProj, proj(Xs[1])-obsProj, proj(Xs[2])-obsProj };
 
     for (int i = 0; i < 3; ++i) {
         const vec3d& P0 = Ps[i];
@@ -127,13 +126,12 @@ Mesh::Triangle::getNearIntegrated(const vec3d& obs, bool doNumeric) const
 
         double rsq = p*p + dsq, r0 = std::sqrt(p0*p0 + dsq), r1 = std::sqrt(p1*p1 + dsq);
   
-        double f2 = 
-            (fzero(r0+l0) || fzero(r1+l1) ?  // use && ?
+        double f2 = (fzero(r0+l0) || fzero(r1+l1) ?  // use && ?
                 std::log(l0/l1) :
                 std::log((r1+l1)/(r0+l0)));
 
         scaRad += phat.dot(uhat) * (
-            p*f2 - d * (std::atan2(p*l1, rsq+d*r1) - std::atan2(p*l0, rsq+d*r0)));
+            p*f2 - d * (atan2(p*l1, rsq+d*r1) - atan2(p*l0, rsq+d*r0)));
         vecRad += uhat * (rsq*f2 + l1*r1 - l0*r0);
     }
     scaRad /= 2.0*area;
@@ -142,8 +140,63 @@ Mesh::Triangle::getNearIntegrated(const vec3d& obs, bool doNumeric) const
     return std::make_pair(scaRad, vecRad);
 }
 
+std::pair<double, vec3d>
+Mesh::Triangle::getIntegratedInvRcubed(const vec3d& obs, bool doNumeric) const
+{
+    using namespace Math;
+
+    double scaRad3 = 0.0;
+    vec3d vecRad3 = vec3d::Zero();
+    const vec3d& obsProj = proj(obs);
+
+    if (doNumeric) {
+        for (const auto& [node, weight] : triQuads) {
+            double dr3 = pow((obs-node).norm(), 3);
+            scaRad3 += weight / dr3;
+            vecRad3 -= weight * (obsProj-proj(node)) / dr3;
+        }
+        return std::make_pair(scaRad3, vecRad3);
+    }
+
+    const auto& Xs = getVerts();
+    double d = std::fabs(nhat.dot(obs-Xs[0])), dsq = d*d;
+    std::cout << "d = " << d << '\n';
+
+    std::array<vec3d, 3> Ps =
+        { proj(Xs[0])-obsProj, proj(Xs[1])-obsProj, proj(Xs[2])-obsProj };
+
+    for (int i = 0; i < 3; ++i) {
+        const vec3d& P0 = Ps[i];
+        const vec3d& P1 = Ps[(i+1)%3];
+
+        const vec3d& lhat = (P1-P0).normalized();
+        const vec3d& uhat = lhat.cross(nhat);
+        double l0 = P0.dot(lhat), l1 = P1.dot(lhat);
+
+        const vec3d& P = P0 - l0*lhat;
+        double p = P.norm(), p0 = P0.norm(), p1 = P1.norm();
+
+        const vec3d& phat = (fzero(p) ? zeroVec : P.normalized());
+
+        double rsq = p*p + dsq, r0 = std::sqrt(p0*p0 + dsq), r1 = std::sqrt(p1*p1 + dsq);
+
+        scaRad3 -= phat.dot(uhat) *
+            (fzero(d) ? 
+             (fzero(p) ? 0.0 : l1/(p*r1) - l0/(p*r0)) :
+             (atan2(d*l1, p*r1) - atan2(d*l0, p*r0) + atan2(l0,p) - atan2(l1,p)) / d);
+        vecRad3 -= uhat * 
+            (fzero(r0+l0) || fzero(r1+l1) ?  // use && ?
+            std::log(l0/l1) :
+            std::log((r1+l1)/(r0+l0)));
+    }
+    scaRad3 /= 2.0*area;
+    vecRad3 /= 2.0*area;
+
+    return std::make_pair(scaRad3, vecRad3);
+}
+
 std::pair<cmplx, vec3cd>
-Mesh::Triangle::getPlaneWaveIntegrated(const vec3d& kvec) const
+Mesh::Triangle::getIntegratedPlaneWave(const vec3d& kvec) const
 {
     using namespace Math;
 
@@ -160,8 +213,7 @@ Mesh::Triangle::getPlaneWaveIntegrated(const vec3d& kvec) const
 
     cmplx scaRad; vec3cd vecRad;
     if (fzero(gamma)) {
-        cmplx
-            f2 = (fzero(alpha) ? iu/6.0 :
+        cmplx f2 = (fzero(alpha) ? iu/6.0 :
                 (expI_alpha*(alphasq + 2.0*iu*alpha - 2.0) + 2.0) / (2.0*alpha*alphasq));
         scaRad = -f1_alpha;
         vecRad = -iu*f2 * (Ds[0] - Ds[2]);
@@ -178,26 +230,6 @@ Mesh::Triangle::getPlaneWaveIntegrated(const vec3d& kvec) const
 
     return std::make_pair(scaRad, vecRad);
 }
-
-/*
-cmplx Mesh::Triangle::getSurfaceCurrent() const {
-    auto triToRWG = triToRWGs[iTri];
-
-    cmplx J = 0.0;
-    for (int i = 0; i < 3; ++i) {
-        int iRWG = triToRWG.iRWGs[i];
-        int isMinus = triToRWG.isMinus[i];
-        auto rwg = glSrcs[iRWG];
-        const auto& Xnc = rwg->getVertsNC();
-
-        double rwgFunc =
-            Math::sign(isMinus) * rwg->leng / (2.0*area) * (center - Xnc[isMinus]);
-
-        J += states.currents[iRWG];
-    }
-    return J;
-}
-*/
 
 /*
 cmplx Mesh::Triangle::getDuffyIntegrated(
@@ -267,5 +299,23 @@ void Mesh::Triangle::buildRadMoments() {
     }
 }*/
 
+/*
+cmplx Mesh::Triangle::getSurfaceCurrent() const {
+    auto triToRWG = triToRWGs[iTri];
 
+    cmplx J = 0.0;
+    for (int i = 0; i < 3; ++i) {
+        int iRWG = triToRWG.iRWGs[i];
+        int isMinus = triToRWG.isMinus[i];
+        auto rwg = glSrcs[iRWG];
+        const auto& Xnc = rwg->getVertsNC();
+
+        double rwgFunc =
+            Math::sign(isMinus) * rwg->leng / (2.0*area) * (center - Xnc[isMinus]);
+
+        J += states.currents[iRWG];
+    }
+    return J;
+}
+*/
 
