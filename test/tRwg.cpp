@@ -15,10 +15,10 @@ extern auto t = ClockTimes();
 void testNumVsAnlNear(const Mesh::Triangle& tri, const vec3d& obs) {
     std::cout << std::setprecision(15);
 
-    const auto [scaRad, vecRad] = tri.getNearIntegrated(obs, 1);
+    const auto [scaRad, vecRad] = tri.getIntegratedInvR(obs, 1);
     std::cout << "Numeric :\n   scaRad = " << scaRad << "\n   vecRad = " << vecRad.transpose() << "\n\n";
 
-    const auto [scaRadAnl, vecRadAnl] = tri.getNearIntegrated(obs, 0);
+    const auto [scaRadAnl, vecRadAnl] = tri.getIntegratedInvR(obs, 0);
     std::cout << "Analytic :\n   scaRad = " << scaRadAnl << "\n   vecRad = " << vecRadAnl.transpose() << "\n";
 
     std::cout << scaRadAnl/scaRad << ' ' 
@@ -48,7 +48,7 @@ void testNearVsFull(const Mesh::Triangle& obsTri, const Mesh::Triangle& srcTri) 
         }
 
         const auto& obsProj = srcTri.proj(obs);
-        const auto& [scaRad, vecRad] = srcTri.getNearIntegrated(obs);
+        const auto& [scaRad, vecRad] = srcTri.getIntegratedInvR(obs);
         nearRad +=
             ((obs-obsNC).dot(vecRad+(obsProj-srcNCproj)*scaRad) - 4.0/(k*k)*scaRad)
             * obsWeight;

@@ -30,10 +30,10 @@ Mesh::RWG::RWG(
     }*/
 }
 
-/* getPlaneWaveIntegrated(kvec, doNumeric)
+/* getIntegratedPlaneWave(kvec, doNumeric)
  * Return integral of exp(ik dot r'} * f(r') dr' at this RWG
  */
-vec3cd Mesh::RWG::getPlaneWaveIntegrated(const vec3d& kvec, bool doNumeric) const {
+vec3cd Mesh::RWG::getIntegratedPlaneWave(const vec3d& kvec, bool doNumeric) const {
     using namespace Math;
 
     const auto& Xnc = getVertsNC();
@@ -54,7 +54,7 @@ vec3cd Mesh::RWG::getPlaneWaveIntegrated(const vec3d& kvec, bool doNumeric) cons
 
     for (const auto& tri : getTris()) {
         const vec3d& X0 = tri.getVerts()[0];
-        const auto& [scaRad, vecRad] = tri.getPlaneWaveIntegrated(kvec);
+        const auto& [scaRad, vecRad] = tri.getIntegratedPlaneWave(kvec);
         rad += exp(iu*kvec.dot(X0)) 
                 * (scaRad * (X0 - Xnc[iTri]) + vecRad) 
                 * sign(iTri++);
@@ -77,16 +77,12 @@ cmplx Mesh::RWG::getIntegratedRad(const std::shared_ptr<Source> src) const {
 
         int iSrcTri = 0;
         for (const auto& srcTri : srcRWG->getTris() ) {
-            const auto 
-                &srcNC = srcRWG->getVertsNC()[iSrcTri],
-                &srcNCproj = srcTri.proj(srcNC);
+            const vec3d& srcNC = srcRWG->getVertsNC()[iSrcTri];
             int nCommon = obsTri.getNumCommonVerts(srcTri);
 
             cmplx pairRad = 0.0;
             for (const auto& [obs, obsWeight] : obsTri.triQuads) {
-                const auto& obsProj = srcTri.proj(obs);
-
-                // Add contribution from e^{ikR)/R or (e^(ikR)-1)/R term (numerically)
+                // Integrate e^{ikR)/R or (e^(ikR)-1)/R term (numerically)
                 for (const auto& [src, srcWeight] : srcTri.triQuads) {
                     double r = (obs-src).norm();
 
@@ -97,15 +93,17 @@ cmplx Mesh::RWG::getIntegratedRad(const std::shared_ptr<Source> src) const {
                     pairRad += ((obs-obsNC).dot(src-srcNC) - 4.0 / (k*k)) * G
                         * obsWeight * srcWeight;
                 }
-
-                // For edge adjacent triangles, add contribution from 1/R term (analytically)
-                if (nCommon >= 2) {
-                    const auto& [scaRad, vecRad] = srcTri.getNearIntegrated(obs);
-                    pairRad +=
-                        ((obs-obsNC).dot(vecRad+(obsProj-srcNCproj)*scaRad) - 4.0/(k*k)*scaRad)
-                        * obsWeight;
-                }
             }
+
+            // For edge adjacent triangles, integrate 1/R term (analytically)
+            // Average obs-src and src-obs to preserve symmetry
+            if (nCommon == 2)
+                pairRad += obsTri.getDoubleIntegratedInvR(srcTri, obsNC, srcNC);
+                /*pairRad += (
+                    obsTri.getDoubleIntegratedInvR(srcTri, obsNC, srcNC) +
+                    srcTri.getDoubleIntegratedInvR(obsTri, srcNC, obsNC)) / 2.0;*/
+            else if (nCommon == 3)
+                pairRad += obsTri.getDoubleIntegratedInvR(srcTri, obsNC, srcNC);
 
             /* For common triangles, add contribution from 1/R term (analytically)
             if (nCommon == 3) {

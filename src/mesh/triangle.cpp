@@ -90,7 +90,7 @@ void Mesh::Triangle::buildSelfIntegrated() {
 }
 
 std::pair<double, vec3d>
-Mesh::Triangle::getNearIntegrated(const vec3d& obs, bool doNumeric) const
+Mesh::Triangle::getIntegratedInvR(const vec3d& obs, bool doNumeric) const
 {
     using namespace Math;
 
@@ -142,8 +142,25 @@ Mesh::Triangle::getNearIntegrated(const vec3d& obs, bool doNumeric) const
     return std::make_pair(scaRad, vecRad);
 }
 
+cmplx Mesh::Triangle::getDoubleIntegratedInvR(
+    const Triangle& srcTri, const vec3d& obsNC, const vec3d& srcNC) const 
+{
+    const vec3d& srcNCproj = proj(srcNC);
+    cmplx rad = 0.0;
+
+    for (const auto& [obs, obsWeight] : triQuads) {
+        const vec3d& obsProj = srcTri.proj(obs);
+
+        const auto& [scaRad, vecRad] = srcTri.getIntegratedInvR(obs);
+        rad += ((obs-obsNC).dot(vecRad+(obsProj-srcNCproj)*scaRad) - 4.0/(k*k)*scaRad)
+            * obsWeight;
+    }
+
+    return rad;
+}
+
 std::pair<cmplx, vec3cd>
-Mesh::Triangle::getPlaneWaveIntegrated(const vec3d& kvec) const
+Mesh::Triangle::getIntegratedPlaneWave(const vec3d& kvec) const
 {
     using namespace Math;
 

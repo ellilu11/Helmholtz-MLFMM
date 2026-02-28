@@ -23,9 +23,12 @@ public:
 
     void buildSelfIntegrated();
 
-    std::pair<double,vec3d> getNearIntegrated(const vec3d&, bool = 0) const;
+    std::pair<double,vec3d> getIntegratedInvR(const vec3d&, bool = 0) const;
 
-    std::pair<cmplx,vec3cd> getPlaneWaveIntegrated(const vec3d&) const;
+    cmplx getDoubleIntegratedInvR(
+        const Triangle&, const vec3d&, const vec3d&) const;
+
+    std::pair<cmplx,vec3cd> getIntegratedPlaneWave(const vec3d&) const;
 
     // cmplx getSurfaceCurrent() const;
 

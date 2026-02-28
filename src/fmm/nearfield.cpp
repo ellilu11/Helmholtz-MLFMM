@@ -39,6 +39,15 @@ void FMM::Nearfield::buildPairRads() {
                 const auto obs = obsLeaf->srcs[iObs], src = srcNode->srcs[iSrc];
 
                 nearPair.rads[pairIdx++] = obs->getIntegratedRad(src);
+                
+                /*cmplx radAtObs = obs->getIntegratedRad(src), 
+                      radAtSrc = src->getIntegratedRad(obs);
+                cmplx diff = radAtObs - radAtSrc;
+                assert(Math::fzero(abs(diff)));
+                */
+                //std::cout
+                //    << radAtObs << " " << radAtSrc << " " << diff << " "
+                //    << (obs->getCenter()- src->getCenter()).norm() << '\n';
             }
         }
     }
@@ -60,6 +69,16 @@ void FMM::Nearfield::buildSelfRads() {
                 const auto& src = leaf->srcs[iSrc];
 
                 selfPair.rads[pairIdx++] = obs->getIntegratedRad(src);
+                
+                /*
+                cmplx radAtObs = obs->getIntegratedRad(src),
+                      radAtSrc = src->getIntegratedRad(obs);
+                cmplx diff = radAtObs - radAtSrc;
+                assert(Math::fzero(abs(diff)));
+                */
+                //std::cout
+                //    << radAtObs << " " << radAtSrc << " " << diff << " "
+                //    << (obs->getCenter()- src->getCenter()).norm() << '\n';
             }
         }
     }
