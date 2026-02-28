@@ -154,13 +154,13 @@ cmplx Mesh::RWG::getIntegratedMFIE(const std::shared_ptr<Source> src) const {
                     const vec3d& rvec = obs-src;
                     double r = rvec.norm(), r2 = r*r, r3 = r*r2;
 
-                    cmplx dG = 0.0;
+                    vec3d gradG = rvec / r3;
                     if (nCommon == 2) 
-                        dG = ((-1.0+iu*k*r)*exp(iu*k*r)+1.0+0.5*k2*r2) / r3; // double check
+                        gradG = gradG * ((-1.0+iu*k*r)*exp(iu*k*r)+1.0+0.5*k2*r2); // double check signs
                     else if (nCommon < 2)
-                        dG = (-1.0+iu*k*r)*exp(iu*k*r) / r3;
+                        gradG = gradG * (-1.0+iu*k*r)*exp(iu*k*r);
 
-                    pairRad -= (obs-obsNC).dot(rvec.cross(src-srcNC)) * dG
+                    pairRad -= (obs-obsNC).dot(gradG.cross(src-srcNC))
                                 * obsWeight * srcWeight;
                 }
 
@@ -180,7 +180,8 @@ cmplx Mesh::RWG::getIntegratedMFIE(const std::shared_ptr<Source> src) const {
                         * obsWeight;
 
                 } else if (nCommon == 3) {
-                    pairRad -= 0.5 * (obs-obsNC).dot(obsTri.nhat.cross(obs-obsNC))
+                    // double check signs and factors
+                    pairRad -= 0.5 * (obs-obsNC).dot(srcTri.nhat.cross(obs-obsNC))
                         * obsWeight;
                 }
             }
