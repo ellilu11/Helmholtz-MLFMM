@@ -33,6 +33,8 @@ void FMM::Nearfield::buildPairRads() {
         size_t nObss = obsLeaf->srcs.size(), nSrcs = srcNode->srcs.size();
         nearPair.rads.resize(nObss*nSrcs);
 
+        std::cout << std::setprecision(9);
+
         int pairIdx = 0;
         for (size_t iObs = 0; iObs < nObss; ++iObs) {
             for (size_t iSrc = 0; iSrc < nSrcs; ++iSrc) {
@@ -40,14 +42,16 @@ void FMM::Nearfield::buildPairRads() {
 
                 nearPair.rads[pairIdx++] = obs->getIntegratedRad(src);
                 
-                /*cmplx radAtObs = obs->getIntegratedRad(src), 
+                /*
+                cmplx radAtObs = obs->getIntegratedRad(src), 
                       radAtSrc = src->getIntegratedRad(obs);
                 cmplx diff = radAtObs - radAtSrc;
-                assert(Math::fzero(abs(diff)));
-                */
+
                 //std::cout
                 //    << radAtObs << " " << radAtSrc << " " << diff << " "
                 //    << (obs->getCenter()- src->getCenter()).norm() << '\n';
+                assert(abs(diff) < 1.0E-4);
+                */
             }
         }
     }
@@ -74,11 +78,12 @@ void FMM::Nearfield::buildSelfRads() {
                 cmplx radAtObs = obs->getIntegratedRad(src),
                       radAtSrc = src->getIntegratedRad(obs);
                 cmplx diff = radAtObs - radAtSrc;
-                assert(Math::fzero(abs(diff)));
-                */
+
                 //std::cout
                 //    << radAtObs << " " << radAtSrc << " " << diff << " "
                 //    << (obs->getCenter()- src->getCenter()).norm() << '\n';
+                assert(abs(diff) < 1.0E-4);
+                */
             }
         }
     }

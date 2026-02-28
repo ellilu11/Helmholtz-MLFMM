@@ -78,10 +78,13 @@ cmplx Mesh::RWG::getIntegratedRad(const std::shared_ptr<Source> src) const {
         int iSrcTri = 0;
         for (const auto& srcTri : srcRWG->getTris() ) {
             const vec3d& srcNC = srcRWG->getVertsNC()[iSrcTri];
+            const vec3d& srcNCproj = srcTri.proj(srcNC);
+
             int nCommon = obsTri.getNumCommonVerts(srcTri);
 
             cmplx pairRad = 0.0;
             for (const auto& [obs, obsWeight] : obsTri.triQuads) {
+
                 // Integrate e^{ikR)/R or (e^(ikR)-1)/R term (numerically)
                 for (const auto& [src, srcWeight] : srcTri.triQuads) {
                     double r = (obs-src).norm();
@@ -97,25 +100,14 @@ cmplx Mesh::RWG::getIntegratedRad(const std::shared_ptr<Source> src) const {
 
             // For edge adjacent triangles, integrate 1/R term (analytically)
             // Average obs-src and src-obs to preserve symmetry
-            if (nCommon == 2)
-                pairRad += obsTri.getDoubleIntegratedInvR(srcTri, obsNC, srcNC);
-                /*pairRad += (
+            if (nCommon >= 2)
+                pairRad += (
                     obsTri.getDoubleIntegratedInvR(srcTri, obsNC, srcNC) +
-                    srcTri.getDoubleIntegratedInvR(obsTri, srcNC, obsNC)) / 2.0;*/
-            else if (nCommon == 3)
-                pairRad += obsTri.getDoubleIntegratedInvR(srcTri, obsNC, srcNC);
+                    srcTri.getDoubleIntegratedInvR(obsTri, srcNC, obsNC)) / 2.0;
 
             /* For common triangles, add contribution from 1/R term (analytically)
-            if (nCommon == 3) {
-                const auto [V0, V1, V2] = obsTri.getVerts();
-                double a00 = V0.dot(V0), a01 = V0.dot(V1), a02 = V0.dot(V2); // cache?
-                const auto& sumNC = srcNC + obsNC;
-
-                pairRad += obsTri.selfInts[0]
-                    + obsTri.selfInts[1] * (-2.0*a00 + 2.0*a01 + (V0-V1).dot(sumNC))
-                    + obsTri.selfInts[2] * (-2.0*a00 + 2.0*a02 + (V0-V2).dot(sumNC))
-                    + obsTri.selfInts[3] * (a00 - V0.dot(sumNC) + srcNC.dot(obsNC) - 4.0/(k*k));
-            }
+            if (nCommon == 3)
+                pairRad = obsTri.getDoubleSelfIntegratedInvR(obsNC, srcNC);
             */
             
             // Using precomputed moments

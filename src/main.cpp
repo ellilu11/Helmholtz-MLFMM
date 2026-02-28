@@ -43,6 +43,8 @@ int main() {
     auto nf = std::make_shared<Nearfield>();
     Time duration_ms = Clock::now() - start;
     std::cout << "   Elapsed time: " << duration_ms.count() << " ms\n\n";
+    
+    // return 0; // TODO: Remove this after testing nearfield
 
     // ==================== Build FMM operators =============== //
     std::cout << " Building FMM operators...\n";
