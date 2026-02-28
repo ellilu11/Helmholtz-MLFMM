@@ -175,7 +175,7 @@ Mesh::Triangle::getIntegratedInvRcubed(const vec3d& obs, bool doNumeric) const
     std::cout << "d = " << d << '\n';
 
     std::array<vec3d, 3> Ps =
-        { proj(Xs[0])-obsProj, proj(Xs[1])-obsProj, proj(Xs[2])-obsProj };
+    { proj(Xs[0])-obsProj, proj(Xs[1])-obsProj, proj(Xs[2])-obsProj };
 
     for (int i = 0; i < 3; ++i) {
         const vec3d& P0 = Ps[i];
@@ -193,19 +193,22 @@ Mesh::Triangle::getIntegratedInvRcubed(const vec3d& obs, bool doNumeric) const
         double rsq = p*p + dsq, r0 = std::sqrt(p0*p0 + dsq), r1 = std::sqrt(p1*p1 + dsq);
 
         scaRad3 -= phat.dot(uhat) *
-            (fzero(d) ? 
-             (fzero(p) ? 0.0 : l1/(p*r1) - l0/(p*r0)) :
-             (atan2(d*l1, p*r1) - atan2(d*l0, p*r0) + atan2(l0,p) - atan2(l1,p)) / d);
-        vecRad3 -= uhat * 
+            (fzero(d) ?
+                (fzero(p) ? 0.0 : l1/(p*r1) - l0/(p*r0)) :
+                (atan2(d*l1, p*r1) - atan2(d*l0, p*r0) + atan2(l0, p) - atan2(l1, p)) / d);
+        vecRad3 -= uhat *
             (fzero(r0+l0) || fzero(r1+l1) ?  // use && ?
-            std::log(l0/l1) :
-            std::log((r1+l1)/(r0+l0)));
+                std::log(l0/l1) :
+                std::log((r1+l1)/(r0+l0)));
     }
     scaRad3 /= 2.0*area;
     vecRad3 /= 2.0*area;
 
-double Mesh::Triangle::getDoubleIntegratedInvR(
-    const Triangle& srcTri, const vec3d& obsNC, const vec3d& srcNC) const 
+    return std::make_pair(scaRad3, vecRad3);
+}
+
+double Mesh::Triangle::getDoubleIntegratedSingularEFIE(
+    const Triangle& srcTri, const vec3d& obsNC, const vec3d& srcNC) const
 {
     const vec3d& srcNCproj = srcTri.proj(srcNC);
     double rad = 0.0;
@@ -215,7 +218,36 @@ double Mesh::Triangle::getDoubleIntegratedInvR(
 
         const auto& [scaRad, vecRad] = srcTri.getIntegratedInvR(obs);
         rad += ((obs-obsNC).dot(vecRad+(obsProj-srcNCproj)*scaRad) - 4.0/(k*k)*scaRad)
-                * obsWeight;
+            * obsWeight;
+    }
+
+    return rad;
+}
+
+double Mesh::Triangle::getDoubleIntegratedSingularMFIE(
+    const Triangle& srcTri, const vec3d& obsNC, const vec3d& srcNC) const
+{
+    const vec3d& srcNCproj = srcTri.proj(srcNC);
+    double rad = 0.0;
+
+    for (const auto& [obs, obsWeight] : triQuads) {
+        const vec3d& R = obs-srcNC;
+        const vec3d& obsProj = srcTri.proj(obs);
+
+        const auto& [scaRad, vecRad] = srcTri.getIntegratedInvR(obs);
+        const auto& [scaRad3, vecRad3] = srcTri.getIntegratedInvRcubed(obs);
+
+        // double check signs and factors
+        rad += k*k/2.0
+            * (obs-obsNC).dot(R.cross(vecRad+(obsProj-srcNCproj)*scaRad))
+            * obsWeight;
+        rad +=
+            (obs-obsNC).dot(R.cross(vecRad3+(obsProj-srcNCproj)*scaRad3))
+            * obsWeight;
+
+        rad += ((obs-obsNC).dot(R.cross(
+            vecRad+(obsProj-srcNCproj)*scaRad)))
+            * obsWeight;
     }
 
     return rad;

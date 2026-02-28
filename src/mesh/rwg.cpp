@@ -78,14 +78,11 @@ cmplx Mesh::RWG::getIntegratedEFIE(const std::shared_ptr<Source> src) const {
 
         int iSrcTri = 0;
         for (const auto& srcTri : srcRWG->getTris() ) {
-            const vec3d& srcNC = srcRWG->getVertsNC()[iSrcTri];
-            const vec3d& srcNCproj = srcTri.proj(srcNC);
-
             int nCommon = obsTri.getNumCommonVerts(srcTri);
+            const vec3d& srcNC = srcRWG->getVertsNC()[iSrcTri];
 
             cmplx pairRad = 0.0;
             for (const auto& [obs, obsWeight] : obsTri.triQuads) {
-
                 // Integrate e^{ikR)/R or (e^(ikR)-1)/R term (numerically)
                 for (const auto& [src, srcWeight] : srcTri.triQuads) {
                     double r = (obs-src).norm();
@@ -100,23 +97,19 @@ cmplx Mesh::RWG::getIntegratedEFIE(const std::shared_ptr<Source> src) const {
             }
 
             // For edge adjacent triangles, integrate 1/R term (analytically)
-            // Average obs-src and src-obs to preserve symmetry
             if (nCommon >= 2)
-                pairRad += (
-                    obsTri.getDoubleIntegratedInvR(srcTri, obsNC, srcNC) +
-                    srcTri.getDoubleIntegratedInvR(obsTri, srcNC, obsNC)) / 2.0;
+                pairRad += obsTri.getDoubleIntegratedSingularEFIE(srcTri, obsNC, srcNC);
+
+                // Average obs-src and src-obs to preserve symmetry
+                //pairRad += (
+                //    obsTri.getDoubleIntegratedSingularEFIE(srcTri, obsNC, srcNC) +
+                //    srcTri.getDoubleIntegratedSingularEFIE(obsTri, srcNC, obsNC)) / 2.0;
 
             /* For common triangles, add contribution from 1/R term (analytically)
             if (nCommon == 3)
                 pairRad = obsTri.getDoubleSelfIntegratedInvR(obsNC, srcNC);
             */
-            
-            // Using precomputed moments
-            //const auto [mm0, mm1, mm2, mm3] =
-            //    Mesh::glRadMoments.at(makeUnordered(obsTri.iTri, srcTri.iTri));
-            //intRad +=
-            //    (mm0 - obsNC.dot(mm1) - mm2.dot(srcNC) + mm3 * (obsNC.dot(srcNC) - 4.0/(k*k)));
-
+           
             intRad += pairRad * Math::sign(iSrcTri) * Math::sign(iObsTri);
             ++iSrcTri;
         }
@@ -134,7 +127,6 @@ cmplx Mesh::RWG::getIntegratedEFIE(const std::shared_ptr<Source> src) const {
 cmplx Mesh::RWG::getIntegratedMFIE(const std::shared_ptr<Source> src) const {
     if (config.alpha == 1) return 0.0;
     const auto srcRWG = dynamic_pointer_cast<RWG>(src);
-    double k2 = k*k;
     cmplx intRad = 0.0;
 
     int iObsTri = 0;
@@ -143,10 +135,8 @@ cmplx Mesh::RWG::getIntegratedMFIE(const std::shared_ptr<Source> src) const {
 
         int iSrcTri = 0;
         for (const auto& srcTri : srcRWG->getTris()) {
-            const auto
-                &srcNC = srcRWG->getVertsNC()[iSrcTri],
-                &srcNCproj = srcTri.proj(srcNC);
             int nCommon = obsTri.getNumCommonVerts(srcTri);
+            const vec3d& srcNC = srcRWG->getVertsNC()[iSrcTri];
 
             cmplx pairRad = 0.0;
             for (const auto& [obs, obsWeight] : obsTri.triQuads) {
@@ -164,27 +154,14 @@ cmplx Mesh::RWG::getIntegratedMFIE(const std::shared_ptr<Source> src) const {
                                 * obsWeight * srcWeight;
                 }
 
-                if (nCommon == 2) {
-                    const vec3d& R = obs-srcNC;
-                    const vec3d& obsProj = srcTri.proj(obs);
-
-                    const auto& [scaRad, vecRad] = srcTri.getIntegratedInvR(obs);
-                    const auto& [scaRad3, vecRad3] = srcTri.getIntegratedInvRcubed(obs);
-
-                    // double check signs and factors
-                    pairRad += k2/2.0
-                        * ((obs-obsNC).dot(R.cross(vecRad+(obsProj-srcNCproj)*scaRad)))
-                        * obsWeight;
-                    pairRad +=
-                        ((obs-obsNC).dot(R.cross(vecRad3+(obsProj-srcNCproj)*scaRad3)))
-                        * obsWeight;
-
-                } else if (nCommon == 3) {
-                    // double check signs and factors
-                    pairRad -= 0.5 * (obs-obsNC).dot(srcTri.nhat.cross(obs-obsNC))
+                if (nCommon == 3) {
+                    pairRad -= 0.5 * (obs-obsNC).dot(obsTri.nhat.cross(obs-obsNC))
                         * obsWeight;
                 }
             }
+
+            if (nCommon == 2)
+                pairRad += obsTri.getDoubleIntegratedSingularMFIE(srcTri, obsNC, srcNC);
 
             intRad += pairRad * Math::sign(iSrcTri) * Math::sign(iObsTri);
             ++iSrcTri;
