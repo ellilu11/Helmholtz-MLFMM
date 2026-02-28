@@ -2,14 +2,13 @@
 
 #include "../source.h"
 #include "triangle.h"
+#include "tripair.h"
 
 class Mesh::RWG : public Source {
 public:
     RWG(std::shared_ptr<Exc::PlaneWave>, size_t, const vec4i&);
 
     vec3cd getIntegratedPlaneWave(const vec3d&, bool = 0) const;
-
-    cmplx getIntegratedInvR(const std::shared_ptr<Source> src) const;
 
     cmplx getIntegratedRad(const std::shared_ptr<Source>) const override;
 

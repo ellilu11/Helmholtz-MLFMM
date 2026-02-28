@@ -154,23 +154,6 @@ Mesh::Triangle::getIntegratedInvR(const vec3d& obs, bool doNumeric) const
     return std::make_pair(scaRad, vecRad);
 }
 
-double Mesh::Triangle::getDoubleIntegratedInvR(
-    const Triangle& srcTri, const vec3d& obsNC, const vec3d& srcNC) const 
-{
-    const vec3d& srcNCproj = srcTri.proj(srcNC);
-    double rad = 0.0;
-
-    for (const auto& [obs, obsWeight] : triQuads) {
-        const vec3d& obsProj = srcTri.proj(obs);
-
-        const auto& [scaRad, vecRad] = srcTri.getIntegratedInvR(obs);
-        rad += ((obs-obsNC).dot(vecRad+(obsProj-srcNCproj)*scaRad) - 4.0/(k*k)*scaRad)
-                * obsWeight;
-    }
-
-    return rad;
-}
-
 std::pair<cmplx, vec3cd>
 Mesh::Triangle::getIntegratedPlaneWave(const vec3d& kvec) const
 {
@@ -268,33 +251,6 @@ cmplx Mesh::Triangle::getDuffyIntegrated(
     return rad;
 }*/
 
-/*
-void Mesh::Triangle::buildRadMoments() {
-    // TODO: Only loop over triangles in nearfield of each other
-    for (size_t iObs = 0; iObs < glTris.size(); ++iObs) {
-        for (size_t iSrc = 0; iSrc <= iObs; ++iSrc) {
-            const auto& obsTri = glTris[iObs];
-            const auto& srcTri = glTris[iSrc];
-
-            const auto key = makeUnordered(obsTri.iTri, srcTri.iTri);
-
-            QuadMoments moments = { 0.0, vec3cd::Zero(), vec3cd::Zero(), 0.0 };
-
-            for (const auto& [obs, obsWeight] : obsTri.quads) {
-                for (const auto& [src, srcWeight] : srcTri.quads) {
-                    const cmplx coeff = 
-                        Math::helmholtzG((obs-src).norm(), FMM::wavenum) * obsWeight * srcWeight;
-                    get<0>(moments) += obs.dot(src) * coeff;
-                    get<1>(moments) += src * coeff;
-                    get<2>(moments) += obs * coeff;
-                    get<3>(moments) += coeff;
-                }
-            }
-
-            glRadMoments.emplace(key, moments);
-        }
-    }
-}*/
 
 
 

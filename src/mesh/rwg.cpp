@@ -73,48 +73,29 @@ cmplx Mesh::RWG::getIntegratedRad(const std::shared_ptr<Source> src) const {
 
     int iObsTri = 0;
     for (const auto& obsTri : getTris() ) {
-        const auto& obsNC = getVertsNC()[iObsTri];
+        const vec3d& obsNC = getVertsNC()[iObsTri];
 
         int iSrcTri = 0;
         for (const auto& srcTri : srcRWG->getTris() ) {
             const vec3d& srcNC = srcRWG->getVertsNC()[iSrcTri];
-            const vec3d& srcNCproj = srcTri.proj(srcNC);
 
-            int nCommon = obsTri.getNumCommonVerts(srcTri);
+            const auto& iTriPair = std::minmax(obsTri.iTri, srcTri.iTri);
+            // std::cout << "(" << iTriPair.first << "," << iTriPair.second << ") ";
 
-            cmplx pairRad = 0.0;
-            for (const auto& [obs, obsWeight] : obsTri.triQuads) {
+            const auto& triPair = glTriPairs.at(iTriPair);
+            const auto& [m00, m10, m01, m11] = triPair.radMoments;
 
-                // Integrate e^{ikR)/R or (e^(ikR)-1)/R term (numerically)
-                for (const auto& [src, srcWeight] : srcTri.triQuads) {
-                    double r = (obs-src).norm();
-
-                    cmplx G;
-                    if (nCommon >= 2) G = (Math::fzero(r) ? iu*k : (exp(iu*k*r)-1.0) / r); 
-                    else G = exp(iu*k*r) / r;
-
-                    pairRad += ((obs-obsNC).dot(src-srcNC) - 4.0 / (k*k)) * G
-                        * obsWeight * srcWeight;
-                }
-            }
+            cmplx pairRad = 
+                m11 - m10.dot(srcNC) - obsNC.dot(m01) + (obsNC.dot(srcNC) - 4.0/(k*k))*m00;
 
             // For edge adjacent triangles, integrate 1/R term (analytically)
-            // Average obs-src and src-obs to preserve symmetry
-            if (nCommon >= 2)
-                pairRad += (
-                    obsTri.getDoubleIntegratedInvR(srcTri, obsNC, srcNC) +
-                    srcTri.getDoubleIntegratedInvR(obsTri, srcNC, obsNC)) / 2.0;
+            if (triPair.nCommon >= 2)
+                pairRad += triPair.getDoubleIntegratedInvR(obsNC, srcNC);
 
             /* For common triangles, add contribution from 1/R term (analytically)
             if (nCommon == 3)
                 pairRad = obsTri.getDoubleSelfIntegratedInvR(obsNC, srcNC);
             */
-            
-            // Using precomputed moments
-            //const auto [mm0, mm1, mm2, mm3] =
-            //    Mesh::glRadMoments.at(makeUnordered(obsTri.iTri, srcTri.iTri));
-            //intRad +=
-            //    (mm0 - obsNC.dot(mm1) - mm2.dot(srcNC) + mm3 * (obsNC.dot(srcNC) - 4.0/(k*k)));
 
             intRad += pairRad * Math::sign(iSrcTri) * Math::sign(iObsTri);
             ++iSrcTri;

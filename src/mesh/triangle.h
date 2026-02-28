@@ -3,13 +3,9 @@
 #include <ranges>
 #include "mesh.h"
 
-struct Mesh::TriToRWG {
-    std::vector<int> iRWGs; // indices of RWGs containing this triangle
-    std::vector<int> isMinus; // whether this triangle is positive or negative in each RWG
-};
-
 class Mesh::Triangle {
 public:
+    friend class TriPair;
     friend class RWG;
     friend class SrcRWG;
     friend class SubRWG;
@@ -26,9 +22,6 @@ public:
     double getDoubleSelfIntegratedInvR(const vec3d&, const vec3d&) const;
 
     std::pair<double,vec3d> getIntegratedInvR(const vec3d&, bool = 0) const;
-
-    double getDoubleIntegratedInvR(
-        const Triangle&, const vec3d&, const vec3d&) const;
 
     std::pair<cmplx,vec3cd> getIntegratedPlaneWave(const vec3d&) const;
 
@@ -71,4 +64,9 @@ private:
     std::array<vec3d,3> Ds; // edge displacements (Ds[i] = Xs[i+1] - Xs[i])
     vec3d nhat;             // surface normal unit vector
     double area;            // area
+};
+
+struct Mesh::TriToRWG {
+    std::vector<int> iRWGs; // indices of RWGs containing this triangle
+    std::vector<int> isMinus; // whether this triangle is positive or negative in each RWG
 };

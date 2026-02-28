@@ -13,6 +13,7 @@ namespace Mesh {
     class SrcRWG;
     class SubRWG;
     class BC;
+    class TriPair;
     struct TriToRWG;
 
     using QuadMoments = std::tuple<cmplx, vec3cd, vec3cd, cmplx>;
@@ -20,6 +21,7 @@ namespace Mesh {
     // Coarse mesh data
     std::vector<vec3d> glVerts;   // list of vertices (including fine)
     std::vector<Triangle> glTris; // list of triangles (including fine)
+    PairHashMap<TriPair> glTriPairs; // nearfield triangle pairs
     std::vector<TriToRWG> triToRWGs; // coarse triangle to RWG mappings
     size_t nverts;                // number of coarse mesh vertices
     size_t ntris;                 // number of coarse mesh triangles
