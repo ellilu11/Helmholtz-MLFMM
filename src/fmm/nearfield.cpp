@@ -33,6 +33,8 @@ void FMM::Nearfield::buildPairRads() {
         size_t nObss = obsLeaf->srcs.size(), nSrcs = srcNode->srcs.size();
         nearPair.efie.resize(nObss*nSrcs);
 
+        std::cout << std::setprecision(9);
+
         int pairIdx = 0;
         for (size_t iObs = 0; iObs < nObss; ++iObs) {
             for (size_t iSrc = 0; iSrc < nSrcs; ++iSrc) {

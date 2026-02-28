@@ -21,7 +21,11 @@ public:
 
     int getNumCommonVerts(const Triangle&) const;
 
-    void buildSelfIntegrated();
+    void buildSelfIntegratedInvR();
+
+    double getDoubleSelfIntegratedInvR(const vec3d&, const vec3d&) const;
+
+    std::pair<double,vec3d> getIntegratedInvR(const vec3d&, bool = 0) const;
 
     std::pair<double,vec3d> getIntegratedInvR(const vec3d&, bool = 0) const;
 

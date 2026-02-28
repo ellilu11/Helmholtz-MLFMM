@@ -40,7 +40,7 @@ int Mesh::Triangle::getNumCommonVerts(const Triangle& other) const {
     return numVerts;
 }
 
-void Mesh::Triangle::buildSelfIntegrated() {
+void Mesh::Triangle::buildSelfIntegratedInvR() {
     const auto& [V0, V1, V2] = getVerts();
     double a00 = V0.dot(V0), a01 = V0.dot(V1), a02 = V0.dot(V2);
     double a11 = V1.dot(V1), a12 = V1.dot(V2), a22 = V2.dot(V2);
@@ -87,6 +87,18 @@ void Mesh::Triangle::buildSelfIntegrated() {
     selfInts[1] = f2(l0, l1, l2, log0, log1, log2);
     selfInts[2] = f2(l1, l2, l0, log1, log2, log0);
     selfInts[3] = (log0/l0 + log1/l1 + log2/l2) / 3.0;
+}
+
+double Mesh::Triangle::getDoubleSelfIntegratedInvR(const vec3d& obsNC, const vec3d& srcNC) const
+{
+    const auto [V0, V1, V2] = getVerts();
+    double a00 = V0.dot(V0), a01 = V0.dot(V1), a02 = V0.dot(V2); // cache?
+    const vec3d& sumNC = srcNC + obsNC;
+    
+    return selfInts[0]
+        + selfInts[1] * (-2.0*a00 + 2.0*a01 + (V0-V1).dot(sumNC))
+        + selfInts[2] * (-2.0*a00 + 2.0*a02 + (V0-V2).dot(sumNC))
+        + selfInts[3] * (a00 - V0.dot(sumNC) + srcNC.dot(obsNC) - 4.0/(k*k));
 }
 
 std::pair<double, vec3d>
@@ -192,7 +204,21 @@ Mesh::Triangle::getIntegratedInvRcubed(const vec3d& obs, bool doNumeric) const
     scaRad3 /= 2.0*area;
     vecRad3 /= 2.0*area;
 
-    return std::make_pair(scaRad3, vecRad3);
+double Mesh::Triangle::getDoubleIntegratedInvR(
+    const Triangle& srcTri, const vec3d& obsNC, const vec3d& srcNC) const 
+{
+    const vec3d& srcNCproj = srcTri.proj(srcNC);
+    double rad = 0.0;
+
+    for (const auto& [obs, obsWeight] : triQuads) {
+        const vec3d& obsProj = srcTri.proj(obs);
+
+        const auto& [scaRad, vecRad] = srcTri.getIntegratedInvR(obs);
+        rad += ((obs-obsNC).dot(vecRad+(obsProj-srcNCproj)*scaRad) - 4.0/(k*k)*scaRad)
+                * obsWeight;
+    }
+
+    return rad;
 }
 
 std::pair<cmplx, vec3cd>
