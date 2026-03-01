@@ -115,10 +115,10 @@ void FMM::Node::buildLists() {
 
     if (isLeaf()) leaves.push_back(shared_from_this());
 
+    findTris(); // TODO: Only call for leaves and non-near stems
+
     for (const auto& branch : branches)
         branch->buildLists();
-
-    findTris();
 }
 
 void FMM::Node::resizeCoeffs() {

@@ -1,5 +1,13 @@
 #include "tripair.h"
 
+Mesh::TriPair::TriPair(pair2i iTris)
+    : iTris(iTris)
+{
+    buildNumCommon();
+    buildRadMoments();
+    if (nCommon >= 2) buildIntegratedInvR();
+}
+
 void Mesh::TriPair::buildNumCommon() {
     if (iTris.first == iTris.second) {
         nCommon = 3;
@@ -16,11 +24,11 @@ void Mesh::TriPair::buildNumCommon() {
 }
 
 void Mesh::TriPair::buildRadMoments() {
-    const auto& [tri0, tri1] = getTriPair();
+    const auto& [obsTri, srcTri] = getTriPair();
 
     radMoments = { 0.0, vec3d::Zero(), vec3d::Zero(), 0.0 };
-    for (const auto& [obs, obsWeight] : tri0.triQuads) {
-        for (const auto& [src, srcWeight] : tri1.triQuads) {
+    for (const auto& [obs, obsWeight] : obsTri.triQuads) {
+        for (const auto& [src, srcWeight] : srcTri.triQuads) {
             double r = (obs-src).norm();
 
             cmplx G;

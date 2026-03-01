@@ -89,13 +89,15 @@ cmplx Mesh::RWG::getIntegratedRad(const std::shared_ptr<Source> src) const {
                 m11 - m10.dot(srcNC) - obsNC.dot(m01) + (obsNC.dot(srcNC) - 4.0/(k*k))*m00;
 
             // For edge adjacent triangles, integrate 1/R term (analytically)
-            if (triPair.nCommon >= 2)
-                pairRad += triPair.getDoubleIntegratedInvR(obsNC, srcNC);
+            //if (triPair.nCommon >= 2)
+            //    pairRad += triPair.getDoubleIntegratedInvR(obsNC, srcNC);
 
             /* For common triangles, add contribution from 1/R term (analytically)
             if (nCommon == 3)
-                pairRad = obsTri.getDoubleSelfIntegratedInvR(obsNC, srcNC);
+                pairRad += obsTri.getDoubleSelfIntegratedInvR(obsNC, srcNC);
             */
+
+            std::cout << "   Rad of tripair (" << obsTri.iTri << "," << srcTri.iTri << "): " << pairRad << '\n';
 
             intRad += pairRad * Math::sign(iSrcTri) * Math::sign(iObsTri);
             ++iSrcTri;

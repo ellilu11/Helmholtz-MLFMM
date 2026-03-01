@@ -8,6 +8,7 @@ FMM::Nearfield::Nearfield() {
     buildTriPairs();
     Time duration_ms = Clock::now() - start;
     std::cout << "  Built triangle pairs in " << duration_ms.count() << " ms\n";
+    std::cout << "  # tri pairs: " << Mesh::glTriPairs.size() << '\n';
 
     //for (const auto& triPair : Mesh::glTriPairs)
     //    std::cout << "("

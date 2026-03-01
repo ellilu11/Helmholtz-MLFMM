@@ -7,13 +7,7 @@ class Mesh::TriPair {
     friend RWG;
 
 public :
-    TriPair(pair2i iTris) 
-        : iTris(iTris)
-    {
-        buildNumCommon();
-        buildRadMoments();
-        if (nCommon >= 2) buildIntegratedInvR();
-    }
+    TriPair(pair2i);
 
     std::pair<Triangle,Triangle> getTriPair() const {
         return { glTris[iTris.first], glTris[iTris.second] };
