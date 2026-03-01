@@ -1,15 +1,20 @@
 #include "nearfield.h"
+#include "../mesh/tripair.h"
 
 FMM::Nearfield::Nearfield() {
-    findPairs();
+    findNodePairs();
+    buildTriPairs();
+
     buildPairRads();
     buildSelfRads();
+
+    Mesh::glTriPairs.clear();
 }
 
-/* findPairs()
+/* findNodePairs()
  * From list of leaves, find all near neighbor leaf pairs
  */
-void FMM::Nearfield::findPairs() {
+void FMM::Nearfield::findNodePairs() {
     for (const auto& leaf : leaves) {
         selfPairs.emplace_back(leaf, leaf);
 
@@ -25,6 +30,37 @@ void FMM::Nearfield::findPairs() {
     }
 }
 
+/* findTriPairs()
+ * From list of node pairs, find all near neighbor triangle pairs
+ * and populate Mesh::glTriPairs
+ */
+void FMM::Nearfield::buildTriPairs() {
+    for (const auto& selfPair : selfPairs) {
+        const auto& [leaf, srcLeaf] = selfPair.pair;
+        assert(leaf == srcLeaf);
+        const auto& iTris = leaf->iTris;
+
+        for (auto iTri0 : iTris)
+            for (auto iTri1 : iTris) {
+                if (iTri0 > iTri1) continue;
+
+                pair2i pair(iTri0, iTri1);
+                Mesh::glTriPairs.emplace(pair, Mesh::TriPair(pair));
+            }
+    }
+
+    for (const auto& nearPair : nearPairs) {
+        const auto& [obsLeaf, srcNode] = nearPair.pair;
+        const auto &iTris0 = obsLeaf->iTris, &iTris1 = srcNode->iTris;
+
+        for (auto iTri0 : iTris0)
+            for (auto iTri1 : iTris1) {
+                pair2i pair = std::minmax(iTri0, iTri1);
+                Mesh::glTriPairs.emplace(pair, Mesh::TriPair(pair));
+            }
+    }
+}
+
 void FMM::Nearfield::buildPairRads() {
     for (auto& nearPair : nearPairs) {
         const auto [obsLeaf, srcNode] = nearPair.pair;
@@ -32,8 +68,6 @@ void FMM::Nearfield::buildPairRads() {
 
         size_t nObss = obsLeaf->srcs.size(), nSrcs = srcNode->srcs.size();
         nearPair.efie.resize(nObss*nSrcs);
-
-        std::cout << std::setprecision(9);
 
         int pairIdx = 0;
         for (size_t iObs = 0; iObs < nObss; ++iObs) {
@@ -84,8 +118,8 @@ void FMM::Nearfield::buildSelfRads() {
 void FMM::Nearfield::evalPairSols(const NearPair& nearPair) {
     const auto& [obsLeaf, srcLeaf] = nearPair.pair;
 
-    const auto& srcs = obsLeaf->srcs;
-    const auto& srcSrcs = srcLeaf->srcs;
+    const SrcVec& srcs = obsLeaf->srcs;
+    const SrcVec& srcSrcs = srcLeaf->srcs;
 
     size_t nObs = srcs.size(), nSrcs = srcSrcs.size();
 
@@ -95,7 +129,7 @@ void FMM::Nearfield::evalPairSols(const NearPair& nearPair) {
     int pairIdx = 0;
     for (size_t iObs = 0; iObs < nObs; ++iObs) {
         for (size_t iSrc = 0; iSrc < nSrcs; ++iSrc) {
-            const auto obs = srcs[iObs], src = srcSrcs[iSrc];
+            auto obs = srcs[iObs], src = srcSrcs[iSrc];
 
             cmplx radAtObs = config.alpha * nearPair.efie[pairIdx] 
                 + (1.0-config.alpha) * nearPair.mfie[pairIdx].first;
@@ -124,7 +158,7 @@ void FMM::Nearfield::evalSelfSols(const NearPair& selfPair) {
     const auto& [leaf, srcLeaf] = selfPair.pair;
     assert(leaf == srcLeaf);
 
-    const auto& srcs = leaf->srcs;
+    const SrcVec& srcs = leaf->srcs;
     size_t nSrcs = srcs.size();
 
     std::vector<cmplx> solAtObss(nSrcs, 0.0);

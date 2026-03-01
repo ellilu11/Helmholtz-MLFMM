@@ -37,23 +37,13 @@ Solver::Solver(
 }
 
 void Solver::updateRvec(int k) {
-    t.resetTimes();
-
     if (!root->isLeaf()) {
         root->mergeMpoleCoeffs();
         root->buildLocalCoeffs();
         FMM::evaluateSols();
     }
-    nf->evaluateSols();
 
-    if (!k) {
-        std::cout << "   Elapsed time (S2M): " << t.S2M.count() << " ms\n";
-        std::cout << "   Elapsed time (M2M): " << t.M2M.count() << " ms\n";
-        std::cout << "   Elapsed time (M2L): " << t.M2L.count() << " ms\n";
-        std::cout << "   Elapsed time (L2L): " << t.L2L.count() << " ms\n";
-        std::cout << "   Elapsed time (L2T): " << t.L2T.count() << " ms\n";
-        std::cout << "   Elapsed time (S2T): " << t.S2T.count() << " ms\n";
-    }
+    nf->evaluateSols();
 }
 
 void Solver::iterateArnoldi(int k) {
@@ -132,12 +122,11 @@ void Solver::printSols(const std::string& fname) {
 }
 
 void Solver::solve(const std::string& fname) {
+    auto start = Clock::now();
+
     int iter = 0;
-
     do {
-        if (!(iter%5)) std::cout << " Do iteration #" << iter << '\n';
-        auto iter_start = Clock::now();
-
+        // if (iter && !(iter%10)) std::cout << "   #" << iter << '\n';
         updateRvec(iter);
 
         iterateArnoldi(iter);
@@ -145,19 +134,19 @@ void Solver::solve(const std::string& fname) {
         updateGvec(iter);
 
         states.rvec = vecXcd::Zero(numSrcs); // reset rvec for next iteration
-
-        Time fmm_duration_ms = Clock::now() - iter_start;
-        // std::cout << "   Elapsed time: " << fmm_duration_ms.count() << " ms\n";
-
     } while (abs(gvec[++iter])/g0 > EPS && iter < maxIter); // careful
 
-    std::cout << " Solving for current...\n";
+    Time duration_ms = Clock::now() - start;
+    std::cout << " in " << duration_ms.count() << " ms\n";
+    t.printTimes();
+    t.resetTimes();
 
-    const auto& Hp = Hmat.block(0, 0, Hmat.rows()-1, Hmat.cols());
+    std::cout << "   # iterations: " << iter << "\n";
+
+    const matXcd& Hp = Hmat.block(0, 0, Hmat.rows()-1, Hmat.cols());
     vecXcd yvec = Hp.lu().solve(gvec.segment(0, iter));
     states.currents = Qmat.leftCols(iter) * yvec;
-    std::cout << std::setprecision(9) 
-        << " Current norm: " << states.currents.norm() << "\n";
+    std::cout << "   Current norm: " << states.currents.norm() << "\n";
 
     printSols(fname);
 }

@@ -6,8 +6,8 @@ Mesh::RWG::RWG(
     iTris({ idx4[2], idx4[3] }),
     iVertsC({ idx4[0], idx4[1] })
 {
-    const auto& tris = getTris();
-    const auto& verts = getVertsC();
+    auto tris = getTris();
+    auto verts = getVertsC();
 
     leng = (verts[0]-verts[1]).norm();
 
@@ -36,7 +36,7 @@ Mesh::RWG::RWG(
 vec3cd Mesh::RWG::getIntegratedPlaneWave(const vec3d& kvec, bool doNumeric) const {
     using namespace Math;
 
-    const auto& Xnc = getVertsNC();
+    auto Xnc = getVertsNC();
     vec3cd rad = vec3cd::Zero();
     int iTri = 0;
 
@@ -55,7 +55,7 @@ vec3cd Mesh::RWG::getIntegratedPlaneWave(const vec3d& kvec, bool doNumeric) cons
     for (const auto& tri : getTris()) {
         const vec3d& X0 = tri.getVerts()[0];
         const auto& [scaRad, vecRad] = tri.getIntegratedPlaneWave(kvec);
-        rad += exp(iu*kvec.dot(X0)) 
+        rad += exp(iu*kvec.dot(X0)) // TODO: Address warning
                 * (scaRad * (X0 - Xnc[iTri]) + vecRad) 
                 * sign(iTri++);
     }
@@ -72,42 +72,30 @@ cmplx Mesh::RWG::getIntegratedEFIE(const std::shared_ptr<Source> src) const {
     const auto srcRWG = dynamic_pointer_cast<RWG>(src);
     cmplx intRad = 0.0;
 
-    int iObsTri = 0;
-    for (const auto& obsTri : getTris() ) {
-        const auto& obsNC = getVertsNC()[iObsTri];
+    int iObs = 0;
+    for (const auto& [obsTri, vobs] : getTrisAndVerts() ) {
 
-        int iSrcTri = 0;
-        for (const auto& srcTri : srcRWG->getTris() ) {
-            int nCommon = obsTri.getNumCommonVerts(srcTri);
-            const vec3d& srcNC = srcRWG->getVertsNC()[iSrcTri];
+        int iSrc = 0;
+        for (const auto& [srcTri, vsrc] : srcRWG->getTrisAndVerts() ) {
+            vec3d v0 = (obsTri.iTri <= srcTri.iTri) ? vobs : vsrc;
+            vec3d v1 = (obsTri.iTri <= srcTri.iTri) ? vsrc : vobs;
 
-            cmplx pairRad = 0.0;
-            for (const auto& [obs, obsWeight] : obsTri.triQuads) {
-                // Integrate e^{ikR)/R or (e^(ikR)-1)/R term (numerically)
-                for (const auto& [src, srcWeight] : srcTri.triQuads) {
-                    double r = (obs-src).norm();
+            const TriPair& triPair = glTriPairs.at(std::minmax(obsTri.iTri, srcTri.iTri));
+            const auto& [m00, m10, m01, m11] = triPair.momentsEFIE;
 
-                    cmplx G;
-                    if (nCommon >= 2) G = (Math::fzero(r) ? iu*k : (exp(iu*k*r)-1.0) / r); 
-                    else G = exp(iu*k*r) / r;
-
-                    pairRad += ((obs-obsNC).dot(src-srcNC) - 4.0 / (k*k)) * G
-                        * obsWeight * srcWeight;
-                }
-            }
+            cmplx pairRad =
+                m11 - v1.dot(m10) - v0.dot(m01) + (v0.dot(v1) - 4.0/(k*k))*m00;
 
             // For edge adjacent triangles, integrate 1/R term (analytically)
-            if (nCommon >= 2)
-                pairRad += obsTri.getDoubleIntegratedSingularEFIE(srcTri, obsNC, srcNC);
+            // Average obs-src and src-obs to preserve symmetry
+            if (triPair.nCommon >= 2)
+                pairRad += (
+                    obsTri.getDoubleIntegratedInvR(srcTri, triPair, vobs, vsrc) +
+                    srcTri.getDoubleIntegratedInvR(obsTri, triPair, vsrc, vobs)) / 2.0;
 
-                // Average obs-src and src-obs to preserve symmetry
-                //pairRad += (
-                //    obsTri.getDoubleIntegratedSingularEFIE(srcTri, obsNC, srcNC) +
-                //    srcTri.getDoubleIntegratedSingularEFIE(obsTri, srcNC, obsNC)) / 2.0;
-
-            /* For common triangles, add contribution from 1/R term (analytically)
+            /* For common triangles, integrate 1/R term (analytically)
             if (nCommon == 3)
-                pairRad = obsTri.getDoubleSelfIntegratedInvR(obsNC, srcNC);
+                pairRad += obsTri.getDoubleSelfIntegratedInvR(vobs, vsrc);
             */
            
             intRad += pairRad * Math::sign(iSrcTri) * Math::sign(iObsTri);
@@ -167,7 +155,7 @@ cmplx Mesh::RWG::getIntegratedMFIE(const std::shared_ptr<Source> src) const {
             ++iSrcTri;
         }
 
-        ++iObsTri;
+        ++iObs;
     }
 
     assert(!std::isnan(intRad.real()) && !std::isnan(intRad.imag()));

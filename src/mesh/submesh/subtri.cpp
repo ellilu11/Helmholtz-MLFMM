@@ -20,9 +20,9 @@ void Mesh::Triangle::refineVertices() {
 
         // Add midpoints of edges
         for (int i = 0; i < 3; ++i) {
-            const int idx0 = tri.iVerts[i], idx1 = tri.iVerts[(i+1)%3];
-            const vec3d mid = (glVerts[idx0] + glVerts[idx1]) / 2.0;
-            const auto& edge = makeUnordered(idx0, idx1);
+            int idx0 = tri.iVerts[i], idx1 = tri.iVerts[(i+1)%3];
+            vec3d mid = (glVerts[idx0] + glVerts[idx1]) / 2.0;
+            pair2i edge = makeUnordered(idx0, idx1);
 
             // Check if midpoint already exists
             if (edgeToMid.find(edge) != edgeToMid.end())
@@ -49,7 +49,7 @@ void Mesh::Triangle::refineTriangles() {
 
             for (int j = 0; j < 2; ++j) {
                 // Assign vertex on coarse mesh as first vertex of subtri
-                const auto& iVerts = (!j ?
+                vec3i iVerts = (!j ?
                     vec3i(idx0, idxMid, idxCenter) :
                     vec3i(idx1, idxCenter, idxMid)
                     );
@@ -74,7 +74,7 @@ void Mesh::Triangle::buildEdgeToTri() {
 
         for (int i = 0; i < 3; ++i) {
             const int idx0 = tri.iVerts[i], idx1 = tri.iVerts[(i+1)%3];
-            const auto& edge = makeUnordered(idx0, idx1);
+            pair2i edge = makeUnordered(idx0, idx1);
 
             if (fineEdgeToTri.find(edge) == fineEdgeToTri.end())
                 fineEdgeToTri.emplace(edge, vec2i(tri.iTri, -1));

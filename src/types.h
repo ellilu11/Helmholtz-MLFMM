@@ -1,5 +1,8 @@
 #pragma once
 
+#include <array>
+#include <complex>
+#include <vector>
 #include <Eigen/Dense>
 
 using cmplx = std::complex<double>;

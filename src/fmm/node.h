@@ -20,6 +20,8 @@ public:
 
     void resizeCoeffs();
 
+    void findTris();
+
     void buildRadPats();
 
     Coeffs buildMpoleCoeffs();
@@ -97,4 +99,6 @@ private:
     const double nodeLeng;
     const int level;
     const vec3d center;
+
+    std::vector<int> iTris; // indices of unique triangles of RWGs in this node
 };

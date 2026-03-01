@@ -2,6 +2,7 @@
 
 #include "../source.h"
 #include "triangle.h"
+#include "tripair.h"
 
 class Mesh::RWG : public Source {
 public:
@@ -27,9 +28,14 @@ public:
         return { glVerts[iVertsNC[0]], glVerts[iVertsNC[1]] };
     }
 
+    std::array<std::pair<Triangle, vec3d>, 2> getTrisAndVerts() const {
+        return { std::make_pair(glTris[iTris[0]], glVerts[iVertsNC[0]]),
+                 std::make_pair(glTris[iTris[1]], glVerts[iVertsNC[1]]) };
+    }
+
     vec3d getCenter() const {
-        const auto& verts = getVertsC();
-        return (verts[0] + verts[1]) / 2.0;
+        auto [v0, v1] = getVertsC();
+        return (v0 + v1) / 2.0;
     }
 
     double getLeng() const { return leng; }

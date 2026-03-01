@@ -90,7 +90,7 @@ void Mesh::printScattered(const SrcVec& srcs, const std::string& fname, int nth)
 
     // Also print out angles (coordinates of farsols)
     std::ofstream thfile(dir/"thetas.txt"); // phfile(dir/"phis.txt");
-    thfile << std::setprecision(15) << std::scientific;
+    // thfile << std::setprecision(15) << std::scientific;
 
     double phi = 0.0; // pick phi = 0
     double rcsSum = 0.0;
@@ -111,5 +111,5 @@ void Mesh::printScattered(const SrcVec& srcs, const std::string& fname, int nth)
         thfile << theta << '\n';
     }
 
-    std::cout << " Average RCS: " << rcsSum/nth << "\n";
+    std::cout << " Mean RCS: " << rcsSum/nth << "\n";
 }

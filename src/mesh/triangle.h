@@ -3,13 +3,9 @@
 #include <ranges>
 #include "mesh.h"
 
-struct Mesh::TriToRWG {
-    std::vector<int> iRWGs; // indices of RWGs containing this triangle
-    std::vector<int> isMinus; // whether this triangle is positive or negative in each RWG
-};
-
 class Mesh::Triangle {
 public:
+    friend class TriPair;
     friend class RWG;
     friend class SrcRWG;
     friend class SubRWG;
@@ -43,8 +39,6 @@ public:
 
     void buildTriQuads();
 
-    // static void buildRadMoments();
-
     static void refineVertices();
 
     static void refineTriangles();
@@ -68,12 +62,17 @@ private:
     std::vector<quadPair<vec3d>> triQuads; // triangle quadrature nodes and weights
     std::array<double, 4> selfInts;
 
-    int iTri;     // index in glTris
-    vec3i iVerts; // indices of vertices
-    int iCenter;  // index of center
-
     vec3d center;           // barycentric center 
     std::array<vec3d,3> Ds; // edge displacements (Ds[i] = Xs[i+1] - Xs[i])
     vec3d nhat;             // surface normal unit vector
     double area;            // area
+
+    vec3i iVerts; // indices of vertices
+    int iCenter;  // index of center
+    int iTri;     // index in glTris
+};
+
+struct Mesh::TriToRWG {
+    std::vector<int> iRWGs; // indices of RWGs containing this triangle
+    std::vector<int> isMinus; // whether this triangle is positive or negative in each RWG
 };

@@ -3,13 +3,13 @@
 Mesh::BC::BC(SrcRWG* const rwg) : base(rwg) {
     using namespace Math;
 
-    const auto& vertsC = base->getVertsC();
+    auto vertsC = base->getVertsC();
     vec3d ehat = (vertsC[1]-vertsC[0]).normalized(); // common edge unit vector
 
     int idx = 0;
     for (auto iVert : base->iVertsC) {
         ehat *= sign(idx);
-        const auto& vert = glVerts[iVert]; // vertsC[idx];
+        vec3d vert = glVerts[iVert]; // vertsC[idx];
         auto iSubs = vertToSubs[iVert];
 
         // Collect subRWGs at this vertex
@@ -59,7 +59,7 @@ void Mesh::BC::receiveRvals() {
     int iVert = 0;
     for (const auto& iSubs : iSubss) {
         for (int j = 0; j < iSubs.size(); ++j) {
-            const auto& subrwg = glSubrwgs[iSubs[j]];
+            const SubRWG& subrwg = glSubrwgs[iSubs[j]];
 
             rval += pcoeffss[iVert][j] // precompute fine RWG -> BC coeffs
                 * subrwg.rval 

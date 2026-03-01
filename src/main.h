@@ -3,11 +3,8 @@
 
 #pragma once
 
-#include <array>
-#include <complex>
 #include <iostream>
 #include <memory>
-#include <vector>
 #include <utility>
 
 #include "dipole.cpp"
@@ -25,6 +22,7 @@
 #include "mesh/rwg.cpp"
 #include "mesh/srcrwg.cpp"
 #include "mesh/triangle.cpp"
+#include "mesh/tripair.cpp"
 #include "mesh/triquads.cpp"
 #include "mesh/submesh/bc.cpp"
 #include "mesh/submesh/submesh.cpp"

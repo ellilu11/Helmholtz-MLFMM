@@ -2,6 +2,7 @@
 
 #include "node.h"
 
+
 struct FMM::NearPair {
     friend class Nearfield;
 
@@ -24,7 +25,9 @@ public :
     void evaluateSols();
 
 private : 
-    void findPairs();
+    void findNodePairs();
+
+    void buildTriPairs();
 
     void buildPairRads();
 

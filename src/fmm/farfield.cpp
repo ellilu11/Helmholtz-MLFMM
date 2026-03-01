@@ -4,8 +4,8 @@
  * Build radiation patterns due to sources in this leaf
  */
 void FMM::Node::buildRadPats() {
-    assert(isLeaf());
-    const auto& angles_lvl = angles[level];
+    // assert(isLeaf());
+    const Angles& angles_lvl = angles[level];
     size_t nDir = angles_lvl.getNumDirs();
 
     radPats.resize(srcs.size());
@@ -14,8 +14,8 @@ void FMM::Node::buildRadPats() {
         Coeffs radPat(nDir);
 
         for (int iDir = 0; iDir < nDir; ++iDir) {
-            const auto& kvec = angles_lvl.khat[iDir] * k;
-            const auto& toThPh = angles_lvl.toThPh[iDir];
+            vec3d kvec = angles_lvl.khat[iDir] * k;
+            const mat23d& toThPh = angles_lvl.toThPh[iDir];
 
             radPat.setCoeffAlongDir(
                 toThPh * src->getRadAlongDir(center, kvec), iDir);
@@ -55,13 +55,13 @@ FMM::Coeffs FMM::Node::mergeMpoleCoeffs() {
     for (const auto& branch : branches) {
         if (branch->isSrcless()) continue;
 
-        const auto& branchCoeffs = (branch->isLeaf() ? 
+        const Coeffs& branchCoeffs = (branch->isLeaf() ? 
             branch->buildMpoleCoeffs() : branch->mergeMpoleCoeffs() );
 
         auto start = Clock::now();
 
         // Shift branch coeffs to center of this node
-        const auto& dX = center - branch->getCenter();
+        vec3d dX = center - branch->getCenter();
 
         Coeffs shiftedCoeffs(mDir);
         for (int iDir = 0; iDir < mDir; ++iDir) {
@@ -97,8 +97,8 @@ void FMM::Node::translateCoeffs() {
     Eigen::Map<arrXcd> localPhi(localCoeffs.phi.data(), nDir);
 
     for (const auto& node : iList) {
-        const auto& dX = center - node->center;
-        const auto& transl_dX = transl.at(dX/nodeLeng);
+        vec3d dX = center - node->center;
+        arrXcd transl_dX = transl.at(dX/nodeLeng);
 
         Eigen::Map<arrXcd> mpoleTheta(node->coeffs.theta.data(), nDir);
         Eigen::Map<arrXcd> mpolePhi(node->coeffs.phi.data(), nDir);
@@ -108,7 +108,7 @@ void FMM::Node::translateCoeffs() {
     }
 
     // Apply integration weights
-    const auto& angles_lvl = angles[level];
+    const Angles& angles_lvl = angles[level];
     auto [nth, nph] = angles_lvl.getNumAngles();
     double phiWeight = 2.0*PI / static_cast<double>(nph);
 
@@ -136,11 +136,11 @@ FMM::Coeffs FMM::Node::getShiftedLocalCoeffs(int branchIdx) const {
     if (iList.empty()) return outCoeffs;
 
     // Shift local coeffs to center of branch
-    const auto& dX = branches[branchIdx]->getCenter() - center;
+    vec3d dX = branches[branchIdx]->getCenter() - center;
 
     Coeffs shiftedCoeffs(mDir);
     for (int iDir = 0; iDir < mDir; ++iDir) {
-        const vec3d& kvec = angles[level].khat[iDir] * k;
+        vec3d kvec = angles[level].khat[iDir] * k;
         cmplx shift = exp(iu*kvec.dot(dX));
 
         shiftedCoeffs.theta[iDir] = shift * localCoeffs.theta[iDir];
@@ -190,7 +190,7 @@ void FMM::Node::evalFarSols() {
     for (const auto& obs : srcs) {
         cmplx intRad = 0;
 
-        auto& radPat = radPats[iObs++];
+        Coeffs& radPat = radPats[iObs++];
         Eigen::Map<arrXcd> radPatTheta(radPat.theta.data(), nDir);
         Eigen::Map<arrXcd> radPatPhi(radPat.phi.data(), nDir);
 

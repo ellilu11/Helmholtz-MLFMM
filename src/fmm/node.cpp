@@ -1,4 +1,5 @@
 #include "node.h"
+#include "../mesh/srcrwg.h"
 
 /* Node(particles,branchIdx,base)
  * particles : list of particles contained in this node
@@ -114,6 +115,8 @@ void FMM::Node::buildLists() {
 
     if (isLeaf()) leaves.push_back(shared_from_this());
 
+    findTris(); // TODO: Only call for leaves and non-near stems
+
     for (const auto& branch : branches)
         branch->buildLists();
 }
@@ -127,4 +130,25 @@ void FMM::Node::resizeCoeffs() {
 
     for (const auto& branch : branches)
         branch->resizeCoeffs();
+}
+
+/* findTris()
+ * Find all unique triangles of RWGs in this node
+ */
+void FMM::Node::findTris() {
+    if (isSrcless()) return;
+
+    for (const auto& src : srcs) {
+        if (!src->isSrcType<Mesh::SrcRWG>()) continue;
+        const auto rwg = dynamic_pointer_cast<Mesh::SrcRWG>(src);
+
+        auto [iTri0, iTri1] = rwg->getTrisIdx();
+        iTris.push_back(iTri0);
+        iTris.push_back(iTri1);
+    }
+
+    // std::cout << "# tris in leaf: " << iTris.size() << '\n';
+    std::sort(iTris.begin(), iTris.end());
+    iTris.erase(std::unique(iTris.begin(), iTris.end()), iTris.end());
+    // std::cout << "# unique tris in leaf: " << iTris.size() << '\n';
 }

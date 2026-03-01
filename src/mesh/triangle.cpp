@@ -11,7 +11,7 @@ std::vector<quadPair<vec3d>> Mesh::Triangle::quadCoeffs;
 Mesh::Triangle::Triangle(const vec3i& iVerts, int iTri)
     : iVerts(iVerts), iTri(iTri)
 {
-    const auto& Xs = getVerts();
+    auto Xs = getVerts();
     center = (Xs[0] + Xs[1] + Xs[2]) / 3.0;
 
     for (int i = 0; i < 3; ++i) Ds[i] = Xs[(i+1)%3] - Xs[i];
@@ -41,7 +41,7 @@ int Mesh::Triangle::getNumCommonVerts(const Triangle& other) const {
 }
 
 void Mesh::Triangle::buildSelfIntegratedInvR() {
-    const auto& [V0, V1, V2] = getVerts();
+    auto [V0, V1, V2] = getVerts();
     double a00 = V0.dot(V0), a01 = V0.dot(V1), a02 = V0.dot(V2);
     double a11 = V1.dot(V1), a12 = V1.dot(V2), a22 = V2.dot(V2);
     double l0 = (V1-V2).norm(), l1 = (V2-V0).norm(), l2 = (V0-V1).norm();
@@ -89,16 +89,16 @@ void Mesh::Triangle::buildSelfIntegratedInvR() {
     selfInts[3] = (log0/l0 + log1/l1 + log2/l2) / 3.0;
 }
 
-double Mesh::Triangle::getDoubleSelfIntegratedInvR(const vec3d& obsNC, const vec3d& srcNC) const
+double Mesh::Triangle::getDoubleSelfIntegratedInvR(const vec3d& vobs, const vec3d& vsrc) const
 {
     const auto [V0, V1, V2] = getVerts();
     double a00 = V0.dot(V0), a01 = V0.dot(V1), a02 = V0.dot(V2); // cache?
-    const vec3d& sumNC = srcNC + obsNC;
+    const vec3d& vsum = vsrc + vobs;
     
     return selfInts[0]
-        + selfInts[1] * (-2.0*a00 + 2.0*a01 + (V0-V1).dot(sumNC))
-        + selfInts[2] * (-2.0*a00 + 2.0*a02 + (V0-V2).dot(sumNC))
-        + selfInts[3] * (a00 - V0.dot(sumNC) + srcNC.dot(obsNC) - 4.0/(k*k));
+        + selfInts[1] * (-2.0*a00 + 2.0*a01 + (V0-V1).dot(vsum))
+        + selfInts[2] * (-2.0*a00 + 2.0*a02 + (V0-V2).dot(vsum))
+        + selfInts[3] * (a00 - V0.dot(vsum) + vsrc.dot(vobs) - 4.0/(k*k));
 }
 
 std::pair<double, vec3d>
@@ -119,10 +119,10 @@ Mesh::Triangle::getIntegratedInvR(const vec3d& obs, bool doNumeric) const
         return std::make_pair(scaRad, vecRad);
     }
 
-    const auto& Xs = getVerts();
-    double d = std::fabs(nhat.dot(obs-Xs[0])), dsq = d*d;
+    auto [X0, X1, X2] = getVerts();
+    double d = std::fabs(nhat.dot(obs-X0)), dsq = d*d;
     std::array<vec3d, 3> Ps =
-        { proj(Xs[0])-obsProj, proj(Xs[1])-obsProj, proj(Xs[2])-obsProj };
+        { proj(X0)-R, proj(X1)-R, proj(X2)-R };
 
     for (int i = 0; i < 3; ++i) {
         const vec3d& P0 = Ps[i];
@@ -210,15 +210,19 @@ Mesh::Triangle::getIntegratedInvRcubed(const vec3d& obs, bool doNumeric) const
 double Mesh::Triangle::getDoubleIntegratedSingularEFIE(
     const Triangle& srcTri, const vec3d& obsNC, const vec3d& srcNC) const
 {
-    const vec3d& srcNCproj = srcTri.proj(srcNC);
+    const vec3d& vsrcProj = srcTri.proj(vsrc);
+
     double rad = 0.0;
-
+    size_t iObs = 0;
     for (const auto& [obs, obsWeight] : triQuads) {
-        const vec3d& obsProj = srcTri.proj(obs);
+        vec3d obsProj = srcTri.proj(obs);
+        auto [scaRad, vecRad] = (iTri <= srcTri.iTri ? 
+            triPair.integratedInvR[iObs] : triPair.integratedInvR2[iObs]);
 
-        const auto& [scaRad, vecRad] = srcTri.getIntegratedInvR(obs);
-        rad += ((obs-obsNC).dot(vecRad+(obsProj-srcNCproj)*scaRad) - 4.0/(k*k)*scaRad)
+        rad += ((obs-vobs).dot(vecRad+(obsProj-vsrcProj)*scaRad) - 4.0/(k*k)*scaRad)
             * obsWeight;
+
+        ++iObs;
     }
 
     return rad;
@@ -258,7 +262,6 @@ Mesh::Triangle::getIntegratedPlaneWave(const vec3d& kvec) const
 {
     using namespace Math;
 
-    const auto& Xs = getVerts();
     double alpha = kvec.dot(Ds[0]), beta = -kvec.dot(Ds[2]), gamma = alpha-beta;
     double alphasq = alpha*alpha, betasq = beta*beta;
     cmplx expI_alpha = exp(iu*alpha), expI_beta = exp(iu*beta);
@@ -291,7 +294,7 @@ Mesh::Triangle::getIntegratedPlaneWave(const vec3d& kvec) const
 
 /*
 cmplx Mesh::Triangle::getDuffyIntegrated(
-    const vec3d& src, const vec3d& obsNC, const vec3d& srcNC) const 
+    const vec3d& src, const vec3d& vobs, const vec3d& vsrc) const 
 {
     const double k = FMM::wavenum;
 
@@ -314,7 +317,7 @@ cmplx Mesh::Triangle::getDuffyIntegrated(
                 const double alpha = dr / u;
 
                 triRad += 
-                    ((obs-obsNC).dot(src-srcNC) - 4.0 / (k*k))
+                    ((obs-vobs).dot(src-vsrc) - 4.0 / (k*k))
                     * exp(iu*k*dr) / alpha // u * Math::helmholtzG(dr, k)
                     * uweight * vweight;
             }
@@ -329,33 +332,6 @@ cmplx Mesh::Triangle::getDuffyIntegrated(
     return rad;
 }*/
 
-/*
-void Mesh::Triangle::buildRadMoments() {
-    // TODO: Only loop over triangles in nearfield of each other
-    for (size_t iObs = 0; iObs < glTris.size(); ++iObs) {
-        for (size_t iSrc = 0; iSrc <= iObs; ++iSrc) {
-            const auto& obsTri = glTris[iObs];
-            const auto& srcTri = glTris[iSrc];
-
-            const auto key = makeUnordered(obsTri.iTri, srcTri.iTri);
-
-            QuadMoments moments = { 0.0, vec3cd::Zero(), vec3cd::Zero(), 0.0 };
-
-            for (const auto& [obs, obsWeight] : obsTri.quads) {
-                for (const auto& [src, srcWeight] : srcTri.quads) {
-                    const cmplx coeff = 
-                        Math::helmholtzG((obs-src).norm(), FMM::wavenum) * obsWeight * srcWeight;
-                    get<0>(moments) += obs.dot(src) * coeff;
-                    get<1>(moments) += src * coeff;
-                    get<2>(moments) += obs * coeff;
-                    get<3>(moments) += coeff;
-                }
-            }
-
-            glRadMoments.emplace(key, moments);
-        }
-    }
-}*/
 
 /*
 cmplx Mesh::Triangle::getSurfaceCurrent() const {

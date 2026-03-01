@@ -119,7 +119,7 @@ HashMap<interpPair> FMM::Tables::getInterpPsi() {
     int order = config.interpOrder;
 
     // Find all unique psi = acos(khat.dot(rhat))
-    const auto& angles_lvl = angles[level];
+    const Angles& angles_lvl = angles[level];
     const auto [nth, nph] = angles_lvl.getNumAngles();
     int nDir = nth*nph;
 
@@ -127,7 +127,7 @@ HashMap<interpPair> FMM::Tables::getInterpPsi() {
 
     size_t m = 0;
     for (size_t iDir = 0; iDir < nDir; ++iDir) {
-        const auto& khat = angles_lvl.khat[iDir];
+        vec3d khat = angles_lvl.khat[iDir];
 
         for (const auto& rhat : rhats)
             psis[m++] = acos(khat.dot(rhat));
@@ -165,11 +165,11 @@ HashMap<interpPair> FMM::Tables::getInterpPsi() {
 void FMM::Tables::buildTranslationTable() {
     int order = config.interpOrder;
 
-    const auto& alphas = getAlpha();
-    const auto& interpPsis = getInterpPsi();
+    const auto alphas = getAlpha();
+    const auto interpPsis = getInterpPsi();
 
-    const auto& angles_lvl = angles[level];
-    const auto [nth, nph] = angles_lvl.getNumAngles();
+    const Angles& angles_lvl = angles[level];
+    auto [nth, nph] = angles_lvl.getNumAngles();
     int nDir = nth*nph;
 
     int nps = std::floor(config.overInterp*(nth-1));
@@ -177,9 +177,8 @@ void FMM::Tables::buildTranslationTable() {
     transl.reserve(dXs.size());
     for (const auto& dX : dXs) {
         double r = dX.norm();
-        const auto& rhat = dX / r;
-
-        const auto& alpha_dX = alphas.at(r);
+        vec3d rhat = dX / r;
+        vecXcd alpha_dX = alphas.at(r);
 
         arrXcd transl_dX(nDir);
         for (int iDir = 0; iDir < nDir; ++iDir) {
