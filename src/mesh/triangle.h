@@ -24,7 +24,7 @@ public:
     std::pair<double,vec3d> getIntegratedInvR(const vec3d&, bool = 0) const;
 
     double getDoubleIntegratedInvR(
-        const Triangle&, const vec3d&, const vec3d&) const;
+        const Triangle&, const TriPair&, const vec3d&, const vec3d&) const;
 
     std::pair<cmplx,vec3cd> getIntegratedPlaneWave(const vec3d&) const;
 
@@ -33,8 +33,6 @@ public:
     // cmplx getDuffyIntegrated(const vec3d&, const vec3d&, const vec3d&) const;
 
     void buildTriQuads();
-
-    // static void buildRadMoments();
 
     static void refineVertices();
 

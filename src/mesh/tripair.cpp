@@ -32,10 +32,9 @@ void Mesh::TriPair::buildMomentsEFIE() {
         for (const auto& [src, srcWeight] : srcTri.triQuads) {
             double r = (obs-src).norm();
 
-            cmplx G;
-            if (nCommon >= 2) G = (Math::fzero(r) ? iu*k : (exp(iu*k*r)-1.0) / r);
-            else G = exp(iu*k*r) / r;
-            G *= obsWeight * srcWeight;
+            cmplx G = obsWeight * srcWeight;
+            if (nCommon >= 2) G *= (Math::fzero(r) ? iu*k : (exp(iu*k*r)-1.0) / r);
+            else G *= exp(iu*k*r) / r;
 
             auto& [m00, m10, m01, m11] = momentsEFIE;
             m00 += G;
@@ -55,31 +54,6 @@ void Mesh::TriPair::buildIntegratedInvR() {
     for (const auto& [src, weight] : srcTri.triQuads)
         integratedInvR2.push_back(obsTri.getIntegratedInvR(src));
 }
-
-/*
-double Mesh::TriPair::getDoubleIntegratedInvR(const vec3d& vobs, const vec3d& vsrc, bool isSym) const
-{
-    auto [obsTri, srcTri] = getTriPair();
-    if (isSym) std::swap(obsTri, srcTri);
-    const vec3d& vsrcProj = srcTri.proj(vsrc);
-
-    double rad = 0.0;
-    size_t iNode = 0;
-    for (const auto& [obs, obsWeight] : obsTri.triQuads) {
-        const vec3d& obsProj = srcTri.proj(obs);
-
-        const auto& [scaRad, vecRad] = 
-            (isSym ? 
-            integratedInvR2[iNode] : 
-            integratedInvR[iNode]);
-        rad += ((obs-vobs).dot(vecRad+(obsProj-vsrcProj)*scaRad) - 4.0/(k*k)*scaRad)
-            * obsWeight;
-
-        ++iNode;
-    }
-
-    return rad;
-}*/
 
 /*
 void Mesh::TriPair::buildMomentsInvR() {

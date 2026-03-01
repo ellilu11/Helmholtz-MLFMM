@@ -17,6 +17,22 @@ void FMM::buildRadPats() {
         leaf->buildRadPats();
 }
 
+/*
+void FMM::buildRadPats() {
+    // Group leaves by level
+    std::vector<NodeVec> leveledLeaves(maxLevel+1);
+    for (const auto& leaf : leaves)
+        leveledLeaves[leaf->getLevel()].push_back(leaf);
+    
+    for (int level = 0; level <= maxLevel; ++level) {
+        const auto& leaves = leveledLeaves[level];
+        if (leaves.empty()) continue;
+
+        for (const auto& leaf : leveledLeaves[level])
+            leaf->buildRadPats();
+    }
+}*/
+
 void FMM::evaluateSols() {
     auto start = Clock::now();
     for (const auto& leaf : leaves)

@@ -76,13 +76,10 @@ cmplx Mesh::RWG::getIntegratedRad(const std::shared_ptr<Source> src) const {
 
         int iSrc = 0;
         for (const auto& [srcTri, vsrc] : srcRWG->getTrisAndVerts() ) {
-            const vec3d& v0 = (obsTri.iTri < srcTri.iTri) ? vobs : vsrc;
-            const vec3d& v1 = (obsTri.iTri < srcTri.iTri) ? vsrc : vobs;
+            const vec3d& v0 = (obsTri.iTri <= srcTri.iTri) ? vobs : vsrc;
+            const vec3d& v1 = (obsTri.iTri <= srcTri.iTri) ? vsrc : vobs;
 
-            const auto& iTriPair = std::minmax(obsTri.iTri, srcTri.iTri);
-            // std::cout << "(" << iTriPair.first << "," << iTriPair.second << ") ";
-
-            const auto& triPair = glTriPairs.at(iTriPair);
+            const auto& triPair = glTriPairs.at(std::minmax(obsTri.iTri, srcTri.iTri));
             const auto& [m00, m10, m01, m11] = triPair.momentsEFIE;
 
             cmplx pairRad =
@@ -92,15 +89,13 @@ cmplx Mesh::RWG::getIntegratedRad(const std::shared_ptr<Source> src) const {
             // Average obs-src and src-obs to preserve symmetry
             if (triPair.nCommon >= 2)
                 pairRad += (
-                    obsTri.getDoubleIntegratedInvR(srcTri, vobs, vsrc) +
-                    srcTri.getDoubleIntegratedInvR(obsTri, vsrc, vobs)) / 2.0;
+                    obsTri.getDoubleIntegratedInvR(srcTri, triPair, vobs, vsrc) +
+                    srcTri.getDoubleIntegratedInvR(obsTri, triPair, vsrc, vobs)) / 2.0;
 
-            /* For common triangles, add contribution from 1/R term (analytically)
+            /* For common triangles, integrate 1/R term (analytically)
             if (nCommon == 3)
                 pairRad += obsTri.getDoubleSelfIntegratedInvR(vobs, vsrc);
             */
-
-            // std::cout << "   Rad of tripair (" << obsTri.iTri << "," << srcTri.iTri << "): " << pairRad << '\n';
 
             intRad += pairRad * Math::sign(iSrc) * Math::sign(iObs);
             ++iSrc;

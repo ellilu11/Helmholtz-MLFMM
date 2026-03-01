@@ -155,9 +155,8 @@ Mesh::Triangle::getIntegratedInvR(const vec3d& obs, bool doNumeric) const
 }
 
 double Mesh::Triangle::getDoubleIntegratedInvR(
-    const Triangle& srcTri, const vec3d& vobs, const vec3d& vsrc) const
+    const Triangle& srcTri, const TriPair& triPair, const vec3d& vobs, const vec3d& vsrc) const
 {
-    const auto& triPair = glTriPairs.at(std::minmax(iTri, srcTri.iTri));
     const vec3d& vsrcProj = srcTri.proj(vsrc);
 
     double rad = 0.0;

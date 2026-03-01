@@ -3,24 +3,10 @@
 
 FMM::Nearfield::Nearfield() {
     findNodePairs();
-
-    auto start = Clock::now();
     buildTriPairs();
-    Time duration_ms = Clock::now() - start;
-    std::cout << "  Built triangle pairs in " << duration_ms.count() << " ms\n";
-    // std::cout << "  # tri pairs: " << Mesh::glTriPairs.size() << '\n';
 
-    //for (const auto& triPair : Mesh::glTriPairs)
-    //    std::cout << "("
-    //        << triPair.first.first << ","
-    //        << triPair.first.second << ") ";
-    //std::cout << '\n';
-
-    start = Clock::now();
     buildPairRads();
     buildSelfRads();
-    duration_ms = Clock::now() - start;
-    std::cout << "  Built nearfield rads in " << duration_ms.count() << " ms\n";
 
     Mesh::glTriPairs.clear();
 }
@@ -52,7 +38,6 @@ void FMM::Nearfield::buildTriPairs() {
     for (const auto& selfPair : selfPairs) {
         const auto& [leaf, srcLeaf] = selfPair.pair;
         assert(leaf == srcLeaf);
-     
         const auto& iTris = leaf->iTris;
 
         for (auto iTri0 : iTris)
@@ -66,10 +51,7 @@ void FMM::Nearfield::buildTriPairs() {
 
     for (const auto& nearPair : nearPairs) {
         const auto& [obsLeaf, srcNode] = nearPair.pair;
-     
-        const auto 
-            &iTris0 = obsLeaf->iTris,
-            &iTris1 = srcNode->iTris;
+        const auto &iTris0 = obsLeaf->iTris, &iTris1 = srcNode->iTris;
 
         for (auto iTri0 : iTris0)
             for (auto iTri1 : iTris1) {
