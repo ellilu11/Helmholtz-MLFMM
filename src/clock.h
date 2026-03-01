@@ -19,16 +19,6 @@ struct ClockTimes {
 
     void resetTimes() { *this = {}; }
 
-    friend ClockTimes operator/(ClockTimes t, double val) {
-        t.S2M /= val;
-        t.M2M /= val;
-        t.M2L /= val;
-        t.L2L /= val;
-        t.L2T /= val;
-        t.S2T /= val;
-        return t;
-    }
-
     Time S2M{};
     Time M2M{};
     Time M2L{};

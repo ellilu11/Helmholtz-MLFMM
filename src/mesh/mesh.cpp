@@ -111,5 +111,5 @@ void Mesh::printScattered(const SrcVec& srcs, const std::string& fname, int nth)
         thfile << theta << '\n';
     }
 
-    std::cout << " Average RCS: " << rcsSum/nth << "\n";
+    std::cout << " Mean RCS: " << rcsSum/nth << "\n";
 }

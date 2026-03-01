@@ -127,8 +127,6 @@ void Solver::solve(const std::string& fname) {
     int iter = 0;
     do {
         // if (iter && !(iter%10)) std::cout << "   #" << iter << '\n';
-        auto iter_start = Clock::now();
-
         updateRvec(iter);
 
         iterateArnoldi(iter);
@@ -140,8 +138,8 @@ void Solver::solve(const std::string& fname) {
 
     Time duration_ms = Clock::now() - start;
     std::cout << " in " << duration_ms.count() << " ms\n";
-    t = t/static_cast<double>(iter); // mean times per iteration
     t.printTimes();
+    t.resetTimes();
 
     std::cout << "   # iterations: " << iter << "\n";
 

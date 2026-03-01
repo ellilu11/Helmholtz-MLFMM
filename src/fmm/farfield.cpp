@@ -23,15 +23,6 @@ void FMM::Node::buildRadPats() {
 
         radPats[iSrc++] = std::move(radPat);
     }
-
-    /*
-    iSrc = 0;
-    for (const auto& src : srcs) {
-        std::cout << "   Radiation pattern for source " << src->getIdx() << ":\n";
-        for (int iDir = 0; iDir < nDir; ++iDir) {
-            std::cout << radPats[iSrc].getVecAlongDir(iDir) << '\n';
-        }
-    }*/
 }
 
 /* buildMpoleCoeffs()
@@ -48,8 +39,6 @@ FMM::Coeffs FMM::Node::buildMpoleCoeffs() {
         coeffs += states.lvec[src->getIdx()] * radPats[iSrc++];
 
     t.S2M += Clock::now() - start;
-
-    // std::cout << std::setprecision(6) << coeffs;
 
     return coeffs;
 }

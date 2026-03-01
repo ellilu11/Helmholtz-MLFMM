@@ -62,7 +62,7 @@ int main() {
     std::cout << " in " << duration_ms.count() << " ms\n\n";
 
     // ==================== Solve iterative FMM ================ //
-    std::cout << " Solving w/ FMM...                ";
+    std::cout << " Solving with FMM...              ";
 
     constexpr int MAX_ITER = 500;
     constexpr double EPS = 1.0E-6;
@@ -92,7 +92,7 @@ int main() {
     duration_ms = Clock::now() - start;
     std::cout << " in " << duration_ms.count() << " ms\n\n";
 
-    std::cout << " Solving w/ direct...             ";
+    std::cout << " Solving with direct...           ";
     solver = std::make_unique<Solver>(srcs, root, nf, MAX_ITER, EPS);
     solver->solve("currDir.txt");
 
