@@ -37,43 +37,41 @@ int main() {
     std::cout << "   Max node level: " << Node::getMaxLvl() << "\n\n";
 
     // ==================== Build nearfield ===================== //
-    std::cout << " Building nearfield matrix...\n";
+    std::cout << " Building nearfield matrix...     ";
 
     auto start = Clock::now();
     auto nf = std::make_shared<Nearfield>();
     Time duration_ms = Clock::now() - start;
-    std::cout << "   Elapsed time: " << duration_ms.count() << " ms\n\n";
+    std::cout << " in " << duration_ms.count() << " ms\n\n";
 
     // ==================== Build FMM operators =============== //
-    std::cout << " Building FMM operators...\n";
+    std::cout << " Building FMM operators...        ";
 
     start = Clock::now();
     if (!isRootLeaf) buildTables();
     duration_ms = Clock::now() - start;
-    std::cout << "   Elapsed time: " << duration_ms.count() << " ms\n\n";
+    std::cout << " in " << duration_ms.count() << " ms\n\n";
 
     // ==================== Build expansions ==================== //
-    std::cout << " Building plane wave expansions...\n";
+    std::cout << " Building plane wave expansions...";
 
     start = Clock::now();
     root->resizeCoeffs(); // TODO: Hide this call
     if(!isRootLeaf) buildRadPats();
     duration_ms = Clock::now() - start;
-    std::cout << "   Elapsed time: " << duration_ms.count() << " ms\n\n";
+    std::cout << " in " << duration_ms.count() << " ms\n\n";
 
     // ==================== Solve iterative FMM ================ //
-    std::cout << " Solving w/ FMM...\n";
+    std::cout << " Solving w/ FMM...                ";
 
     constexpr int MAX_ITER = 500;
     constexpr double EPS = 1.0E-6;
 
     auto solver = std::make_unique<Solver>(srcs, root, nf, MAX_ITER, EPS);
-
-    start = Clock::now();
     solver->solve("curr.txt");
-    duration_ms = Clock::now() - start;
+
     Time duration_ms0 = Clock::now() - start0;
-    std::cout << "   FMM total elapsed time: " << duration_ms0.count() << " ms\n\n";
+    std::cout << " FMM total elapsed time: " << duration_ms0.count() << " ms\n\n";
 
     Mesh::printScattered(srcs, "ff_n"+to_string(nsrcs)+".txt", 200);
 
@@ -87,19 +85,19 @@ int main() {
     root = std::make_shared<Node>(srcs, 0, nullptr, 1);
     root->buildLists();
 
-    std::cout << "\n Building nearfield matrix...\n";
+    std::cout << "\n Building nearfield matrix...     ";
 
     start = Clock::now();
     nf = std::make_shared<Nearfield>();
     duration_ms = Clock::now() - start;
-    std::cout << "   Elapsed time: " << duration_ms.count() << " ms\n\n";
+    std::cout << " in " << duration_ms.count() << " ms\n\n";
 
-    std::cout << " Solving w/ direct...\n";
+    std::cout << " Solving w/ direct...             ";
     solver = std::make_unique<Solver>(srcs, root, nf, MAX_ITER, EPS);
-
     solver->solve("currDir.txt");
+
     duration_ms0 = Clock::now() - start0;
-    std::cout << "   Direct total elapsed time: " << duration_ms0.count() << " ms\n\n";
+    std::cout << " Direct total elapsed time: " << duration_ms0.count() << " ms\n\n";
 
     Mesh::printScattered(srcs, "ffDir_n"+to_string(nsrcs)+".txt", 200);
 
