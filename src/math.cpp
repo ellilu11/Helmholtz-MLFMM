@@ -57,7 +57,7 @@ std::pair<std::vector<double>, std::vector<double>> Math::gaussLegendre(int l, d
 
     std::vector<double> nodes(l);
     std::vector<double> weights(l);
-    const int kmax = l/2; // # positive nodes = integer part of l/2
+    size_t kmax = l/2; // # positive nodes = integer part of l/2
 
     if (l%2) { // if order is odd, middle node is at (a+b)/2
         nodes[kmax] = mid;
@@ -77,8 +77,8 @@ std::pair<std::vector<double>, std::vector<double>> Math::gaussLegendre(int l, d
             }
         }
 
-        const size_t kplus = l%2 ? kmax+1+k : kmax+k;
-        const size_t kminus = kmax-1-k;
+        size_t kplus = l%2 ? kmax+1+k : kmax+k;
+        size_t kminus = kmax-1-k;
 
         nodes[kplus] = leng/2.0*x_k + mid;
         nodes[kminus] = -leng/2.0*x_k + mid;
@@ -102,13 +102,13 @@ std::pair<std::vector<double>, std::vector<double>> Math::gaussLegendre(int l, d
 int Math::getNearGLNodeIdx(
     const double xi, const int m, const double a = -1.0, const double b = 1.0) {
 
-    const double leng = b - a;
-    const double mid = (a + b)/2.0;
+    double leng = b - a;
+    double mid = (a + b)/2.0;
     assert(leng > 0);
 
-    const double x = 2.0*(xi - mid) / leng; // Change to interval [-1,1]
+    double x = 2.0*(xi - mid) / leng; // Change to interval [-1,1]
 
-    const int idx = m - floor(((4.0*m+2.0) * acos(x) / PI + 1.0)/4.0) - 1;
+    int idx = m - floor(((4.0*m+2.0) * acos(x) / PI + 1.0)/4.0) - 1;
 
     assert(idx >= -1 && idx < m);
 

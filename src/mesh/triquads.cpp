@@ -165,10 +165,10 @@ void Mesh::Triangle::buildQuadCoeffs(Precision prec) {
 
 // Build triangular quadrature nodes and weights
 void Mesh::Triangle::buildTriQuads() {
-    const auto& Xs = getVerts();
+    auto [X0, X1, X2] = getVerts();
 
     auto baryToPos = [&](const vec3d& ws) {
-        return ws[0]*Xs[0] + ws[1]*Xs[1] + ws[2]*Xs[2];
+        return ws[0]*X0 + ws[1]*X1 + ws[2]*X2;
     };
 
     triQuads.reserve(numQuads);

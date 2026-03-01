@@ -63,10 +63,6 @@ private:
     std::vector<quadPair<vec3d>> triQuads; // triangle quadrature nodes and weights
     std::array<double, 4> selfInts;
 
-    int iTri;     // index in glTris
-    vec3i iVerts; // indices of vertices
-    int iCenter;  // index of center
-
     vec3d center;           // barycentric center 
     std::array<vec3d,3> Ds; // edge displacements (Ds[i] = Xs[i+1] - Xs[i])
     vec3d nhat;             // surface normal unit vector

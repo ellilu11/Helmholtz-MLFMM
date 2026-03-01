@@ -2,16 +2,16 @@
 
 void FMM::Angles::buildAngularSamples(int level)
 {
-    const double nodeLeng = config.rootLeng / pow(2.0, level);
+    double nodeLeng = config.rootLeng / pow(2.0, level);
 
     // Use excess bandwidth formula
-    const int tau = ceil((1.73*k*nodeLeng +
+    int tau = ceil((1.73*k*nodeLeng +
         2.16*pow(config.digits, 2.0/3.0)*pow(k*nodeLeng, 1.0/3.0)));
 
     L = floor(0.50*tau); // TODO: Find optimal formula
 
     // Construct thetas
-    const int nth = tau+1;
+    int nth = tau+1;
     std::tie(thetas, weights) = Math::gaussLegendre(nth, 0.0, PI);
 
     // Absorb sin(theta) into weights
@@ -20,7 +20,7 @@ void FMM::Angles::buildAngularSamples(int level)
     );
 
     // Construct phis
-    const int nph = 2*nth;
+    int nph = 2*nth;
     phis.resize(nph);
 
     for (int iph = 0; iph < nph; ++iph)

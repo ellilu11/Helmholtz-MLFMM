@@ -3,7 +3,7 @@
 Mesh::SubRWG::SubRWG(int iSub, const vec4i& idx4)
     : RWG(nullptr, iSub, idx4)
 {
-    const auto& [tri0, tri1] = getTris();
+    auto [tri0, tri1] = getTris();
 
     // If an RWG straddles two coarse mesh vertices, 
     // it does not contribute to the BC function at either vertex
@@ -75,7 +75,7 @@ void Mesh::SubRWG::buildMassCoeffs() {
 
             // Only loop over RWGs sharing a triangle with this RWG
             for (auto iSubs : triToSubs[iTri]) {
-                const auto& other = glSubrwgs[iSubs];
+                const SubRWG& other = glSubrwgs[iSubs];
 
                 if (rwg.iSrc < other.iSrc) {
                     massCoeffs.push_back(rwg.getMassCoeff(other));
@@ -105,15 +105,15 @@ void Mesh::SubRWG::buildMassCoeffs() {
 }
 
 double Mesh::SubRWG::getMassCoeff(const SubRWG& other) const {
-    const auto& Xnc0 = getVertsNC();
-    const auto& Xnc1 = other.getVertsNC();
+    auto Xnc0 = getVertsNC();
+    auto Xnc1 = other.getVertsNC();
     
     // double massNum = 0.0;
     double mass = 0.0;
 
     size_t iPair0 = 0;
     for (const auto& iTri0 : iTris) {
-        const auto& tri0 = glTris[iTri0];
+        const Triangle& tri0 = glTris[iTri0];
 
         size_t iPair1 = 0;
         for (const auto& iTri1 : other.iTris) {
@@ -125,7 +125,7 @@ double Mesh::SubRWG::getMassCoeff(const SubRWG& other) const {
                 //            / (2.0 * tri0.area);
 
                 // Analytic
-                const auto& [X0, X1, X2] = tri0.getVerts();
+                auto [X0, X1, X2] = tri0.getVerts();
                 const double sum =
                     (X0.squaredNorm() + X1.squaredNorm() + X2.squaredNorm() + 
                      X0.dot(X1) + X0.dot(X2) + X1.dot(X2)) / 12.0
@@ -150,8 +150,8 @@ double Mesh::SubRWG::getMassCoeff(const SubRWG& other) const {
 }
 
 void Mesh::SubRWG::setOriented(int iVert, const vec3d& nhat, const vec3d& ehat) {
-    const vec3d& Xref = glVerts[iVert]; // vertex on coarse mesh
-    const auto& [X0,X1] = getVertsC(); // vertices of common edge
+    vec3d Xref = glVerts[iVert]; // vertex on coarse mesh
+    auto [X0,X1] = getVertsC(); // vertices of common edge
 
     auto [i0, i1] = iVertsC;
     assert(i0 == iVert || i1 == iVert);

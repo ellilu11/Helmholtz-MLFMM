@@ -23,6 +23,8 @@ add_executable (MLFMA "src/main.cpp" "src/main.h")
 
 target_link_libraries(MLFMA PRIVATE eigen)
 
+# target_compile_options(MLFMA PRIVATE $<$<CONFIG:Release>:/Wall>)
+
 # Add test executable
 add_executable (test "test/tRwg.cpp" "src/main.h")
 

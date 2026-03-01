@@ -135,7 +135,7 @@ void Solver::solve(const std::string& fname) {
     int iter = 0;
 
     do {
-        if (!(iter%5)) std::cout << " Do iteration #" << iter << '\n';
+        if (!(iter%10)) std::cout << " Do iteration #" << iter << '\n';
         auto iter_start = Clock::now();
 
         updateRvec(iter);
@@ -153,7 +153,7 @@ void Solver::solve(const std::string& fname) {
 
     std::cout << " Solving for current...\n";
 
-    const auto& Hp = Hmat.block(0, 0, Hmat.rows()-1, Hmat.cols());
+    const matXcd& Hp = Hmat.block(0, 0, Hmat.rows()-1, Hmat.cols());
     vecXcd yvec = Hp.lu().solve(gvec.segment(0, iter));
     states.currents = Qmat.leftCols(iter) * yvec;
     std::cout << std::setprecision(9) 
