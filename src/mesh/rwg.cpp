@@ -90,19 +90,19 @@ cmplx Mesh::RWG::getIntegratedEFIE(const std::shared_ptr<Source> src) const {
             // Average obs-src and src-obs to preserve symmetry
             if (triPair.nCommon >= 2)
                 pairRad += (
-                    obsTri.getDoubleIntegratedInvR(srcTri, triPair, vobs, vsrc) +
-                    srcTri.getDoubleIntegratedInvR(obsTri, triPair, vsrc, vobs)) / 2.0;
+                    obsTri.getDoubleIntegratedSingularEFIE(srcTri, triPair, vobs, vsrc) +
+                    srcTri.getDoubleIntegratedSingularEFIE(obsTri, triPair, vsrc, vobs)) / 2.0;
 
             /* For common triangles, integrate 1/R term (analytically)
             if (nCommon == 3)
                 pairRad += obsTri.getDoubleSelfIntegratedInvR(vobs, vsrc);
             */
            
-            intRad += pairRad * Math::sign(iSrcTri) * Math::sign(iObsTri);
-            ++iSrcTri;
+            intRad += pairRad * Math::sign(iObs) * Math::sign(iSrc);
+            ++iSrc;
         }
 
-        ++iObsTri;
+        ++iObs;
     }
 
     assert(!std::isnan(intRad.real()) && !std::isnan(intRad.imag()));
@@ -117,6 +117,7 @@ cmplx Mesh::RWG::getIntegratedMFIE(const std::shared_ptr<Source> src) const {
     const auto srcRWG = dynamic_pointer_cast<RWG>(src);
     cmplx intRad = 0.0;
 
+    /*
     int iObsTri = 0;
     for (const auto& obsTri : getTris()) {
         const auto& obsNC = getVertsNC()[iObsTri];
@@ -134,7 +135,7 @@ cmplx Mesh::RWG::getIntegratedMFIE(const std::shared_ptr<Source> src) const {
 
                     vec3d gradG = rvec / r3;
                     if (nCommon == 2) 
-                        gradG = gradG * ((-1.0+iu*k*r)*exp(iu*k*r)+1.0+0.5*k2*r2); // double check signs
+                        gradG = gradG * ((-1.0+iu*k*r)*exp(iu*k*r)+1.0+0.5*k*k*r2); // double check signs
                     else if (nCommon < 2)
                         gradG = gradG * (-1.0+iu*k*r)*exp(iu*k*r);
 
@@ -155,8 +156,8 @@ cmplx Mesh::RWG::getIntegratedMFIE(const std::shared_ptr<Source> src) const {
             ++iSrcTri;
         }
 
-        ++iObs;
-    }
+        ++iObsTri;
+    }*/
 
     assert(!std::isnan(intRad.real()) && !std::isnan(intRad.imag()));
     return leng * srcRWG->leng * intRad;

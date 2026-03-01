@@ -122,7 +122,7 @@ Mesh::Triangle::getIntegratedInvR(const vec3d& obs, bool doNumeric) const
     auto [X0, X1, X2] = getVerts();
     double d = std::fabs(nhat.dot(obs-X0)), dsq = d*d;
     std::array<vec3d, 3> Ps =
-        { proj(X0)-R, proj(X1)-R, proj(X2)-R };
+        { proj(X0)-obsProj, proj(X1)-obsProj, proj(X2)-obsProj };
 
     for (int i = 0; i < 3; ++i) {
         const vec3d& P0 = Ps[i];
@@ -208,7 +208,7 @@ Mesh::Triangle::getIntegratedInvRcubed(const vec3d& obs, bool doNumeric) const
 }
 
 double Mesh::Triangle::getDoubleIntegratedSingularEFIE(
-    const Triangle& srcTri, const vec3d& obsNC, const vec3d& srcNC) const
+    const Triangle& srcTri, const TriPair& triPair, const vec3d& vobs, const vec3d& vsrc) const
 {
     const vec3d& vsrcProj = srcTri.proj(vsrc);
 
