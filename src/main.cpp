@@ -72,12 +72,12 @@ int main() {
     auto solver = std::make_unique<Solver>(srcs, root, nf, MAX_ITER, EPS);
 
     start = Clock::now();
-    solver->solve("curr_avginvr.txt");
+    solver->solve("curr_tri.txt");
     duration_ms = Clock::now() - start;
     Time duration_ms0 = Clock::now() - start0;
     std::cout << "   FMM total elapsed time: " << duration_ms0.count() << " ms\n\n";
 
-    Mesh::printScattered(srcs, "ff_n"+to_string(nsrcs)+"_avginvr.txt", 200);
+    Mesh::printScattered(srcs, "ff_n"+to_string(nsrcs)+"_tri.txt", 200);
 
     if (config.mode == Mode::FMM) return 0;
 
@@ -99,11 +99,11 @@ int main() {
     std::cout << " Solving w/ direct...\n";
     solver = std::make_unique<Solver>(srcs, root, nf, MAX_ITER, EPS);
 
-    solver->solve("currDir_avginvr.txt");
+    solver->solve("currDir_tri.txt");
     duration_ms0 = Clock::now() - start0;
     std::cout << "   Direct total elapsed time: " << duration_ms0.count() << " ms\n\n";
 
-    Mesh::printScattered(srcs, "ffDir_n"+to_string(nsrcs)+"_avginvr.txt", 200);
+    Mesh::printScattered(srcs, "ffDir_n"+to_string(nsrcs)+"_tri.txt", 200);
 
     return 0;
 }
