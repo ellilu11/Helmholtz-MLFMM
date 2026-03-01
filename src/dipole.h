@@ -11,9 +11,7 @@ public:
         std::shared_ptr<Exc::PlaneWave> Einc, size_t iSrc, const vec3d& X)
         : Source(std::move(Einc), iSrc), pos(X), 
         pmag(Phys::p0), pol(vec3d(pmag, 0, 0)), phat(pol/pmag)
-    {
-        buildVoltage();
-    };
+    {};
 
     Dipole(
         std::shared_ptr<Exc::PlaneWave> Einc, size_t iSrc, const vec3d& X, const vec3d& P)
@@ -23,7 +21,7 @@ public:
         pmag = P.norm();
         phat = P / pmag;
 
-        // std::cout << "Pol: " << P << '\n';
+        buildVoltage();
     };
 
     void buildVoltage() override {
@@ -55,11 +53,11 @@ public:
      * Return the radiated field due to src tested with this dipole
      */
     cmplx getIntegratedRad(const std::shared_ptr<Source> src) const override {
-        const auto srcDip = dynamic_pointer_cast<Dipole>(src);
+        auto srcDip = dynamic_pointer_cast<Dipole>(src);
 
         if (pos == srcDip->pos) return 0.0; // TODO: Radiation reaction field
 
-        const auto& rad = Math::dyadicG(pos - srcDip->pos, k) * srcDip->phat;
+        vec3cd rad = Math::dyadicG(pos - srcDip->pos, k) * srcDip->phat;
 
         return conj(rad.dot(phat));
     }
@@ -71,9 +69,7 @@ public:
 
 private:
     vec3d pos;   // position
-
-    double pmag; // pol. density magnitude 
     vec3d pol;   // pol. density vector
     vec3d phat;  // unit pol. density vector
-
+    double pmag; // pol. density magnitude 
 };

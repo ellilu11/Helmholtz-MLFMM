@@ -6,8 +6,8 @@ Mesh::RWG::RWG(
     iTris({ idx4[2], idx4[3] }),
     iVertsC({ idx4[0], idx4[1] })
 {
-    const auto& tris = getTris();
-    const auto& verts = getVertsC();
+    auto tris = getTris();
+    auto verts = getVertsC();
 
     leng = (verts[0]-verts[1]).norm();
 
@@ -36,7 +36,7 @@ Mesh::RWG::RWG(
 vec3cd Mesh::RWG::getIntegratedPlaneWave(const vec3d& kvec, bool doNumeric) const {
     using namespace Math;
 
-    const auto& Xnc = getVertsNC();
+    auto Xnc = getVertsNC();
     vec3cd rad = vec3cd::Zero();
     int iTri = 0;
 
@@ -55,7 +55,7 @@ vec3cd Mesh::RWG::getIntegratedPlaneWave(const vec3d& kvec, bool doNumeric) cons
     for (const auto& tri : getTris()) {
         const vec3d& X0 = tri.getVerts()[0];
         const auto& [scaRad, vecRad] = tri.getIntegratedPlaneWave(kvec);
-        rad += exp(iu*kvec.dot(X0)) 
+        rad += exp(iu*kvec.dot(X0)) // TODO: Address warning
                 * (scaRad * (X0 - Xnc[iTri]) + vecRad) 
                 * sign(iTri++);
     }
@@ -76,10 +76,10 @@ cmplx Mesh::RWG::getIntegratedRad(const std::shared_ptr<Source> src) const {
 
         int iSrc = 0;
         for (const auto& [srcTri, vsrc] : srcRWG->getTrisAndVerts() ) {
-            const vec3d& v0 = (obsTri.iTri <= srcTri.iTri) ? vobs : vsrc;
-            const vec3d& v1 = (obsTri.iTri <= srcTri.iTri) ? vsrc : vobs;
+            vec3d v0 = (obsTri.iTri <= srcTri.iTri) ? vobs : vsrc;
+            vec3d v1 = (obsTri.iTri <= srcTri.iTri) ? vsrc : vobs;
 
-            const auto& triPair = glTriPairs.at(std::minmax(obsTri.iTri, srcTri.iTri));
+            const TriPair& triPair = glTriPairs.at(std::minmax(obsTri.iTri, srcTri.iTri));
             const auto& [m00, m10, m01, m11] = triPair.momentsEFIE;
 
             cmplx pairRad =

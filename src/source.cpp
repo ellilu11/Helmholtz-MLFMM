@@ -32,16 +32,20 @@ SrcVec importSources(std::shared_ptr<Exc::PlaneWave> Einc)
         configPath+"rwgs.txt",
         Einc);
     // Mesh::refineMesh(srcs);
+    //
 
     /* Dipole sources
     const auto fpath = makePath(config);
     SrcVec srcs;
+    srcs = importDipoles("config/dipole/sphere_n"+to_string(config.nsrcs)+".txt", Einc);
+
+    //
     switch (config.mode) {
-        case Mode::READ:
+        case Mode::FMM:
             srcs = importDipoles(fpath, Einc);
             break;
             
-        case Mode::WRITE: {
+        case Mode::FMMDIR: {
             srcs = makeDipoles<uniform_real_distribution<double>>(config, Einc);
 
             ofstream srcFile(fpath);
@@ -49,7 +53,7 @@ SrcVec importSources(std::shared_ptr<Exc::PlaneWave> Einc)
             break;
         }
     }
-    cout << "   Source file:     " << fpath.generic_string() << '\n';
+    // cout << "   Source file:     " << fpath.generic_string() << '\n';
     */
 
     return srcs;

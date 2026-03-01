@@ -11,7 +11,7 @@ std::vector<quadPair<vec3d>> Mesh::Triangle::quadCoeffs;
 Mesh::Triangle::Triangle(const vec3i& iVerts, int iTri)
     : iVerts(iVerts), iTri(iTri)
 {
-    const auto& Xs = getVerts();
+    auto Xs = getVerts();
     center = (Xs[0] + Xs[1] + Xs[2]) / 3.0;
 
     for (int i = 0; i < 3; ++i) Ds[i] = Xs[(i+1)%3] - Xs[i];
@@ -41,7 +41,7 @@ int Mesh::Triangle::getNumCommonVerts(const Triangle& other) const {
 }
 
 void Mesh::Triangle::buildSelfIntegratedInvR() {
-    const auto& [V0, V1, V2] = getVerts();
+    auto [V0, V1, V2] = getVerts();
     double a00 = V0.dot(V0), a01 = V0.dot(V1), a02 = V0.dot(V2);
     double a11 = V1.dot(V1), a12 = V1.dot(V2), a22 = V2.dot(V2);
     double l0 = (V1-V2).norm(), l1 = (V2-V0).norm(), l2 = (V0-V1).norm();
@@ -120,10 +120,10 @@ Mesh::Triangle::getIntegratedInvR(const vec3d& obs, bool doNumeric) const
         return std::make_pair(scaRad, vecRad);
     }
 
-    const auto& Xs = getVerts();
-    double d = std::fabs(nhat.dot(obs-Xs[0])), dsq = d*d;
+    auto [X0, X1, X2] = getVerts();
+    double d = std::fabs(nhat.dot(obs-X0)), dsq = d*d;
     std::array<vec3d, 3> Ps =
-        { proj(Xs[0])-R, proj(Xs[1])-R, proj(Xs[2])-R };
+        { proj(X0)-R, proj(X1)-R, proj(X2)-R };
 
     for (int i = 0; i < 3; ++i) {
         const vec3d& P0 = Ps[i];
@@ -162,8 +162,8 @@ double Mesh::Triangle::getDoubleIntegratedInvR(
     double rad = 0.0;
     size_t iObs = 0;
     for (const auto& [obs, obsWeight] : triQuads) {
-        const vec3d& obsProj = srcTri.proj(obs);
-        const auto& [scaRad, vecRad] = (iTri <= srcTri.iTri ? 
+        vec3d obsProj = srcTri.proj(obs);
+        auto [scaRad, vecRad] = (iTri <= srcTri.iTri ? 
             triPair.integratedInvR[iObs] : triPair.integratedInvR2[iObs]);
 
         rad += ((obs-vobs).dot(vecRad+(obsProj-vsrcProj)*scaRad) - 4.0/(k*k)*scaRad)
@@ -180,7 +180,6 @@ Mesh::Triangle::getIntegratedPlaneWave(const vec3d& kvec) const
 {
     using namespace Math;
 
-    const auto& Xs = getVerts();
     double alpha = kvec.dot(Ds[0]), beta = -kvec.dot(Ds[2]), gamma = alpha-beta;
     double alphasq = alpha*alpha, betasq = beta*beta;
     cmplx expI_alpha = exp(iu*alpha), expI_beta = exp(iu*beta);

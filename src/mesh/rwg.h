@@ -32,8 +32,8 @@ public:
     }
 
     vec3d getCenter() const {
-        const auto& verts = getVertsC();
-        return (verts[0] + verts[1]) / 2.0;
+        auto [v0, v1] = getVertsC();
+        return (v0 + v1) / 2.0;
     }
 
     double getLeng() const { return leng; }

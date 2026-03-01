@@ -46,7 +46,7 @@ void Mesh::TriPair::buildMomentsEFIE() {
 }
 
 void Mesh::TriPair::buildIntegratedInvR() {
-    const auto& [obsTri, srcTri] = getTriPair();
+    const auto [obsTri, srcTri] = getTriPair();
 
     for (const auto& [obs, weight] : obsTri.triQuads)
         integratedInvR.push_back(srcTri.getIntegratedInvR(obs));

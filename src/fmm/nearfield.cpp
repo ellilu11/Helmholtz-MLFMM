@@ -108,8 +108,8 @@ void FMM::Nearfield::buildSelfRads() {
 void FMM::Nearfield::evalPairSols(const NearPair& nearPair) {
     const auto& [obsLeaf, srcLeaf] = nearPair.pair;
 
-    const auto& srcs = obsLeaf->srcs;
-    const auto& srcSrcs = srcLeaf->srcs;
+    const SrcVec& srcs = obsLeaf->srcs;
+    const SrcVec& srcSrcs = srcLeaf->srcs;
 
     size_t nObs = srcs.size(), nSrcs = srcSrcs.size();
 
@@ -119,7 +119,7 @@ void FMM::Nearfield::evalPairSols(const NearPair& nearPair) {
     int pairIdx = 0;
     for (size_t iObs = 0; iObs < nObs; ++iObs) {
         for (size_t iSrc = 0; iSrc < nSrcs; ++iSrc) {
-            const auto obs = srcs[iObs], src = srcSrcs[iSrc];
+            auto obs = srcs[iObs], src = srcSrcs[iSrc];
 
             cmplx rad = nearPair.rads[pairIdx++];
 
@@ -143,7 +143,7 @@ void FMM::Nearfield::evalSelfSols(const NearPair& selfPair) {
     const auto& [leaf, srcLeaf] = selfPair.pair;
     assert(leaf == srcLeaf);
 
-    const auto& srcs = leaf->srcs;
+    const SrcVec& srcs = leaf->srcs;
     size_t nSrcs = srcs.size();
 
     std::vector<cmplx> solAtObss(nSrcs, 0.0);
