@@ -3,6 +3,7 @@
 Mesh::TriPair::TriPair(pair2i iTris)
     : iTris(iTris)
 {
+    assert(iTris.first <= iTris.second);
     buildNumCommon();
     buildRadMoments();
     if (nCommon >= 2) buildIntegratedInvR();
@@ -51,11 +52,11 @@ void Mesh::TriPair::buildIntegratedInvR() {
     for (const auto& [obs, weight] : obsTri.triQuads)
         integratedInvR.push_back(srcTri.getIntegratedInvR(obs));
 
-    // TODO: Symmetric case
+    for (const auto& [src, weight] : srcTri.triQuads)
+        integratedInvR2.push_back(obsTri.getIntegratedInvR(src));
 }
 
-double Mesh::TriPair::getDoubleIntegratedInvR(
-    const vec3d& vobs, const vec3d& vsrc) const
+double Mesh::TriPair::getDoubleIntegratedInvR(const vec3d& vobs, const vec3d& vsrc, bool isSym) const
 {
     const auto& [obsTri, srcTri] = getTriPair();
     const vec3d& vsrcProj = srcTri.proj(vsrc);
@@ -65,9 +66,14 @@ double Mesh::TriPair::getDoubleIntegratedInvR(
     for (const auto& [obs, obsWeight] : obsTri.triQuads) {
         const vec3d& obsProj = srcTri.proj(obs);
 
-        const auto& [scaRad, vecRad] = integratedInvR[iNode++];
+        const auto& [scaRad, vecRad] = 
+            (isSym ? 
+            integratedInvR2[iNode] : 
+            integratedInvR[iNode]);
         rad += ((obs-vobs).dot(vecRad+(obsProj-vsrcProj)*scaRad) - 4.0/(k*k)*scaRad)
             * obsWeight;
+
+        ++iNode;
     }
 
     return rad;

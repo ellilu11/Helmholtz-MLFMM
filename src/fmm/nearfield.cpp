@@ -73,7 +73,7 @@ void FMM::Nearfield::buildTriPairs() {
 
         for (auto iTri0 : iTris0)
             for (auto iTri1 : iTris1) {
-                pair2i pair(iTri0, iTri1);
+                pair2i pair = std::minmax(iTri0, iTri1);
                 Mesh::glTriPairs.emplace(pair, Mesh::TriPair(pair));
             }
     }

@@ -13,7 +13,7 @@ public :
         return { glTris[iTris.first], glTris[iTris.second] };
     }
 
-    double getDoubleIntegratedInvR(const vec3d&, const vec3d&) const;
+    double getDoubleIntegratedInvR(const vec3d&, const vec3d&, bool) const;
 
     int getNumCommonVerts() const { return nCommon; }
 
@@ -27,6 +27,7 @@ private :
 private : 
     QuadMoments radMoments; // quadrature moments for non-singular double integrals
     std::vector<std::pair<double,vec3d>> integratedInvR; // integrated 1/R term
+    std::vector<std::pair<double, vec3d>> integratedInvR2; // symmetric case
 
     pair2i iTris; // indices of triangles
     int nCommon;  // number of common vertices
