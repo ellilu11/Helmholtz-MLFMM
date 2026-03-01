@@ -141,7 +141,7 @@ void Solver::solve(const std::string& fname) {
     t.printTimes();
     t.resetTimes();
 
-    std::cout << "   # iterations: " << iter << "\n";
+    std::cout << "   # Iterations: " << iter << "\n";
 
     const matXcd& Hp = Hmat.block(0, 0, Hmat.rows()-1, Hmat.cols());
     vecXcd yvec = Hp.lu().solve(gvec.segment(0, iter));

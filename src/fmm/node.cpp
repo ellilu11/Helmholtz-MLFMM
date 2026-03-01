@@ -14,7 +14,7 @@ FMM::Node::Node(
     : srcs(srcs), branchIdx(branchIdx), base(base),
     nodeLeng(base == nullptr ? config.rootLeng : base->nodeLeng/2.0),
     level(base == nullptr ? 0 : base->level + 1),
-    center(base == nullptr ? zeroVec :
+    center(base == nullptr ? zeroVec : // TODO: add config.center
         base->center + nodeLeng/2.0 * Math::idx2pm(branchIdx))
 {
     if (buildLeaf) maxLevel = std::max(level, maxLevel);

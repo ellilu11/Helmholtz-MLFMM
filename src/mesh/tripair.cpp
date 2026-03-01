@@ -33,8 +33,12 @@ void Mesh::TriPair::buildMomentsEFIE() {
             double r = (obs-src).norm();
 
             cmplx G = obsWeight * srcWeight;
-            if (nCommon >= 2) G *= (Math::fzero(r) ? iu*k : (exp(iu*k*r)-1.0) / r);
-            else G *= exp(iu*k*r) / r;
+            if (nCommon >= 2) 
+                G *= (Math::fzero(r) ? iu*k : (exp(iu*k*r)-1.0) / r);
+            else {
+                assert(!Math::fzero(r));
+                G *= exp(iu*k*r) / r;
+            }
 
             auto& [m00, m10, m01, m11] = momentsEFIE;
             m00 += G;
