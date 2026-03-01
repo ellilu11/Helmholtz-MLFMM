@@ -29,14 +29,25 @@ void FMM::Node::buildRadPats() {
  * (S2M) Build multipole coefficients from sources in this leaf
  */
 FMM::Coeffs FMM::Node::buildMpoleCoeffs() {
-    auto start = Clock::now();
-
     coeffs.fillZero();
     if (isSrcless() || isRoot()) return coeffs;
 
+    auto start = Clock::now();
+
+    size_t nDir = angles[level].getNumDirs();
+    Eigen::Map<arrXcd> coeffsTheta(coeffs.theta.data(), nDir);
+    Eigen::Map<arrXcd> coeffsPhi(coeffs.phi.data(), nDir);
+
     size_t iSrc = 0;
-    for (const auto& src : srcs)
-        coeffs += states.lvec[src->getIdx()] * radPats[iSrc++];
+    for (const auto& src : srcs) {
+        Coeffs& radPat = radPats[iSrc++];
+
+        Eigen::Map<arrXcd> radPatTheta(radPat.theta.data(), nDir);
+        Eigen::Map<arrXcd> radPatPhi(radPat.phi.data(), nDir);
+
+        coeffsTheta += states.lvec[src->getIdx()] * radPatTheta;
+        coeffsPhi += states.lvec[src->getIdx()] * radPatPhi;
+    }
 
     t.S2M += Clock::now() - start;
 
