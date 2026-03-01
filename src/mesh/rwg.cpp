@@ -71,39 +71,39 @@ cmplx Mesh::RWG::getIntegratedRad(const std::shared_ptr<Source> src) const {
     const auto srcRWG = dynamic_pointer_cast<RWG>(src);
     cmplx intRad = 0.0;
 
-    int iObsTri = 0;
-    for (const auto& obsTri : getTris() ) {
-        const vec3d& obsNC = getVertsNC()[iObsTri];
+    int i0 = 0;
+    for (const auto& [tri0, v0] : getTrisAndVerts() ) {
 
-        int iSrcTri = 0;
-        for (const auto& srcTri : srcRWG->getTris() ) {
-            const vec3d& srcNC = srcRWG->getVertsNC()[iSrcTri];
+        int i1 = 0;
+        for (const auto& [tri1, v1] : srcRWG->getTrisAndVerts() ) {
+            vec3d vobs = v0, vsrc = v1;
+            if (tri0.iTri > tri1.iTri) std::swap(vobs, vsrc);
 
-            const auto& iTriPair = std::minmax(obsTri.iTri, srcTri.iTri);
+            const auto& iTriPair = std::minmax(tri0.iTri, tri1.iTri);
             // std::cout << "(" << iTriPair.first << "," << iTriPair.second << ") ";
 
             const auto& triPair = glTriPairs.at(iTriPair);
             const auto& [m00, m10, m01, m11] = triPair.radMoments;
 
-            cmplx pairRad = 
-                m11 - m10.dot(srcNC) - obsNC.dot(m01) + (obsNC.dot(srcNC) - 4.0/(k*k))*m00;
+            cmplx pairRad =
+                m11 - vsrc.dot(m10) - vobs.dot(m01) + (vobs.dot(vsrc) - 4.0/(k*k))*m00;
 
             // For edge adjacent triangles, integrate 1/R term (analytically)
-            //if (triPair.nCommon >= 2)
-            //    pairRad += triPair.getDoubleIntegratedInvR(obsNC, srcNC);
+            if (triPair.nCommon >= 2)
+                pairRad += triPair.getDoubleIntegratedInvR(vobs, vsrc);
 
             /* For common triangles, add contribution from 1/R term (analytically)
             if (nCommon == 3)
-                pairRad += obsTri.getDoubleSelfIntegratedInvR(obsNC, srcNC);
+                pairRad += obsTri.getDoubleSelfIntegratedInvR(vobs, vsrc);
             */
 
-            std::cout << "   Rad of tripair (" << obsTri.iTri << "," << srcTri.iTri << "): " << pairRad << '\n';
+            // std::cout << "   Rad of tripair (" << tri0.iTri << "," << tri1.iTri << "): " << pairRad << '\n';
 
-            intRad += pairRad * Math::sign(iSrcTri) * Math::sign(iObsTri);
-            ++iSrcTri;
+            intRad += pairRad * Math::sign(i1) * Math::sign(i0);
+            ++i1;
         }
 
-        ++iObsTri;
+        ++i0;
     }
 
     assert(!std::isnan(intRad.real()) && !std::isnan(intRad.imag()));

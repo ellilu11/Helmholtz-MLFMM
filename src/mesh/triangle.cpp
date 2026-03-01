@@ -89,16 +89,16 @@ void Mesh::Triangle::buildSelfIntegratedInvR() {
     selfInts[3] = (log0/l0 + log1/l1 + log2/l2) / 3.0;
 }
 
-double Mesh::Triangle::getDoubleSelfIntegratedInvR(const vec3d& obsNC, const vec3d& srcNC) const
+double Mesh::Triangle::getDoubleSelfIntegratedInvR(const vec3d& vobs, const vec3d& vsrc) const
 {
     const auto [V0, V1, V2] = getVerts();
     double a00 = V0.dot(V0), a01 = V0.dot(V1), a02 = V0.dot(V2); // cache?
-    const vec3d& sumNC = srcNC + obsNC;
+    const vec3d& vsum = vsrc + vobs;
     
     return selfInts[0]
-        + selfInts[1] * (-2.0*a00 + 2.0*a01 + (V0-V1).dot(sumNC))
-        + selfInts[2] * (-2.0*a00 + 2.0*a02 + (V0-V2).dot(sumNC))
-        + selfInts[3] * (a00 - V0.dot(sumNC) + srcNC.dot(obsNC) - 4.0/(k*k));
+        + selfInts[1] * (-2.0*a00 + 2.0*a01 + (V0-V1).dot(vsum))
+        + selfInts[2] * (-2.0*a00 + 2.0*a02 + (V0-V2).dot(vsum))
+        + selfInts[3] * (a00 - V0.dot(vsum) + vsrc.dot(vobs) - 4.0/(k*k));
 }
 
 std::pair<double, vec3d>
@@ -213,7 +213,7 @@ cmplx Mesh::Triangle::getSurfaceCurrent() const {
 
 /*
 cmplx Mesh::Triangle::getDuffyIntegrated(
-    const vec3d& src, const vec3d& obsNC, const vec3d& srcNC) const 
+    const vec3d& src, const vec3d& vobs, const vec3d& vsrc) const 
 {
     const double k = FMM::wavenum;
 
@@ -236,7 +236,7 @@ cmplx Mesh::Triangle::getDuffyIntegrated(
                 const double alpha = dr / u;
 
                 triRad += 
-                    ((obs-obsNC).dot(src-srcNC) - 4.0 / (k*k))
+                    ((obs-vobs).dot(src-vsrc) - 4.0 / (k*k))
                     * exp(iu*k*dr) / alpha // u * Math::helmholtzG(dr, k)
                     * uweight * vweight;
             }

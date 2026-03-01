@@ -22,7 +22,7 @@ FMM::Nearfield::Nearfield() {
     duration_ms = Clock::now() - start;
     std::cout << "  Built nearfield rads in " << duration_ms.count() << " ms\n";
 
-    // Mesh::glTriPairs.clear();
+    Mesh::glTriPairs.clear();
 }
 
 /* findNodePairs()

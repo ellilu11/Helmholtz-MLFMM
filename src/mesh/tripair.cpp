@@ -26,7 +26,7 @@ void Mesh::TriPair::buildNumCommon() {
 void Mesh::TriPair::buildRadMoments() {
     const auto& [obsTri, srcTri] = getTriPair();
 
-    radMoments = { 0.0, vec3d::Zero(), vec3d::Zero(), 0.0 };
+    radMoments = { 0.0, vec3cd::Zero(), vec3cd::Zero(), 0.0 };
     for (const auto& [obs, obsWeight] : obsTri.triQuads) {
         for (const auto& [src, srcWeight] : srcTri.triQuads) {
             double r = (obs-src).norm();
@@ -46,19 +46,19 @@ void Mesh::TriPair::buildRadMoments() {
 }
 
 void Mesh::TriPair::buildIntegratedInvR() {
-    const auto& [tri0, tri1] = getTriPair();
+    const auto& [obsTri, srcTri] = getTriPair();
 
-    for (const auto& [node, weight] : tri0.triQuads)
-        integratedInvR.push_back(tri1.getIntegratedInvR(node));
+    for (const auto& [obs, weight] : obsTri.triQuads)
+        integratedInvR.push_back(srcTri.getIntegratedInvR(obs));
 
     // TODO: Symmetric case
 }
 
 double Mesh::TriPair::getDoubleIntegratedInvR(
-    const vec3d& obsNC, const vec3d& srcNC) const
+    const vec3d& vobs, const vec3d& vsrc) const
 {
     const auto& [obsTri, srcTri] = getTriPair();
-    const vec3d& srcNCproj = srcTri.proj(srcNC);
+    const vec3d& vsrcProj = srcTri.proj(vsrc);
 
     double rad = 0.0;
     size_t iNode = 0;
@@ -66,7 +66,7 @@ double Mesh::TriPair::getDoubleIntegratedInvR(
         const vec3d& obsProj = srcTri.proj(obs);
 
         const auto& [scaRad, vecRad] = integratedInvR[iNode++];
-        rad += ((obs-obsNC).dot(vecRad+(obsProj-srcNCproj)*scaRad) - 4.0/(k*k)*scaRad)
+        rad += ((obs-vobs).dot(vecRad+(obsProj-vsrcProj)*scaRad) - 4.0/(k*k)*scaRad)
             * obsWeight;
     }
 

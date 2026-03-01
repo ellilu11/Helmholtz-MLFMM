@@ -29,9 +29,9 @@ void testInvRNumVsAnl(const Mesh::Triangle& tri, const vec3d& obs) {
 
 void testInvR(const Mesh::Triangle& obsTri, const Mesh::Triangle& srcTri) {
     
-    const auto& obsNC = obsTri.getVerts()[0];
-    const auto& srcNC = srcTri.getVerts()[0];
-    const auto& srcNCproj = srcTri.proj(srcNC);
+    const auto& vobs = obsTri.getVerts()[0];
+    const auto& vsrc = srcTri.getVerts()[0];
+    const auto& vsrcproj = srcTri.proj(vsrc);
     
     const int nCommon = obsTri.getNumCommonVerts(srcTri);
     std::cout << "nCommon = " << nCommon << '\n';
@@ -45,14 +45,14 @@ void testInvR(const Mesh::Triangle& obsTri, const Mesh::Triangle& srcTri) {
             const double r = (obs-src).norm();
             cmplx G = 1.0 / r;
 
-            fullRad += ((obs-obsNC).dot(src-srcNC) - 4.0 / (k*k)) * G
+            fullRad += ((obs-vobs).dot(src-vsrc) - 4.0 / (k*k)) * G
                 * obsWeight * srcWeight;
         }
 
         const auto& obsProj = srcTri.proj(obs);
         const auto& [scaRad, vecRad] = srcTri.getIntegratedInvR(obs);
         nearRad +=
-            ((obs-obsNC).dot(vecRad+(obsProj-srcNCproj)*scaRad) - 4.0/(k*k)*scaRad)
+            ((obs-vobs).dot(vecRad+(obsProj-vsrcproj)*scaRad) - 4.0/(k*k)*scaRad)
             * obsWeight;
     }*/
 
