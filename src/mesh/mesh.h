@@ -13,10 +13,8 @@ namespace Mesh {
     class SrcRWG;
     class SubRWG;
     class BC;
-    class TriPair;
+    struct TriPair;
     struct TriToRWG;
-
-    using QuadMoments = std::tuple<cmplx, vec3cd, vec3cd, cmplx>;
 
     // Coarse mesh data
     std::vector<vec3d> glVerts;   // list of vertices (including fine)

@@ -154,6 +154,28 @@ Mesh::Triangle::getIntegratedInvR(const vec3d& obs, bool doNumeric) const
     return std::make_pair(scaRad, vecRad);
 }
 
+double Mesh::Triangle::getDoubleIntegratedInvR(
+    const Triangle& srcTri, const vec3d& vobs, const vec3d& vsrc) const
+{
+    const auto& triPair = glTriPairs.at(std::minmax(iTri, srcTri.iTri));
+    const vec3d& vsrcProj = srcTri.proj(vsrc);
+
+    double rad = 0.0;
+    size_t iObs = 0;
+    for (const auto& [obs, obsWeight] : triQuads) {
+        const vec3d& obsProj = srcTri.proj(obs);
+        const auto& [scaRad, vecRad] = (iTri <= srcTri.iTri ? 
+            triPair.integratedInvR[iObs] : triPair.integratedInvR2[iObs]);
+
+        rad += ((obs-vobs).dot(vecRad+(obsProj-vsrcProj)*scaRad) - 4.0/(k*k)*scaRad)
+            * obsWeight;
+
+        ++iObs;
+    }
+
+    return rad;
+}
+
 std::pair<cmplx, vec3cd>
 Mesh::Triangle::getIntegratedPlaneWave(const vec3d& kvec) const
 {

@@ -5,7 +5,7 @@ Mesh::TriPair::TriPair(pair2i iTris)
 {
     assert(iTris.first <= iTris.second);
     buildNumCommon();
-    buildRadMoments();
+    buildMomentsEFIE();
     if (nCommon >= 2) buildIntegratedInvR();
 }
 
@@ -24,10 +24,10 @@ void Mesh::TriPair::buildNumCommon() {
     assert(nCommon < 3);
 }
 
-void Mesh::TriPair::buildRadMoments() {
+void Mesh::TriPair::buildMomentsEFIE() {
     const auto& [obsTri, srcTri] = getTriPair();
 
-    radMoments = { 0.0, vec3cd::Zero(), vec3cd::Zero(), 0.0 };
+    momentsEFIE = { 0.0, vec3cd::Zero(), vec3cd::Zero(), 0.0 };
     for (const auto& [obs, obsWeight] : obsTri.triQuads) {
         for (const auto& [src, srcWeight] : srcTri.triQuads) {
             double r = (obs-src).norm();
@@ -37,7 +37,7 @@ void Mesh::TriPair::buildRadMoments() {
             else G = exp(iu*k*r) / r;
             G *= obsWeight * srcWeight;
 
-            auto& [m00, m10, m01, m11] = radMoments;
+            auto& [m00, m10, m01, m11] = momentsEFIE;
             m00 += G;
             m10 += obs * G;
             m01 += src * G;
@@ -56,9 +56,11 @@ void Mesh::TriPair::buildIntegratedInvR() {
         integratedInvR2.push_back(obsTri.getIntegratedInvR(src));
 }
 
+/*
 double Mesh::TriPair::getDoubleIntegratedInvR(const vec3d& vobs, const vec3d& vsrc, bool isSym) const
 {
-    const auto& [obsTri, srcTri] = getTriPair();
+    auto [obsTri, srcTri] = getTriPair();
+    if (isSym) std::swap(obsTri, srcTri);
     const vec3d& vsrcProj = srcTri.proj(vsrc);
 
     double rad = 0.0;
@@ -77,4 +79,22 @@ double Mesh::TriPair::getDoubleIntegratedInvR(const vec3d& vobs, const vec3d& vs
     }
 
     return rad;
+}*/
+
+/*
+void Mesh::TriPair::buildMomentsInvR() {
+    const auto& [obsTri, srcTri] = getTriPair();
+
+    momentsInvR = { 0.0, vec3cd::Zero(), 0.0 };
+    for (const auto& [obs, obsWeight] : obsTri.triQuads) {
+        const auto& [scaRad, vecRad] = srcTri.getIntegratedInvR(obs);
+
+        auto& [m0, m1, m11] = momentsInvR;
+        m0 += scaRad * obsWeight;
+        m1 += vecRad * obsWeight;
+        m11 += obs.dot(vecRad) * obsWeight;
+    }
+
+    // TODO: Symmetric case
 }
+*/
