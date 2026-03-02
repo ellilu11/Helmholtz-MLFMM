@@ -17,22 +17,6 @@ void FMM::buildRadPats() {
         leaf->buildRadPats();
 }
 
-/*
-void FMM::buildRadPats() {
-    // Group leaves by level
-    std::vector<NodeVec> leveledLeaves(maxLevel+1);
-    for (const auto& leaf : leaves)
-        leveledLeaves[leaf->getLevel()].push_back(leaf);
-    
-    for (int level = 0; level <= maxLevel; ++level) {
-        const auto& leaves = leveledLeaves[level];
-        if (leaves.empty()) continue;
-
-        for (const auto& leaf : leveledLeaves[level])
-            leaf->buildRadPats();
-    }
-}*/
-
 void FMM::evaluateSols() {
     auto start = Clock::now();
     for (const auto& leaf : leaves)
@@ -47,6 +31,7 @@ void FMM::addInterpCoeffs(
 
     auto [mth, mph] = angles[srcLvl].getNumAngles();
     auto [nth, nph] = angles[tgtLvl].getNumAngles();
+    size_t mDir = mth*mph, nDir = nth*nph, nmDir = nth*mph;
     assert(!(mph%2)); // mph needs to be even
 
     int tblLvl = std::min(srcLvl, tgtLvl);
@@ -54,7 +39,7 @@ void FMM::addInterpCoeffs(
     const auto& interpPhi = tables[tblLvl].interpPhi;
 
     // Interpolate over theta
-    Coeffs innerCoeffs(nth*mph);
+    Coeffs innerCoeffs(nmDir);
     for (int jth = 0; jth < nth; ++jth) {
         const auto [interp, nearIdx] = interpTheta[jth];
 
@@ -70,10 +55,10 @@ void FMM::addInterpCoeffs(
 
                 size_t idxInner = jth*mph+iph, idxIn = ith_flipped*mph+iph_shifted;
 
-                innerCoeffs.theta[idxInner] +=
-                    interp[k] * inCoeffs.theta[idxIn] * Math::sign(outOfRange);
-                innerCoeffs.phi[idxInner] +=
-                    interp[k] * inCoeffs.phi[idxIn] * Math::sign(outOfRange);
+                innerCoeffs.vals[idxInner] +=
+                    interp[k] * inCoeffs.vals[idxIn] * Math::sign(outOfRange);
+                innerCoeffs.vals[nmDir+idxInner] +=
+                    interp[k] * inCoeffs.vals[mDir+idxIn] * Math::sign(outOfRange);
             }
         }
     }
@@ -89,8 +74,8 @@ void FMM::addInterpCoeffs(
             for (int jth = 0; jth < nth; ++jth) {
                 size_t idxOut = jth*nph+jph, idxInner = jth*mph+iph_wrapped;
 
-                outCoeffs.theta[idxOut] += interp[k] * innerCoeffs.theta[idxInner];
-                outCoeffs.phi[idxOut] += interp[k] * innerCoeffs.phi[idxInner];
+                outCoeffs.vals[idxOut] += interp[k] * innerCoeffs.vals[idxInner];
+                outCoeffs.vals[nDir+idxOut] += interp[k] * innerCoeffs.vals[nmDir+idxInner];
             }
         }
     }
@@ -103,6 +88,7 @@ void FMM::addAnterpCoeffs(
 
     auto [mth, mph] = angles[srcLvl].getNumAngles();
     auto [nth, nph] = angles[tgtLvl].getNumAngles();
+    size_t mDir = mth*mph, nDir = nth*nph, mnDir = mth*nph;
     assert(!(nph%2)); // nph needs to be even
 
     const int tblLvl = std::min(srcLvl, tgtLvl);
@@ -125,8 +111,8 @@ void FMM::addAnterpCoeffs(
             for (int ith = 0; ith < mth; ++ith) {
                 size_t idxInner = ith*nph+jph_wrapped, idxIn = ith*mph+iph;
 
-                innerCoeffs.theta[idxInner] += interp[k] * inCoeffs.theta[idxIn];
-                innerCoeffs.phi[idxInner] += interp[k] * inCoeffs.phi[idxIn];
+                innerCoeffs.vals[idxInner] += interp[k] * inCoeffs.vals[idxIn];
+                innerCoeffs.vals[mnDir+idxInner] += interp[k] * inCoeffs.vals[mDir+idxIn];
             }
         }
     }
@@ -151,10 +137,10 @@ void FMM::addAnterpCoeffs(
 
                 size_t idxOut = jth_flipped*nph+jph_shifted, idxInner = ith*nph+jph;
 
-                outCoeffs.theta[idxOut] +=
-                    interp[k] * innerCoeffs.theta[idxInner] * Math::sign(outOfRange);
-                outCoeffs.phi[idxOut] +=
-                    interp[k] * innerCoeffs.phi[idxInner] * Math::sign(outOfRange);
+                outCoeffs.vals[idxOut] +=
+                    interp[k] * innerCoeffs.vals[idxInner] * Math::sign(outOfRange);
+                outCoeffs.vals[nDir+idxOut] +=
+                    interp[k] * innerCoeffs.vals[mnDir+idxInner] * Math::sign(outOfRange);
             }
         }
     }

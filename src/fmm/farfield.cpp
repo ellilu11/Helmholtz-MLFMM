@@ -29,24 +29,20 @@ void FMM::Node::buildRadPats() {
  * (S2M) Build multipole coefficients from sources in this leaf
  */
 FMM::Coeffs FMM::Node::buildMpoleCoeffs() {
-    coeffs.fillZero();
+    coeffs.fill(0.0);
     if (isSrcless() || isRoot()) return coeffs;
 
     auto start = Clock::now();
 
     size_t nDir = angles[level].getNumDirs();
-    Eigen::Map<arrXcd> coeffsTheta(coeffs.theta.data(), nDir);
-    Eigen::Map<arrXcd> coeffsPhi(coeffs.phi.data(), nDir);
+    Eigen::Map<arrXcd> coeffsArr(coeffs.vals.data(), 2*nDir);
 
     size_t iSrc = 0;
     for (const auto& src : srcs) {
         Coeffs& radPat = radPats[iSrc++];
+        Eigen::Map<arrXcd> radPatArr(radPat.vals.data(), 2*nDir);
 
-        Eigen::Map<arrXcd> radPatTheta(radPat.theta.data(), nDir);
-        Eigen::Map<arrXcd> radPatPhi(radPat.phi.data(), nDir);
-
-        coeffsTheta += states.lvec[src->getIdx()] * radPatTheta;
-        coeffsPhi += states.lvec[src->getIdx()] * radPatPhi;
+        coeffsArr += states.lvec[src->getIdx()] * radPatArr;
     }
 
     t.S2M += Clock::now() - start;
@@ -61,7 +57,7 @@ FMM::Coeffs FMM::Node::mergeMpoleCoeffs() {
     int order = config.interpOrder;
     size_t mDir = angles[level+1].getNumDirs();
 
-    coeffs.fillZero();
+    coeffs.fill(0.0);
 
     for (const auto& branch : branches) {
         if (branch->isSrcless()) continue;
@@ -79,8 +75,8 @@ FMM::Coeffs FMM::Node::mergeMpoleCoeffs() {
             const vec3d& kvec = angles[level+1].khat[iDir] * k;
             cmplx shift = exp(iu*kvec.dot(dX));
 
-            shiftedCoeffs.theta[iDir] = shift * branchCoeffs.theta[iDir];
-            shiftedCoeffs.phi[iDir] = shift * branchCoeffs.phi[iDir];
+            shiftedCoeffs.vals[iDir] = shift * branchCoeffs.vals[iDir];
+            shiftedCoeffs.vals[mDir+iDir] = shift * branchCoeffs.vals[mDir+iDir];
         }
 
         // Interpolate shifted coeffs to this node's angular grid
@@ -99,23 +95,20 @@ FMM::Coeffs FMM::Node::mergeMpoleCoeffs() {
 void FMM::Node::translateCoeffs() {
     if (iList.empty()) return;
 
-    localCoeffs.fillZero();
+    localCoeffs.fill(0.0);
     size_t nDir = localCoeffs.size();
 
     // Translate mpole coeffs into local coeffs
     const VecHashMap<arrXcd>& transl = tables[level].transl;
-    Eigen::Map<arrXcd> localTheta(localCoeffs.theta.data(), nDir);
-    Eigen::Map<arrXcd> localPhi(localCoeffs.phi.data(), nDir);
+    Eigen::Map<arrXcd> localArr(localCoeffs.vals.data(), 2*nDir);
 
     for (const auto& node : iList) {
         vec3d dX = center - node->center;
         arrXcd transl_dX = transl.at(dX/nodeLeng);
 
-        Eigen::Map<arrXcd> mpoleTheta(node->coeffs.theta.data(), nDir);
-        Eigen::Map<arrXcd> mpolePhi(node->coeffs.phi.data(), nDir);
+        Eigen::Map<arrXcd> mpoleArr(node->coeffs.vals.data(), 2*nDir);
 
-        localTheta += transl_dX * mpoleTheta;
-        localPhi += transl_dX * mpolePhi;
+        localArr += transl_dX * mpoleArr;
     }
 
     // Apply integration weights
@@ -128,8 +121,8 @@ void FMM::Node::translateCoeffs() {
         double thetaWeight = angles_lvl.weights[ith];
 
         for (int iph = 0; iph < nph; ++iph) {
-            localCoeffs.theta[iDir] *= thetaWeight * phiWeight;
-            localCoeffs.phi[iDir] *= thetaWeight * phiWeight;
+            localCoeffs.vals[iDir] *= thetaWeight * phiWeight;
+            localCoeffs.vals[nDir+iDir] *= thetaWeight * phiWeight;
             ++iDir;
         }
     }
@@ -154,8 +147,8 @@ FMM::Coeffs FMM::Node::getShiftedLocalCoeffs(int branchIdx) const {
         vec3d kvec = angles[level].khat[iDir] * k;
         cmplx shift = exp(iu*kvec.dot(dX));
 
-        shiftedCoeffs.theta[iDir] = shift * localCoeffs.theta[iDir];
-        shiftedCoeffs.phi[iDir] = shift * localCoeffs.phi[iDir];
+        shiftedCoeffs.vals[iDir] = shift * localCoeffs.vals[iDir];
+        shiftedCoeffs.vals[mDir+iDir] = shift * localCoeffs.vals[mDir+iDir];
     }
 
     // Anterpolate shifted coeffs to branch's angular grid
@@ -193,20 +186,16 @@ void FMM::Node::evalFarSols() {
     if (isSrcless() || level <= 1) return;
 
     size_t nDir = angles[level].getNumDirs();
-
-    Eigen::Map<arrXcd> localTheta(localCoeffs.theta.data(), nDir);
-    Eigen::Map<arrXcd> localPhi(localCoeffs.phi.data(), nDir);
+    Eigen::Map<arrXcd> localArr(localCoeffs.vals.data(), 2*nDir);
 
     size_t iObs = 0;
     for (const auto& obs : srcs) {
         cmplx intRad = 0;
 
         Coeffs& radPat = radPats[iObs++];
-        Eigen::Map<arrXcd> radPatTheta(radPat.theta.data(), nDir);
-        Eigen::Map<arrXcd> radPatPhi(radPat.phi.data(), nDir);
+        Eigen::Map<arrXcd> radPatArr(radPat.vals.data(), 2*nDir);
 
-        intRad += (radPatTheta.conjugate() * localTheta +
-            radPatPhi.conjugate() * localPhi).sum();
+        intRad += (radPatArr.conjugate() * localArr).sum();
 
         states.rvec[obs->getIdx()] += Phys::C * k * intRad;
     }

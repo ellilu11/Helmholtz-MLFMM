@@ -3,45 +3,42 @@
 #include "fmm.h"
 
 struct FMM::Coeffs {
-    std::vector<cmplx> theta;
-    std::vector<cmplx> phi;
+    std::vector<cmplx> vals;
+    size_t nDir;
 
     Coeffs() = default;
 
-    Coeffs(size_t N, cmplx val = 0.0) 
-        : theta(N, val), phi(N, val) 
+    Coeffs(size_t nDir, cmplx val = 0.0)
+        : vals(2*nDir, val), nDir(nDir)
     {}
 
-    size_t size() const { return theta.size(); }
+    size_t size() const { return nDir; }
 
-    void resize(size_t N) {
-        theta.resize(N, 0.0);
-        phi.resize(N, 0.0);
+    void resize(size_t nDir) {
+        vals.resize(2.0*nDir);
+        this->nDir = nDir;
     }
 
-    void fillZero() {
-        std::fill(theta.begin(), theta.end(), 0.0);
-        std::fill(phi.begin(), phi.end(), 0.0);
+    void fill(cmplx val) {
+        std::fill(vals.begin(), vals.end(), val);
     }
 
     void setCoeffAlongDir(const vec2cd& vec, size_t iDir) {
-        theta[iDir] = vec[0];
-        phi[iDir] = vec[1];
+        vals[iDir] = vec[0];
+        vals[nDir+iDir] = vec[1];
     }
 
     vec2cd getVecAlongDir(size_t iDir) const {
-        return vec2cd(theta[iDir], phi[iDir]);
+        return vec2cd(vals[iDir], vals[nDir+iDir]);
     }
 
     Coeffs& operator+=(const Coeffs& coeffs) noexcept {
-        theta += coeffs.theta;
-        phi += coeffs.phi;
+        vals += coeffs.vals;
         return *this;
     }
 
     Coeffs& operator*=(cmplx val) noexcept {
-        theta *= val;
-        phi *= val;
+        vals *= val;
         return *this;
     }
 
@@ -56,8 +53,7 @@ struct FMM::Coeffs {
     }
 
     friend std::ostream& operator<<(std::ostream& os, const Coeffs& coeffs) noexcept {
-        os << coeffs.theta;
-        os << coeffs.phi;
+        os << coeffs.vals;
         return os;  
     }
 };

@@ -180,7 +180,7 @@ void FMM::Tables::buildTranslationTable() {
         vec3d rhat = dX / r;
         vecXcd alpha_dX = alphas.at(r);
 
-        arrXcd transl_dX(nDir);
+        arrXcd transl_dX(2*nDir);
         for (int iDir = 0; iDir < nDir; ++iDir) {
             const auto& khat = angles_lvl.khat[iDir];
             double psi = acos(khat.dot(rhat));
@@ -194,6 +194,7 @@ void FMM::Tables::buildTranslationTable() {
             }
 
             transl_dX(iDir) = translCoeff;
+            transl_dX(nDir+iDir) = translCoeff; // Same transl coeff for theta and phi dirs
         }
 
         transl.emplace(dX, transl_dX);
