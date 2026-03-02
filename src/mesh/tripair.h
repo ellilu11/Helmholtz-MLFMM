@@ -19,7 +19,9 @@ private :
 
     void buildMomentsMFIE();
 
-    void buildIntegratedSingular();
+    void buildIntegratedInvR();
+
+    void buildIntegratedInvRcubed();
 
 public : 
     std::tuple<cmplx, vec3cd, vec3cd, cmplx> momentsEFIE;

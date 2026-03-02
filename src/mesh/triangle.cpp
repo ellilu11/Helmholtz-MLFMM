@@ -175,7 +175,7 @@ Mesh::Triangle::getIntegratedInvRcubed(const vec3d& obs, bool doNumeric) const
     std::cout << "d = " << d << '\n';
 
     std::array<vec3d, 3> Ps =
-    { proj(Xs[0])-obsProj, proj(Xs[1])-obsProj, proj(Xs[2])-obsProj };
+        { proj(Xs[0])-obsProj, proj(Xs[1])-obsProj, proj(Xs[2])-obsProj };
 
     for (int i = 0; i < 3; ++i) {
         const vec3d& P0 = Ps[i];

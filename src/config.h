@@ -77,9 +77,9 @@ struct Config {
     Config(const std::string& fileName) {
         std::ifstream is(fileName);
         is >> mode >> quadPrec // TODO: fix enums first
-           >> nsrcs >> maxNodeSrcs
-           >> digits >> interpOrder >> overInterp
-           >> rootLeng >> wavenum;
+            >> nsrcs >> maxNodeSrcs
+            >> digits >> interpOrder >> overInterp
+            >> rootLeng >> wavenum >> alpha;
 
         ::k = wavenum; // set global wavenumber
 
@@ -97,6 +97,7 @@ struct Config {
         std::cout << "   Tri quad rule:   " << getNumQuads(quadPrec) << "-point\n";
         std::cout << "   Root length:     " << rootLeng << " m\n";
         std::cout << "   Wavenumber:      " << k << " /m\n\n";
+        std::cout << "   CFIE alpha:      " << alpha << "\n\n";
     }
 
     Mode mode;
@@ -106,9 +107,9 @@ struct Config {
     int digits;
     int interpOrder;
     double overInterp;
-    double alpha;
     double rootLeng;
     double wavenum;
+    double alpha;
 
     // Point dipoles only
     Dist pdist;

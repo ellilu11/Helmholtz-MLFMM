@@ -41,7 +41,8 @@ public:
     double getLeng() const { return leng; }
 
     void buildVoltage() override {
-        const vec3d& pol = config.alpha * Einc->pol 
+        vec3d pol = 
+            config.alpha * Einc->pol 
             + (1.0-config.alpha) * Phys::eta * Einc->wavehat.cross(Einc->pol);
 
         voltage = -Einc->amplitude *
@@ -49,7 +50,11 @@ public:
     }
 
     vec3cd getRadAlongDir(const vec3d& X, const vec3d& kvec) const override {
-        return exp(iu*kvec.dot(X)) * getIntegratedPlaneWave(kvec).conjugate();
+        vec3cd intPlaneWave = getIntegratedPlaneWave(kvec).conjugate();
+
+        return exp(iu*kvec.dot(X)) * 
+            (config.alpha * intPlaneWave 
+                - (1.0-config.alpha) * Phys::eta * iu * kvec.cross(intPlaneWave)); // double check sign
     }
 
     vec3cd getFarAlongDir(const vec3d& krhat) const override {
