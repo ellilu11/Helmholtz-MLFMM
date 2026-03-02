@@ -1,5 +1,5 @@
 #include "node.h"
-#include "../mesh/srcrwg.h"
+#include "../mesh/rwg.h"
 
 /* Node(particles,branchIdx,base)
  * particles : list of particles contained in this node
@@ -139,8 +139,8 @@ void FMM::Node::findTris() {
     if (isSrcless()) return;
 
     for (const auto& src : srcs) {
-        if (!src->isSrcType<Mesh::SrcRWG>()) continue;
-        const auto rwg = dynamic_pointer_cast<Mesh::SrcRWG>(src);
+        if (!src->isSrcType<Mesh::RWG>()) continue;
+        const auto rwg = dynamic_pointer_cast<Mesh::RWG>(src);
 
         auto [iTri0, iTri1] = rwg->getTrisIdx();
         iTris.push_back(iTri0);

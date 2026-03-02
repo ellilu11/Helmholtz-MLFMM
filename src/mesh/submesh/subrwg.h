@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../rwg.h"
+#include "submesh.h"
 
 class Mesh::SubRWG final : public RWG {
     friend class BC;

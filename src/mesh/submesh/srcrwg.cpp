@@ -6,8 +6,6 @@ Mesh::SrcRWG::SrcRWG( // TODO: Initialize iSubs
     const Eigen::Vector4i& idx4)
     : RWG(std::move(Einc), iSrc, idx4)
 {
-    buildVoltage(); 
-
     //std::cout << "Built srcRWG #" << iSrc << " w/ common vertices # " 
     //    << iVertsC[0] << ' '<< iVertsC[1] << " and non-common vertices # "
     //    << iVertsNC[0] << ' ' << iVertsNC[1] << "\n";

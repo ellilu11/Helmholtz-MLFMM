@@ -17,6 +17,8 @@ Mesh::RWG::RWG(
             if (iVert != iVertsC[0] && iVert != iVertsC[1])
                 iVertsNC[i] = iVert;
 
+    buildVoltage();
+
     /* Update triToRWG
     for (int i = 0; i < 2; ++i) {
         int iTri = iTris[i];

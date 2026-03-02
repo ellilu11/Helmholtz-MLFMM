@@ -2,7 +2,6 @@
 
 #include "node.h"
 
-
 struct FMM::NearPair {
     friend class Nearfield;
 

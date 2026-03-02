@@ -1,4 +1,4 @@
-#include "../mesh.h"
+#include "submesh.h"
 
 void Mesh::refineMesh(const SrcVec& rwgs) {
     Triangle::refineVertices();
