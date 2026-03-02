@@ -84,14 +84,15 @@ cmplx Mesh::RWG::getIntegratedEFIE(const std::shared_ptr<Source> src) const {
             const auto& [m00, m10, m01, m11] = triPair.momentsEFIE;
 
             cmplx pairRad =
-                m11 - v1.dot(m10) - v0.dot(m01) + (v0.dot(v1) - 4.0/(k*k))*m00;
+                m11 - v0.dot(m01) - v1.dot(m10) + (v0.dot(v1) - 4.0/(k*k))*m00;
+                // m11 - v1.dot(m10) - v0.dot(m01) + (v0.dot(v1) - 4.0/(k*k))*m00;
 
             // For edge adjacent triangles, integrate 1/R term (analytically)
             // Average obs-src and src-obs to preserve symmetry
             if (triPair.nCommon >= 2)
                 pairRad += (
-                    obsTri.getDoubleIntegratedSingularEFIE(srcTri, triPair, vobs, vsrc) +
-                    srcTri.getDoubleIntegratedSingularEFIE(obsTri, triPair, vsrc, vobs)) / 2.0;
+                    obsTri.getDoubleIntegratedInvR(srcTri, triPair, vobs, vsrc, true) +
+                    srcTri.getDoubleIntegratedInvR(obsTri, triPair, vsrc, vobs, true)) / 2.0;
 
             /* For common triangles, integrate 1/R term (analytically)
             if (nCommon == 3)
@@ -117,7 +118,56 @@ cmplx Mesh::RWG::getIntegratedMFIE(const std::shared_ptr<Source> src) const {
     const auto srcRWG = dynamic_pointer_cast<RWG>(src);
     cmplx intRad = 0.0;
 
-    /*
+    int iObs = 0;
+    for (const auto& [obsTri, vobs] : getTrisAndVerts()) {
+
+        int iSrc = 0;
+        for (const auto& [srcTri, vsrc] : srcRWG->getTrisAndVerts()) {
+            vec3d v0 = (obsTri.iTri <= srcTri.iTri) ? vobs : vsrc;
+            vec3d v1 = (obsTri.iTri <= srcTri.iTri) ? vsrc : vobs;
+
+            const TriPair& triPair = glTriPairs.at(std::minmax(obsTri.iTri, srcTri.iTri));
+            const auto& [m00, m10, m01, m11] = triPair.momentsMFIE;
+
+            cmplx pairRad = m11 - v0.dot(m01) - v1.dot(m10) + v1.cross(v0).dot(m00); // double check!
+
+            // For edge adjacent triangles, integrate 1/R term (analytically)
+            // Average obs-src and src-obs to preserve symmetry
+            if (triPair.nCommon == 2)
+                pairRad += (
+                    k*k/2.0*obsTri.getDoubleIntegratedInvR(srcTri, triPair, vobs, vsrc, false) +
+                    k*k/2.0*srcTri.getDoubleIntegratedInvR(obsTri, triPair, vsrc, vobs, false) +
+                    obsTri.getDoubleIntegratedInvRcubed(srcTri, triPair, vobs, vsrc) +
+                    srcTri.getDoubleIntegratedInvRcubed(obsTri, triPair, vsrc, vobs)) / 2.0;
+
+            /* For common triangles, use 1/2 J term (numerically)
+            if (nCommon == 3)
+                pairRad -= 0.5 * (obs-obsNC).dot(obsTri.nhat.cross(obs-obsNC))
+                        * obsWeight;
+            */
+
+            intRad += pairRad * Math::sign(iObs) * Math::sign(iSrc);
+            ++iSrc;
+        }
+
+        ++iObs;
+    }
+
+    assert(!std::isnan(intRad.real()) && !std::isnan(intRad.imag()));
+    return leng * srcRWG->leng * intRad;
+}
+
+
+/* getIntegratedMFIE(src)
+ * Return the magnetic field due to src tested with this RWG
+ */
+/*
+cmplx Mesh::RWG::getIntegratedMFIE(const std::shared_ptr<Source> src) const {
+    if (config.alpha == 1) return 0.0;
+    const auto srcRWG = dynamic_pointer_cast<RWG>(src);
+    cmplx intRad = 0.0;
+
+    // 
     int iObsTri = 0;
     for (const auto& obsTri : getTris()) {
         const auto& obsNC = getVertsNC()[iObsTri];
@@ -157,8 +207,9 @@ cmplx Mesh::RWG::getIntegratedMFIE(const std::shared_ptr<Source> src) const {
         }
 
         ++iObsTri;
-    }*/
+    }
 
     assert(!std::isnan(intRad.real()) && !std::isnan(intRad.imag()));
     return leng * srcRWG->leng * intRad;
 }
+*/

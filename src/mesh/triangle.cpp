@@ -207,8 +207,9 @@ Mesh::Triangle::getIntegratedInvRcubed(const vec3d& obs, bool doNumeric) const
     return std::make_pair(scaRad3, vecRad3);
 }
 
-double Mesh::Triangle::getDoubleIntegratedSingularEFIE(
-    const Triangle& srcTri, const TriPair& triPair, const vec3d& vobs, const vec3d& vsrc) const
+double Mesh::Triangle::getDoubleIntegratedInvR(
+    const Triangle& srcTri, const TriPair& triPair, const vec3d& vobs, const vec3d& vsrc,
+    bool isEFIE) const
 {
     const vec3d& vsrcProj = srcTri.proj(vsrc);
 
@@ -219,8 +220,9 @@ double Mesh::Triangle::getDoubleIntegratedSingularEFIE(
         auto [scaRad, vecRad] = (iTri <= srcTri.iTri ? 
             triPair.integratedInvR[iObs] : triPair.integratedInvR2[iObs]);
 
-        rad += ((obs-vobs).dot(vecRad+(obsProj-vsrcProj)*scaRad) - 4.0/(k*k)*scaRad)
-            * obsWeight;
+        rad += ((obs-vobs).dot(vecRad+(obsProj-vsrcProj)*scaRad) - 
+                isEFIE * 4.0/(k*k)*scaRad) // TODO: No 4/k^2 term for MFIE
+                * obsWeight;
 
         ++iObs;
     }
@@ -228,8 +230,28 @@ double Mesh::Triangle::getDoubleIntegratedSingularEFIE(
     return rad;
 }
 
-double Mesh::Triangle::getDoubleIntegratedSingularMFIE(
-    const Triangle& srcTri, const vec3d& obsNC, const vec3d& srcNC) const
+double Mesh::Triangle::getDoubleIntegratedInvRcubed(
+    const Triangle& srcTri, const TriPair& triPair, const vec3d& vobs, const vec3d& vsrc) const
+{
+    const vec3d& vsrcProj = srcTri.proj(vsrc);
+
+    double rad = 0.0;
+    size_t iObs = 0;
+    for (const auto& [obs, obsWeight] : triQuads) {
+        vec3d obsProj = srcTri.proj(obs);
+        auto [scaRad3, vecRad3] = (iTri <= srcTri.iTri ?
+            triPair.integratedInvRcubed[iObs] : triPair.integratedInvRcubed2[iObs]);
+
+        rad += (obs-vobs).dot(vecRad3+(obsProj-vsrcProj)*scaRad3) * obsWeight;
+
+        ++iObs;
+    }
+
+    return rad;
+}
+
+/*
+double Mesh::Triangle::getDoubleIntegratedInvRcubed(
 {
     const vec3d& srcNCproj = srcTri.proj(srcNC);
     double rad = 0.0;
@@ -255,7 +277,7 @@ double Mesh::Triangle::getDoubleIntegratedSingularMFIE(
     }
 
     return rad;
-}
+}*/
 
 std::pair<cmplx, vec3cd>
 Mesh::Triangle::getIntegratedPlaneWave(const vec3d& kvec) const

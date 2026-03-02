@@ -23,11 +23,11 @@ public:
 
     std::pair<double,vec3d> getIntegratedInvR(const vec3d&, bool = 0) const;
 
-    double getDoubleIntegratedSingularEFIE(
-        const Triangle&, const TriPair&, const vec3d&, const vec3d&) const;
+    double getDoubleIntegratedInvR(
+        const Triangle&, const TriPair&, const vec3d&, const vec3d&, bool) const;
 
-    double getDoubleIntegratedSingularMFIE(
-        const Triangle&, const vec3d&, const vec3d&) const;
+    double getDoubleIntegratedInvRcubed(
+        const Triangle&, const TriPair&, const vec3d&, const vec3d&) const;
 
     std::pair<double, vec3d> getIntegratedInvRcubed(const vec3d&, bool = 0) const;
 
