@@ -1,6 +1,7 @@
 #pragma once
 
-#include "../srcrwg.h"
+#include "srcrwg.h"
+#include "submesh.h"
 #include "subrwg.h"
 
 class Mesh::BC {

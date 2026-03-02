@@ -1,5 +1,5 @@
 #include "mesh.h"
-#include "srcrwg.h"
+#include "rwg.h"
 
 void Mesh::importVertices(const std::filesystem::path& path) {
     std::ifstream file(path);
@@ -52,7 +52,7 @@ SrcVec Mesh::importRWGs(
         Eigen::Vector4i idx4;
 
         if (iss >> idx4)
-            rwgs.push_back(std::make_shared<SrcRWG>(Einc, iSrc++, idx4));
+            rwgs.push_back(std::make_shared<RWG>(Einc, iSrc++, idx4));
         else
             throw std::runtime_error("Unable to parse line");
     }
