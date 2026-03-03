@@ -6,9 +6,9 @@
 
 class Solver {
 
-public :
+public:
     Solver(
-        SrcVec& srcs, 
+        SrcVec& srcs,
         std::shared_ptr<FMM::Node>,
         std::shared_ptr<FMM::Nearfield>,
         int, double);
@@ -25,7 +25,12 @@ public :
 
     void printSols(const std::string&);
 
-private :
+public:
+    static vecXcd lvec;
+    static vecXcd rvec;
+    static vecXcd currents;
+
+private:
     std::shared_ptr<FMM::Node> root;
     std::shared_ptr<FMM::Nearfield> nf;
 
@@ -41,3 +46,6 @@ private :
     vecXcd vcos;
     vecXcd vsin;
 };
+
+
+

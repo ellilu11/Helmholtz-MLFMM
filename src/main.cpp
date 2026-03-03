@@ -3,14 +3,11 @@
 #include "clock.h"
 #include "config.h"
 #include "source.h"
-#include "states.h"
 #include "fmm/fmm.h"
 
 using namespace FMM;
 
 extern const Config config("config/config.txt");
-extern double k = 0.0;
-extern auto states = States();
 extern auto t = ClockTimes();
 
 int main() {
@@ -20,8 +17,6 @@ int main() {
     auto Einc = Exc::importPlaneWaves("config/pwave.txt");
     auto srcs = importSources(Einc);
     size_t nsrcs = srcs.size();
-
-    states = States(nsrcs);
 
     // ==================== Build nodes ==================== //
     std::cout << " Building FMM tree...\n";
@@ -78,10 +73,8 @@ int main() {
     if (config.mode == Mode::FMM) return 0;
 
     // ================== Solve iterative direct ================ //
-    states = States(nsrcs);
-    resetLeaves();
-
     start0 = Clock::now();
+    resetLeaves();
     root = std::make_shared<Node>(srcs, 0, nullptr, 1);
     root->buildLists();
 

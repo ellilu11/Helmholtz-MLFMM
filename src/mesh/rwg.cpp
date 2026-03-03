@@ -71,6 +71,7 @@ vec3cd Mesh::RWG::getIntegratedPlaneWave(const vec3d& kvec, bool doNumeric) cons
  */
 cmplx Mesh::RWG::getIntegratedRad(const std::shared_ptr<Source> src) const {
     const auto srcRWG = dynamic_pointer_cast<RWG>(src);
+    double k2 = config.k * config.k;
     cmplx intRad = 0.0;
 
     int iObs = 0;
@@ -85,7 +86,7 @@ cmplx Mesh::RWG::getIntegratedRad(const std::shared_ptr<Source> src) const {
             const auto& [m00, m10, m01, m11] = triPair.momentsEFIE;
 
             cmplx pairRad =
-                m11 - v1.dot(m10) - v0.dot(m01) + (v0.dot(v1) - 4.0/(k*k))*m00;
+                m11 - v1.dot(m10) - v0.dot(m01) + (v0.dot(v1) - 4.0/k2)*m00;
 
             // For edge adjacent triangles, integrate 1/R term (analytically)
             // Average obs-src and src-obs to preserve symmetry

@@ -25,6 +25,7 @@ void Mesh::TriPair::buildNumCommon() {
 }
 
 void Mesh::TriPair::buildMomentsEFIE() {
+    double k = config.k;
     const auto& [obsTri, srcTri] = getTriPair();
 
     momentsEFIE = { 0.0, vec3cd::Zero(), vec3cd::Zero(), 0.0 };

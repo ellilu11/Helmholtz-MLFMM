@@ -77,7 +77,7 @@ void Mesh::SrcRWG::findSubRWGs() {
 // Propagate rval to rval of fine RWGs
 // TODO: Zero out fine RWG rvals in caller before calling this
 void Mesh::SrcRWG::propagateRvals() {
-    rval = states.rvec[iSrc]; // get updated rval from FMM
+    rval = Solver::rvec[iSrc]; // get updated rval from FMM
 
     for (size_t i = 0; i < iSubs.size(); ++i) {
         auto& subrwg = glSubrwgs[iSubs[i]];

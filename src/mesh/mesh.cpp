@@ -92,6 +92,7 @@ void Mesh::printScattered(const SrcVec& srcs, const std::string& fname, int nth)
     std::ofstream thfile(dir/"thetas.txt"); // phfile(dir/"phis.txt");
     // thfile << std::setprecision(15) << std::scientific;
 
+    double k = config.k;
     double phi = 0.0; // pick phi = 0
     double rcsSum = 0.0;
     for (int ith = 0; ith < nth; ++ith) {
@@ -100,7 +101,7 @@ void Mesh::printScattered(const SrcVec& srcs, const std::string& fname, int nth)
 
         vec3cd dirFar = vec3cd::Zero();
         for (const auto& src : srcs)
-            dirFar += states.currents[src->getIdx()] * src->getFarAlongDir(k*rhat);
+            dirFar += Solver::currents[src->getIdx()] * src->getFarAlongDir(k*rhat);
 
         const vec2cd& far = Phys::C * k * Math::toThPh(theta, phi) * dirFar;
 

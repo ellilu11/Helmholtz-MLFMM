@@ -2,6 +2,10 @@
 #include "fmm/nearfield.h"
 #include "fmm/node.h"
 
+vecXcd Solver::currents;
+vecXcd Solver::lvec;
+vecXcd Solver::rvec;
+
 Solver::Solver(
     SrcVec& srcs,
     std::shared_ptr<FMM::Node> root,
@@ -17,23 +21,20 @@ Solver::Solver(
       vcos(vecXcd::Zero(maxIter)),
       vsin(vecXcd::Zero(maxIter))
 {
-    /* Sort sources by srcIdx
-    std::sort(srcs.begin(), srcs.end(),
-        [](std::shared_ptr<Source> src0, std::shared_ptr<Source> src1)
-        { return src0->getIdx() < src1->getIdx(); }
-    );
-    */
+    currents = vecXcd::Zero(numSrcs);
+    lvec = vecXcd::Zero(numSrcs);
+    rvec = vecXcd::Zero(numSrcs);
 
-    // states.lvec = r = ZI - w = -w assuming I = 0 initially
+    // lvec = r = ZI - w = -w assuming I = 0 initially
     // std::transform
     for (int idx = 0; idx < numSrcs; ++idx)
-        states.lvec[idx] = -srcs[idx]->getVoltage();
+        lvec[idx] = -srcs[idx]->getVoltage();
 
-    g0 = states.lvec.norm(); // store g0 for use later
+    g0 = lvec.norm(); // store g0 for use later
     gvec[0] = g0;
 
-    states.lvec.normalize(); // lvec_0
-    Qmat.col(0) = states.lvec; // store lvec as first column of Qmat
+    lvec.normalize(); // lvec_0
+    Qmat.col(0) = lvec; // store lvec as first column of Qmat
 }
 
 void Solver::updateRvec(int k) {
@@ -48,9 +49,6 @@ void Solver::updateRvec(int k) {
 
 void Solver::iterateArnoldi(int k) {
     assert(Qmat.cols() == k+1);
-
-    auto& lvec = states.lvec;
-    auto& rvec = states.rvec;
 
     // Do Arnoldi iteration
     vecXcd hcol(k+2);
@@ -117,8 +115,8 @@ void Solver::printSols(const std::string& fname) {
 
     file << std::setprecision(15) << std::scientific;
 
-    // for (const auto& sol : states.rvec) file << sol << '\n';
-    for (const auto& curr : states.currents) file << curr << '\n';
+    // for (const auto& sol : rvec) file << sol << '\n';
+    for (const auto& curr : currents) file << curr << '\n';
 }
 
 void Solver::solve(const std::string& fname) {
@@ -128,12 +126,9 @@ void Solver::solve(const std::string& fname) {
     do {
         // if (iter && !(iter%10)) std::cout << "   #" << iter << '\n';
         updateRvec(iter);
-
         iterateArnoldi(iter);
-
         updateGvec(iter);
-
-        states.rvec = vecXcd::Zero(numSrcs); // reset rvec for next iteration
+        rvec = vecXcd::Zero(numSrcs); // reset rvec for next iteration
     } while (abs(gvec[++iter])/g0 > EPS && iter < maxIter); // careful
 
     Time duration_ms = Clock::now() - start;
@@ -145,8 +140,8 @@ void Solver::solve(const std::string& fname) {
 
     const matXcd& Hp = Hmat.block(0, 0, Hmat.rows()-1, Hmat.cols());
     vecXcd yvec = Hp.lu().solve(gvec.segment(0, iter));
-    states.currents = Qmat.leftCols(iter) * yvec;
-    std::cout << "   Current norm: " << states.currents.norm() << "\n";
+    currents = Qmat.leftCols(iter) * yvec;
+    std::cout << "   Current norm: " << currents.norm() << "\n";
 
     printSols(fname);
 }

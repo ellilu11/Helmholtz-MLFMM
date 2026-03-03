@@ -57,7 +57,7 @@ public:
 
         if (pos == srcDip->pos) return 0.0; // TODO: Radiation reaction field
 
-        vec3cd rad = Math::dyadicG(pos - srcDip->pos, k) * srcDip->phat;
+        vec3cd rad = Math::dyadicG(pos - srcDip->pos, config.k) * srcDip->phat;
 
         return conj(rad.dot(phat));
     }

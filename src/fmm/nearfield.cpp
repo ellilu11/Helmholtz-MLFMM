@@ -123,16 +123,16 @@ void FMM::Nearfield::evalPairSols(const NearPair& nearPair) {
 
             cmplx rad = nearPair.rads[pairIdx++];
 
-            solAtObss[iObs] += states.lvec[src->getIdx()] * rad;
-            solAtSrcs[iSrc] += states.lvec[obs->getIdx()] * rad;
+            solAtObss[iObs] += Solver::lvec[src->getIdx()] * rad;
+            solAtSrcs[iSrc] += Solver::lvec[obs->getIdx()] * rad;
         }
     }
 
     for (int n = 0; n < nObs; ++n)
-        states.rvec[srcs[n]->getIdx()] += Phys::C * k * solAtObss[n];
+        Solver::rvec[srcs[n]->getIdx()] += Phys::C * config.k * solAtObss[n];
 
     for (int n = 0; n < nSrcs; ++n)
-        states.rvec[srcSrcs[n]->getIdx()] += Phys::C * k * solAtSrcs[n];
+        Solver::rvec[srcSrcs[n]->getIdx()] += Phys::C * config.k * solAtSrcs[n];
 }
 
 /* evalSelfSols()
@@ -155,13 +155,13 @@ void FMM::Nearfield::evalSelfSols(const NearPair& selfPair) {
 
             cmplx rad = selfPair.rads[pairIdx++];
 
-            solAtObss[iObs] += states.lvec[src->getIdx()] * rad;
-            solAtObss[iSrc] += states.lvec[obs->getIdx()] * rad;
+            solAtObss[iObs] += Solver::lvec[src->getIdx()] * rad;
+            solAtObss[iSrc] += Solver::lvec[obs->getIdx()] * rad;
         }
     }
 
     for (int n = 0; n < nSrcs; ++n)
-        states.rvec[srcs[n]->getIdx()] += Phys::C * k * solAtObss[n];
+        Solver::rvec[srcs[n]->getIdx()] += Phys::C * config.k * solAtObss[n];
 }
 
 /* evaluateSols()
