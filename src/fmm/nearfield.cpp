@@ -77,8 +77,13 @@ void FMM::Nearfield::buildPairRads() {
 
                 nearPair.efie[pairIdx] = obs->getIntegratedEFIE(src);
 
+                cmplx rad0 = obs->getIntegratedMFIE(src);
+                cmplx rad1 = src->getIntegratedMFIE(obs);
+
+                // std::cout << rad0 << ' ' << rad1 << "\n";
+
                 nearPair.mfie[pairIdx] = std::make_pair(
-                    obs->getIntegratedMFIE(src), src->getIntegratedMFIE(obs));
+                    rad0, rad1);
                     
                 ++pairIdx;
             }
@@ -96,10 +101,10 @@ void FMM::Nearfield::buildSelfRads() {
         selfPair.mfie.resize(nSrcs*(nSrcs+1)/2);
 
         int pairIdx = 0;
-        for (size_t iObs = 0; iObs < leaf->srcs.size(); ++iObs) { // iObs = 0
+        for (size_t iObs = 1; iObs < leaf->srcs.size(); ++iObs) { // iObs = 0
             const auto& obs = leaf->srcs[iObs];
 
-            for (size_t iSrc = 0; iSrc <= iObs; ++iSrc) { // iSrc <= iObs 
+            for (size_t iSrc = 0; iSrc < iObs; ++iSrc) { // iSrc <= iObs 
                 const auto& src = leaf->srcs[iSrc];
 
                 selfPair.efie[pairIdx] = obs->getIntegratedEFIE(src);
@@ -134,9 +139,9 @@ void FMM::Nearfield::evalPairSols(const NearPair& nearPair) {
             auto obs = srcs[iObs], src = srcSrcs[iSrc];
 
             cmplx radAtObs = config.alpha * nearPair.efie[pairIdx] 
-                + (1.0-config.alpha) * nearPair.mfie[pairIdx].first;
+                + config.beta * nearPair.mfie[pairIdx].first;
             cmplx radAtSrc = config.alpha * nearPair.efie[pairIdx] 
-                + (1.0-config.alpha) * nearPair.mfie[pairIdx].second;
+                + config.beta * nearPair.mfie[pairIdx].second;
 
             solAtObss[iObs] += states.lvec[src->getIdx()] * radAtObs;
             solAtSrcs[iSrc] += states.lvec[obs->getIdx()] * radAtSrc;
@@ -166,14 +171,14 @@ void FMM::Nearfield::evalSelfSols(const NearPair& selfPair) {
     std::vector<cmplx> solAtObss(nSrcs, 0.0);
 
     int pairIdx = 0;
-    for (size_t iObs = 0; iObs < nSrcs; ++iObs) { // iObs = 0
-        for (size_t iSrc = 0; iSrc <= iObs; ++iSrc) { // iSrc <= iObs 
+    for (size_t iObs = 1; iObs < nSrcs; ++iObs) { // iObs = 0
+        for (size_t iSrc = 0; iSrc < iObs; ++iSrc) { // iSrc <= iObs 
             auto obs = srcs[iObs], src = srcs[iSrc];
 
             cmplx radAtObs = config.alpha * selfPair.efie[pairIdx]
-                + (1.0-config.alpha) * selfPair.mfie[pairIdx].first;
+                + config.beta * selfPair.mfie[pairIdx].first;
             cmplx radAtSrc = config.alpha * selfPair.efie[pairIdx]
-                + (1.0-config.alpha) * selfPair.mfie[pairIdx].second;
+                + config.beta * selfPair.mfie[pairIdx].second;
 
             solAtObss[iObs] += states.lvec[src->getIdx()] * radAtObs;
             solAtObss[iSrc] += states.lvec[obs->getIdx()] * radAtSrc;

@@ -68,7 +68,9 @@ int main() {
     constexpr double EPS = 1.0E-6;
 
     auto solver = std::make_unique<Solver>(srcs, root, nf, MAX_ITER, EPS);
-    solver->solve("curr.txt");
+    // solver->solve("curr.txt");
+    solver->updateRvec(0);
+    solver->printSols("rvec.txt");
 
     Time duration_ms0 = Clock::now() - start0;
     std::cout << " FMM total elapsed time: " << duration_ms0.count() << " ms\n\n";
@@ -94,7 +96,9 @@ int main() {
 
     std::cout << " Solving with direct...           ";
     solver = std::make_unique<Solver>(srcs, root, nf, MAX_ITER, EPS);
-    solver->solve("currDir.txt");
+    // solver->solve("currDir.txt");
+    solver->updateRvec(0);
+    solver->printSols("rvecDir.txt");
 
     duration_ms0 = Clock::now() - start0;
     std::cout << " Direct total elapsed time: " << duration_ms0.count() << " ms\n\n";

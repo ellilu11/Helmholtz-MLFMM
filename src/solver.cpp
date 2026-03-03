@@ -117,8 +117,8 @@ void Solver::printSols(const std::string& fname) {
 
     file << std::setprecision(15) << std::scientific;
 
-    // for (const auto& sol : states.rvec) file << sol << '\n';
-    for (const auto& curr : states.currents) file << curr << '\n';
+    for (const auto& sol : states.rvec) file << sol << '\n';
+    // for (const auto& curr : states.currents) file << curr << '\n';
 }
 
 void Solver::solve(const std::string& fname) {

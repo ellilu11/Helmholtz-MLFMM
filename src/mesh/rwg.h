@@ -41,20 +41,20 @@ public:
     double getLeng() const { return leng; }
 
     void buildVoltage() override {
-        vec3d pol = 
-            config.alpha * Einc->pol 
-            + (1.0-config.alpha) * Phys::eta * Einc->wavehat.cross(Einc->pol);
+        vec3d polInc = 
+            config.alpha * Einc->pol +
+            config.beta * Einc->wavehat.cross(Einc->pol);
 
         voltage = -Einc->amplitude *
-            conj(getIntegratedPlaneWave(Einc->wavevec).dot(pol)); // Hermitian dot!
+            conj(getIntegratedPlaneWave(Einc->wavevec).dot(polInc)); // Hermitian dot!
     }
 
     vec3cd getRadAlongDir(const vec3d& X, const vec3d& kvec) const override {
         vec3cd intPlaneWave = getIntegratedPlaneWave(kvec).conjugate();
 
         return exp(iu*kvec.dot(X)) * 
-            (config.alpha * intPlaneWave 
-                - (1.0-config.alpha) * Phys::eta * iu * kvec.cross(intPlaneWave)); // double check sign
+            (config.alpha * intPlaneWave -
+             config.beta * iu * kvec.cross(intPlaneWave)); // double check sign
     }
 
     vec3cd getFarAlongDir(const vec3d& krhat) const override {

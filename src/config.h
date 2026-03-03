@@ -81,7 +81,8 @@ struct Config {
             >> digits >> interpOrder >> overInterp
             >> rootLeng >> wavenum >> alpha;
 
-        ::k = wavenum; // set global wavenumber
+        ::k = wavenum;
+        beta = (1.0 - alpha) * Phys::eta;
 
         std::cout << " *************************** \n";
         std::cout << " ***** Helmholtz-MLFMM ***** \n";
@@ -96,7 +97,7 @@ struct Config {
         std::cout << "   Overinterp:      " << overInterp << '\n';
         std::cout << "   Tri quad rule:   " << getNumQuads(quadPrec) << "-point\n";
         std::cout << "   Root length:     " << rootLeng << " m\n";
-        std::cout << "   Wavenumber:      " << k << " /m\n\n";
+        std::cout << "   Wavenumber:      " << k << " /m\n";
         std::cout << "   CFIE alpha:      " << alpha << "\n\n";
     }
 
@@ -110,6 +111,7 @@ struct Config {
     double rootLeng;
     double wavenum;
     double alpha;
+    double beta;
 
     // Point dipoles only
     Dist pdist;

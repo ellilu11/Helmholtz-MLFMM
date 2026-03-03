@@ -102,7 +102,7 @@ void Mesh::printScattered(const SrcVec& srcs, const std::string& fname, int nth)
         for (const auto& src : srcs)
             dirFar += states.currents[src->getIdx()] * src->getFarAlongDir(k*rhat);
 
-        const vec2cd& far = Phys::C * k * Math::toThPh(theta, phi) * dirFar;
+        const vec2cd& far = Phys::C * k * Math::toThPhMat(theta, phi) * dirFar;
 
         double rcs = 4.0*PI/(k*k) * far.squaredNorm();
         rcsSum += rcs;

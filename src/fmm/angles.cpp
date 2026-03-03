@@ -35,6 +35,8 @@ void FMM::Angles::buildAngularMatrices() {
 
     khat.resize(nDirs);
     toThPh.resize(nDirs);
+    toSph.resize(nDirs);
+    fromSph.resize(nDirs);
     ImRR.resize(nDirs);
 
     size_t iDir = 0;
@@ -45,7 +47,9 @@ void FMM::Angles::buildAngularMatrices() {
             const double phi = phis[iph];
 
             khat[iDir] = Math::fromSph(vec3d(1.0, theta, phi));
-            toThPh[iDir] = Math::toThPh(theta, phi);
+            toThPh[iDir] = Math::toThPhMat(theta, phi);
+            toSph[iDir] = Math::toSphMat(theta, phi);
+            fromSph[iDir] = Math::fromSphMat(theta, phi);
             ImRR[iDir] = Math::ImRR(khat[iDir]);
 
             ++iDir;

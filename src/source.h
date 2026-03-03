@@ -6,6 +6,8 @@
 #include "math.h"
 #include "phys.h"
 
+extern const Config config;
+
 class Source;
 
 using SrcVec = std::vector<std::shared_ptr<Source>>;

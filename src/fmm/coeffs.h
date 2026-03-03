@@ -33,6 +33,16 @@ struct FMM::Coeffs {
         return vec2cd(theta[iDir], phi[iDir]);
     }
 
+    // Return cross product of coeffs with rhat along each direction
+    Coeffs getCrossCoeffs() const {
+        Coeffs crossCoeffs(size());
+        for (size_t iDir = 0; iDir < size(); ++iDir) {
+            crossCoeffs.theta[iDir] = phi[iDir];
+            crossCoeffs.phi[iDir] = -theta[iDir];
+        }
+        return crossCoeffs;
+    }
+
     Coeffs& operator+=(const Coeffs& coeffs) noexcept {
         theta += coeffs.theta;
         phi += coeffs.phi;

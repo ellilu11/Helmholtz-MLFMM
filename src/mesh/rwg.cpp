@@ -157,6 +157,7 @@ cmplx Mesh::RWG::getIntegratedMFIE(const std::shared_ptr<Source> src) const {
     return leng * srcRWG->leng * intRad;
 }*/
 
+// Debug version, no precomputed moments
 cmplx Mesh::RWG::getIntegratedMFIE(const std::shared_ptr<Source> src) const {
     if (config.alpha == 1.0) return 0.0;
     const auto srcRWG = dynamic_pointer_cast<RWG>(src);
@@ -171,34 +172,38 @@ cmplx Mesh::RWG::getIntegratedMFIE(const std::shared_ptr<Source> src) const {
 
             cmplx pairRad = 0.0;
             for (const auto& [obs, obsWeight] : obsTri.triQuads) {
-                for (const auto& [src, srcWeight] : srcTri.triQuads) {
-                    vec3d rvec = obs-src;
-                    double r = rvec.norm(), r2 = r*r, r3 = r*r2;
+                // For common triangles, use 1/2 J term(numerically)
+                if (triPair.nCommon == 3) {
+                    //pairRad -= 0.5 * (obs-vobs).dot(obsTri.nhat.cross(obs-vsrc))
+                    //    * obsWeight
+                    //    / (2.0 * obsTri.area); // since numerical integration only cancels one RWG's 1/(2A) factor
+                    continue;
+                }
 
-                    vec3cd gradG = rvec / r3;
-                    if (triPair.nCommon == 2)
+                for (const auto& [src, srcWeight] : srcTri.triQuads) {
+                    vec3d R = obs-src;
+                    double r = R.norm(), r2 = r*r, r3 = r*r2;
+                    assert(!Math::fzero(r));
+                            
+                    vec3cd gradG = R / r3;
+                    gradG = gradG * (-1.0+iu*k*r)*exp(iu*k*r);
+                    /*if (triPair.nCommon == 2)
                         gradG = gradG * ((-1.0+iu*k*r)*exp(iu*k*r)+1.0+0.5*k*k*r2);
                     else if (triPair.nCommon < 2)
-                        gradG = gradG * (-1.0+iu*k*r)*exp(iu*k*r);
+                        gradG = gradG * (-1.0+iu*k*r)*exp(iu*k*r);*/
 
+                    // minus sign from flipping J x gradG to gradG x J
                     pairRad -= (obs-vobs).dot(gradG.cross(src-vsrc))
                         * obsWeight * srcWeight;
                 }
-
-                // For common triangles, use 1/2 J term(numerically)
-                if (triPair.nCommon == 3) {
-                    pairRad -= 0.5 * (obs-vobs).dot(obsTri.nhat.cross(obs-vsrc))
-                        * obsWeight
-                        / (2.0 * obsTri.area); // since numerical integration only cancels one RWG's 1/(2A) factor
-                }
             }
 
-            // For edge adjacent triangles, integrate 1/R term (analytically)
+            /* For edge adjacent triangles, integrate 1/R term (analytically)
             if (triPair.nCommon == 2)
                 pairRad -= // minus sign since 1.0+0.5*k*k*r2 was added to gradG
                     (obsTri.getDoubleIntegratedInvRcubed(srcTri, triPair, vobs, vsrc) + 
                         0.5*k*k*obsTri.getDoubleIntegratedInvR(srcTri, triPair, vobs, vsrc, false));
-
+            */
             intRad += pairRad * Math::sign(iObs) * Math::sign(iSrc);
             ++iSrc;
         }

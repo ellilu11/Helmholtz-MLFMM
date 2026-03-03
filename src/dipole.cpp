@@ -2,6 +2,29 @@
 
 using namespace std;
 
+SrcVec importDipoles(
+    const filesystem::path& fpath,
+    const shared_ptr<Exc::PlaneWave>& Einc)
+{
+    ifstream inFile(fpath);
+    if (!inFile) throw runtime_error("Unable to find file");
+    string line;
+    SrcVec dipoles;
+    size_t idx = 0;
+
+    while (getline(inFile, line)) {
+        istringstream iss(line);
+
+        vec3d pos, dip;
+        if (iss >> pos >> dip)
+            dipoles.emplace_back(make_shared<Dipole>(Einc, idx++, pos, dip));
+        else
+            throw std::runtime_error("Unable to parse line");
+    }
+
+    return dipoles;
+}
+
 template <class dist0, class dist1 = dist0, class dist2 = dist0>
 SrcVec makeDipoles(const Config& config, const shared_ptr<Exc::PlaneWave> Einc)
 {
@@ -77,30 +100,6 @@ SrcVec makeDipoles(const Config& config, const shared_ptr<Exc::PlaneWave> Einc)
             }();
 
         dipoles.emplace_back(make_shared<Dipole>(Einc, n, X, P));
-    }
-
-    return dipoles;
-}
-
-// TODO: Make Dipole static method
-SrcVec importDipoles(
-    const filesystem::path& fpath,
-    const shared_ptr<Exc::PlaneWave>& Einc)
-{
-    ifstream inFile(fpath);
-    if (!inFile) throw runtime_error("Unable to find file");
-    string line;
-    SrcVec dipoles;
-    size_t idx = 0;
-
-    while (getline(inFile, line)) {
-        istringstream iss(line);
-
-        vec3d pos, dip;
-        if (iss >> pos >> dip)
-            dipoles.emplace_back(make_shared<Dipole>(Einc, idx++, pos, dip));
-        else
-            throw std::runtime_error("Unable to parse line");
     }
 
     return dipoles;

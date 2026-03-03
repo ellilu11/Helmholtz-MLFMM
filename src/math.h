@@ -93,7 +93,25 @@ namespace Math {
             z);
     }
 
-    inline mat23d toThPh(double th, double ph) noexcept {
+    // Debugging only
+    inline mat3d toSphMat(double th, double ph) noexcept {
+        return mat3d{
+            {  sin(th)*cos(ph),  sin(th)*sin(ph),  cos(th) },
+            {  cos(th)*cos(ph),  cos(th)*sin(ph), -sin(th) },
+            { -sin(ph),          cos(ph),          0.0     }
+        };
+    }
+
+    // Debugging only
+    inline Eigen::Matrix<double,3,2> fromSphMat(double th, double ph) noexcept {
+        return Eigen::Matrix<double,3,2>{
+            {  cos(th)*cos(ph), -sin(ph) },
+            {  cos(th)*sin(ph),  cos(ph) },
+            { -sin(th),          0.0 }
+        };
+    }
+
+    inline mat23d toThPhMat(double th, double ph) noexcept {
         return mat23d{
             {  cos(th)*cos(ph),  cos(th)*sin(ph), -sin(th) },
             { -sin(ph),          cos(ph),          0.0     }

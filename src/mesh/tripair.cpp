@@ -7,7 +7,7 @@ Mesh::TriPair::TriPair(pair2i iTris)
     buildNumCommon();
 
     if (config.alpha != 0.0) buildMomentsEFIE();
-    if (config.alpha != 1.0) buildMomentsMFIE();
+    // if (config.alpha != 1.0) buildMomentsMFIE();
     if (nCommon >= 2) {
         buildIntegratedInvR();
         if (config.alpha != 1.0) buildIntegratedInvRcubed();
@@ -56,16 +56,16 @@ void Mesh::TriPair::buildMomentsEFIE() {
 
 void Mesh::TriPair::buildMomentsMFIE() {
     momentsMFIE = { vec3cd::Zero(), vec3cd::Zero(), vec3cd::Zero(), 0.0 };
-    if (nCommon == 3) return; // common triangles handled separately
+    if (nCommon == 3) return; // principal value of self-interaction is zero
     const auto& [obsTri, srcTri] = getTriPair();
 
     for (const auto& [obs, obsWeight] : obsTri.triQuads) {
         for (const auto& [src, srcWeight] : srcTri.triQuads) {
-            const vec3d& rvec = obs-src;
-            double r = rvec.norm(), r2 = r*r, r3 = r*r2;
+            const vec3d& R = obs-src;
+            double r = R.norm(), r2 = r*r, r3 = r*r2;
             assert(!Math::fzero(r));
 
-            vec3cd gradG = rvec * obsWeight * srcWeight; // absorb quad weights into gradG
+            vec3cd gradG = R * obsWeight * srcWeight; // absorb quad weights into gradG
             if (nCommon == 2)
                 gradG = gradG * ((-1.0+iu*k*r)*exp(iu*k*r)+1.0+0.5*k*k*r2) / r3; // double check signs
             else if (nCommon < 2)

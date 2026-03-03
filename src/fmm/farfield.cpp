@@ -16,9 +16,13 @@ void FMM::Node::buildRadPats() {
         for (int iDir = 0; iDir < nDir; ++iDir) {
             vec3d kvec = angles_lvl.khat[iDir] * k;
             const mat23d& toThPh = angles_lvl.toThPh[iDir];
+            
+            vec3cd rad = src->getRadAlongDir(center, kvec);
+            // std::cout << angles_lvl.toSph[iDir] * rad << "\n\n";
 
             radPat.setCoeffAlongDir(
-                toThPh * src->getRadAlongDir(center, kvec), iDir);
+                toThPh // project away radial component regardless of whether it is zero 
+                * rad, iDir);
         }
 
         radPats[iSrc++] = std::move(radPat);
@@ -193,7 +197,6 @@ void FMM::Node::evalFarSols() {
     if (isSrcless() || level <= 1) return;
 
     size_t nDir = angles[level].getNumDirs();
-
     Eigen::Map<arrXcd> localTheta(localCoeffs.theta.data(), nDir);
     Eigen::Map<arrXcd> localPhi(localCoeffs.phi.data(), nDir);
 
@@ -205,8 +208,27 @@ void FMM::Node::evalFarSols() {
         Eigen::Map<arrXcd> radPatTheta(radPat.theta.data(), nDir);
         Eigen::Map<arrXcd> radPatPhi(radPat.phi.data(), nDir);
 
-        intRad += (radPatTheta.conjugate() * localTheta +
+        intRad += config.alpha * (radPatTheta.conjugate() * localTheta +
             radPatPhi.conjugate() * localPhi).sum();
+
+        // Take cross product of -khat with all radpats to get magnetic field contribution
+        Coeffs radPatCross = radPat.getCrossCoeffs();
+        Eigen::Map<arrXcd> radPatCrossTheta(radPatCross.theta.data(), nDir);
+        Eigen::Map<arrXcd> radPatCrossPhi(radPatCross.phi.data(), nDir);
+
+        intRad += config.beta * ((iu*k*radPatCrossTheta).conjugate() * localTheta +
+            (iu*k*radPatCrossPhi).conjugate() * localPhi).sum();
+        //
+
+        /*
+        const Angles& angles_lvl = angles[level];   
+        for (size_t iDir = 0; iDir < nDir; ++iDir) {
+            // Do the angular integration
+            vec3d khat = angles_lvl.khat[iDir];
+            vec3cd radpat = angles_lvl.fromSph[iDir] * radPat.getVecAlongDir(iDir);
+            vec3cd local = angles_lvl.fromSph[iDir] * localCoeffs.getVecAlongDir(iDir);
+            intRad -= (iu * khat.cross(radpat)).conjugate().dot(local); // Hermitian dot!
+        }*/
 
         states.rvec[obs->getIdx()] += Phys::C * k * intRad;
     }

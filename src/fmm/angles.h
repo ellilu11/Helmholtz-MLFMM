@@ -26,6 +26,8 @@ struct FMM::Angles {
 
     std::vector<vec3d> khat;
     std::vector<mat23d> toThPh;
+    std::vector<mat3d> toSph; // debugging only
+    std::vector<Eigen::Matrix<double, 3, 2>> fromSph; // debugging only
     std::vector<mat3d> ImRR;
 
     std::vector<double> thetas;  // theta samples

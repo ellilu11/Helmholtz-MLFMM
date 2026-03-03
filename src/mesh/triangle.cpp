@@ -172,7 +172,6 @@ Mesh::Triangle::getIntegratedInvRcubed(const vec3d& obs, bool doNumeric) const
 
     const auto& Xs = getVerts();
     double d = std::fabs(nhat.dot(obs-Xs[0])), dsq = d*d;
-    std::cout << "d = " << d << '\n';
 
     std::array<vec3d, 3> Ps =
         { proj(Xs[0])-obsProj, proj(Xs[1])-obsProj, proj(Xs[2])-obsProj };
