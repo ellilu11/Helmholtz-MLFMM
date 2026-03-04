@@ -34,9 +34,6 @@ public:
     }
 
     vec3cd getRadAlongDir(const vec3d& X, const vec3d& kvec) const override {
-        //vec3cd intPlaneWave = exp(iu*kvec.dot(X-pos)) * phat;
-        //return config.alpha * intPlaneWave -
-        //    config.beta * iu * kvec.cross(intPlaneWave);
         return exp(iu*kvec.dot(X-pos)) * phat;
     }
 

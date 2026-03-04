@@ -26,7 +26,7 @@ private :
 public : 
     std::tuple<cmplx, vec3cd, vec3cd, cmplx> momentsEFIE;
     std::tuple<vec3cd, vec3cd, vec3cd, cmplx> momentsMFIE;
-    std::tuple<vec3cd, vec3cd, vec3cd, cmplx> momentsMFIE2;
+    // std::tuple<vec3cd, vec3cd, vec3cd, cmplx> momentsMFIE2;
 
     std::vector<std::pair<double,vec3d>> integratedInvR; 
     std::vector<std::pair<double,vec3d>> integratedInvR2; // symmetric case

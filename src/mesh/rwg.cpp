@@ -125,27 +125,30 @@ cmplx Mesh::RWG::getIntegratedMFIE(const std::shared_ptr<Source> src) const {
 
         int iSrc = 0;
         for (const auto& [srcTri, vsrc] : srcRWG->getTrisAndVerts()) {
+            const TriPair& triPair = glTriPairs.at(std::minmax(obsTri.iTri, srcTri.iTri));
+            cmplx pairRad = 0.0;
+
+            // For common triangles, use 1/2 J term(numerically)
+            if (triPair.nCommon == 3) {
+                for (const auto& [obs, obsWeight] : obsTri.triQuads) {
+                    pairRad -= (obs-vobs).dot(obsTri.nhat.cross(obs-vsrc))
+                        * obsWeight / (4.0 * obsTri.area);
+                }
+                continue;
+            }
+
             vec3d v0 = (obsTri.iTri <= srcTri.iTri) ? vobs : vsrc;
             vec3d v1 = (obsTri.iTri <= srcTri.iTri) ? vsrc : vobs;
 
-            const TriPair& triPair = glTriPairs.at(std::minmax(obsTri.iTri, srcTri.iTri));
-            const auto& [m00, m10, m01, m11] = 
-                ((obsTri.iTri <= srcTri.iTri) ? triPair.momentsMFIE : triPair.momentsMFIE2);
+            const auto& [m00, m10, m01, m11] = triPair.momentsMFIE;
 
-            cmplx pairRad = m11 - v0.dot(m01) - v1.dot(m10) + (v1.cross(v0)).dot(m00); // double check!
+            pairRad += m11 - v0.dot(m01) - v1.dot(m10) + (v1.cross(v0)).dot(m00);
 
-            /* For edge adjacent triangles, integrate 1/R term (analytically)
+            // For edge adjacent triangles, integrate 1/R term (analytically)
             if (triPair.nCommon == 2)
                 pairRad -= // minus sign since 1.0+0.5*k*k*r2 was added to gradG in MFIE moments
                     (0.5*k*k*obsTri.getDoubleIntegratedInvR(srcTri, triPair, vobs, vsrc, false)
                     + obsTri.getDoubleIntegratedInvRcubed(srcTri, triPair, vobs, vsrc));
-            */
-
-            /* For common triangles, use 1/2 J term (numerically)
-            if (triPair.nCommon == 3)
-                pairRad -= 0.5 * (obs-vobs).dot(obsTri.nhat.cross(obs-vobs))
-                        * obsWeight;
-            */
 
             intRad += pairRad * Math::sign(iObs) * Math::sign(iSrc);
             ++iSrc;

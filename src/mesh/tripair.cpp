@@ -65,27 +65,21 @@ void Mesh::TriPair::buildMomentsMFIE() {
             double r = R.norm(), r2 = r*r, r3 = r*r2;
             assert(!Math::fzero(r));
 
-            vec3cd gradG = R / r3 * (-1.0+iu*k*r)*exp(iu*k*r)
-                * obsWeight * srcWeight; // absorb quad weights into gradG
-            /*
+            vec3cd gradG = R / r3 * obsWeight * srcWeight; // absorb quad weights into gradG
+            
             if (nCommon == 2)
-                gradG = gradG * ((-1.0+iu*k*r)*exp(iu*k*r)+1.0+0.5*k*k*r2); // double check signs
+                gradG = gradG * ((-1.0+iu*k*r)*exp(iu*k*r)+0.5*k*k*r2+1.0); // double check signs
             else if (nCommon < 2)
                 gradG = gradG * (-1.0+iu*k*r)*exp(iu*k*r);
-            */
 
+            vec3cd obsXgradG = obs.cross(gradG).conjugate();
+            vec3cd gradGXsrc = gradG.cross(src).conjugate();
             auto& [m00, m10, m01, m11] = momentsMFIE;
             // minus signs from flipping J x gradG to gradG x J
             m00 -= gradG; 
-            m10 -= obs.cross(gradG); // double check
-            m01 -= (gradG.cross(src)).conjugate();
-            m11 -= conj(obs.dot(gradG.cross(src)));
-
-            auto& [m00_2, m10_2, m01_2, m11_2] = momentsMFIE2;
-            m00_2 += gradG;
-            m10_2 += src.cross(gradG);
-            m01_2 += (gradG.cross(obs)).conjugate();
-            m11_2 += conj(src.dot(gradG.cross(obs)));
+            m10 -= obsXgradG;
+            m01 -= gradGXsrc;
+            m11 -= obs.dot(gradGXsrc);
         }
     }
 }

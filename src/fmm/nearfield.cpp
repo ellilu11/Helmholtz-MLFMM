@@ -101,10 +101,10 @@ void FMM::Nearfield::buildSelfRads() {
         selfPair.mfie.resize(nSrcs*(nSrcs+1)/2);
 
         int pairIdx = 0;
-        for (size_t iObs = 1; iObs < leaf->srcs.size(); ++iObs) { // iObs = 0
+        for (size_t iObs = 0; iObs < leaf->srcs.size(); ++iObs) { // iObs = 0
             const auto& obs = leaf->srcs[iObs];
 
-            for (size_t iSrc = 0; iSrc < iObs; ++iSrc) { // iSrc <= iObs 
+            for (size_t iSrc = 0; iSrc <= iObs; ++iSrc) { // iSrc <= iObs 
                 const auto& src = leaf->srcs[iSrc];
 
                 selfPair.efie[pairIdx] = obs->getIntegratedEFIE(src);
@@ -171,8 +171,8 @@ void FMM::Nearfield::evalSelfSols(const NearPair& selfPair) {
     std::vector<cmplx> solAtObss(nSrcs, 0.0);
 
     int pairIdx = 0;
-    for (size_t iObs = 1; iObs < nSrcs; ++iObs) { // iObs = 0
-        for (size_t iSrc = 0; iSrc < iObs; ++iSrc) { // iSrc <= iObs 
+    for (size_t iObs = 0; iObs < nSrcs; ++iObs) { // iObs = 0
+        for (size_t iSrc = 0; iSrc <= iObs; ++iSrc) { // iSrc <= iObs 
             auto obs = srcs[iObs], src = srcs[iSrc];
 
             cmplx radAtObs = config.alpha * selfPair.efie[pairIdx]

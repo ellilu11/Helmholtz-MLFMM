@@ -20,8 +20,6 @@ FMM::Node::Node(
     if (buildLeaf) maxLevel = std::max(level, maxLevel);
     else subdivideNode();
 
-    // std::cout << "  Built node with " << srcs.size() << " srcs and center " << center.transpose() << "\n";
-
     ++numNodes;
 }
 

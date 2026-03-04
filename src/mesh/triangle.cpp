@@ -220,7 +220,7 @@ double Mesh::Triangle::getDoubleIntegratedInvR(
             triPair.integratedInvR[iObs] : triPair.integratedInvR2[iObs]);
 
         rad += ((obs-vobs).dot(vecRad+(obsProj-vsrcProj)*scaRad) - 
-                isEFIE * 4.0/(k*k)*scaRad) // TODO: No 4/k^2 term for MFIE
+                isEFIE * 4.0/(k*k)*scaRad)
                 * obsWeight;
 
         ++iObs;
