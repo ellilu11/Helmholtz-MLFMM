@@ -50,11 +50,7 @@ public:
     }
 
     vec3cd getRadAlongDir(const vec3d& X, const vec3d& kvec) const override {
-        vec3cd intPlaneWave = getIntegratedPlaneWave(kvec).conjugate();
-
-        return exp(iu*kvec.dot(X)) * 
-            (config.alpha * intPlaneWave -
-             config.beta * iu * kvec.cross(intPlaneWave)); // double check sign
+        return exp(iu*kvec.dot(X)) * getIntegratedPlaneWave(kvec).conjugate();
     }
 
     vec3cd getFarAlongDir(const vec3d& krhat) const override {

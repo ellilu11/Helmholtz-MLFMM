@@ -204,31 +204,14 @@ void FMM::Node::evalFarSols() {
     for (const auto& obs : srcs) {
         cmplx intRad = 0;
 
-        Coeffs& radPat = radPats[iObs++];
+        auto radPatE = radPats[iObs++];
+        auto radPatH = iu*k*radPatE.getCrossCoeffs();
+        auto radPat = config.alpha * radPatE + config.beta * radPatH;
+
         Eigen::Map<arrXcd> radPatTheta(radPat.theta.data(), nDir);
         Eigen::Map<arrXcd> radPatPhi(radPat.phi.data(), nDir);
-
-        intRad += config.alpha * (radPatTheta.conjugate() * localTheta +
+        intRad += (radPatTheta.conjugate() * localTheta +
             radPatPhi.conjugate() * localPhi).sum();
-
-        // Take cross product of -khat with all radpats to get magnetic field contribution
-        Coeffs radPatCross = radPat.getCrossCoeffs();
-        Eigen::Map<arrXcd> radPatCrossTheta(radPatCross.theta.data(), nDir);
-        Eigen::Map<arrXcd> radPatCrossPhi(radPatCross.phi.data(), nDir);
-
-        intRad += config.beta * ((iu*k*radPatCrossTheta).conjugate() * localTheta +
-            (iu*k*radPatCrossPhi).conjugate() * localPhi).sum();
-        //
-
-        /*
-        const Angles& angles_lvl = angles[level];   
-        for (size_t iDir = 0; iDir < nDir; ++iDir) {
-            // Do the angular integration
-            vec3d khat = angles_lvl.khat[iDir];
-            vec3cd radpat = angles_lvl.fromSph[iDir] * radPat.getVecAlongDir(iDir);
-            vec3cd local = angles_lvl.fromSph[iDir] * localCoeffs.getVecAlongDir(iDir);
-            intRad -= (iu * khat.cross(radpat)).conjugate().dot(local); // Hermitian dot!
-        }*/
 
         states.rvec[obs->getIdx()] += Phys::C * k * intRad;
     }

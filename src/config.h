@@ -82,7 +82,9 @@ struct Config {
             >> rootLeng >> wavenum >> alpha;
 
         ::k = wavenum;
-        beta = (1.0 - alpha) * Phys::eta;
+
+        beta = 1.0 - alpha;
+        C = -iu * Phys::eta * k / (4.0 * PI);
 
         std::cout << " *************************** \n";
         std::cout << " ***** Helmholtz-MLFMM ***** \n";
@@ -112,6 +114,7 @@ struct Config {
     double wavenum;
     double alpha;
     double beta;
+    cmplx C;
 
     // Point dipoles only
     Dist pdist;

@@ -21,7 +21,7 @@ std::filesystem::path makePath(const Config& config) {
 
 SrcVec importSources(std::shared_ptr<Exc::PlaneWave> Einc)
 {
-    /* RWG sources
+    // RWG sources
     Mesh::Triangle::buildQuadCoeffs(config.quadPrec);
 
     // const string configPath = "config/rwg/test/n"+to_string(config.nsrcs)+"adj/";
@@ -32,12 +32,13 @@ SrcVec importSources(std::shared_ptr<Exc::PlaneWave> Einc)
         configPath+"rwgs.txt",
         Einc);
     // Mesh::refineMesh(srcs);
-    */
+    //
 
-    // Dipole sources
+    /* Dipole sources
     const auto fpath = makePath(config);
     SrcVec srcs;
     srcs = importDipoles("config/dipole/sphere_n"+to_string(config.nsrcs)+".txt", Einc);
+    */
 
     /*
     switch (config.mode) {

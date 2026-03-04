@@ -61,12 +61,12 @@ public:
      */
     cmplx getIntegratedMFIE(const std::shared_ptr<Source> src) const override {
         auto srcDip = dynamic_pointer_cast<Dipole>(src);
-        if (pos == srcDip->pos || config.beta == 0.0) return 0.0;
+        if (pos == srcDip->pos || config.alpha == 1.0) return 0.0;
         vec3d R = pos - srcDip->pos;
         double r = R.norm(), r3 = r*r*r;
 
         vec3cd gradG = (-1.0+iu*k*r)*exp(iu*k*r)/r3 * R;
-        vec3cd rad = -gradG.cross(srcDip->phat);
+        vec3cd rad = -(gradG.cross(srcDip->phat)).conjugate(); // Hermitian cross!
 
         return phat.dot(rad);
     }
