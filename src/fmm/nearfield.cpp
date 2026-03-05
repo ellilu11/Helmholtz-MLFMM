@@ -178,3 +178,28 @@ void FMM::Nearfield::evaluateSols() {
 
     t.S2T += Clock::now() - start;
 }
+
+/* getNearMatrix()
+ * Get nearfield (impedance) matrix of all interactions between sources in this self pair
+ */
+ matXcd FMM::NearPair::getNearMatrix() const {
+     const auto& [leaf, srcLeaf] = pair;
+     assert(leaf == srcLeaf);
+
+     const SrcVec& srcs = leaf->getSrcs();
+     size_t nSrcs = srcs.size();
+     matXcd mat(nSrcs, nSrcs);
+
+     for (size_t iObs = 0; iObs < nSrcs; ++iObs) {
+         size_t iTri = iObs*(iObs+1)/2; // double check
+
+         for (size_t iSrc = 0; iSrc <= iObs; ++iSrc) {
+             cmplx rad = rads[iTri + iSrc];
+
+             mat(iObs, iSrc) = rad;
+             mat(iSrc, iObs) = rad;
+         }
+     }
+
+     return mat;
+ }

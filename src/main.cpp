@@ -62,7 +62,7 @@ int main() {
     constexpr int MAX_ITER = 500;
     constexpr double EPS = 1.0E-6;
 
-    auto solver = std::make_unique<Solver>(srcs, root, nf, MAX_ITER, EPS);
+    auto solver = std::make_unique<GMRES>(srcs, nf, root, MAX_ITER, EPS);
     solver->solve("curr.txt");
 
     Time duration_ms0 = Clock::now() - start0;
@@ -86,8 +86,9 @@ int main() {
     std::cout << " in " << duration_ms.count() << " ms\n\n";
 
     std::cout << " Solving with direct...           ";
-    solver = std::make_unique<Solver>(srcs, root, nf, MAX_ITER, EPS);
-    solver->solve("currDir.txt");
+    // solver = std::make_unique<GMRES>(srcs, nf, root, MAX_ITER, EPS);
+    auto solverDir = std::make_unique<Direct>(srcs, nf);
+    solverDir->solve("currDir.txt");
 
     duration_ms0 = Clock::now() - start0;
     std::cout << " Direct total elapsed time: " << duration_ms0.count() << " ms\n\n";

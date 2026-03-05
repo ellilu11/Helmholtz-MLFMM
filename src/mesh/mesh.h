@@ -1,6 +1,7 @@
 #pragma once
 
 #include <filesystem>
+#include "../maps.h"
 
 namespace Mesh {
     // Types

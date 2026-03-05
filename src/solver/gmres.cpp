@@ -1,19 +1,14 @@
-#include "solver.h"
-#include "fmm/nearfield.h"
-#include "fmm/node.h"
+#include "gmres.h"
+#include "../fmm/nearfield.h"
+#include "../fmm/node.h"
 
-vecXcd Solver::currents;
-vecXcd Solver::lvec;
-vecXcd Solver::rvec;
-
-Solver::Solver(
+GMRES::GMRES(
     SrcVec& srcs,
-    std::shared_ptr<FMM::Node> root,
     std::shared_ptr<FMM::Nearfield> nf,
+    std::shared_ptr<FMM::Node> root,
     int maxIter, double EPS)
-    : root(std::move(root)),
-      nf(std::move(nf)),
-      numSrcs(srcs.size()),
+    : Solver(srcs, std::move(nf)),
+      root(std::move(root)),
       maxIter(maxIter),
       EPS(EPS),
       Qmat(matXcd(numSrcs, 1)),
@@ -37,7 +32,7 @@ Solver::Solver(
     Qmat.col(0) = lvec; // store lvec as first column of Qmat
 }
 
-void Solver::updateRvec(int k) {
+void GMRES::updateRvec(int k) {
     if (!root->isLeaf()) {
         root->mergeMpoleCoeffs();
         root->buildLocalCoeffs();
@@ -47,7 +42,7 @@ void Solver::updateRvec(int k) {
     nf->evaluateSols();
 }
 
-void Solver::iterateArnoldi(int k) {
+void GMRES::iterateArnoldi(int k) {
     assert(Qmat.cols() == k+1);
 
     // Do Arnoldi iteration
@@ -73,7 +68,7 @@ void Solver::iterateArnoldi(int k) {
     Hmat.col(k) = hcol;
 }
 
-void Solver::applyGivensRotation(vecXcd& hcol, int k) {
+void GMRES::applyGivensRotation(vecXcd& hcol, int k) {
     assert(hcol.size() == k+2);
 
     for (int i = 0; i <= k-1; ++i) {
@@ -91,8 +86,7 @@ void Solver::applyGivensRotation(vecXcd& hcol, int k) {
     vsin[k] = vsin_k;
 }
 
-void Solver::updateGvec(int k) {
-
+void GMRES::updateGvec(int k) {
     vecXcd hcol_k = Hmat.col(k);
     applyGivensRotation(hcol_k, k);
     Hmat.col(k) = hcol_k;
@@ -101,25 +95,7 @@ void Solver::updateGvec(int k) {
     gvec[k] = vcos[k] * gvec[k];
 }
 
-void Solver::printSols(const std::string& fname) {
-    namespace fs = std::filesystem;
-    fs::path dir = "out/sol";
-    std::error_code ec;
-
-    if (fs::create_directory(dir, ec))
-        std::cout << " Created directory " << dir.generic_string() << "/\n";
-    else if (ec)
-        std::cerr << " Error creating directory " << ec.message() << "\n";
-
-    std::ofstream file(dir/fname);
-
-    file << std::setprecision(15) << std::scientific;
-
-    // for (const auto& sol : rvec) file << sol << '\n';
-    for (const auto& curr : currents) file << curr << '\n';
-}
-
-void Solver::solve(const std::string& fname) {
+void GMRES::solve(const std::string& fname) {
     auto start = Clock::now();
 
     int iter = 0;

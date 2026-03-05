@@ -1,16 +1,13 @@
 #pragma once
 
-#include <filesystem>
-#include "fmm/fmm.h"
-#include "source.h"
+#include "solver.h"
 
-class Solver {
+class GMRES final : public Solver {
 
 public:
-    Solver(
-        SrcVec& srcs,
-        std::shared_ptr<FMM::Node>,
+    GMRES(SrcVec& srcs,
         std::shared_ptr<FMM::Nearfield>,
+        std::shared_ptr<FMM::Node>,
         int, double);
 
     void updateRvec(int);
@@ -21,20 +18,11 @@ public:
 
     void updateGvec(int);
 
-    void solve(const std::string&);
-
-    void printSols(const std::string&);
-
-public:
-    static vecXcd lvec;
-    static vecXcd rvec;
-    static vecXcd currents;
+    void solve(const std::string&) override;
 
 private:
     std::shared_ptr<FMM::Node> root;
-    std::shared_ptr<FMM::Nearfield> nf;
 
-    int numSrcs;
     int maxIter;
     double EPS;
 
