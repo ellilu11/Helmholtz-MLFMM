@@ -88,8 +88,8 @@ int main() {
     std::cout << " Solving with direct...           ";
     solver = std::make_unique<GMRES>(srcs, nf, root, EPS, MAX_ITER);
     solver->solve("currDir.txt");
-    // auto solverDir = std::make_unique<Direct>(srcs, nf);
-    // solverDir->solve("currDir.txt");
+    //auto solverDir = std::make_unique<Direct>(srcs, nf);
+    //solverDir->solve("currDir.txt");
 
     duration_ms0 = Clock::now() - start0;
     std::cout << " Direct total elapsed time: " << duration_ms0.count() << " ms\n\n";

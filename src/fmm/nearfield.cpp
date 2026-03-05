@@ -71,8 +71,9 @@ void FMM::Nearfield::buildPairRads() {
 
         int pairIdx = 0;
         for (size_t iObs = 0; iObs < nObss; ++iObs) {
+            auto obs = obsLeaf->srcs[iObs];
             for (size_t iSrc = 0; iSrc < nSrcs; ++iSrc) {
-                auto obs = obsLeaf->srcs[iObs], src = srcNode->srcs[iSrc];
+                auto src = srcNode->srcs[iSrc];
 
                 nearPair.rads[pairIdx++] = obs->getIntegratedRad(src);
             }
@@ -95,11 +96,8 @@ void FMM::Nearfield::buildSelfRads() {
             for (size_t iSrc = 0; iSrc <= iObs; ++iSrc) { // iSrc <= iObs 
                 auto src = leaf->srcs[iSrc];
 
-                cmplx rad = obs->getIntegratedRad(src);
-                selfPair.rads[pairIdx++] = rad;
-                // std::cout << rad << ' ';
+                selfPair.rads[pairIdx++] = obs->getIntegratedRad(src);
             }
-            // std::cout << '\n';
         }
     }
 }
@@ -119,12 +117,12 @@ void FMM::Nearfield::evalPairSols(const NearPair& nearPair) {
     for (size_t iObs = 0; iObs < nObs; ++iObs) {
         auto obs = srcs[iObs];
         cmplx lvecObs = Solver::lvec[obs->getIdx()];
-        cmplx& rvecObs = Solver::rvec[obs->getIdx()];
+        cmplx& rvecObs = Solver::rvec[obs->getIdx()]; // &
 
         for (size_t iSrc = 0; iSrc < nSrcs; ++iSrc) {
             auto src = srcSrcs[iSrc];
             cmplx lvecSrc = Solver::lvec[src->getIdx()];
-            cmplx& rvecSrc = Solver::rvec[src->getIdx()];
+            cmplx& rvecSrc = Solver::rvec[src->getIdx()]; // &
 
             cmplx rad = Phys::C * config.k * nearPair.rads[pairIdx++];
 
@@ -149,15 +147,16 @@ void FMM::Nearfield::evalSelfSols(const NearPair& selfPair) {
     for (size_t iObs = 0; iObs < nSrcs; ++iObs) { // iObs = 0
         auto obs = srcs[iObs];
         cmplx lvecObs = Solver::lvec[obs->getIdx()];
-        cmplx& rvecObs = Solver::rvec[obs->getIdx()];
+        cmplx& rvecObs = Solver::rvec[obs->getIdx()]; // &
 
         for (size_t iSrc = 0; iSrc <= iObs; ++iSrc) { // iSrc <= iObs 
             auto src = srcs[iSrc];
             cmplx lvecSrc = Solver::lvec[src->getIdx()];
-            cmplx& rvecSrc = Solver::rvec[src->getIdx()];
+            cmplx& rvecSrc = Solver::rvec[src->getIdx()]; // &
 
             cmplx rad = Phys::C * config.k * selfPair.rads[pairIdx++];
 
+            // Only add self-term contribution once!
             if (iSrc == iObs) {
                 rvecObs += lvecSrc * rad;
                 continue;
