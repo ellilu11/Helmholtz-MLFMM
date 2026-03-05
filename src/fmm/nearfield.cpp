@@ -113,30 +113,25 @@ void FMM::Nearfield::evalPairSols(const NearPair& nearPair) {
 
     const SrcVec& srcs = obsLeaf->srcs;
     const SrcVec& srcSrcs = srcLeaf->srcs;
-
     size_t nObs = srcs.size(), nSrcs = srcSrcs.size();
-
-    std::vector<cmplx> solAtObss(nObs, 0.0);
-    std::vector<cmplx> solAtSrcs(nSrcs, 0.0);
 
     int pairIdx = 0;
     for (size_t iObs = 0; iObs < nObs; ++iObs) {
         auto obs = srcs[iObs];
+        cmplx lvecObs = Solver::lvec[obs->getIdx()];
+        cmplx& rvecObs = Solver::rvec[obs->getIdx()];
+
         for (size_t iSrc = 0; iSrc < nSrcs; ++iSrc) {
             auto src = srcSrcs[iSrc];
+            cmplx lvecSrc = Solver::lvec[src->getIdx()];
+            cmplx& rvecSrc = Solver::rvec[src->getIdx()];
 
-            cmplx rad = nearPair.rads[pairIdx++];
+            cmplx rad = Phys::C * config.k * nearPair.rads[pairIdx++];
 
-            solAtObss[iObs] += Solver::lvec[src->getIdx()] * rad;
-            solAtSrcs[iSrc] += Solver::lvec[obs->getIdx()] * rad;
+            rvecObs += lvecSrc * rad;
+            rvecSrc += lvecObs * rad;
         }
     }
-
-    for (int n = 0; n < nObs; ++n)
-        Solver::rvec[srcs[n]->getIdx()] += Phys::C * config.k * solAtObss[n];
-
-    for (int n = 0; n < nSrcs; ++n)
-        Solver::rvec[srcSrcs[n]->getIdx()] += Phys::C * config.k * solAtSrcs[n];
 }
 
 /* evalSelfSols()
@@ -144,37 +139,34 @@ void FMM::Nearfield::evalPairSols(const NearPair& nearPair) {
  * in this node
  */
 void FMM::Nearfield::evalSelfSols(const NearPair& selfPair) {
-    //auto Zmat = selfPair.getNearMatrix();
-    //Solver::rvec += Zmat * Solver::lvec;
-
     const auto& [leaf, srcLeaf] = selfPair.pair;
     assert(leaf == srcLeaf);
 
     const SrcVec& srcs = leaf->srcs;
     size_t nSrcs = srcs.size();
 
-    std::vector<cmplx> solAtObss(nSrcs, 0.0);
     int pairIdx = 0;
     for (size_t iObs = 0; iObs < nSrcs; ++iObs) { // iObs = 0
         auto obs = srcs[iObs];
+        cmplx lvecObs = Solver::lvec[obs->getIdx()];
+        cmplx& rvecObs = Solver::rvec[obs->getIdx()];
 
         for (size_t iSrc = 0; iSrc <= iObs; ++iSrc) { // iSrc <= iObs 
             auto src = srcs[iSrc];
+            cmplx lvecSrc = Solver::lvec[src->getIdx()];
+            cmplx& rvecSrc = Solver::rvec[src->getIdx()];
 
-            cmplx rad = selfPair.rads[pairIdx++];
+            cmplx rad = Phys::C * config.k * selfPair.rads[pairIdx++];
 
             if (iSrc == iObs) {
-                solAtObss[iObs] += Solver::lvec[src->getIdx()] * rad;
+                rvecObs += lvecSrc * rad;
                 continue;
             }
 
-            solAtObss[iObs] += Solver::lvec[src->getIdx()] * rad;
-            solAtObss[iSrc] += Solver::lvec[obs->getIdx()] * rad;
+            rvecObs += lvecSrc * rad;
+            rvecSrc += lvecObs * rad;
         }
     }
-
-    for (int n = 0; n < nSrcs; ++n)
-        Solver::rvec[srcs[n]->getIdx()] += Phys::C * config.k * solAtObss[n];
 }
 
 /* evaluateSols()
