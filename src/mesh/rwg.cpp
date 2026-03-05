@@ -79,15 +79,14 @@ cmplx Mesh::RWG::getIntegratedEFIE(const std::shared_ptr<Source> src) const {
 
         int iSrc = 0;
         for (const auto& [srcTri, vsrc] : srcRWG->getTrisAndVerts() ) {
-            vec3d v0 = (obsTri.iTri <= srcTri.iTri) ? vobs : vsrc;
-            vec3d v1 = (obsTri.iTri <= srcTri.iTri) ? vsrc : vobs;
-
             const TriPair& triPair = glTriPairs.at(std::minmax(obsTri.iTri, srcTri.iTri));
             const auto& [m00, m10, m01, m11] = triPair.momentsEFIE;
 
+            vec3d v0 = (obsTri.iTri <= srcTri.iTri) ? vobs : vsrc;
+            vec3d v1 = (obsTri.iTri <= srcTri.iTri) ? vsrc : vobs;
+
             cmplx pairRad =
                 m11 - v0.dot(m01) - v1.dot(m10) + (v0.dot(v1) - 4.0/(k*k))*m00;
-                // m11 - v1.dot(m10) - v0.dot(m01) + (v0.dot(v1) - 4.0/(k*k))*m00;
 
             // For edge adjacent triangles, integrate 1/R term (analytically)
             // Average obs-src and src-obs to preserve symmetry
@@ -115,6 +114,7 @@ cmplx Mesh::RWG::getIntegratedEFIE(const std::shared_ptr<Source> src) const {
 /* getIntegratedMFIE(src)
  * Return the magnetic field due to src tested with this RWG
  */
+/*
 cmplx Mesh::RWG::getIntegratedMFIE(const std::shared_ptr<Source> src) const {
     if (config.alpha == 1) return 0.0;
     const auto srcRWG = dynamic_pointer_cast<RWG>(src);
@@ -126,23 +126,12 @@ cmplx Mesh::RWG::getIntegratedMFIE(const std::shared_ptr<Source> src) const {
         int iSrc = 0;
         for (const auto& [srcTri, vsrc] : srcRWG->getTrisAndVerts()) {
             const TriPair& triPair = glTriPairs.at(std::minmax(obsTri.iTri, srcTri.iTri));
-            cmplx pairRad = 0.0;
-
-            // For common triangles, use 1/2 J term(numerically)
-            if (triPair.nCommon == 3) {
-                for (const auto& [obs, obsWeight] : obsTri.triQuads) {
-                    pairRad -= (obs-vobs).dot(obsTri.nhat.cross(obs-vsrc))
-                        * obsWeight / (4.0 * obsTri.area);
-                }
-                continue;
-            }
+            const auto& [m00, m10, m01, m11] = triPair.momentsMFIE;
 
             vec3d v0 = (obsTri.iTri <= srcTri.iTri) ? vobs : vsrc;
             vec3d v1 = (obsTri.iTri <= srcTri.iTri) ? vsrc : vobs;
 
-            const auto& [m00, m10, m01, m11] = triPair.momentsMFIE;
-
-            pairRad += m11 - v0.dot(m01) - v1.dot(m10) + (v1.cross(v0)).dot(m00);
+            cmplx pairRad = m11 - v0.dot(m01) - v1.dot(m10) + (v1.cross(v0)).dot(m00);
 
             // For edge adjacent triangles, integrate 1/R term (analytically)
             if (triPair.nCommon == 2)
@@ -160,8 +149,9 @@ cmplx Mesh::RWG::getIntegratedMFIE(const std::shared_ptr<Source> src) const {
     assert(!std::isnan(intRad.real()) && !std::isnan(intRad.imag()));
     return leng * srcRWG->leng * intRad;
 }
+*/
 
-/* Debug version, no precomputed moments
+// Debug version, no precomputed moments
 cmplx Mesh::RWG::getIntegratedMFIE(const std::shared_ptr<Source> src) const {
     if (config.alpha == 1.0) return 0.0;
     const auto srcRWG = dynamic_pointer_cast<RWG>(src);
@@ -176,13 +166,13 @@ cmplx Mesh::RWG::getIntegratedMFIE(const std::shared_ptr<Source> src) const {
 
             cmplx pairRad = 0.0;
             for (const auto& [obs, obsWeight] : obsTri.triQuads) {
-                // For common triangles, use 1/2 J term(numerically)
+                // For common triangles, use -1/2 J term (numerically)
                 if (triPair.nCommon == 3) {
-                    //pairRad -= 0.5 * (obs-vobs).dot(obsTri.nhat.cross(obs-vsrc))
-                    //    * obsWeight
-                    //    / (2.0 * obsTri.area); // since numerical integration only cancels one RWG's 1/(2A) factor
+                    pairRad -= (obs-vobs).dot(obsTri.nhat.cross(obs-vsrc))
+                        * obsWeight / (4.0 * obsTri.area);
                     continue;
                 }
+                //
 
                 for (const auto& [src, srcWeight] : srcTri.triQuads) {
                     vec3d R = obs-src;
@@ -203,9 +193,9 @@ cmplx Mesh::RWG::getIntegratedMFIE(const std::shared_ptr<Source> src) const {
 
             // For edge adjacent triangles, integrate 1/R term (analytically)
             if (triPair.nCommon == 2)
-                pairRad -= // minus sign since 1.0+0.5*k*k*r2 was added to gradG
-                    (obsTri.getDoubleIntegratedInvRcubed(srcTri, triPair, vobs, vsrc) + 
-                        0.5*k*k*obsTri.getDoubleIntegratedInvR(srcTri, triPair, vobs, vsrc, false));
+                pairRad -= // minus sign since 1.0+0.5*k*k*r2 was added to gradG in MFIE moments
+                    (0.5*k*k*obsTri.getDoubleIntegratedInvR(srcTri, triPair, vobs, vsrc, false)
+                    + obsTri.getDoubleIntegratedInvRcubed(srcTri, triPair, vobs, vsrc));
             //
             intRad += pairRad * Math::sign(iObs) * Math::sign(iSrc);
             ++iSrc;
@@ -216,5 +206,6 @@ cmplx Mesh::RWG::getIntegratedMFIE(const std::shared_ptr<Source> src) const {
 
     assert(!std::isnan(intRad.real()) && !std::isnan(intRad.imag()));
     return leng * srcRWG->leng * intRad;
-}*/
+}
+//
 

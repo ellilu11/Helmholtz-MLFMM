@@ -31,6 +31,7 @@ void Mesh::TriPair::buildNumCommon() {
 
 void Mesh::TriPair::buildMomentsEFIE() {
     momentsEFIE = { 0.0, vec3cd::Zero(), vec3cd::Zero(), 0.0 };
+    auto& [m00, m10, m01, m11] = momentsEFIE;
     const auto& [obsTri, srcTri] = getTriPair();
 
     for (const auto& [obs, obsWeight] : obsTri.triQuads) {
@@ -45,7 +46,6 @@ void Mesh::TriPair::buildMomentsEFIE() {
                 G *= exp(iu*k*r) / r;
             }
 
-            auto& [m00, m10, m01, m11] = momentsEFIE;
             m00 += G;
             m10 += obs * G;
             m01 += src * G;
@@ -56,30 +56,42 @@ void Mesh::TriPair::buildMomentsEFIE() {
 
 void Mesh::TriPair::buildMomentsMFIE() {
     momentsMFIE = { vec3cd::Zero(), vec3cd::Zero(), vec3cd::Zero(), 0.0 };
-    if (nCommon == 3) return; // principal value of self-interaction is zero
+    auto& [m00, m10, m01, m11] = momentsMFIE;
     const auto& [obsTri, srcTri] = getTriPair();
 
     for (const auto& [obs, obsWeight] : obsTri.triQuads) {
+        // For common triangles, use -1/2 J term
+        if (nCommon == 3) {
+            // since numerical integration only cancels one RWG's 1/(2A) factor
+            vec3d nhat_X_obs =
+                obsTri.nhat.cross(obs) * obsWeight / (4.0*obsTri.area);
+
+            // m00 is zero for common triangles
+            m10 -= -nhat_X_obs;
+            m01 -= nhat_X_obs;
+            m11 -= obs.dot(nhat_X_obs);
+            continue;
+        }
+
         for (const auto& [src, srcWeight] : srcTri.triQuads) {
             const vec3d& R = obs-src;
             double r = R.norm(), r2 = r*r, r3 = r*r2;
             assert(!Math::fzero(r));
 
-            vec3cd gradG = R / r3 * obsWeight * srcWeight; // absorb quad weights into gradG
+            vec3cd gradG = R/r3 * obsWeight*srcWeight; // absorb quad weights into gradG
             
             if (nCommon == 2)
-                gradG = gradG * ((-1.0+iu*k*r)*exp(iu*k*r)+0.5*k*k*r2+1.0); // double check signs
+                gradG = gradG * ((-1.0+iu*k*r)*exp(iu*k*r) + 0.5*k*k*r2 + 1.0); // double check signs
             else if (nCommon < 2)
                 gradG = gradG * (-1.0+iu*k*r)*exp(iu*k*r);
 
-            vec3cd obsXgradG = obs.cross(gradG).conjugate();
-            vec3cd gradGXsrc = gradG.cross(src).conjugate();
-            auto& [m00, m10, m01, m11] = momentsMFIE;
+            vec3cd obs_X_gradG = obs.cross(gradG).conjugate();
+            vec3cd gradG_X_src = gradG.cross(src).conjugate();
             // minus signs from flipping J x gradG to gradG x J
             m00 -= gradG; 
-            m10 -= obsXgradG;
-            m01 -= gradGXsrc;
-            m11 -= obs.dot(gradGXsrc);
+            m10 -= obs_X_gradG;
+            m01 -= gradG_X_src;
+            m11 -= obs.dot(gradG_X_src);
         }
     }
 }

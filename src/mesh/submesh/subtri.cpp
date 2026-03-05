@@ -1,14 +1,5 @@
 #include "../triangle.h"
 
-/* If nhat is pointing inward, reverse it
-// Assume a closed, star-shaped mesh centered at and enclosing the origin
-void Mesh::Triangle::fixNhat() {}
-    if (center.dot(nhat) < 0.0) {
-        nhat *= -1.0;
-        std::swap(this->iVerts[0], this->iVerts[2]); // Swap verts per RHR orientation
-}
-*/
-
 // Refine vertices: add centers and midpoints of coarse tris
 void Mesh::Triangle::refineVertices() {
     int iVerts = nverts;

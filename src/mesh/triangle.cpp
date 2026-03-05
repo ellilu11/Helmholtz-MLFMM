@@ -21,12 +21,23 @@ Mesh::Triangle::Triangle(const vec3i& iVerts, int iTri)
     area = (Ds[0].cross(-Ds[2])).norm() / 2.0;
 
     buildTriQuads();
+    reverseOrient();
     // buildSelfIntegrated();
     //std::cout << "Built triangle #" << iTri << " with edge lengths " 
     //    << Ds[0].norm() << ", " << Ds[1].norm() << ", " << Ds[2].norm() << '\n';
 }
 
-// Return global indices of vertices shared by this and other triangle
+/* If nhat is pointing inward, reverse it
+   Assume a closed, star-shaped mesh centered at and enclosing the origin
+ */
+void Mesh::Triangle::reverseOrient() {
+    if (center.dot(nhat) < 0.0) {
+        nhat *= -1.0;
+        std::swap(this->iVerts[0], this->iVerts[2]); // Swap verts per right-hand rule
+    }
+}
+
+// Debugging only
 int Mesh::Triangle::getNumCommonVerts(const Triangle& other) const {
     if (iTri == other.iTri) return 3;
 

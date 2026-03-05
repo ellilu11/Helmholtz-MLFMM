@@ -126,7 +126,7 @@ void Solver::solve(const std::string& fname) {
 
     int iter = 0;
     do {
-        // if (iter && !(iter%10)) std::cout << "   #" << iter << '\n';
+        if (iter && !(iter%10)) std::cout << "   #" << iter << '\n';
         updateRvec(iter);
 
         iterateArnoldi(iter);

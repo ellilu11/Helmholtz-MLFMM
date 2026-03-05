@@ -75,7 +75,7 @@ SrcVec Mesh::importMesh(
 
 void Mesh::printScattered(const SrcVec& srcs, const std::string& fname, int nth) {
     namespace fs = std::filesystem;
-    fs::path dir = "out/ff/px_kz1.0_r7.5";
+    fs::path dir = "out/ff/px_kz1.0_r5.0";
     std::error_code ec;
 
     std::cout << " Computing scattered farfield...\n";

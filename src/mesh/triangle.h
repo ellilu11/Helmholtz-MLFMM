@@ -15,6 +15,8 @@ public:
 
     Triangle(const vec3i&, int);
 
+    void reverseOrient();
+
     int getNumCommonVerts(const Triangle&) const;
 
     void buildSelfIntegratedInvR();
