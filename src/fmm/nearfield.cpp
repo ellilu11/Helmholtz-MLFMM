@@ -72,7 +72,7 @@ void FMM::Nearfield::buildPairRads() {
         int pairIdx = 0;
         for (size_t iObs = 0; iObs < nObss; ++iObs) {
             for (size_t iSrc = 0; iSrc < nSrcs; ++iSrc) {
-                const auto obs = obsLeaf->srcs[iObs], src = srcNode->srcs[iSrc];
+                auto obs = obsLeaf->srcs[iObs], src = srcNode->srcs[iSrc];
 
                 nearPair.rads[pairIdx++] = obs->getIntegratedRad(src);
             }
@@ -89,11 +89,11 @@ void FMM::Nearfield::buildSelfRads() {
         selfPair.rads.resize(nSrcs*(nSrcs+1)/2);
 
         int pairIdx = 0;
-        for (size_t iObs = 0; iObs < leaf->srcs.size(); ++iObs) { // iObs = 0
-            const auto& obs = leaf->srcs[iObs];
+        for (size_t iObs = 0; iObs < nSrcs; ++iObs) { // iObs = 0
+            auto obs = leaf->srcs[iObs];
 
             for (size_t iSrc = 0; iSrc <= iObs; ++iSrc) { // iSrc <= iObs 
-                const auto& src = leaf->srcs[iSrc];
+                auto src = leaf->srcs[iSrc];
 
                 cmplx rad = obs->getIntegratedRad(src);
                 selfPair.rads[pairIdx++] = rad;
@@ -121,8 +121,9 @@ void FMM::Nearfield::evalPairSols(const NearPair& nearPair) {
 
     int pairIdx = 0;
     for (size_t iObs = 0; iObs < nObs; ++iObs) {
+        auto obs = srcs[iObs];
         for (size_t iSrc = 0; iSrc < nSrcs; ++iSrc) {
-            auto obs = srcs[iObs], src = srcSrcs[iSrc];
+            auto src = srcSrcs[iSrc];
 
             cmplx rad = nearPair.rads[pairIdx++];
 
@@ -143,6 +144,9 @@ void FMM::Nearfield::evalPairSols(const NearPair& nearPair) {
  * in this node
  */
 void FMM::Nearfield::evalSelfSols(const NearPair& selfPair) {
+    //auto Zmat = selfPair.getNearMatrix();
+    //Solver::rvec += Zmat * Solver::lvec;
+
     const auto& [leaf, srcLeaf] = selfPair.pair;
     assert(leaf == srcLeaf);
 
@@ -150,28 +154,27 @@ void FMM::Nearfield::evalSelfSols(const NearPair& selfPair) {
     size_t nSrcs = srcs.size();
 
     std::vector<cmplx> solAtObss(nSrcs, 0.0);
-
-    //auto Zmat = selfPair.getNearMatrix();
-    //Solver::rvec += Zmat * Solver::lvec;
-
-    //
-    for (size_t iObs = 0; iObs < nSrcs; ++iObs) {
-        size_t iTri = iObs*(iObs+1)/2;
+    int pairIdx = 0;
+    for (size_t iObs = 0; iObs < nSrcs; ++iObs) { // iObs = 0
         auto obs = srcs[iObs];
-        solAtObss[iObs] += Solver::lvec[obs->getIdx()] * selfPair.rads[iTri + iObs];
 
-        for (size_t iSrc = 0; iSrc < iObs; ++iSrc) { 
+        for (size_t iSrc = 0; iSrc <= iObs; ++iSrc) { // iSrc <= iObs 
             auto src = srcs[iSrc];
-            cmplx rad = selfPair.rads[iTri + iSrc];
+
+            cmplx rad = selfPair.rads[pairIdx++];
+
+            if (iSrc == iObs) {
+                solAtObss[iObs] += Solver::lvec[src->getIdx()] * rad;
+                continue;
+            }
 
             solAtObss[iObs] += Solver::lvec[src->getIdx()] * rad;
             solAtObss[iSrc] += Solver::lvec[obs->getIdx()] * rad;
-
         }
     }
 
     for (int n = 0; n < nSrcs; ++n)
-        Solver::rvec[srcs[n]->getIdx()] = Phys::C * config.k * solAtObss[n];
+        Solver::rvec[srcs[n]->getIdx()] += Phys::C * config.k * solAtObss[n];
 }
 
 /* evaluateSols()
@@ -201,7 +204,7 @@ void FMM::Nearfield::evaluateSols() {
      matXcd mat(nSrcs, nSrcs);
 
      for (size_t iObs = 0; iObs < nSrcs; ++iObs) {
-         size_t iTri = iObs*(iObs+1)/2; // double check
+         size_t iTri = iObs*(iObs+1)/2; // triangular numbers
 
          for (size_t iSrc = 0; iSrc <= iObs; ++iSrc) {
              cmplx rad = Phys::C * config.k * rads[iTri+iSrc];

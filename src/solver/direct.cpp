@@ -11,7 +11,7 @@ Direct::Direct(SrcVec& srcs,
 
     // rvec = V = ZI
     for (int idx = 0; idx < numSrcs; ++idx)
-        rvec[idx] = srcs[idx]->getVoltage();
+        rvec[idx] = -srcs[idx]->getVoltage(); // Double check sign convention here
 };
 
 void Direct::solve(const std::string& fname) {
@@ -25,25 +25,13 @@ void Direct::solve(const std::string& fname) {
     assert(Zmat.rows() == rvec.rows());
     assert(Zmat.cols() == currents.rows());
 
-    // Print out Zmat
-    std::ofstream zfile("out/test/zmat.txt");
-    for (int i = 0; i < Zmat.rows(); ++i) {
-        for (int j = 0; j < Zmat.cols(); ++j)
-            zfile << Zmat(i, j) << ' ';
-        zfile << '\n';
-    }
-
-    // Print out rvec
-    std::ofstream rfile("out/test/rvec.txt");
-    for (int i = 0; i < rvec.size(); ++i)
-        rfile << rvec[i] << '\n';
-
     currents = Zmat.lu().solve(rvec);
 
     Time duration_ms = Clock::now() - start;
     std::cout << " in " << duration_ms.count() << " ms\n";
 
-    std::cout << "   Current norm: " << currents.norm() << "\n";
+    std::cout << "   Current norm: "
+        << std::setprecision(9) << currents.norm() << std::setprecision(3) << "\n";
 
     // std::cout << std::setprecision(9) << (Zmat * currents - rvec).transpose() << "\n";
 

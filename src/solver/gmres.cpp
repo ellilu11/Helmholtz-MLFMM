@@ -38,10 +38,7 @@ void GMRES::updateRvec(int k) {
         root->buildLocalCoeffs();
         FMM::evaluateSols();
     }
-
-    // std::cout << lvec << "\n";
     nf->evaluateSols();
-    // std::cout << rvec << "\n";
 }
 
 void GMRES::iterateArnoldi(int k) {
@@ -117,16 +114,10 @@ void GMRES::solve(const std::string& fname) {
     std::cout << "   # Iterations: " << iter << "\n";
 
     const matXcd& Hp = Hmat.block(0, 0, Hmat.rows()-1, Hmat.cols());
-
-    //for (int i = 0; i < Hp.rows(); ++i) {
-    //    for (int j = 0; j < Hp.cols(); ++j)
-    //        std::cout << Hp(i, j) << ' ';
-    //    std::cout << "\n";
-    //}
-
     vecXcd yvec = Hp.lu().solve(gvec.segment(0, iter));
     currents = Qmat.leftCols(iter) * yvec;
-    std::cout << "   Current norm: " << currents.norm() << "\n";
+    std::cout << "   Current norm: " 
+        << std::setprecision(9) << currents.norm() << std::setprecision(3) << "\n";
 
     printSols(fname);
 }

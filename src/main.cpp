@@ -11,7 +11,6 @@ extern const Config config("config/config.txt");
 extern auto t = ClockTimes();
 
 int main() {
-    std::cout << std::setprecision(6);
     // ===================== Build sources ==================== //
     std::cout << " Importing excitation and sources...\n";
 
@@ -65,7 +64,6 @@ int main() {
 
     auto solver = std::make_unique<GMRES>(srcs, nf, root, EPS, MAX_ITER);
     solver->solve("curr.txt");
-    // solver->updateRvec(0);
 
     Time duration_ms0 = Clock::now() - start0;
     std::cout << " FMM total elapsed time: " << duration_ms0.count() << " ms\n\n";
@@ -88,9 +86,10 @@ int main() {
     std::cout << " in " << duration_ms.count() << " ms\n\n";
 
     std::cout << " Solving with direct...           ";
-    // solver = std::make_unique<GMRES>(srcs, nf, root, EPS, MAX_ITER);
-    auto solverDir = std::make_unique<Direct>(srcs, nf);
-    solverDir->solve("currDir.txt");
+    solver = std::make_unique<GMRES>(srcs, nf, root, EPS, MAX_ITER);
+    solver->solve("currDir.txt");
+    // auto solverDir = std::make_unique<Direct>(srcs, nf);
+    // solverDir->solve("currDir.txt");
 
     duration_ms0 = Clock::now() - start0;
     std::cout << " Direct total elapsed time: " << duration_ms0.count() << " ms\n\n";

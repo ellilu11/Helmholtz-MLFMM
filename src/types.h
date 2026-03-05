@@ -68,13 +68,12 @@ std::ostream& operator<< (std::ostream& os, const std::vector<T>& vec) {
     return os;
 }
 
-//
 std::ostream& operator<< (std::ostream& os, cmplx z) {
-    char sign = z.imag() >= 0.0 ? '+' : '-';
-    os << z.real() << sign << abs(z.imag()) << 'i';
-    // os << z.real() << ' ' << z.imag();
+    //char sign = z.imag() >= 0.0 ? '+' : '-';
+    //os << z.real() << sign << abs(z.imag()) << 'i';
+    os << z.real() << ' ' << z.imag();
     return os;
-}//
+}
 
 std::ostream& operator<< (std::ostream& os, const vec3d& X) {
     // os << X[0] << " " << X[1] << " " << X[2];
