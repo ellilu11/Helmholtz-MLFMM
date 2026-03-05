@@ -8,7 +8,7 @@ public:
     GMRES(SrcVec& srcs,
         std::shared_ptr<FMM::Nearfield>,
         std::shared_ptr<FMM::Node>,
-        int, double);
+        double, int);
 
     void updateRvec(int);
 
@@ -23,9 +23,6 @@ public:
 private:
     std::shared_ptr<FMM::Node> root;
 
-    int maxIter;
-    double EPS;
-
     matXcd Qmat;
     matXcd Hmat;
     vecXcd gvec;
@@ -33,6 +30,9 @@ private:
 
     vecXcd vcos;
     vecXcd vsin;
+
+    double EPS;
+    int maxIter;
 };
 
 

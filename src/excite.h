@@ -18,7 +18,8 @@ namespace Exc {
                 throw std::runtime_error("Polarization and wave vector must be orthogonal");
 
             std::cout << "   Polarization:    " << this->pol << '\n';
-            std::cout << "   Wave vector:     " << this->wavevec << "\n\n";
+            std::cout << "   Wave vector:     " << this->wavevec << "\n";
+            std::cout << "   Amplitude:       " << this->amplitude << "\n\n";
         };
 
         vec3d pol;          // unit polarization

@@ -95,8 +95,11 @@ void FMM::Nearfield::buildSelfRads() {
             for (size_t iSrc = 0; iSrc <= iObs; ++iSrc) { // iSrc <= iObs 
                 const auto& src = leaf->srcs[iSrc];
 
-                selfPair.rads[pairIdx++] = obs->getIntegratedRad(src);
+                cmplx rad = obs->getIntegratedRad(src);
+                selfPair.rads[pairIdx++] = rad;
+                // std::cout << rad << ' ';
             }
+            // std::cout << '\n';
         }
     }
 }
@@ -148,20 +151,27 @@ void FMM::Nearfield::evalSelfSols(const NearPair& selfPair) {
 
     std::vector<cmplx> solAtObss(nSrcs, 0.0);
 
-    int pairIdx = 0;
-    for (size_t iObs = 0; iObs < nSrcs; ++iObs) { // iObs = 0
-        for (size_t iSrc = 0; iSrc <= iObs; ++iSrc) { // iSrc <= iObs 
-            auto obs = srcs[iObs], src = srcs[iSrc];
+    //auto Zmat = selfPair.getNearMatrix();
+    //Solver::rvec += Zmat * Solver::lvec;
 
-            cmplx rad = selfPair.rads[pairIdx++];
+    //
+    for (size_t iObs = 0; iObs < nSrcs; ++iObs) {
+        size_t iTri = iObs*(iObs+1)/2;
+        auto obs = srcs[iObs];
+        solAtObss[iObs] += Solver::lvec[obs->getIdx()] * selfPair.rads[iTri + iObs];
+
+        for (size_t iSrc = 0; iSrc < iObs; ++iSrc) { 
+            auto src = srcs[iSrc];
+            cmplx rad = selfPair.rads[iTri + iSrc];
 
             solAtObss[iObs] += Solver::lvec[src->getIdx()] * rad;
             solAtObss[iSrc] += Solver::lvec[obs->getIdx()] * rad;
+
         }
     }
 
     for (int n = 0; n < nSrcs; ++n)
-        Solver::rvec[srcs[n]->getIdx()] += Phys::C * config.k * solAtObss[n];
+        Solver::rvec[srcs[n]->getIdx()] = Phys::C * config.k * solAtObss[n];
 }
 
 /* evaluateSols()
@@ -194,7 +204,7 @@ void FMM::Nearfield::evaluateSols() {
          size_t iTri = iObs*(iObs+1)/2; // double check
 
          for (size_t iSrc = 0; iSrc <= iObs; ++iSrc) {
-             cmplx rad = rads[iTri + iSrc];
+             cmplx rad = Phys::C * config.k * rads[iTri+iSrc];
 
              mat(iObs, iSrc) = rad;
              mat(iSrc, iObs) = rad;

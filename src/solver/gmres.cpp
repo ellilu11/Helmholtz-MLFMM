@@ -6,15 +6,15 @@ GMRES::GMRES(
     SrcVec& srcs,
     std::shared_ptr<FMM::Nearfield> nf,
     std::shared_ptr<FMM::Node> root,
-    int maxIter, double EPS)
+    double EPS, int maxIter)
     : Solver(srcs, std::move(nf)),
       root(std::move(root)),
-      maxIter(maxIter),
-      EPS(EPS),
       Qmat(matXcd(numSrcs, 1)),
       gvec(vecXcd::Zero(maxIter+1)),
       vcos(vecXcd::Zero(maxIter)),
-      vsin(vecXcd::Zero(maxIter))
+      vsin(vecXcd::Zero(maxIter)),
+      EPS(EPS),
+      maxIter(maxIter)
 {
     currents = vecXcd::Zero(numSrcs);
     lvec = vecXcd::Zero(numSrcs);
@@ -39,7 +39,9 @@ void GMRES::updateRvec(int k) {
         FMM::evaluateSols();
     }
 
+    // std::cout << lvec << "\n";
     nf->evaluateSols();
+    // std::cout << rvec << "\n";
 }
 
 void GMRES::iterateArnoldi(int k) {
@@ -115,6 +117,13 @@ void GMRES::solve(const std::string& fname) {
     std::cout << "   # Iterations: " << iter << "\n";
 
     const matXcd& Hp = Hmat.block(0, 0, Hmat.rows()-1, Hmat.cols());
+
+    //for (int i = 0; i < Hp.rows(); ++i) {
+    //    for (int j = 0; j < Hp.cols(); ++j)
+    //        std::cout << Hp(i, j) << ' ';
+    //    std::cout << "\n";
+    //}
+
     vecXcd yvec = Hp.lu().solve(gvec.segment(0, iter));
     currents = Qmat.leftCols(iter) * yvec;
     std::cout << "   Current norm: " << currents.norm() << "\n";
