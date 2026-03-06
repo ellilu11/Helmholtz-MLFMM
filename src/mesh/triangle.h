@@ -67,4 +67,8 @@ private:
     std::array<vec3d,3> Ds; // edge displacements (Ds[i] = Xs[i+1] - Xs[i])
     vec3d nhat;             // surface normal unit vector
     double area;            // area
+
+    vec3i iVerts; // indices of vertices
+    int iCenter;  // index of center
+    int iTri;     // index in glTris
 };
