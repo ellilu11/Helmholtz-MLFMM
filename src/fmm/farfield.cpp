@@ -14,7 +14,7 @@ void FMM::Node::buildRadPats() {
         Coeffs radPat(nDir);
 
         for (int iDir = 0; iDir < nDir; ++iDir) {
-            vec3d kvec = angles_lvl.khat[iDir] * k;
+            vec3d kvec = angles_lvl.khat[iDir] * config.k;
             const mat23d& toThPh = angles_lvl.toThPh[iDir];
             
             vec3cd rad = src->getRadAlongDir(center, kvec);
@@ -49,8 +49,8 @@ FMM::Coeffs FMM::Node::buildMpoleCoeffs() {
         Eigen::Map<arrXcd> radPatTheta(radPat.theta.data(), nDir);
         Eigen::Map<arrXcd> radPatPhi(radPat.phi.data(), nDir);
 
-        coeffsTheta += states.lvec[src->getIdx()] * radPatTheta;
-        coeffsPhi += states.lvec[src->getIdx()] * radPatPhi;
+        coeffsTheta += Solver::lvec[src->getIdx()] * radPatTheta;
+        coeffsPhi += Solver::lvec[src->getIdx()] * radPatPhi;
     }
 
     t.S2M += Clock::now() - start;
@@ -80,7 +80,7 @@ FMM::Coeffs FMM::Node::mergeMpoleCoeffs() {
 
         Coeffs shiftedCoeffs(mDir);
         for (int iDir = 0; iDir < mDir; ++iDir) {
-            const vec3d& kvec = angles[level+1].khat[iDir] * k;
+            const vec3d& kvec = angles[level+1].khat[iDir] * config.k;
             cmplx shift = exp(iu*kvec.dot(dX));
 
             shiftedCoeffs.theta[iDir] = shift * branchCoeffs.theta[iDir];
@@ -155,7 +155,7 @@ FMM::Coeffs FMM::Node::getShiftedLocalCoeffs(int branchIdx) const {
 
     Coeffs shiftedCoeffs(mDir);
     for (int iDir = 0; iDir < mDir; ++iDir) {
-        vec3d kvec = angles[level].khat[iDir] * k;
+        vec3d kvec = angles[level].khat[iDir] * config.k;
         cmplx shift = exp(iu*kvec.dot(dX));
 
         shiftedCoeffs.theta[iDir] = shift * localCoeffs.theta[iDir];
@@ -196,6 +196,7 @@ void FMM::Node::buildLocalCoeffs() {
 void FMM::Node::evalFarSols() {
     if (isSrcless() || level <= 1) return;
 
+    double k = config.k;
     size_t nDir = angles[level].getNumDirs();
     Eigen::Map<arrXcd> localTheta(localCoeffs.theta.data(), nDir);
     Eigen::Map<arrXcd> localPhi(localCoeffs.phi.data(), nDir);
@@ -213,6 +214,6 @@ void FMM::Node::evalFarSols() {
         intRad += (radPatTheta.conjugate() * localTheta +
             radPatPhi.conjugate() * localPhi).sum();
 
-        states.rvec[obs->getIdx()] += Phys::C * k * intRad;
+        Solver::rvec[obs->getIdx()] += Phys::C * k * intRad;
     }
 }

@@ -6,8 +6,6 @@
 #include <type_traits>
 #include "phys.h"
 
-extern double k;
-
 enum class Mode { FMM, FMMDIR };
 
 enum class Precision { VERYLOW, LOW, MEDIUM, HIGH, VERYHIGH };
@@ -79,9 +77,7 @@ struct Config {
         is >> mode >> quadPrec // TODO: fix enums first
             >> nsrcs >> maxNodeSrcs
             >> digits >> interpOrder >> overInterp
-            >> rootLeng >> wavenum >> alpha;
-
-        ::k = wavenum;
+            >> rootLeng >> k >> alpha;
 
         beta = 1.0 - alpha;
         C = -iu * Phys::eta * k / (4.0 * PI);
@@ -111,7 +107,7 @@ struct Config {
     int interpOrder;
     double overInterp;
     double rootLeng;
-    double wavenum;
+    double k;
     double alpha;
     double beta;
     cmplx C;

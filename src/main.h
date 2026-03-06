@@ -9,8 +9,10 @@
 
 #include "dipole.cpp"
 #include "math.cpp"
-#include "solver.cpp"
 #include "source.cpp"
+#include "solver/direct.cpp"
+#include "solver/gmres.cpp"
+#include "solver/solver.cpp"
 #include "fmm/angles.cpp"
 #include "fmm/farfield.cpp"
 #include "fmm/fmm.cpp"

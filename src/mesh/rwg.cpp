@@ -72,6 +72,7 @@ vec3cd Mesh::RWG::getIntegratedPlaneWave(const vec3d& kvec, bool doNumeric) cons
 cmplx Mesh::RWG::getIntegratedEFIE(const std::shared_ptr<Source> src) const {
     if (config.alpha == 0) return 0.0;
     const auto srcRWG = dynamic_pointer_cast<RWG>(src);
+    double k2 = config.k * config.k;
     cmplx intRad = 0.0;
 
     int iObs = 0;
@@ -86,7 +87,7 @@ cmplx Mesh::RWG::getIntegratedEFIE(const std::shared_ptr<Source> src) const {
             vec3d v1 = (obsTri.iTri <= srcTri.iTri) ? vsrc : vobs;
 
             cmplx pairRad =
-                m11 - v0.dot(m01) - v1.dot(m10) + (v0.dot(v1) - 4.0/(k*k))*m00;
+                m11 - v1.dot(m10) - v0.dot(m01) + (v0.dot(v1) - 4.0/k2)*m00;
 
             // For edge adjacent triangles, integrate 1/R term (analytically)
             // Average obs-src and src-obs to preserve symmetry
@@ -114,12 +115,13 @@ cmplx Mesh::RWG::getIntegratedEFIE(const std::shared_ptr<Source> src) const {
 /* getIntegratedMFIE(src)
  * Return the magnetic field due to src tested with this RWG
  */
-/*
+//
 cmplx Mesh::RWG::getIntegratedMFIE(const std::shared_ptr<Source> src) const {
     if (config.alpha == 1) return 0.0;
     const auto srcRWG = dynamic_pointer_cast<RWG>(src);
-    cmplx intRad = 0.0;
+    double k = config.k, k2 = k*k;
 
+    cmplx intRad = 0.0;
     int iObs = 0;
     for (const auto& [obsTri, vobs] : getTrisAndVerts()) {
 
@@ -149,14 +151,15 @@ cmplx Mesh::RWG::getIntegratedMFIE(const std::shared_ptr<Source> src) const {
     assert(!std::isnan(intRad.real()) && !std::isnan(intRad.imag()));
     return leng * srcRWG->leng * intRad;
 }
-*/
+//
 
-// Debug version, no precomputed moments
+/* Debug version, no precomputed moments
 cmplx Mesh::RWG::getIntegratedMFIE(const std::shared_ptr<Source> src) const {
     if (config.alpha == 1.0) return 0.0;
     const auto srcRWG = dynamic_pointer_cast<RWG>(src);
-    cmplx intRad = 0.0;
+    double k = config.k, k2 = k*k;
 
+    cmplx intRad = 0.0;
     int iObs = 0;
     for (const auto& [obsTri, vobs] : getTrisAndVerts()) {
 
@@ -207,5 +210,5 @@ cmplx Mesh::RWG::getIntegratedMFIE(const std::shared_ptr<Source> src) const {
     assert(!std::isnan(intRad.real()) && !std::isnan(intRad.imag()));
     return leng * srcRWG->leng * intRad;
 }
-//
+*/
 

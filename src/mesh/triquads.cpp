@@ -67,7 +67,7 @@ void Mesh::Triangle::buildQuadCoeffs(Precision prec) {
             break;
         }
 
-        case Precision::HIGH: { // TODO: Fix buildPermutations before selecting this option
+        case Precision::HIGH: { 
             constexpr double weight0 = -0.074785022233841;
             const vec3d ws0(1.0/3.0, 1.0/3.0, 1.0/3.0);
             quadCoeffs.emplace_back(ws0, weight0);
@@ -76,7 +76,10 @@ void Mesh::Triangle::buildQuadCoeffs(Precision prec) {
             constexpr double alpha1 = 0.479308067841920, beta1 = 0.260345966079040;
             vec3d ws1(alpha1, beta1, beta1);
             std::vector<vec3d> wss1;
-            Math::buildPermutations(ws1, wss1, 0);
+            wss1.emplace_back(alpha1, beta1, beta1);
+            wss1.emplace_back(beta1, alpha1, beta1);
+            wss1.emplace_back(beta1, beta1, alpha1);
+            // Math::buildPermutations(ws1, wss1, 0);
             for (const auto& ws : wss1)
                 quadCoeffs.emplace_back(ws, weight1);
 
@@ -84,7 +87,10 @@ void Mesh::Triangle::buildQuadCoeffs(Precision prec) {
             constexpr double alpha2 = 0.869739794195568, beta2 = 0.065130102902216;
             vec3d ws2(alpha2, beta2, beta2);
             std::vector<vec3d> wss2;
-            Math::buildPermutations(ws2, wss2, 0);
+            wss2.emplace_back(alpha2, beta2, beta2);
+            wss2.emplace_back(beta2, alpha2, beta2);
+            wss2.emplace_back(beta2, beta2, alpha2);
+            // Math::buildPermutations(ws2, wss2, 0);
             for (const auto& ws : wss2)
                 quadCoeffs.emplace_back(ws, weight2);
 
@@ -92,7 +98,14 @@ void Mesh::Triangle::buildQuadCoeffs(Precision prec) {
             constexpr double alpha3 = 0.048690315425316, beta3 = 0.312865496004874, gamma = 0.638444188569810;
             vec3d ws3(alpha3, beta3, gamma);
             std::vector<vec3d> wss3;
-            Math::buildPermutations(ws3, wss3, 0);
+            wss3.emplace_back(alpha3, beta3, gamma);
+            wss3.emplace_back(beta3, gamma, alpha3);
+            wss3.emplace_back(gamma, alpha3, beta3);
+
+            wss3.emplace_back(beta3, alpha3, gamma);
+            wss3.emplace_back(alpha3, gamma, beta3);
+            wss3.emplace_back(gamma, beta3, alpha3);
+            // Math::buildPermutations(ws3, wss3, 0);
             for (const auto& ws : wss3)
                 quadCoeffs.emplace_back(ws, weight3);
 
@@ -101,7 +114,8 @@ void Mesh::Triangle::buildQuadCoeffs(Precision prec) {
             break;
         }
 
-        case Precision::VERYHIGH: {
+        /*
+        case Precision::VERYHIGH: { // TODO: Fix buildPermutations before selecting this option
             constexpr double weight0 = 0.048567898141400;
             const vec3d ws0(1.0/3.0, 1.0/3.0, 1.0/3.0);
             quadCoeffs.emplace_back(ws0, weight0);
@@ -150,6 +164,7 @@ void Mesh::Triangle::buildQuadCoeffs(Precision prec) {
             static_assert(weightErr > -Math::FEPS && weightErr < Math::FEPS);
             break;
         }
+        */
     }
 
     assert(quadCoeffs.size() == numQuads);

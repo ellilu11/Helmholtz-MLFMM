@@ -5,12 +5,9 @@
 #include "../excite.h"
 #include "../math.h"
 #include "../phys.h"
-#include "../states.h"
 #include "../types.h"
 
 extern const Config config;
-extern double k;
-extern States states;
 extern ClockTimes t;
 
 namespace FMM {

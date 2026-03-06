@@ -11,6 +11,8 @@ struct FMM::NearPair {
         : pair(std::move(obsLeaf), std::move(srcLeaf)) 
     {}
 
+    matXcd getNearMatrix() const;
+
     NodePair pair;
     std::vector<cmplx> efie;
     std::vector<pair2cd> mfie;
@@ -22,6 +24,10 @@ public :
     Nearfield();
 
     void evaluateSols();
+
+    std::vector<NearPair> getNearPairs() const { return nearPairs; }
+
+    std::vector<NearPair> getSelfPairs() const { return selfPairs; }
 
 private : 
     void findNodePairs();

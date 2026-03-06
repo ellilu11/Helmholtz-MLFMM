@@ -102,6 +102,7 @@ void Mesh::Triangle::buildSelfIntegratedInvR() {
 
 double Mesh::Triangle::getDoubleSelfIntegratedInvR(const vec3d& vobs, const vec3d& vsrc) const
 {
+    double k2 = config.k * config.k;
     const auto [V0, V1, V2] = getVerts();
     double a00 = V0.dot(V0), a01 = V0.dot(V1), a02 = V0.dot(V2); // cache?
     const vec3d& vsum = vsrc + vobs;
@@ -109,7 +110,7 @@ double Mesh::Triangle::getDoubleSelfIntegratedInvR(const vec3d& vobs, const vec3
     return selfInts[0]
         + selfInts[1] * (-2.0*a00 + 2.0*a01 + (V0-V1).dot(vsum))
         + selfInts[2] * (-2.0*a00 + 2.0*a02 + (V0-V2).dot(vsum))
-        + selfInts[3] * (a00 - V0.dot(vsum) + vsrc.dot(vobs) - 4.0/(k*k));
+        + selfInts[3] * (a00 - V0.dot(vsum) + vsrc.dot(vobs) - 4.0/k2);
 }
 
 std::pair<double, vec3d>
@@ -221,6 +222,7 @@ double Mesh::Triangle::getDoubleIntegratedInvR(
     const Triangle& srcTri, const TriPair& triPair, const vec3d& vobs, const vec3d& vsrc,
     bool isEFIE) const
 {
+    double k2 = config.k * config.k;
     const vec3d& vsrcProj = srcTri.proj(vsrc);
 
     double rad = 0.0;
@@ -231,7 +233,7 @@ double Mesh::Triangle::getDoubleIntegratedInvR(
             triPair.integratedInvR[iObs] : triPair.integratedInvR2[iObs]);
 
         rad += ((obs-vobs).dot(vecRad+(obsProj-vsrcProj)*scaRad) - 
-                isEFIE * 4.0/(k*k)*scaRad)
+                isEFIE * 4.0/k2*scaRad)
                 * obsWeight;
 
         ++iObs;

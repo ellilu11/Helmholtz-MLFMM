@@ -33,6 +33,7 @@ void Mesh::TriPair::buildMomentsEFIE() {
     momentsEFIE = { 0.0, vec3cd::Zero(), vec3cd::Zero(), 0.0 };
     auto& [m00, m10, m01, m11] = momentsEFIE;
     const auto& [obsTri, srcTri] = getTriPair();
+    double k = config.k;
 
     for (const auto& [obs, obsWeight] : obsTri.triQuads) {
         for (const auto& [src, srcWeight] : srcTri.triQuads) {
@@ -58,6 +59,7 @@ void Mesh::TriPair::buildMomentsMFIE() {
     momentsMFIE = { vec3cd::Zero(), vec3cd::Zero(), vec3cd::Zero(), 0.0 };
     auto& [m00, m10, m01, m11] = momentsMFIE;
     const auto& [obsTri, srcTri] = getTriPair();
+    double k = config.k, k2 = k*k;
 
     for (const auto& [obs, obsWeight] : obsTri.triQuads) {
         // For common triangles, use -1/2 J term

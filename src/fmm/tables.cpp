@@ -1,4 +1,3 @@
-
 #include "tables.h"
 
 std::vector<double> FMM::Tables::dists;
@@ -93,7 +92,7 @@ Map<vecXcd> FMM::Tables::getAlpha() {
 
     Map<vecXcd> alpha;
     for (const auto& dist : dists) {
-        double kr = k * dist * nodeLeng;
+        double kr = config.k * dist * nodeLeng;
 
         vecXcd transl_dist(nps);
         for (int ips = 0; ips < nps; ++ips) {
@@ -105,7 +104,7 @@ Map<vecXcd> FMM::Tables::getAlpha() {
                     * sphericalHankel1(kr, l)
                     * legendreP(xi, l).first;
 
-            transl_dist[ips] = iu * k / (4.0*PI) * coeff;
+            transl_dist[ips] = iu * config.k / (4.0*PI) * coeff;
         }
 
         alpha.emplace(dist, transl_dist);

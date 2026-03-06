@@ -47,6 +47,7 @@ public:
     cmplx getIntegratedEFIE(const std::shared_ptr<Source> src) const override {
         auto srcDip = dynamic_pointer_cast<Dipole>(src);
         if (pos == srcDip->pos || config.alpha == 0.0) return 0.0;
+        double k = config.k;
 
         vec3cd rad = Math::dyadicG(pos - srcDip->pos, k) * srcDip->phat;
         
@@ -59,6 +60,7 @@ public:
     cmplx getIntegratedMFIE(const std::shared_ptr<Source> src) const override {
         auto srcDip = dynamic_pointer_cast<Dipole>(src);
         if (pos == srcDip->pos || config.alpha == 1.0) return 0.0;
+        double k = config.k;
         vec3d R = pos - srcDip->pos;
         double r = R.norm(), r3 = r*r*r;
 
