@@ -95,9 +95,10 @@ void FMM::Node::buildInteractionList() {
 void FMM::Node::pushSelfToNearNonNbors() {
     if (leafIlist.empty()) return;
 
-    for (const auto& node : leafIlist) {
-        node->pushToNearNonNbors(shared_from_this());
-        nonNearPairs.emplace_back(node, shared_from_this()); // record list4-list3 pair
+    for (const auto& leaf : leafIlist) {
+        assert(leaf->isLeaf());
+        leaf->pushToNearNonNbors(shared_from_this());
+        nonNearPairs.emplace_back(leaf, shared_from_this()); // record list4-list3 pair
     }
 }
 

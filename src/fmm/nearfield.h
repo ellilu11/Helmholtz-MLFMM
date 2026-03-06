@@ -33,7 +33,10 @@ private :
 
     static void evalSelfSols(const NearPair&);
 
+    static void evalPairSolsAsym(const NearPair&);
+
 private:
     std::vector<NearPair> nearPairs;
     std::vector<NearPair> selfPairs;
+    std::vector<NearPair> nNearPairs; // for debugging
 };

@@ -13,32 +13,46 @@ void FMM::Nearfield::findPairs() {
     for (const auto& leaf : leaves) {
         selfPairs.emplace_back(leaf, leaf);
 
-        for (const auto& nbor : leaf->nearNbors) {
-            assert(nbor->isLeaf());
+        // for (const auto& nbor : leaf->nearNbors) {
+        for (const auto& nbor : leaf->nbors) {
+            // assert(nbor->isLeaf());
             if (leaf < nbor) nearPairs.emplace_back(leaf, nbor);
         }
     }
 
     for (const auto& pair : nonNearPairs) {
-        const auto& [obsNode, srcNode] = pair;
-        nearPairs.emplace_back(obsNode, srcNode);
+        const auto& [srcLeaf, obsNode] = pair;
+        nNearPairs.emplace_back(srcLeaf, obsNode);
     }
 }
 
 void FMM::Nearfield::buildPairRads() {
     for (auto& nearPair : nearPairs) {
         const auto [obsLeaf, srcNode] = nearPair.pair;
-        // assert(obsLeaf < srcNode);
 
         size_t nObss = obsLeaf->srcs.size(), nSrcs = srcNode->srcs.size();
         nearPair.rads.resize(nObss*nSrcs);
-
-        std::cout << std::setprecision(9);
 
         int pairIdx = 0;
         for (size_t iObs = 0; iObs < nObss; ++iObs) {
             for (size_t iSrc = 0; iSrc < nSrcs; ++iSrc) {
                 const auto obs = obsLeaf->srcs[iObs], src = srcNode->srcs[iSrc];
+
+                nearPair.rads[pairIdx++] = obs->getIntegratedRad(src);
+            }
+        }
+    }
+
+    for (auto& nearPair : nNearPairs) {
+        const auto [srcLeaf, obsNode] = nearPair.pair;
+
+        size_t nObss = obsNode->srcs.size(), nSrcs = srcLeaf->srcs.size();
+        nearPair.rads.resize(nObss*nSrcs);
+
+        int pairIdx = 0;
+        for (size_t iObs = 0; iObs < nObss; ++iObs) {
+            for (size_t iSrc = 0; iSrc < nSrcs; ++iSrc) {
+                const auto obs = obsNode->srcs[iObs], src = srcLeaf->srcs[iSrc];
 
                 nearPair.rads[pairIdx++] = obs->getIntegratedRad(src);
             }
@@ -147,5 +161,37 @@ void FMM::Nearfield::evaluateSols() {
     for (const auto& selfPair : selfPairs)
         evalSelfSols(selfPair);
 
+    // For debugging: evaluate sols due to leafIlist (list 4) nodes
+    for (const auto& nNearPair : nNearPairs)
+        evalPairSolsAsym(nNearPair);
+
     t.S2T += Clock::now() - start;
+}
+
+// Evaluate sols at sources in this node due to sources in leafIlist (list 4) leaf
+// but not vice versa
+void FMM::Nearfield::evalPairSolsAsym(const NearPair& nearPair) {
+    const auto& [srcLeaf, obsNode] = nearPair.pair;
+    assert(srcLeaf->isLeaf());
+
+    const SrcVec& srcs = obsNode->srcs;
+    const SrcVec& srcSrcs = srcLeaf->srcs;
+
+    size_t nObs = srcs.size(), nSrcs = srcSrcs.size();
+
+    std::vector<cmplx> solAtObss(nObs, 0.0);
+
+    int pairIdx = 0;
+    for (size_t iObs = 0; iObs < nObs; ++iObs) {
+        for (size_t iSrc = 0; iSrc < nSrcs; ++iSrc) {
+            auto obs = srcs[iObs], src = srcSrcs[iSrc];
+
+            cmplx rad = nearPair.rads[pairIdx++];
+
+            solAtObss[iObs] += states.lvec[src->getIdx()] * rad;
+        }
+    }
+
+    for (int n = 0; n < nObs; ++n)
+        states.rvec[srcs[n]->getIdx()] += Phys::C * k * solAtObss[n];
 }
