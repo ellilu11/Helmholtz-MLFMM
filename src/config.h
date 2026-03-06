@@ -78,7 +78,9 @@ struct Config {
         is >> mode >> quadPrec // TODO: fix enums first
             >> nsrcs >> maxNodeSrcs
             >> digits >> interpOrder >> overInterp
-            >> rootLeng >> k;
+            >> rootLeng >> wavenum;
+
+        ::k = wavenum;
 
         std::cout << " *************************** \n";
         std::cout << " ***** Helmholtz-MLFMM ***** \n";
@@ -93,7 +95,7 @@ struct Config {
         std::cout << "   Overinterp:      " << overInterp << '\n';
         std::cout << "   Tri quad rule:   " << getNumQuads(quadPrec) << "-point\n";
         std::cout << "   Root length:     " << rootLeng << " m\n";
-        std::cout << "   Wavenumber:      " << k << " /m\n\n";
+        std::cout << "   Wavenumber:      " << ::k << " /m\n\n";
     }
 
     Mode mode;
@@ -104,7 +106,7 @@ struct Config {
     int interpOrder;
     double overInterp;
     double rootLeng;
-    double k;
+    double wavenum;
 
     // Point dipoles only
     Dist pdist;

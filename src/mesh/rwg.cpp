@@ -75,20 +75,23 @@ cmplx Mesh::RWG::getIntegratedRad(const std::shared_ptr<Source> src) const {
                     const double r = (obs-src).norm();
 
                     cmplx G;
-                    if (!nCommon) G = exp(iu*k*r) / r; 
-                    else G = (Math::approxZero(r) ? iu*k : (exp(iu*k*r)-1.0) / r);
+                    if (nCommon >= 2) G = (Math::approxZero(r) ? iu*k : (exp(iu*k*r)-1.0) / r);
+                    else G = exp(iu*k*r) / r;
+
+                    assert(!std::isnan(G.real()) && !std::isnan(G.imag()));
 
                     pairRad += ((obs-obsNC).dot(src-srcNC) - 4.0 / (k*k)) * G
-                        * obsWeight * srcWeight;
+                                * obsWeight * srcWeight;
                 }
 
                 // For near triangles, add contribution from 1/R term (analytically)
-                if (nCommon == 2 || nCommon == 3) {
+                if (nCommon >= 2) {
                     const auto& [scaRad, vecRad] = srcTri.getNearIntegrated(obs);
                     pairRad +=
                         ((obs-obsNC).dot(vecRad+(obsProj-srcNCproj)*scaRad) - 4.0/(k*k)*scaRad)
                         * obsWeight;
                 }
+                //
             }
 
             /* For common triangles, add contribution from 1/R term (analytically)
