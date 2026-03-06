@@ -21,15 +21,31 @@ std::filesystem::path makePath(const Config& config) {
 
 SrcVec importSources(std::shared_ptr<Exc::PlaneWave> Einc)
 {
+    // RWG sources
+    Mesh::Triangle::buildQuadCoeffs(config.quadPrec);
+
+    // const string configPath = "config/rwg/test/n"+to_string(config.nsrcs)+"/";
+    const string configPath = "config/rwg/sph_r5.0_n"+to_string(config.nsrcs)+"/";
+    auto srcs = Mesh::importMesh(
+        configPath+"vertices.txt",
+        configPath+"faces.txt",
+        configPath+"rwgs.txt",
+        Einc);
+    // Mesh::refineMesh(srcs);
+    //
+
     /* Dipole sources
     const auto fpath = makePath(config);
     SrcVec srcs;
+    srcs = importDipoles("config/dipole/sphere_n"+to_string(config.nsrcs)+".txt", Einc);
+
+    //
     switch (config.mode) {
-        case Mode::READ:
+        case Mode::FMM:
             srcs = importDipoles(fpath, Einc);
             break;
-            
-        case Mode::WRITE: {
+
+        case Mode::FMMDIR: {
             srcs = makeDipoles<uniform_real_distribution<double>>(config, Einc);
 
             ofstream srcFile(fpath);
@@ -37,21 +53,8 @@ SrcVec importSources(std::shared_ptr<Exc::PlaneWave> Einc)
             break;
         }
     }
-    cout << "   Source file:     " << fpath.generic_string() << '\n';
+    // cout << "   Source file:     " << fpath.generic_string() << '\n';
     */
-
-    // RWG sources
-    Mesh::Triangle::buildQuadCoeffs(config.quadPrec);
-
-    // const string configPath = "config/rwg/test/n"+to_string(config.nsrcs)+"adj/";
-    const string configPath = "config/rwg/sph"+to_string(config.nsrcs)+"/";
-    auto srcs = Mesh::importMesh(
-        configPath+"vertices.txt",
-        configPath+"faces.txt",
-        configPath+"rwgs.txt",
-        Einc);
-
-    // Mesh::refineMesh(srcs);
 
     return srcs;
 }

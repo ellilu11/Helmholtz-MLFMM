@@ -22,7 +22,7 @@ public:
 
     virtual void buildLocalCoeffs() = 0;
 
-    void printFarFld(const std::string&);
+    void printFarFld(const std::string&, int);
 
     static int getMaxLvl() { return maxLevel; }
 

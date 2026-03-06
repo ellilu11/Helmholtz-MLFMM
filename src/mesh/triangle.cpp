@@ -30,7 +30,7 @@ Mesh::Triangle::Triangle(const vec3i& iVerts, int iTri)
     area = (Ds[0].cross(-Ds[2])).norm() / 2.0;
 
     buildTriQuads();
-    buildSelfIntegrated();
+    // buildSelfIntegrated();
     //std::cout << "Built triangle #" << iTri << " with selfints: " 
     //    << selfInts[0] << ", " << selfInts[1] << ", " << selfInts[2] << ", " << selfInts[3] << '\n';
 }

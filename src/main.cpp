@@ -76,14 +76,14 @@ int main() {
     auto solver = std::make_unique<Solver>(srcs, root, MAX_ITER, EPS);
 
     start = Clock::now();
-    solver->solve("curr.txt");
+    solver->solve("sol.txt");
     end = Clock::now();
     duration_ms = end - start;
     std::cout << "   FMM total elapsed time: " << duration_ms.count() << " ms\n\n";
 
-    // root->printFarFld("ff.txt");
+    root->printFarFld("ff.txt", 200);
 
-    if (!config.evalDirect) return 0;
+    if (config.mode == Mode::FMM) return 0;
 
     // ================== Solve iterative direct ================ //
     states = States(nsrcs);
@@ -104,7 +104,9 @@ int main() {
     std::cout << " Solving w/ direct...\n";
     solver = std::make_unique<Solver>(srcs, root, MAX_ITER, EPS);
 
-    solver->solve("currDir.txt");
+    solver->solve("solDir.txt");
+
+    root->printFarFld("ffDir.txt", 200);
 
     return 0;
 }

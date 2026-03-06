@@ -83,7 +83,7 @@ cmplx Mesh::RWG::getIntegratedRad(const std::shared_ptr<Source> src) const {
                 }
 
                 // For near triangles, add contribution from 1/R term (analytically)
-                if (nCommon == 1 || nCommon == 2) {
+                if (nCommon == 2 || nCommon == 3) {
                     const auto& [scaRad, vecRad] = srcTri.getNearIntegrated(obs);
                     pairRad +=
                         ((obs-obsNC).dot(vecRad+(obsProj-srcNCproj)*scaRad) - 4.0/(k*k)*scaRad)
@@ -91,7 +91,7 @@ cmplx Mesh::RWG::getIntegratedRad(const std::shared_ptr<Source> src) const {
                 }
             }
 
-            // For common triangles, add contribution from 1/R term (analytically)
+            /* For common triangles, add contribution from 1/R term (analytically)
             if (nCommon == 3) {
                 const auto [V0, V1, V2] = obsTri.getVerts();
                 double a00 = V0.dot(V0), a01 = V0.dot(V1), a02 = V0.dot(V2); // cache?
@@ -100,7 +100,7 @@ cmplx Mesh::RWG::getIntegratedRad(const std::shared_ptr<Source> src) const {
                     + obsTri.selfInts[1] * (-2.0*a00 + 2.0*a01 + (V0-V1).dot(srcNC+obsNC))
                     + obsTri.selfInts[2] * (-2.0*a00 + 2.0*a02 + (V0-V2).dot(srcNC+obsNC))
                     + obsTri.selfInts[3] * (a00 - V0.dot(srcNC+obsNC) + srcNC.dot(obsNC) - 4.0/(k*k));
-            }
+            }*/
             
             // Using precomputed moments
             //const auto [mm0, mm1, mm2, mm3] =

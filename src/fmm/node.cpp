@@ -116,7 +116,7 @@ void FMM::Node::evalLeafIlistSols() {
     //return;
 }
 
-void FMM::Node::printFarFld(const std::string& fname) {
+void FMM::Node::printFarFld(const std::string& fname, int nth) {
     namespace fs = std::filesystem;
     fs::path dir = "out/ff";
     std::error_code ec;
@@ -129,22 +129,29 @@ void FMM::Node::printFarFld(const std::string& fname) {
     std::ofstream farfile(dir/fname);
     farfile << std::setprecision(15) << std::scientific;
 
-    const auto& angles_lvl = angles[level];
-    size_t nDir = angles_lvl.getNumDirs();
-
-    for (int iDir = 0; iDir < nDir; ++iDir) {
-        const auto& krhat = angles_lvl.khat[iDir] * k;
-
-        vec3cd dirFar = vec3cd::Zero();
-        for (const auto& src : srcs)
-            dirFar += states.currents[src->getIdx()] * src->getFarAlongDir(krhat);
-
-        const vec3cd& far = Phys::C * k * angles_lvl.ImRR[iDir] * dirFar;
-
-        farfile << far << '\n';
-    }
-
     // Also print out angles (coordinates of farsols)
     std::ofstream thfile(dir/"thetas.txt"), phfile(dir/"phis.txt");
     angles[level].printAngles(thfile, phfile);
+
+    double phi = 0.0; // pick phi = 0
+    double rcsSum = 0.0;
+    for (int ith = 0; ith < nth; ++ith) {
+        double theta = (ith+0.5)*PI/static_cast<double>(nth);
+        const vec3d& rhat = Math::fromSph(vec3d(1.0, theta, phi));
+
+        vec3cd dirFar = vec3cd::Zero();
+        for (const auto& src : srcs)
+            dirFar += states.currents[src->getIdx()] * src->getFarAlongDir(k*rhat);
+
+        const vec2cd& far = Phys::C * k * Math::toThPh(theta, phi) * dirFar;
+
+        double rcs = 4.0*PI/(k*k) * far.squaredNorm();
+        rcsSum += rcs;
+        farfile << rcs << '\n'; // squared magnitude of theta and phi components
+
+        thfile << theta << '\n';
+    }
+
+    std::cout << " Mean RCS: " 
+        << std::setprecision(9) << rcsSum/nth << std::setprecision(3) << "\n";
 }

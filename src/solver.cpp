@@ -152,6 +152,8 @@ void Solver::solve(const std::string& fname) {
     const auto& Hp = Hmat.block(0, 0, Hmat.rows()-1, Hmat.cols());
     vecXcd yvec = Hp.lu().solve(gvec.segment(0, iter));
     states.currents = Qmat.leftCols(iter) * yvec;
+    std::cout << "   Current norm: "
+        << std::setprecision(9) << states.currents.norm() << std::setprecision(3) << "\n";
 
     printSols(fname);
 }
