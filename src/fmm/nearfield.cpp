@@ -1,7 +1,15 @@
 #include "nearfield.h"
 
+std::vector<int> FMM::Nearfield::numPairsPerLvlDiff = std::vector<int>(5, 0);
+
 FMM::Nearfield::Nearfield() {
     findPairs();
+    std::cout << "   # non-near pairs: " << nNearPairs.size() << '\n';
+    std::cout << "   # non-near leaf-stem pairs: " << numLeafStemPairs << '\n';
+
+    for (int lvl = 0; lvl < 5; ++lvl)
+        std::cout << "  #  Nodepairs at level diff " << lvl << ": " << numPairsPerLvlDiff[lvl] << '\n';
+
     buildPairRads();
     buildSelfRads();
 }
@@ -17,12 +25,20 @@ void FMM::Nearfield::findPairs() {
         for (const auto& nbor : leaf->nbors) {
             // assert(nbor->isLeaf());
             if (leaf < nbor) nearPairs.emplace_back(leaf, nbor);
+
+            int lvlDiff = std::abs(leaf->level - nbor->level);
+            ++numPairsPerLvlDiff[lvlDiff];
         }
     }
 
     for (const auto& pair : nonNearPairs) {
         const auto& [srcLeaf, obsNode] = pair;
         nNearPairs.emplace_back(srcLeaf, obsNode);
+
+        if (!obsNode->isLeaf()) ++numLeafStemPairs;
+
+        int lvlDiff = std::abs(obsNode->level - srcLeaf->level);
+        ++numPairsPerLvlDiff[lvlDiff];
     }
 }
 

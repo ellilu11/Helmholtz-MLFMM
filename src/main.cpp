@@ -36,6 +36,9 @@ int main() {
     std::cout << "   # Leaves: " << leaves.size() << '\n';
     std::cout << "   Max node level: " << Node::getMaxLvl() << "\n\n";
 
+    for (int lvl = 0; lvl <= Node::getMaxLvl(); ++lvl)
+        std::cout << "   # Nodes at level " << lvl << ": " << Node::numNodesPerLvl[lvl] << '\n';
+
     // ==================== Build nearfield ===================== //
     std::cout << " Building nearfield matrix...\n";
 
@@ -66,7 +69,7 @@ int main() {
     // ==================== Solve iterative FMM ================ //
     std::cout << " Solving w/ FMM...\n";
 
-    constexpr int MAX_ITER = 500;
+    constexpr int MAX_ITER = 1000;
     constexpr double EPS = 1.0E-6;
 
     auto solver = std::make_unique<Solver>(srcs, root, nf, MAX_ITER, EPS);

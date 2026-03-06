@@ -36,6 +36,10 @@ private :
     static void evalPairSolsAsym(const NearPair&);
 
 private:
+    static std::vector<int> numPairsPerLvlDiff; // for debugging
+
+    inline static int numLeafStemPairs = 0;
+
     std::vector<NearPair> nearPairs;
     std::vector<NearPair> selfPairs;
     std::vector<NearPair> nNearPairs; // for debugging

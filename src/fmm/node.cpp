@@ -1,5 +1,7 @@
 #include "node.h"
 
+std::vector<int> FMM::Node::numNodesPerLvl = std::vector<int>(10, 0);
+
 /* Node(particles,branchIdx,base)
  * particles : list of particles contained in this node
  * branchidx : index of this node relative to its base node
@@ -20,6 +22,10 @@ FMM::Node::Node(
     else subdivideNode();
 
     ++numNodes;
+
+    // For debugging: count number of nodes at each level
+    assert(level < numNodesPerLvl.size());
+    ++numNodesPerLvl[level];
 }
 
 void FMM::Node::subdivideNode() {

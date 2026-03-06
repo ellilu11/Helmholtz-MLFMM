@@ -77,6 +77,9 @@ private:
         nearNonNbors.push_back(node);
     }
 
+public:
+    static std::vector<int> numNodesPerLvl; // for debugging
+
 private:
     inline static int numNodes = 0;
 
