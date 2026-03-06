@@ -35,5 +35,5 @@ void Direct::solve(const std::string& fname) {
 
     // std::cout << std::setprecision(9) << (Zmat * currents - rvec).transpose() << "\n";
 
-    printSols(fname);
+    printSols(fname, currents);
 }

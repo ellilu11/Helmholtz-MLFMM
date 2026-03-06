@@ -59,11 +59,11 @@ int main() {
     // ==================== Solve iterative FMM ================ //
     std::cout << " Solving with FMM...              ";
 
-    constexpr int MAX_ITER = 500;
-    constexpr double EPS = 1.0E-6;
+    constexpr int MAX_ITER = 1000;
+    constexpr double EPS = 1.0E-9;
 
     auto solver = std::make_unique<GMRES>(srcs, nf, root, EPS, MAX_ITER);
-    solver->solve("curr.txt");
+    solver->solve("sol.txt");
 
     Time duration_ms0 = Clock::now() - start0;
     std::cout << " FMM total elapsed time: " << duration_ms0.count() << " ms\n\n";
@@ -87,9 +87,9 @@ int main() {
 
     std::cout << " Solving with direct...           ";
     solver = std::make_unique<GMRES>(srcs, nf, root, EPS, MAX_ITER);
-    solver->solve("currDir.txt");
+    solver->solve("solDir.txt");
     //auto solverDir = std::make_unique<Direct>(srcs, nf);
-    //solverDir->solve("currDir.txt");
+    //solverDir->solve("solDir.txt");
 
     duration_ms0 = Clock::now() - start0;
     std::cout << " Direct total elapsed time: " << duration_ms0.count() << " ms\n\n";

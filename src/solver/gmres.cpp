@@ -71,7 +71,7 @@ void GMRES::applyGivensRotation(vecXcd& hcol, int k) {
     assert(hcol.size() == k+2);
 
     for (int i = 0; i <= k-1; ++i) {
-        const cmplx hprev = vcos[i] * hcol[i] + vsin[i] * hcol[i+1] ;
+        cmplx hprev = vcos[i] * hcol[i] + vsin[i] * hcol[i+1] ;
         hcol[i+1] = -vsin[i] * hcol[i] + vcos[i] * hcol[i+1];
         hcol[i] = hprev;
     }
@@ -95,8 +95,15 @@ void GMRES::updateGvec(int k) {
 }
 
 void GMRES::solve(const std::string& fname) {
-    auto start = Clock::now();
+    // If maxIter = 0, just do one MVM and exit
+    if (!maxIter) {
+        updateRvec(0);
+        printSols(fname, rvec);
+        std::cout << '\n';
+        return;
+    }
 
+    auto start = Clock::now();
     int iter = 0;
     do {
         // if (iter && !(iter%10)) std::cout << "   #" << iter << '\n';
@@ -119,5 +126,5 @@ void GMRES::solve(const std::string& fname) {
     std::cout << "   Current norm: " 
         << std::setprecision(9) << currents.norm() << std::setprecision(3) << "\n";
 
-    printSols(fname);
+    printSols(fname, currents);
 }

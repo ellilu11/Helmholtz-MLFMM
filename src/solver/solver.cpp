@@ -11,7 +11,7 @@ Solver::Solver(SrcVec& srcs,
 {
 };
 
-void Solver::printSols(const std::string& fname) {
+void Solver::printSols(const std::string& fname, const vecXcd& sols) {
     namespace fs = std::filesystem;
     fs::path dir = "out/sol";
     std::error_code ec;
@@ -25,6 +25,5 @@ void Solver::printSols(const std::string& fname) {
 
     file << std::setprecision(15) << std::scientific;
 
-    // for (const auto& sol : rvec) file << sol << '\n';
-    for (const auto& curr : currents) file << curr << '\n';
+    for (const auto& sol : sols) file << sol << '\n';
 }

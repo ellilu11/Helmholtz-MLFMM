@@ -11,7 +11,7 @@ public:
 
     virtual void solve(const std::string&) = 0;
 
-    void printSols(const std::string&);
+    static void printSols(const std::string&, const vecXcd&);
 
 public:
     static vecXcd lvec;
@@ -20,7 +20,6 @@ public:
 
 protected:
     std::shared_ptr<FMM::Nearfield> nf;
-
     int numSrcs;
 };
 
