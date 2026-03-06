@@ -289,6 +289,11 @@ void FMM::Leaf::evalSelfSols() {
 
             const cmplx rad = selfRads[pairIdx++];
 
+            if (iObs == iSrc) {
+                solAtObss[iObs] += states.lvec[src->getIdx()] * rad;
+                continue;
+            }
+
             solAtObss[iObs] += states.lvec[src->getIdx()] * rad;
             solAtObss[iSrc] += states.lvec[obs->getIdx()] * rad;
         }
