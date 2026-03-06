@@ -135,7 +135,7 @@ void Solver::solve(const std::string& fname) {
     int iter = 0;
 
     do {
-        if (!(iter%10)) std::cout << " Do iteration #" << iter << '\n';
+        if (!(iter%100)) std::cout << " Do iteration #" << iter << '\n';
         auto iter_start = Clock::now();
 
         updateRvec(iter);
