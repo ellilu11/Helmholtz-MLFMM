@@ -155,6 +155,60 @@ Mesh::Triangle::getIntegratedInvR(const vec3d& obs, bool doNumeric) const
     return std::make_pair(scaRad, vecRad);
 }
 
+std::pair<double, vec3d>
+Mesh::Triangle::getIntegratedInvRcubed(const vec3d& obs, bool doNumeric) const
+{
+    using namespace Math;
+
+    double scaRad3 = 0.0;
+    vec3d vecRad3 = vec3d::Zero();
+    const vec3d& obsProj = proj(obs);
+
+    if (doNumeric) {
+        for (const auto& [node, weight] : triQuads) {
+            double dr3 = pow((obs-node).norm(), 3);
+            scaRad3 += weight / dr3;
+            vecRad3 -= weight * (obsProj-proj(node)) / dr3;
+        }
+        return std::make_pair(scaRad3, vecRad3);
+    }
+
+    const auto& Xs = getVerts();
+    double d = std::fabs(nhat.dot(obs-Xs[0])), dsq = d*d;
+
+    std::array<vec3d, 3> Ps =
+    { proj(Xs[0])-obsProj, proj(Xs[1])-obsProj, proj(Xs[2])-obsProj };
+
+    for (int i = 0; i < 3; ++i) {
+        const vec3d& P0 = Ps[i];
+        const vec3d& P1 = Ps[(i+1)%3];
+
+        const vec3d& lhat = (P1-P0).normalized();
+        const vec3d& uhat = lhat.cross(nhat);
+        double l0 = P0.dot(lhat), l1 = P1.dot(lhat);
+
+        const vec3d& P = P0 - l0*lhat;
+        double p = P.norm(), p0 = P0.norm(), p1 = P1.norm();
+
+        const vec3d& phat = (fzero(p) ? zeroVec : P.normalized());
+
+        double rsq = p*p + dsq, r0 = std::sqrt(p0*p0 + dsq), r1 = std::sqrt(p1*p1 + dsq);
+
+        scaRad3 -= phat.dot(uhat) *
+            (fzero(d) ?
+                (fzero(p) ? 0.0 : l1/(p*r1) - l0/(p*r0)) :
+                (atan2(d*l1, p*r1) - atan2(d*l0, p*r0) + atan2(l0, p) - atan2(l1, p)) / d);
+        vecRad3 -= uhat *
+            (fzero(r0+l0) || fzero(r1+l1) ?  // use && ?
+                std::log(l0/l1) :
+                std::log((r1+l1)/(r0+l0)));
+    }
+    scaRad3 /= 2.0*area;
+    vecRad3 /= 2.0*area;
+
+    return std::make_pair(scaRad3, vecRad3);
+}
+
 double Mesh::Triangle::getDoubleIntegratedInvR(
     const Triangle& srcTri, const TriPair& triPair, const vec3d& vobs, const vec3d& vsrc) const
 {
@@ -170,6 +224,26 @@ double Mesh::Triangle::getDoubleIntegratedInvR(
 
         rad += ((obs-vobs).dot(vecRad+(obsProj-vsrcProj)*scaRad) - 4.0/k2*scaRad)
             * obsWeight;
+
+        ++iObs;
+    }
+
+    return rad;
+}
+
+double Mesh::Triangle::getDoubleIntegratedInvRcubed(
+    const Triangle& srcTri, const TriPair& triPair, const vec3d& vobs, const vec3d& vsrc) const
+{
+    const vec3d& vsrcProj = srcTri.proj(vsrc);
+
+    double rad = 0.0;
+    size_t iObs = 0;
+    for (const auto& [obs, obsWeight] : triQuads) {
+        vec3d obsProj = srcTri.proj(obs);
+        auto [scaRad3, vecRad3] = (iTri <= srcTri.iTri ?
+            triPair.integratedInvRcubed[iObs] : triPair.integratedInvRcubed2[iObs]);
+
+        rad += (obs-vobs).dot(vecRad3+(obsProj-vsrcProj)*scaRad3) * obsWeight;
 
         ++iObs;
     }

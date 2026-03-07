@@ -1,28 +1,37 @@
 #pragma once
 
 #include "mesh.h"
-#include "../types.h"
+#include "triangle.h"
 
 struct Mesh::TriPair {
 
-public :
+public:
     TriPair(pair2i);
 
-    std::pair<Triangle,Triangle> getTriPair() const {
+    std::pair<Triangle, Triangle> getTriPair() const {
         return { glTris[iTris.first], glTris[iTris.second] };
     }
 
-private :
+private:
     void buildNumCommon();
 
     void buildMomentsEFIE();
 
+    void buildMomentsMFIE();
+
     void buildIntegratedInvR();
 
-public : 
+    void buildIntegratedInvRcubed();
+
+public:
     std::tuple<cmplx, vec3cd, vec3cd, cmplx> momentsEFIE;
-    std::vector<std::pair<double,vec3d>> integratedInvR; 
+    std::tuple<vec3cd, vec3cd, vec3cd, cmplx> momentsMFIE;
+    // std::tuple<vec3cd, vec3cd, vec3cd, cmplx> momentsMFIE2;
+
+    std::vector<std::pair<double, vec3d>> integratedInvR;
     std::vector<std::pair<double, vec3d>> integratedInvR2; // symmetric case
+    std::vector<std::pair<double, vec3d>> integratedInvRcubed;
+    std::vector<std::pair<double, vec3d>> integratedInvRcubed2; // symmetric case
 
     pair2i iTris; // indices of triangles
     int nCommon;  // number of common vertices

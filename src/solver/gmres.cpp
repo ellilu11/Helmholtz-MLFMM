@@ -106,7 +106,7 @@ void GMRES::solve(const std::string& fname) {
     auto start = Clock::now();
     int iter = 0;
     do {
-        // if (iter && !(iter%10)) std::cout << "   #" << iter << '\n';
+        if (iter && !(iter%100)) std::cout << "   #" << iter << '\n';
         updateRvec(iter);
         iterateArnoldi(iter);
         updateGvec(iter);

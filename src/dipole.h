@@ -49,17 +49,33 @@ public:
         return exp(-iu*pos.dot(krhat)) * phat;
     }
 
-    /* getIntegratedRad(src)
-     * Return the radiated field due to src tested with this dipole
+    /* getIntegratedEFIE(src)
+     * Return the electric field due to src tested with this dipole
      */
-    cmplx getIntegratedRad(const std::shared_ptr<Source> src) const override {
+    cmplx getIntegratedEFIE(const std::shared_ptr<Source> src) const override {
         auto srcDip = dynamic_pointer_cast<Dipole>(src);
+        if (pos == srcDip->pos || config.alpha == 0.0) return 0.0;
+        double k = config.k;
 
-        if (pos == srcDip->pos) return 0.0; // TODO: Radiation reaction field
+        vec3cd rad = Math::dyadicG(pos - srcDip->pos, k) * srcDip->phat;
 
-        vec3cd rad = Math::dyadicG(pos - srcDip->pos, config.k) * srcDip->phat;
+        return phat.dot(rad);
+    }
 
-        return conj(rad.dot(phat));
+    /* getIntegratedMFIE(src)
+     * Return the magnetic field due to src tested with this dipole
+     */
+    cmplx getIntegratedMFIE(const std::shared_ptr<Source> src) const override {
+        auto srcDip = dynamic_pointer_cast<Dipole>(src);
+        if (pos == srcDip->pos || config.alpha == 1.0) return 0.0;
+        double k = config.k;
+        vec3d R = pos - srcDip->pos;
+        double r = R.norm(), r3 = r*r*r;
+
+        vec3cd gradG = (-1.0+iu*k*r)*exp(iu*k*r)/r3 * R;
+        vec3cd rad = -(gradG.cross(srcDip->phat)).conjugate(); // Hermitian cross!
+
+        return phat.dot(rad);
     }
 
     friend std::ostream& operator<<(std::ostream& os, Dipole& src) {

@@ -10,7 +10,9 @@ public:
 
     vec3cd getIntegratedPlaneWave(const vec3d&, bool = 0) const;
 
-    cmplx getIntegratedRad(const std::shared_ptr<Source>) const override;
+    cmplx getIntegratedEFIE(const std::shared_ptr<Source>) const override;
+
+    cmplx getIntegratedMFIE(const std::shared_ptr<Source>) const override;
 
     std::array<int,2> getTrisIdx() const { return iTris; }
 

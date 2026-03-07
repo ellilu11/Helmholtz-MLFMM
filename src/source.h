@@ -38,7 +38,9 @@ public:
 
     virtual vec3cd getFarAlongDir(const vec3d&) const = 0;
 
-    virtual cmplx getIntegratedRad(const std::shared_ptr<Source>) const = 0;
+    virtual cmplx getIntegratedEFIE(const std::shared_ptr<Source>) const = 0;
+
+    virtual cmplx getIntegratedMFIE(const std::shared_ptr<Source>) const = 0;
 
 protected:
     std::shared_ptr<Exc::PlaneWave> Einc;

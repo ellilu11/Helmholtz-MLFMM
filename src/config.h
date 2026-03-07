@@ -75,9 +75,10 @@ struct Config {
     Config(const std::string& fileName) {
         std::ifstream is(fileName);
         is >> mode >> quadPrec // TODO: fix enums first
-           >> nsrcs >> maxNodeSrcs
-           >> digits >> interpOrder >> overInterp
-           >> rootLeng >> k;
+            >> nsrcs >> maxNodeSrcs
+            >> digits >> interpOrder >> overInterp
+            >> rootLeng >> k >> alpha;
+        beta = 1.0 - alpha;
 
         std::cout << " *************************** \n";
         std::cout << " ***** Helmholtz-MLFMM ***** \n";
@@ -92,7 +93,8 @@ struct Config {
         std::cout << "   Overinterp:      " << overInterp << '\n';
         std::cout << "   Tri quad rule:   " << getNumQuads(quadPrec) << "-point\n";
         std::cout << "   Root length:     " << rootLeng << " m\n";
-        std::cout << "   Wavenumber:      " << k << " /m\n\n";
+        std::cout << "   Wavenumber:      " << k << " /m\n";
+        std::cout << "   CFIE alpha:      " << alpha << "\n\n";
     }
 
     Mode mode;
@@ -104,6 +106,8 @@ struct Config {
     double overInterp;
     double rootLeng;
     double k;
+    double alpha;
+    double beta;
 
     // Point dipoles only
     Dist pdist;

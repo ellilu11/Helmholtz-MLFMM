@@ -66,10 +66,10 @@ vec3cd Mesh::RWG::getIntegratedPlaneWave(const vec3d& kvec, bool doNumeric) cons
     return leng * rad;
 }
 
-/* getIntegratedRad(src)
+/* getIntegratedEFIE(src)
  * Return the radiated field due to src tested with this RWG
  */
-cmplx Mesh::RWG::getIntegratedRad(const std::shared_ptr<Source> src) const {
+cmplx Mesh::RWG::getIntegratedEFIE(const std::shared_ptr<Source> src) const {
     const auto srcRWG = dynamic_pointer_cast<RWG>(src);
     double k2 = config.k * config.k;
     cmplx intRad = 0.0;
@@ -110,3 +110,103 @@ cmplx Mesh::RWG::getIntegratedRad(const std::shared_ptr<Source> src) const {
     assert(!std::isnan(intRad.real()) && !std::isnan(intRad.imag()));
     return leng * srcRWG->leng * intRad;
 }
+
+/* getIntegratedMFIE(src)
+ * Return the magnetic field due to src tested with this RWG
+ */
+ //
+cmplx Mesh::RWG::getIntegratedMFIE(const std::shared_ptr<Source> src) const {
+    if (config.alpha == 1) return 0.0;
+    const auto srcRWG = dynamic_pointer_cast<RWG>(src);
+    double k = config.k, k2 = k*k;
+
+    cmplx intRad = 0.0;
+    int iObs = 0;
+    for (const auto& [obsTri, vobs] : getTrisAndVerts()) {
+
+        int iSrc = 0;
+        for (const auto& [srcTri, vsrc] : srcRWG->getTrisAndVerts()) {
+            const TriPair& triPair = glTriPairs.at(std::minmax(obsTri.iTri, srcTri.iTri));
+            const auto& [m00, m10, m01, m11] = triPair.momentsMFIE;
+
+            vec3d v0 = (obsTri.iTri <= srcTri.iTri) ? vobs : vsrc;
+            vec3d v1 = (obsTri.iTri <= srcTri.iTri) ? vsrc : vobs;
+
+            cmplx pairRad = m11 - v0.dot(m01) - v1.dot(m10) + (v1.cross(v0)).dot(m00);
+
+            // For edge adjacent triangles, integrate 1/R term (analytically)
+            if (triPair.nCommon == 2)
+                pairRad -= // minus sign since 1.0+0.5*k*k*r2 was added to gradG in MFIE moments
+                (0.5*k2*obsTri.getDoubleIntegratedInvR(srcTri, triPair, vobs, vsrc)
+                    + obsTri.getDoubleIntegratedInvRcubed(srcTri, triPair, vobs, vsrc));
+
+            intRad += pairRad * Math::sign(iObs) * Math::sign(iSrc);
+            ++iSrc;
+        }
+
+        ++iObs;
+    }
+
+    assert(!std::isnan(intRad.real()) && !std::isnan(intRad.imag()));
+    return leng * srcRWG->leng * intRad;
+}
+//
+
+/* Debug version, no precomputed moments
+cmplx Mesh::RWG::getIntegratedMFIE(const std::shared_ptr<Source> src) const {
+    if (config.alpha == 1.0) return 0.0;
+    const auto srcRWG = dynamic_pointer_cast<RWG>(src);
+    double k = config.k, k2 = k*k;
+
+    cmplx intRad = 0.0;
+    int iObs = 0;
+    for (const auto& [obsTri, vobs] : getTrisAndVerts()) {
+
+        int iSrc = 0;
+        for (const auto& [srcTri, vsrc] : srcRWG->getTrisAndVerts()) {
+            const TriPair& triPair = glTriPairs.at(std::minmax(obsTri.iTri, srcTri.iTri));
+
+            cmplx pairRad = 0.0;
+            for (const auto& [obs, obsWeight] : obsTri.triQuads) {
+                // For common triangles, use -1/2 J term (numerically)
+                if (triPair.nCommon == 3) {
+                    pairRad -= (obs-vobs).dot(obsTri.nhat.cross(obs-vsrc))
+                        * obsWeight / (4.0 * obsTri.area);
+                    continue;
+                }
+                //
+
+                for (const auto& [src, srcWeight] : srcTri.triQuads) {
+                    vec3d R = obs-src;
+                    double r = R.norm(), r2 = r*r, r3 = r*r2;
+                    assert(!Math::fzero(r));
+
+                    vec3cd gradG = R / r3;
+                    if (triPair.nCommon == 2)
+                        gradG = gradG * ((-1.0+iu*k*r)*exp(iu*k*r)+1.0+0.5*k*k*r2);
+                    else if (triPair.nCommon < 2)
+                        gradG = gradG * (-1.0+iu*k*r)*exp(iu*k*r);
+
+                    // minus sign from flipping J x gradG to gradG x J
+                    pairRad -= conj((obs-vobs).dot(gradG.cross(src-vsrc))) // Hermitian cross!
+                        * obsWeight * srcWeight;
+                }
+            }
+
+            // For edge adjacent triangles, integrate 1/R term (analytically)
+            if (triPair.nCommon == 2)
+                pairRad -= // minus sign since 1.0+0.5*k*k*r2 was added to gradG in MFIE moments
+                    (0.5*k*k*obsTri.getDoubleIntegratedInvR(srcTri, triPair, vobs, vsrc, false)
+                    + obsTri.getDoubleIntegratedInvRcubed(srcTri, triPair, vobs, vsrc));
+            //
+            intRad += pairRad * Math::sign(iObs) * Math::sign(iSrc);
+            ++iSrc;
+        }
+
+        ++iObs;
+    }
+
+    assert(!std::isnan(intRad.real()) && !std::isnan(intRad.imag()));
+    return leng * srcRWG->leng * intRad;
+}
+*/

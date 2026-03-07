@@ -192,8 +192,8 @@ void FMM::Node::buildLocalCoeffs() {
 void FMM::Node::evalFarSols() {
     if (isSrcless() || level <= 1) return;
 
+    double k = config.k;
     size_t nDir = angles[level].getNumDirs();
-
     Eigen::Map<arrXcd> localTheta(localCoeffs.theta.data(), nDir);
     Eigen::Map<arrXcd> localPhi(localCoeffs.phi.data(), nDir);
 
@@ -201,13 +201,15 @@ void FMM::Node::evalFarSols() {
     for (const auto& obs : srcs) {
         cmplx intRad = 0;
 
-        Coeffs& radPat = radPats[iObs++];
+        auto radPatE = radPats[iObs++];
+        auto radPatH = iu*k*radPatE.getCrossCoeffs();
+        auto radPat = config.alpha * radPatE + config.beta * radPatH;
+
         Eigen::Map<arrXcd> radPatTheta(radPat.theta.data(), nDir);
         Eigen::Map<arrXcd> radPatPhi(radPat.phi.data(), nDir);
-
         intRad += (radPatTheta.conjugate() * localTheta +
             radPatPhi.conjugate() * localPhi).sum();
 
-        Solver::rvec[obs->getIdx()] += Phys::C * config.k * intRad;
+        Solver::rvec[obs->getIdx()] += Phys::C * k * intRad;
     }
 }

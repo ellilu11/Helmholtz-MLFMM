@@ -67,7 +67,8 @@ void FMM::Nearfield::buildPairRads() {
         // assert(obsLeaf < srcNode);
 
         size_t nObss = obsLeaf->srcs.size(), nSrcs = srcNode->srcs.size();
-        nearPair.rads.resize(nObss*nSrcs);
+        nearPair.efie.resize(nObss*nSrcs);
+        nearPair.mfie.resize(nObss*nSrcs);
 
         int pairIdx = 0;
         for (size_t iObs = 0; iObs < nObss; ++iObs) {
@@ -75,7 +76,12 @@ void FMM::Nearfield::buildPairRads() {
             for (size_t iSrc = 0; iSrc < nSrcs; ++iSrc) {
                 auto src = srcNode->srcs[iSrc];
 
-                nearPair.rads[pairIdx++] = obs->getIntegratedRad(src);
+                nearPair.efie[pairIdx] = obs->getIntegratedEFIE(src);
+
+                nearPair.mfie[pairIdx] =
+                    { obs->getIntegratedMFIE(src), src->getIntegratedMFIE(obs) };
+
+                ++pairIdx;
             }
         }
     }
@@ -87,7 +93,8 @@ void FMM::Nearfield::buildSelfRads() {
         assert(leaf == srcLeaf);
 
         size_t nSrcs = leaf->srcs.size();
-        selfPair.rads.resize(nSrcs*(nSrcs+1)/2);
+        selfPair.efie.resize(nSrcs*(nSrcs+1)/2);
+        selfPair.mfie.resize(nSrcs*(nSrcs+1)/2);
 
         int pairIdx = 0;
         for (size_t iObs = 0; iObs < nSrcs; ++iObs) { // iObs = 0
@@ -96,7 +103,12 @@ void FMM::Nearfield::buildSelfRads() {
             for (size_t iSrc = 0; iSrc <= iObs; ++iSrc) { // iSrc <= iObs 
                 auto src = leaf->srcs[iSrc];
 
-                selfPair.rads[pairIdx++] = obs->getIntegratedRad(src);
+                selfPair.efie[pairIdx] = obs->getIntegratedEFIE(src);
+
+                selfPair.mfie[pairIdx] =
+                    { obs->getIntegratedMFIE(src), src->getIntegratedMFIE(obs) };
+
+                ++pairIdx;
             }
         }
     }
@@ -124,10 +136,16 @@ void FMM::Nearfield::evalPairSols(const NearPair& nearPair) {
             cmplx lvecSrc = Solver::lvec[src->getIdx()];
             cmplx& rvecSrc = Solver::rvec[src->getIdx()]; // &
 
-            cmplx rad = Phys::C * config.k * nearPair.rads[pairIdx++];
+            cmplx radAtObs = Phys::C * config.k *
+                (config.alpha * nearPair.efie[pairIdx]
+                    + config.beta * nearPair.mfie[pairIdx].first);
+            cmplx radAtSrc = Phys::C * config.k *
+                (config.alpha * nearPair.efie[pairIdx]
+                    + config.beta * nearPair.mfie[pairIdx].second);
+            ++pairIdx;
 
-            rvecObs += lvecSrc * rad;
-            rvecSrc += lvecObs * rad;
+            rvecObs += lvecSrc * radAtObs;
+            rvecSrc += lvecObs * radAtSrc;
         }
     }
 }
@@ -154,16 +172,22 @@ void FMM::Nearfield::evalSelfSols(const NearPair& selfPair) {
             cmplx lvecSrc = Solver::lvec[src->getIdx()];
             cmplx& rvecSrc = Solver::rvec[src->getIdx()]; // &
 
-            cmplx rad = Phys::C * config.k * selfPair.rads[pairIdx++];
+            cmplx radAtObs = Phys::C * config.k *
+                (config.alpha * selfPair.efie[pairIdx]
+                    + config.beta * selfPair.mfie[pairIdx].first);
+            cmplx radAtSrc = Phys::C * config.k *
+                (config.alpha * selfPair.efie[pairIdx]
+                    + config.beta * selfPair.mfie[pairIdx].second);
+            ++pairIdx;
 
             // Only add self-term contribution once!
             if (iSrc == iObs) {
-                rvecObs += lvecSrc * rad;
+                rvecObs += lvecSrc * radAtObs;
                 continue;
             }
 
-            rvecObs += lvecSrc * rad;
-            rvecSrc += lvecObs * rad;
+            rvecObs += lvecSrc * radAtObs;
+            rvecSrc += lvecObs * radAtSrc;
         }
     }
 }
@@ -198,10 +222,17 @@ void FMM::Nearfield::evaluateSols() {
          size_t iTri = iObs*(iObs+1)/2; // triangular numbers
 
          for (size_t iSrc = 0; iSrc <= iObs; ++iSrc) {
-             cmplx rad = Phys::C * config.k * rads[iTri+iSrc];
+             // cmplx rad = Phys::C * config.k * efie[iTri+iSrc];
 
-             mat(iObs, iSrc) = rad;
-             mat(iSrc, iObs) = rad;
+             cmplx radAtObs = Phys::C * config.k *
+                 (config.alpha * efie[iTri+iSrc]
+                     + config.beta * mfie[iTri+iSrc].first);
+             cmplx radAtSrc = Phys::C * config.k *
+                 (config.alpha * efie[iTri+iSrc]
+                     + config.beta * mfie[iTri+iSrc].second);
+
+             mat(iObs, iSrc) = radAtObs;
+             mat(iSrc, iObs) = radAtSrc;
          }
      }
 
