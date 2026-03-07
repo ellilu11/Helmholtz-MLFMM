@@ -222,8 +222,6 @@ void FMM::Nearfield::evaluateSols() {
          size_t iTri = iObs*(iObs+1)/2; // triangular numbers
 
          for (size_t iSrc = 0; iSrc <= iObs; ++iSrc) {
-             // cmplx rad = Phys::C * config.k * efie[iTri+iSrc];
-
              cmplx radAtObs = Phys::C * config.k *
                  (config.alpha * efie[iTri+iSrc]
                      + config.beta * mfie[iTri+iSrc].first);

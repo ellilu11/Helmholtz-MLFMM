@@ -30,10 +30,11 @@ void Mesh::TriPair::buildNumCommon() {
 }
 
 void Mesh::TriPair::buildMomentsEFIE() {
-    double k = config.k;
-    const auto& [obsTri, srcTri] = getTriPair();
-
     momentsEFIE = { 0.0, vec3cd::Zero(), vec3cd::Zero(), 0.0 };
+    auto& [m00, m10, m01, m11] = momentsEFIE;
+    const auto& [obsTri, srcTri] = getTriPair();
+    double k = config.k;
+
     for (const auto& [obs, obsWeight] : obsTri.triQuads) {
         for (const auto& [src, srcWeight] : srcTri.triQuads) {
             double r = (obs-src).norm();
@@ -46,7 +47,6 @@ void Mesh::TriPair::buildMomentsEFIE() {
                 G *= exp(iu*k*r) / r;
             }
 
-            auto& [m00, m10, m01, m11] = momentsEFIE;
             m00 += G;
             m10 += obs * G;
             m01 += src * G;
@@ -65,13 +65,13 @@ void Mesh::TriPair::buildMomentsMFIE() {
         // For common triangles, use -1/2 J term
         if (nCommon == 3) {
             // since numerical integration only cancels one RWG's 1/(2A) factor
-            vec3d nhat_X_obs =
-                obsTri.nhat.cross(obs) * obsWeight / (4.0*obsTri.area);
+            double weight = obsWeight / (4.0*obsTri.area);
+            vec3d nhat_X_obs = obsTri.nhat.cross(obs);
 
-            // m00 is zero for common triangles
-            m10 -= -nhat_X_obs;
-            m01 -= nhat_X_obs;
-            m11 -= obs.dot(nhat_X_obs);
+            m00 -= obsTri.nhat * weight;
+            m10 -= -nhat_X_obs * weight;
+            m01 -= nhat_X_obs * weight;
+            m11 -= obs.dot(nhat_X_obs) * weight;
             continue;
         }
 
@@ -83,7 +83,7 @@ void Mesh::TriPair::buildMomentsMFIE() {
             vec3cd gradG = R/r3 * obsWeight*srcWeight; // absorb quad weights into gradG
 
             if (nCommon == 2)
-                gradG = gradG * ((-1.0+iu*k*r)*exp(iu*k*r) + 0.5*k*k*r2 + 1.0); // double check signs
+                gradG = gradG * ((-1.0+iu*k*r)*exp(iu*k*r) + 0.5*k2*r2 + 1.0); // double check signs
             else if (nCommon < 2)
                 gradG = gradG * (-1.0+iu*k*r)*exp(iu*k*r);
 

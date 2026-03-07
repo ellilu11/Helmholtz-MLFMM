@@ -21,12 +21,12 @@ public:
 
     double getDoubleSelfIntegratedInvR(const vec3d&, const vec3d&) const;
 
-    std::pair<double,vec3d> getIntegratedInvR(const vec3d&, bool = 0) const;
+    std::pair<double,vec3d> getIntegratedInvR(const vec3d&, bool = false) const;
 
-    std::pair<double, vec3d> getIntegratedInvRcubed(const vec3d&, bool = 0) const;
+    std::pair<double, vec3d> getIntegratedInvRcubed(const vec3d&, bool = false) const;
 
     double getDoubleIntegratedInvR(
-        const Triangle&, const TriPair&, const vec3d&, const vec3d&) const;
+        const Triangle&, const TriPair&, const vec3d&, const vec3d&, bool = true) const;
 
     double getDoubleIntegratedInvRcubed(
         const Triangle&, const TriPair&, const vec3d&, const vec3d&) const;

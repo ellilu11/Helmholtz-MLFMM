@@ -210,7 +210,8 @@ Mesh::Triangle::getIntegratedInvRcubed(const vec3d& obs, bool doNumeric) const
 }
 
 double Mesh::Triangle::getDoubleIntegratedInvR(
-    const Triangle& srcTri, const TriPair& triPair, const vec3d& vobs, const vec3d& vsrc) const
+    const Triangle& srcTri, const TriPair& triPair, const vec3d& vobs, const vec3d& vsrc,
+    bool isEFIE) const
 {
     double k2 = config.k * config.k;
     const vec3d& vsrcProj = srcTri.proj(vsrc);
@@ -222,7 +223,7 @@ double Mesh::Triangle::getDoubleIntegratedInvR(
         auto [scaRad, vecRad] = (iTri <= srcTri.iTri ? 
             triPair.integratedInvR[iObs] : triPair.integratedInvR2[iObs]);
 
-        rad += ((obs-vobs).dot(vecRad+(obsProj-vsrcProj)*scaRad) - 4.0/k2*scaRad)
+        rad += ((obs-vobs).dot(vecRad+(obsProj-vsrcProj)*scaRad) - isEFIE * 4.0/k2*scaRad)
             * obsWeight;
 
         ++iObs;
