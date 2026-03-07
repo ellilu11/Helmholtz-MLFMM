@@ -83,6 +83,7 @@ private:
     inline static int numNodes = 0;
 
     std::vector<Coeffs> radPats;
+    std::vector<Coeffs> recPatsH;
     Coeffs coeffs;
     Coeffs localCoeffs;
 

@@ -9,19 +9,24 @@ void FMM::Node::buildRadPats() {
     size_t nDir = angles_lvl.getNumDirs();
 
     radPats.resize(srcs.size());
+    recPatsH.resize(srcs.size());
     size_t iSrc = 0;
     for (const auto& src : srcs) {
         Coeffs radPat(nDir);
+        Coeffs recPatH(nDir);
 
         for (int iDir = 0; iDir < nDir; ++iDir) {
             vec3d kvec = angles_lvl.khat[iDir] * config.k;
             const mat23d& toThPh = angles_lvl.toThPh[iDir];
 
-            radPat.setCoeffAlongDir(
-                toThPh * src->getRadAlongDir(center, kvec), iDir);
+            auto [rad, radNormal] = src->getRadsAlongDir(center, kvec);
+            radPat.setCoeffAlongDir(toThPh * rad, iDir);
+            recPatH.setCoeffAlongDir(toThPh * radNormal, iDir);
         }
 
-        radPats[iSrc++] = std::move(radPat);
+        radPats[iSrc] = std::move(radPat);
+        recPatsH[iSrc] = std::move(recPatH);
+        ++iSrc;
     }
 }
 
@@ -201,15 +206,18 @@ void FMM::Node::evalFarSols() {
     for (const auto& obs : srcs) {
         cmplx intRad = 0;
 
-        auto radPatE = radPats[iObs++];
-        auto radPatH = iu*k*radPatE.getCrossCoeffs();
-        auto radPat = config.alpha * radPatE + config.beta * radPatH;
+        auto recPatE = radPats[iObs];
+        // auto radPatH = iu*k*radPatE.getCrossCoeffs();
+        auto recPatH = iu*k*recPatsH[iObs];
+        auto recPat = config.alpha * recPatE + config.beta * recPatH;
 
-        Eigen::Map<arrXcd> radPatTheta(radPat.theta.data(), nDir);
-        Eigen::Map<arrXcd> radPatPhi(radPat.phi.data(), nDir);
-        intRad += (radPatTheta.conjugate() * localTheta +
-            radPatPhi.conjugate() * localPhi).sum();
+        Eigen::Map<arrXcd> recPatTheta(recPat.theta.data(), nDir);
+        Eigen::Map<arrXcd> recPatPhi(recPat.phi.data(), nDir);
+        intRad += (recPatTheta.conjugate() * localTheta +
+            recPatPhi.conjugate() * localPhi).sum();
 
         Solver::rvec[obs->getIdx()] += Phys::C * k * intRad;
+
+        ++iObs;
     }
 }

@@ -70,6 +70,8 @@ SrcVec Mesh::importMesh(
 
     importTriangles(tpath);
 
+    printNormals("out/nhats.txt");
+
     return importRWGs(rpath, std::move(Einc));
 }
 
@@ -114,4 +116,11 @@ void Mesh::printScattered(const SrcVec& srcs, const std::string& fname, int nth)
 
     std::cout << " Mean RCS: " 
         << std::setprecision(9) << rcsSum/nth << std::setprecision(3) << "\n";
+}
+
+void Mesh::printNormals(const std::string& fname) {
+    std::ofstream file(fname);
+    file << std::setprecision(15) << std::scientific;
+    for (const auto& tri : glTris)
+        file << tri.getCenter() << ' ' << tri.getNormal() << '\n';
 }

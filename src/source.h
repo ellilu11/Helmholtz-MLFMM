@@ -34,7 +34,7 @@ public:
 
     virtual void buildVoltage() = 0;
 
-    virtual vec3cd getRadAlongDir(const vec3d&, const vec3d&) const = 0;
+    virtual std::pair<vec3cd,vec3cd> getRadsAlongDir(const vec3d&, const vec3d&) const = 0;
 
     virtual vec3cd getFarAlongDir(const vec3d&) const = 0;
 
@@ -42,7 +42,7 @@ public:
 
     virtual cmplx getIntegratedMFIE(const std::shared_ptr<Source>) const = 0;
 
-    virtual cmplx getSelfIntegratedMFIE(const std::shared_ptr<Source>) const = 0;
+    virtual cmplx getIntegratedMass(const std::shared_ptr<Source>) const = 0;
 
 protected:
     std::shared_ptr<Exc::PlaneWave> Einc;

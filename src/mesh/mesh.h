@@ -35,6 +35,8 @@ namespace Mesh {
 
     void printScattered(const SrcVec&, const std::string&, int);
 
+    void printNormals(const std::string&);
+
     // void evaluateJ();
 
     // void printRWGs(const SrcVec& rwgs, const std::string&);

@@ -281,11 +281,11 @@ double Mesh::Triangle::getSingularMFIE(
         vec3d obsProj = srcTri.proj(obs);
 
         // 1/R term
-        rad += 0.5*k2 * (obs-vobs).dot(R.cross(vecInvR+(obsProj-vsrcProj)*scaInvR))
+        rad += 0.5*k2 * (obs-vobs).dot(nhat.cross(R.cross(vecInvR+(obsProj-vsrcProj)*scaInvR)))
                 * obsWeight;
 
         // 1/R^3 term
-        rad += (obs-vobs).dot(R.cross(vecInvR3+(obsProj-vsrcProj)*scaInvR3))
+        rad += (obs-vobs).dot(nhat.cross(R.cross(vecInvR3+(obsProj-vsrcProj)*scaInvR3)))
                 * obsWeight;
 
         ++iObs;

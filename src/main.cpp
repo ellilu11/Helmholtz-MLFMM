@@ -59,7 +59,7 @@ int main() {
     // ==================== Solve iterative FMM ================ //
     std::cout << " Solving with FMM...              ";
 
-    const int MAX_ITER = nsrcs;
+    const int MAX_ITER = 0;
     constexpr double EPS = 1.0E-6;
 
     auto solver = std::make_unique<GMRES>(srcs, nf, root, EPS, MAX_ITER);

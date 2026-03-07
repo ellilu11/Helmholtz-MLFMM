@@ -47,7 +47,7 @@ public:
 
     static void buildEdgeToTri();
 
-    int getIdx() const { return iTri; }
+    vec3d proj(const vec3d& X) const { return X - (nhat.dot(X))*nhat; }
 
     std::array<vec3d,3> getVerts() const {
         return { glVerts[iVerts[0]], glVerts[iVerts[1]], glVerts[iVerts[2]] };
@@ -55,7 +55,11 @@ public:
 
     std::vector<quadPair<vec3d>> getQuads() const { return triQuads; }
 
-    vec3d proj(const vec3d& X) const { return X - (nhat.dot(X))*nhat; }
+    int getIdx() const { return iTri; }
+
+    vec3d getCenter() const { return center; }
+
+    vec3d getNormal() const { return nhat; }
 
 private:
     static int numQuads;

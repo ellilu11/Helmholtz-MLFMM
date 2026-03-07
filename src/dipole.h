@@ -37,10 +37,10 @@ public:
      * X    : observation point (Cartesian)
      * kvec : wavevector
      */
-    vec3cd getRadAlongDir(
-        const vec3d& X, const vec3d& kvec) const override 
+    std::pair<vec3cd, vec3cd> getRadsAlongDir(const vec3d& X, const vec3d& kvec) const override
     {
-        return exp(iu*kvec.dot(X-pos)) * phat;
+        vec3cd rad = exp(iu*kvec.dot(X-pos)) * phat;
+        return { rad, kvec.cross(rad).conjugate() }; // Hermitian cross!
     }
 
     vec3cd getFarAlongDir(
@@ -78,7 +78,7 @@ public:
         return phat.dot(rad);
     }
 
-    cmplx getSelfIntegratedMFIE(const std::shared_ptr<Source> src) const override {
+    cmplx getIntegratedMass(const std::shared_ptr<Source> src) const override {
         return 0.0; // Dipole magnetic self interaction?
     }
 
