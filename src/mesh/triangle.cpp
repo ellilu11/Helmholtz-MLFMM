@@ -21,23 +21,20 @@ Mesh::Triangle::Triangle(const vec3i& iVerts, int iTri)
     area = (Ds[0].cross(-Ds[2])).norm() / 2.0;
 
     buildTriQuads();
+    reverseOrient();
     // buildSelfIntegrated();
     //std::cout << "Built triangle #" << iTri << " with edge lengths " 
     //    << Ds[0].norm() << ", " << Ds[1].norm() << ", " << Ds[2].norm() << '\n';
 }
 
-// Return global indices of vertices shared by this and other triangle
-int Mesh::Triangle::getNumCommonVerts(const Triangle& other) const {
-    if (iTri == other.iTri) return 3;
-
-    int numVerts = 0;
-    for (int i = 0; i < 3; ++i)
-        for (int j = 0; j < 3; ++j)
-            if (iVerts[i] == other.iVerts[j])
-                ++numVerts;
-
-    assert(numVerts < 3);
-    return numVerts;
+/* If nhat is pointing inward, reverse it
+   Assume a closed, star-shaped mesh centered at and enclosing the origin
+ */
+void Mesh::Triangle::reverseOrient() {
+    if (center.dot(nhat) < 0.0) {
+        nhat *= -1.0;
+        std::swap(this->iVerts[0], this->iVerts[2]); // Swap verts per right-hand rule
+    }
 }
 
 void Mesh::Triangle::buildSelfIntegratedInvR() {
@@ -100,6 +97,42 @@ double Mesh::Triangle::getDoubleSelfIntegratedInvR(const vec3d& vobs, const vec3
         + selfInts[1] * (-2.0*a00 + 2.0*a01 + (V0-V1).dot(vsum))
         + selfInts[2] * (-2.0*a00 + 2.0*a02 + (V0-V2).dot(vsum))
         + selfInts[3] * (a00 - V0.dot(vsum) + vsrc.dot(vobs) - 4.0/k2);
+}
+
+std::pair<cmplx, vec3cd>
+Mesh::Triangle::getIntegratedPlaneWave(const vec3d& kvec) const
+{
+    using namespace Math;
+
+    double alpha = kvec.dot(Ds[0]), beta = -kvec.dot(Ds[2]), gamma = alpha-beta;
+    double alphasq = alpha*alpha, betasq = beta*beta;
+    cmplx expI_alpha = exp(iu*alpha), expI_beta = exp(iu*beta);
+    cmplx // TODO: Only compute if gamma != 0
+        f0_alpha = (fzero(alpha) ? -iu : (1.0 - expI_alpha) / alpha),
+        f0_beta = (fzero(beta) ? -iu : (1.0 - expI_beta) / beta);
+    cmplx
+        f1_alpha = (fzero(alpha) ? -0.5 : (1.0 - (1.0 - iu*alpha) * expI_alpha) / alphasq),
+        f1_beta = (fzero(beta) ? -0.5 : (1.0 - (1.0 - iu*beta) * expI_beta) / betasq);
+
+    cmplx scaRad; vec3cd vecRad;
+    if (fzero(gamma)) {
+        cmplx
+            f2 = (fzero(alpha) ? iu/6.0 :
+                (expI_alpha*(alphasq + 2.0*iu*alpha - 2.0) + 2.0) / (2.0*alpha*alphasq));
+        scaRad = -f1_alpha;
+        vecRad = -iu*f2 * (Ds[0] - Ds[2]);
+        // radVec = -f1_alpha * (Xs[0] - Xnc[iTri]) - iu*f2 * (Ds[0] - Ds[2]);
+    } else {
+        cmplx
+            I0 = (f0_alpha - f0_beta) / gamma,
+            I1 = iu * (I0 + f1_alpha),
+            I2 = -iu * (I0 + f1_beta);
+        scaRad = I0;
+        vecRad = (I1*Ds[0] - I2*Ds[2]) / gamma;
+        // radVec = I0 * (Xs[0] - Xnc[iTri]) + (I1*Ds[0] - I2*Ds[2]) / gamma;
+    }
+
+    return std::make_pair(scaRad, vecRad);
 }
 
 std::pair<double, vec3d>
@@ -209,42 +242,51 @@ Mesh::Triangle::getIntegratedInvRcubed(const vec3d& obs, bool doNumeric) const
     return std::make_pair(scaRad3, vecRad3);
 }
 
-double Mesh::Triangle::getDoubleIntegratedInvR(
-    const Triangle& srcTri, const TriPair& triPair, const vec3d& vobs, const vec3d& vsrc,
-    bool isEFIE) const
-{
-    double k2 = config.k * config.k;
-    const vec3d& vsrcProj = srcTri.proj(vsrc);
-
-    double rad = 0.0;
-    size_t iObs = 0;
-    for (const auto& [obs, obsWeight] : triQuads) {
-        vec3d obsProj = srcTri.proj(obs);
-        auto [scaRad, vecRad] = (iTri <= srcTri.iTri ? 
-            triPair.integratedInvR[iObs] : triPair.integratedInvR2[iObs]);
-
-        rad += ((obs-vobs).dot(vecRad+(obsProj-vsrcProj)*scaRad) - isEFIE * 4.0/k2*scaRad)
-            * obsWeight;
-
-        ++iObs;
-    }
-
-    return rad;
-}
-
-double Mesh::Triangle::getDoubleIntegratedInvRcubed(
+double Mesh::Triangle::getSingularEFIE(
     const Triangle& srcTri, const TriPair& triPair, const vec3d& vobs, const vec3d& vsrc) const
 {
-    const vec3d& vsrcProj = srcTri.proj(vsrc);
+    double k2 = config.k * config.k;
+    vec3d vsrcProj = srcTri.proj(vsrc);
 
     double rad = 0.0;
     size_t iObs = 0;
     for (const auto& [obs, obsWeight] : triQuads) {
         vec3d obsProj = srcTri.proj(obs);
-        auto [scaRad3, vecRad3] = (iTri <= srcTri.iTri ?
+        auto [scaInvR, vecInvR] = (iTri <= srcTri.iTri ? 
+            triPair.integratedInvR[iObs] : triPair.integratedInvR2[iObs]);
+
+        rad += ((obs-vobs).dot(vecInvR+(obsProj-vsrcProj)*scaInvR) - 4.0/k2*scaInvR)
+                * obsWeight;
+        ++iObs;
+    }
+
+    return rad;
+}
+
+double Mesh::Triangle::getSingularMFIE(
+    const Triangle& srcTri, const TriPair& triPair, const vec3d& vobs, const vec3d& vsrc) const
+{
+    double k2 = config.k * config.k;
+    vec3d vsrcProj = srcTri.proj(vsrc);
+
+    double rad = 0.0;
+    size_t iObs = 0;
+    for (const auto& [obs, obsWeight] : triQuads) {
+        auto [scaInvR, vecInvR] = (iTri <= srcTri.iTri ?
+            triPair.integratedInvR[iObs] : triPair.integratedInvR2[iObs]);
+        auto [scaInvR3, vecInvR3] = (iTri <= srcTri.iTri ?
             triPair.integratedInvRcubed[iObs] : triPair.integratedInvRcubed2[iObs]);
 
-        rad += (obs-vobs).dot(vecRad3+(obsProj-vsrcProj)*scaRad3) * obsWeight;
+        vec3d R = obs - vsrc;
+        vec3d obsProj = srcTri.proj(obs);
+
+        // 1/R term
+        rad += 0.5*k2 * (obs-vobs).dot(R.cross(vecInvR+(obsProj-vsrcProj)*scaInvR))
+                * obsWeight;
+
+        // 1/R^3 term
+        rad += (obs-vobs).dot(R.cross(vecInvR3+(obsProj-vsrcProj)*scaInvR3))
+                * obsWeight;
 
         ++iObs;
     }
@@ -252,40 +294,18 @@ double Mesh::Triangle::getDoubleIntegratedInvRcubed(
     return rad;
 }
 
-std::pair<cmplx, vec3cd>
-Mesh::Triangle::getIntegratedPlaneWave(const vec3d& kvec) const
-{
-    using namespace Math;
+// Debugging only
+int Mesh::Triangle::getNumCommonVerts(const Triangle& other) const {
+    if (iTri == other.iTri) return 3;
 
-    double alpha = kvec.dot(Ds[0]), beta = -kvec.dot(Ds[2]), gamma = alpha-beta;
-    double alphasq = alpha*alpha, betasq = beta*beta;
-    cmplx expI_alpha = exp(iu*alpha), expI_beta = exp(iu*beta);
-    cmplx // TODO: Only compute if gamma != 0
-        f0_alpha = (fzero(alpha) ? -iu : (1.0 - expI_alpha) / alpha),
-        f0_beta = (fzero(beta) ? -iu : (1.0 - expI_beta) / beta);
-    cmplx
-        f1_alpha = (fzero(alpha) ? -0.5 : (1.0 - (1.0 - iu*alpha) * expI_alpha) / alphasq),
-        f1_beta = (fzero(beta) ? -0.5 : (1.0 - (1.0 - iu*beta) * expI_beta) / betasq);
+    int numVerts = 0;
+    for (int i = 0; i < 3; ++i)
+        for (int j = 0; j < 3; ++j)
+            if (iVerts[i] == other.iVerts[j])
+                ++numVerts;
 
-    cmplx scaRad; vec3cd vecRad;
-    if (fzero(gamma)) {
-        cmplx
-            f2 = (fzero(alpha) ? iu/6.0 :
-                (expI_alpha*(alphasq + 2.0*iu*alpha - 2.0) + 2.0) / (2.0*alpha*alphasq));
-        scaRad = -f1_alpha;
-        vecRad = -iu*f2 * (Ds[0] - Ds[2]);
-        // radVec = -f1_alpha * (Xs[0] - Xnc[iTri]) - iu*f2 * (Ds[0] - Ds[2]);
-    } else {
-        cmplx
-            I0 = (f0_alpha - f0_beta) / gamma,
-            I1 = iu * (I0 + f1_alpha),
-            I2 = -iu * (I0 + f1_beta);
-        scaRad = I0;
-        vecRad = (I1*Ds[0] - I2*Ds[2]) / gamma;
-        // radVec = I0 * (Xs[0] - Xnc[iTri]) + (I1*Ds[0] - I2*Ds[2]) / gamma;
-    }
-
-    return std::make_pair(scaRad, vecRad);
+    assert(numVerts < 3);
+    return numVerts;
 }
 
 /*

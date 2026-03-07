@@ -70,6 +70,7 @@ vec3cd Mesh::RWG::getIntegratedPlaneWave(const vec3d& kvec, bool doNumeric) cons
  * Return the radiated field due to src tested with this RWG
  */
 cmplx Mesh::RWG::getIntegratedEFIE(const std::shared_ptr<Source> src) const {
+    if (config.alpha == 0) return 0.0;
     const auto srcRWG = dynamic_pointer_cast<RWG>(src);
     double k2 = config.k * config.k;
     
@@ -92,8 +93,8 @@ cmplx Mesh::RWG::getIntegratedEFIE(const std::shared_ptr<Source> src) const {
             // Average obs-src and src-obs to preserve symmetry
             if (triPair.nCommon >= 2)
                 pairRad += (
-                    obsTri.getDoubleIntegratedInvR(srcTri, triPair, vobs, vsrc) +
-                    srcTri.getDoubleIntegratedInvR(obsTri, triPair, vsrc, vobs)) / 2.0;
+                    obsTri.getSingularEFIE(srcTri, triPair, vobs, vsrc) +
+                    srcTri.getSingularEFIE(obsTri, triPair, vsrc, vobs)) / 2.0;
 
             /* For common triangles, integrate 1/R term (analytically)
             if (nCommon == 3)
@@ -118,7 +119,6 @@ cmplx Mesh::RWG::getIntegratedEFIE(const std::shared_ptr<Source> src) const {
 cmplx Mesh::RWG::getIntegratedMFIE(const std::shared_ptr<Source> src) const {
     if (config.alpha == 1) return 0.0;
     const auto srcRWG = dynamic_pointer_cast<RWG>(src);
-    constexpr bool isEFIE = false;
     double k = config.k, k2 = k*k;
 
     cmplx intRad = 0.0;
@@ -127,6 +127,8 @@ cmplx Mesh::RWG::getIntegratedMFIE(const std::shared_ptr<Source> src) const {
 
         int iSrc = 0;
         for (const auto& [srcTri, vsrc] : srcRWG->getTrisAndVerts()) {
+            if (obsTri.iTri == srcTri.iTri) continue; // defer to getSelfIntegratedMFIE()
+
             const TriPair& triPair = glTriPairs.at(std::minmax(obsTri.iTri, srcTri.iTri));
             const auto& [m00, m10, m01, m11] = triPair.momentsMFIE;
 
@@ -138,8 +140,40 @@ cmplx Mesh::RWG::getIntegratedMFIE(const std::shared_ptr<Source> src) const {
             // For edge adjacent triangles, integrate 1/R term (analytically)
             if (triPair.nCommon == 2)
                 pairRad -= // minus sign since 1.0+0.5*k*k*r2 was added to gradG in MFIE moments
-                    (0.5*k2*obsTri.getDoubleIntegratedInvR(srcTri, triPair, vobs, vsrc, isEFIE)
-                        + obsTri.getDoubleIntegratedInvRcubed(srcTri, triPair, vobs, vsrc));
+                    obsTri.getSingularMFIE(srcTri, triPair, vobs, vsrc);
+
+            intRad += pairRad * Math::sign(iObs) * Math::sign(iSrc);
+            ++iSrc;
+        }
+
+        ++iObs;
+    }
+
+    assert(!std::isnan(intRad.real()) && !std::isnan(intRad.imag()));
+    return leng * srcRWG->leng * intRad;
+}
+
+cmplx Mesh::RWG::getSelfIntegratedMFIE(const std::shared_ptr<Source> src) const {
+    if (config.alpha == 1) return 0.0;
+    const auto srcRWG = dynamic_pointer_cast<RWG>(src);
+    double k = config.k, k2 = k*k;
+
+    cmplx intRad = 0.0;
+    int iObs = 0;
+    for (const auto& [obsTri, vobs] : getTrisAndVerts()) {
+
+        int iSrc = 0;
+        for (const auto& [srcTri, vsrc] : srcRWG->getTrisAndVerts()) {
+            if (obsTri.iTri != srcTri.iTri) continue; // computed by getIntegratedMFIE()
+
+            const TriPair& triPair = glTriPairs.at(std::minmax(obsTri.iTri, srcTri.iTri));
+            const auto& [m00, m10, m01, m11] = triPair.momentsMFIE;
+            assert(triPair.nCommon == 3);
+
+            vec3d v0 = (obsTri.iTri <= srcTri.iTri) ? vobs : vsrc;
+            vec3d v1 = (obsTri.iTri <= srcTri.iTri) ? vsrc : vobs;
+
+            cmplx pairRad = m11 - v1.dot(m10) - v0.dot(m01) + (v1.cross(v0)).dot(m00);
 
             intRad += pairRad * Math::sign(iObs) * Math::sign(iSrc);
             ++iSrc;
@@ -197,9 +231,8 @@ cmplx Mesh::RWG::getIntegratedMFIE(const std::shared_ptr<Source> src) const {
             // For edge adjacent triangles, integrate 1/R term (analytically)
             if (triPair.nCommon == 2)
                 pairRad -= // minus sign since 1.0+0.5*k*k*r2 was added to gradG in MFIE moments
-                    (0.5*k*k*obsTri.getDoubleIntegratedInvR(srcTri, triPair, vobs, vsrc, false)
-                    + obsTri.getDoubleIntegratedInvRcubed(srcTri, triPair, vobs, vsrc));
-            //
+                    obsTri.getSingularMFIE(srcTri, triPair, vobs, vsrc);
+
             intRad += pairRad * Math::sign(iObs) * Math::sign(iSrc);
             ++iSrc;
         }

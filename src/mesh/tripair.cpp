@@ -12,6 +12,9 @@ Mesh::TriPair::TriPair(pair2i iTris)
         buildIntegratedInvR();
         if (config.alpha != 1.0) buildIntegratedInvRcubed();
     }
+
+    //std::cout << "Built TriPair (" << iTris.first << "," << iTris.second
+    //    << ") with nCommon = " << nCommon << '\n';
 }
 
 void Mesh::TriPair::buildNumCommon() {
@@ -66,6 +69,7 @@ void Mesh::TriPair::buildMomentsMFIE() {
         if (nCommon == 3) {
             // since numerical integration only cancels one RWG's 1/(2A) factor
             double weight = obsWeight / (4.0*obsTri.area);
+            // vec3d nhat = obsTri.nhat * obsWeight / (4.0*obsTri.area);
             vec3d nhat_X_obs = obsTri.nhat.cross(obs);
 
             m00 -= obsTri.nhat * weight;

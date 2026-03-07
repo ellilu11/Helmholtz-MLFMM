@@ -15,23 +15,25 @@ public:
 
     Triangle(const vec3i&, int);
 
-    int getNumCommonVerts(const Triangle&) const;
+    void reverseOrient();
 
     void buildSelfIntegratedInvR();
 
     double getDoubleSelfIntegratedInvR(const vec3d&, const vec3d&) const;
 
+    std::pair<cmplx, vec3cd> getIntegratedPlaneWave(const vec3d&) const;
+
     std::pair<double,vec3d> getIntegratedInvR(const vec3d&, bool = false) const;
 
     std::pair<double, vec3d> getIntegratedInvRcubed(const vec3d&, bool = false) const;
 
-    double getDoubleIntegratedInvR(
-        const Triangle&, const TriPair&, const vec3d&, const vec3d&, bool = true) const;
-
-    double getDoubleIntegratedInvRcubed(
+    double getSingularEFIE(
         const Triangle&, const TriPair&, const vec3d&, const vec3d&) const;
 
-    std::pair<cmplx,vec3cd> getIntegratedPlaneWave(const vec3d&) const;
+    double getSingularMFIE(
+        const Triangle&, const TriPair&, const vec3d&, const vec3d&) const;
+
+    int getNumCommonVerts(const Triangle&) const;
 
     // cmplx getSurfaceCurrent() const;
 
@@ -44,6 +46,8 @@ public:
     static void refineTriangles();
 
     static void buildEdgeToTri();
+
+    int getIdx() const { return iTri; }
 
     std::array<vec3d,3> getVerts() const {
         return { glVerts[iVerts[0]], glVerts[iVerts[1]], glVerts[iVerts[2]] };

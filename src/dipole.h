@@ -78,6 +78,10 @@ public:
         return phat.dot(rad);
     }
 
+    cmplx getSelfIntegratedMFIE(const std::shared_ptr<Source> src) const override {
+        return 0.0; // Dipole magnetic self interaction?
+    }
+
     friend std::ostream& operator<<(std::ostream& os, Dipole& src) {
         os << src.pos << ' ' << src.pol << '\n';
         return os;

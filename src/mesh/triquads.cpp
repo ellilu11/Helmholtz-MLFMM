@@ -114,7 +114,7 @@ void Mesh::Triangle::buildQuadCoeffs(Precision prec) {
             break;
         }
 
-        /*
+        //
         case Precision::VERYHIGH: { // TODO: Fix buildPermutations before selecting this option
             constexpr double weight0 = 0.048567898141400;
             const vec3d ws0(1.0/3.0, 1.0/3.0, 1.0/3.0);
@@ -164,7 +164,7 @@ void Mesh::Triangle::buildQuadCoeffs(Precision prec) {
             static_assert(weightErr > -Math::FEPS && weightErr < Math::FEPS);
             break;
         }
-        */
+        //
     }
 
     assert(quadCoeffs.size() == numQuads);

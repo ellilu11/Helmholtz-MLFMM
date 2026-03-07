@@ -14,6 +14,8 @@ public:
 
     cmplx getIntegratedMFIE(const std::shared_ptr<Source>) const override;
 
+    cmplx getSelfIntegratedMFIE(const std::shared_ptr<Source>) const override;
+
     std::array<int,2> getTrisIdx() const { return iTris; }
 
     std::array<Triangle,2> getTris() const {

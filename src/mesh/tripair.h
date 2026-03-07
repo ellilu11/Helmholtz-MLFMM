@@ -30,6 +30,7 @@ public:
 
     std::vector<std::pair<double, vec3d>> integratedInvR;
     std::vector<std::pair<double, vec3d>> integratedInvR2; // symmetric case
+
     std::vector<std::pair<double, vec3d>> integratedInvRcubed;
     std::vector<std::pair<double, vec3d>> integratedInvRcubed2; // symmetric case
 
