@@ -8,7 +8,7 @@ Mesh::TriPair::TriPair(pair2i iTris)
 
     if (config.alpha != 0.0) buildMomentsEFIE();
     if (config.alpha != 1.0) buildMomentsMFIE();
-    if (nCommon >= 2) {
+    if (nCommon >= nCommonThres) {
         buildIntegratedInvR();
         if (config.alpha != 1.0) buildIntegratedInvRcubed();
     }
@@ -42,8 +42,8 @@ void Mesh::TriPair::buildMomentsEFIE() {
         for (const auto& [src, srcWeight] : srcTri.triQuads) {
             double r = (obs-src).norm();
 
-            cmplx G = obsWeight * srcWeight;
-            if (nCommon >= 2) 
+            cmplx G = obsWeight*srcWeight; // / (4.0*PI); // apply 1/(4pi) factor
+            if (nCommon >= nCommonThres)
                 G *= (Math::fzero(r) ? iu*k : (exp(iu*k*r)-1.0) / r);
             else {
                 assert(!Math::fzero(r));
@@ -58,7 +58,7 @@ void Mesh::TriPair::buildMomentsEFIE() {
     }
 }
 
-// Build MFIE-N moments
+// Build N-MFIE moments
 void Mesh::TriPair::buildMomentsMFIE() {
     double k = config.k, k2 = k*k;
 
@@ -77,13 +77,14 @@ void Mesh::TriPair::buildMomentsMFIE() {
             double r = R.norm(), r2 = r*r, r3 = r*r2;
             assert(!Math::fzero(r));
 
-            vec3cd gradG = R / r3 * obsWeight*srcWeight;
+            vec3cd gradG = obsWeight*srcWeight * R / r3; // (4.0*PI*r3); // apply 1/(4pi) factor
 
-            if (nCommon == 2)
+            if (nCommon >= nCommonThres)
                 gradG = gradG * ((-1.0+iu*k*r)*exp(iu*k*r) + 0.5*k2*r2 + 1.0); // double check signs
-            else if (nCommon < 2)
+            else if (nCommon < nCommonThres)
                 gradG = gradG * (-1.0+iu*k*r)*exp(iu*k*r);
 
+            // Overall minus sign from flipping J x gradG to gradG x J
             m000 -= -obsNhat.dot(gradG);
             m001 -= gradG;
             m10 -= (obs.dot(gradG) * obsNhat - obsNhat.dot(gradG) * obs);

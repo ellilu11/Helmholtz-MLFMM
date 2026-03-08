@@ -116,27 +116,29 @@ void testSingularEFIE(const Mesh::Triangle& obsTri, const Mesh::Triangle& srcTri
     Mesh::TriPair triPair(pair);
 
     // Double numeric integration of 1/R 
-    cmplx radNumNum = 0.0;
+    double radNumNum = 0.0;
     for (const auto& [obs, obsWeight] : obsTri.getQuads()) {
         for (const auto& [src, srcWeight] : srcTri.getQuads()) {
             double r = (obs-src).norm();
-            assert(!Math::fzero(r));
 
-            cmplx G = 1.0 / r;
+            double G = 1.0 / r;
             radNumNum += ((obs-vobs).dot(src-vsrc) - 4.0/k2) * G
                 * obsWeight * srcWeight;
         }
     }
 
     // Numeric-analytic integration of 1/R
-    cmplx radNumAnl = (
+    double radNumAnl = (
         obsTri.getSingularEFIE(srcTri, triPair, vobs, vsrc) +
         srcTri.getSingularEFIE(obsTri, triPair, vsrc, vobs)) / 2.0;
 
-    std::cout << std::setprecision(15)
-        << "NumNum EFIE: " << radNumNum << '\n'
-        << "NumAnl EFIE: " << radNumAnl << '\n'
-        << "Diff: " << radNumNum - radNumAnl << '\n';
+    //std::cout << std::setprecision(15)
+    //    << "NumNum EFIE: " << radNumNum << ' '
+    //    << "NumAnl EFIE: " << radNumAnl << ' '
+    //    << "Diff: " << radNumNum - radNumAnl << '\n';
+
+    std::cout << std::setprecision(9) << " # common verts: " << triPair.nCommon << ' '
+        << "Rel diff: " << (radNumNum - radNumAnl) / radNumAnl << '\n';
 }
 
 
@@ -151,14 +153,13 @@ void testSingularMFIE(const Mesh::Triangle& obsTri, const Mesh::Triangle& srcTri
     Mesh::TriPair triPair(pair);
 
     // Double numeric integration of k^2/2 * 1/R + 1/R^3
-    cmplx radNumNum = 0.0;
+    double radNumNum = 0.0;
     for (const auto& [obs, obsWeight] : obsTri.getQuads()) {
         for (const auto& [src, srcWeight] : srcTri.getQuads()) {
             vec3d R = obs-src;
             double r = R.norm(), r2 = r*r, r3 = r*r2;
-            assert(!Math::fzero(r));
 
-            vec3cd gradG = R/r3 * (0.5*k2*r2 + 1.0);
+            vec3d gradG = R/r3 * (0.5*k2*r2 + 1.0);
 
             radNumNum -= (obs-vobs).dot(obsTri.getNormal().cross(gradG.cross(src-vsrc)))
                 * obsWeight * srcWeight;
@@ -166,14 +167,18 @@ void testSingularMFIE(const Mesh::Triangle& obsTri, const Mesh::Triangle& srcTri
     }
 
     // Numeric-analytic integration of k^2/2 * 1/R + 1/R^3
-    cmplx radNumAnl = -obsTri.getSingularMFIE(srcTri, triPair, vobs, vsrc);
+    double radNumAnl = -obsTri.getSingularMFIE(srcTri, triPair, vobs, vsrc);
 
-    std::cout << std::setprecision(15)
-        << "NumNum MFIE: " << radNumNum << '\n'
-        << "NumAnl MFIE: " << radNumAnl << '\n'
-        << "Diff: " << radNumNum - radNumAnl << '\n';
+    //std::cout << std::setprecision(15)
+    //    << "NumNum MFIE: " << radNumNum << ' '
+    //    << "NumAnl MFIE: " << radNumAnl << ' '
+    //    << "Diff: " << radNumNum - radNumAnl << '\n';
+
+    std::cout << std::setprecision(9) << " # common verts: " << triPair.nCommon << ' '
+        << "Rel diff: " << (radNumNum - radNumAnl) / radNumAnl << '\n';
 }
 
+/*
 void testMassMatrix(const Mesh::Triangle& tri) {
     double k2 = config.k * config.k;
     vec3d v0 = tri.getVerts()[0];
@@ -210,6 +215,7 @@ void testMassMatrix(const Mesh::Triangle& tri) {
         << "Anl: " << radAnl << '\n'
         << "Diff: " << radNum - radAnl << '\n';
 }
+*/
 
 int main() {
     // ===================== Build sources ==================== //
@@ -219,6 +225,34 @@ int main() {
     const auto srcs = importSources(Einc);
     size_t nsrcs = srcs.size();
 
+    // ==================== Build nodes ==================== //
+    std::cout << " Building FMM tree...\n";
+
+    auto start0 = Clock::now();
+    bool isRootLeaf = nsrcs <= config.maxNodeSrcs;
+    auto root = std::make_shared<Node>(srcs, 0, nullptr, isRootLeaf);
+
+    root->buildLists();
+
+    std::cout << "   # Nodes: " << Node::getNumNodes() << '\n';
+    std::cout << "   # Leaves: " << leaves.size() << '\n';
+    std::cout << "   Max node level: " << Node::getMaxLvl() << "\n\n";
+
+    // ==================== Build nearfield ===================== //
+    std::cout << " Building nearfield matrix...     ";
+
+    auto start = Clock::now();
+    auto nf = std::make_shared<Nearfield>();
+    Time duration_ms = Clock::now() - start;
+    std::cout << " in " << duration_ms.count() << " ms\n\n";
+
+    for (const auto& triMap : Mesh::glTriPairs) {
+        const auto& [obsTri, srcTri] = triMap.second.getTriPair();
+
+        testSingularMFIE(obsTri, srcTri);
+        testSingularMFIE(srcTri, obsTri);
+    }
+
     /* Numeric vs analytic 1/R or 1/R^3 integration test
     const auto tri = dynamic_pointer_cast<Mesh::RWG>(srcs[0])->getTris()[0];
     const vec3d obs = { -1.00000, 2.0, 0.0 };
@@ -227,14 +261,15 @@ int main() {
 
     /* Double numeric vs numeric-analytic singular EFIE or MFIE test
     auto srcTri = dynamic_pointer_cast<Mesh::RWG>(srcs[0])->getTris()[0];
-    auto obsTri = dynamic_pointer_cast<Mesh::RWG>(srcs[0])->getTris()[1];
-    testMomentsMFIE(obsTri, srcTri);
+    auto obsTri = dynamic_pointer_cast<Mesh::RWG>(srcs[1])->getTris()[1];
+    testSingularMFIE(obsTri, srcTri);
     std::cout << "(obsTri, srcTri) = (" << obsTri.getIdx() << ", " << srcTri.getIdx() << ")\n";
     */
 
-    // Mass matrix test
+    /* Mass matrix numeric vs analytic test
     auto tri = dynamic_pointer_cast<Mesh::RWG>(srcs[0])->getTris()[0];
     testMassMatrix(tri);
+    */
 
     /* Near/self integration test
     auto rwg0 = dynamic_pointer_cast<Mesh::RWG>(srcs[0]);

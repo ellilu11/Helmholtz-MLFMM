@@ -8,7 +8,7 @@ FMM::Nearfield::Nearfield() {
     buildPairRads();
     buildSelfRads();
 
-    Mesh::glTriPairs.clear();
+    // Mesh::glTriPairs.clear();
 }
 
 /* findNodePairs()
