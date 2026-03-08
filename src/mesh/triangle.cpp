@@ -260,7 +260,7 @@ double Mesh::Triangle::getSingularEFIE(
         ++iObs;
     }
 
-    return rad;
+    return rad / (4.0*PI); // apply factor of 1/(4pi)
 }
 
 double Mesh::Triangle::getSingularMFIE(
@@ -291,7 +291,7 @@ double Mesh::Triangle::getSingularMFIE(
         ++iObs;
     }
 
-    return rad;
+    return rad / (4.0*PI); // apply factor of 1/(4pi)
 }
 
 // Debugging only

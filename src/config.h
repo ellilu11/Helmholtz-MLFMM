@@ -80,7 +80,7 @@ struct Config {
             >> rootLeng >> k
             >> alpha >> maxIter;
         beta = 1.0 - alpha;
-        // C = -iu * Phys::c0 * Phys::mu0 * k;
+        C = -iu * Phys::c0 * Phys::mu0 * k; // / (4.0 * PI);
 
         std::cout << " *************************** \n";
         std::cout << " ***** Helmholtz-MLFMM ***** \n";

@@ -39,14 +39,14 @@ public:
      */
     std::pair<vec3cd, vec3cd> getRadsAlongDir(const vec3d& X, const vec3d& kvec) const override
     {
-        vec3cd rad = exp(iu*kvec.dot(X-pos)) * phat; // / (4.0*PI); // apply factor of 1/(4pi)
+        vec3cd rad = exp(iu*kvec.dot(X-pos)) * phat / (4.0*PI); // apply factor of 1/(4pi)
         return { rad, kvec.cross(rad).conjugate() }; // Hermitian cross!
     }
 
     vec3cd getFarAlongDir(
         const vec3d& krhat) const override
     {
-        return exp(-iu*pos.dot(krhat)) * phat; // / (4.0*PI); // apply factor of 1/(4pi)
+        return exp(-iu*pos.dot(krhat)) * phat / (4.0*PI); // apply factor of 1/(4pi)
     }
 
     /* getIntegratedEFIE(src)

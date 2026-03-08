@@ -45,14 +45,14 @@ public:
     double getLeng() const { return leng; }
 
     std::pair<vec3cd,vec3cd> getRadsAlongDir(const vec3d& X, const vec3d& kvec) const override {
-        cmplx exp = std::exp(iu*kvec.dot(X)); // / (4.0*PI); // apply factor of 1/(4pi)
+        cmplx exp = std::exp(iu*kvec.dot(X)) / (4.0*PI); // apply factor of 1/(4pi)
         auto [rad, radNormal] = getIntegratedPlaneWave(kvec);
 
         return { exp * rad.conjugate(), exp * radNormal.conjugate() };
     }
 
     vec3cd getFarAlongDir(const vec3d& krhat) const override {
-        return getIntegratedPlaneWave(krhat).first.conjugate(); // / (4.0*PI); // apply factor of 1/(4pi)
+        return getIntegratedPlaneWave(krhat).first.conjugate() / (4.0*PI); // apply factor of 1/(4pi)
     }
 
 protected:

@@ -215,7 +215,7 @@ void FMM::Node::evalFarSols() {
         intRad += (recPatTheta.conjugate() * localTheta +
             recPatPhi.conjugate() * localPhi).sum();
 
-        Solver::rvec[obs->getIdx()] += Phys::C * k * intRad;
+        Solver::rvec[obs->getIdx()] += config.C * 4.0 * PI * intRad;
 
         ++iObs;
     }

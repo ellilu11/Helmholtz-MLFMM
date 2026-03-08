@@ -42,7 +42,7 @@ void Mesh::TriPair::buildMomentsEFIE() {
         for (const auto& [src, srcWeight] : srcTri.triQuads) {
             double r = (obs-src).norm();
 
-            cmplx G = obsWeight*srcWeight; // / (4.0*PI); // apply 1/(4pi) factor
+            cmplx G = obsWeight*srcWeight / (4.0*PI); // apply 1/(4pi) factor
             if (nCommon >= nCommonThres)
                 G *= (Math::fzero(r) ? iu*k : (exp(iu*k*r)-1.0) / r);
             else {
@@ -77,7 +77,7 @@ void Mesh::TriPair::buildMomentsMFIE() {
             double r = R.norm(), r2 = r*r, r3 = r*r2;
             assert(!Math::fzero(r));
 
-            vec3cd gradG = obsWeight*srcWeight * R / r3; // (4.0*PI*r3); // apply 1/(4pi) factor
+            vec3cd gradG = obsWeight*srcWeight * R / (4.0*PI*r3); // apply 1/(4pi) factor
 
             if (nCommon >= nCommonThres)
                 gradG = gradG * ((-1.0+iu*k*r)*exp(iu*k*r) + 0.5*k2*r2 + 1.0); // double check signs
