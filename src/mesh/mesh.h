@@ -7,6 +7,7 @@ namespace Mesh {
     // constants
     constexpr int nCommonThres = 2; // number of common vertices for nearfield singularity
     static_assert(nCommonThres >= 0 && nCommonThres <= 3);
+    constexpr double distThres = 2.0; // distance threshold for nearfield pairs (meters)
 
     // Types
     class Triangle;

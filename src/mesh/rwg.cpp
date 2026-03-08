@@ -22,11 +22,10 @@ Mesh::RWG::RWG(
 
 void Mesh::RWG::buildVoltage() {
     auto [inc, incNormal] = getIntegratedPlaneWave(Einc->wavevec);
-    vec3d polE = config.alpha * Einc->pol;
-    vec3d polH = config.beta * Einc->wavehat.cross(Einc->pol);
 
-    // inc . (nhat x polH) = polH . (inc x nhat) = -polH . (nhat x inc) = -polH . incNormal
-    voltage = -Einc->amplitude * (polE.dot(inc) - polH.dot(incNormal));
+    // inc . (nhat x pol) = pol . (inc x nhat) = -pol . (nhat x inc) = -pol . incNormal
+    voltage = -Einc->amplitude * Einc->pol.dot(
+        config.alpha * inc - config.beta * incNormal);
 }
 
 /* getIntegratedPlaneWave(kvec, doNumeric)
@@ -183,18 +182,15 @@ double Mesh::RWG::getIntegratedMass(const std::shared_ptr<Source> src) const {
                 - (vobs + vsrc).dot(obsTri.center) / 2.0
                 + vobs.dot(vsrc) / 2.0;
 
-            mass -= pairMass / (4.0 * obsTri.area) // factor of -1/2! (-\Omega/(4\pi) ?)
-                * Math::sign(iObs) * Math::sign(iSrc);
+            mass += pairMass / (2.0 * obsTri.area) * Math::sign(iObs) * Math::sign(iSrc);
             ++iSrc;
-
         }
 
         ++iObs;
     }
 
     assert(!std::isnan(mass));
-    return leng * srcRWG->leng * mass;
-        // * 4.0 * PI; // multiply back a factor of 4pi since G-function factor of 1/(4pi) is accidentally included
+    return -0.5 * leng * srcRWG->leng * mass; // factor of -1/2 = -Omega/(4pi)
 }
 
 /* Debug version, no precomputed moments

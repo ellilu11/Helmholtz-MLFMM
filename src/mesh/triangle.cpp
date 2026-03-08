@@ -272,21 +272,22 @@ double Mesh::Triangle::getSingularMFIE(
     double rad = 0.0;
     size_t iObs = 0;
     for (const auto& [obs, obsWeight] : triQuads) {
+        // (obs-src) x (src-vsrc) = [R - (src-vsrc)] x (src-vsrc) = R x (src-vsrc)
+        vec3d R = obs - vsrc;
+        vec3d obsProj = srcTri.proj(obs);
+
         auto [scaInvR, vecInvR] = (iTri <= srcTri.iTri ?
             triPair.integratedInvR[iObs] : triPair.integratedInvR2[iObs]);
         auto [scaInvR3, vecInvR3] = (iTri <= srcTri.iTri ?
             triPair.integratedInvRcubed[iObs] : triPair.integratedInvRcubed2[iObs]);
 
-        vec3d R = obs - vsrc;
-        vec3d obsProj = srcTri.proj(obs);
-
         // 1/R term
         rad += 0.5*k2 * (obs-vobs).dot(nhat.cross(R.cross(vecInvR+(obsProj-vsrcProj)*scaInvR)))
-                * obsWeight;
+            * obsWeight;
 
         // 1/R^3 term
         rad += (obs-vobs).dot(nhat.cross(R.cross(vecInvR3+(obsProj-vsrcProj)*scaInvR3)))
-                * obsWeight;
+            * obsWeight;
 
         ++iObs;
     }

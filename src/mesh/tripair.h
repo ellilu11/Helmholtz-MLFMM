@@ -38,5 +38,6 @@ public:
     std::vector<std::pair<double, vec3d>> integratedInvRcubed2; // symmetric case
 
     pair2i iTris; // indices of triangles
+    double dist;  // distance between triangle centers
     int nCommon;  // number of common vertices
 };

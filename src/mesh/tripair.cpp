@@ -20,11 +20,14 @@ Mesh::TriPair::TriPair(pair2i iTris)
 void Mesh::TriPair::buildNumCommon() {
     if (iTris.first == iTris.second) {
         nCommon = 3;
+        dist = 0.0;
         return;
     }
 
     const auto [tri0, tri1] = getTriPair();
     nCommon = 0;
+    dist = (tri0.center - tri1.center).norm();
+
     for (int i = 0; i < 3; ++i)
         for (int j = 0; j < 3; ++j)
             if (tri0.iVerts[i] == tri1.iVerts[j])
@@ -81,7 +84,7 @@ void Mesh::TriPair::buildMomentsMFIE() {
 
             if (nCommon >= nCommonThres)
                 gradG = gradG * ((-1.0+iu*k*r)*exp(iu*k*r) + 0.5*k2*r2 + 1.0); // double check signs
-            else if (nCommon < nCommonThres)
+            else
                 gradG = gradG * (-1.0+iu*k*r)*exp(iu*k*r);
 
             // Overall minus sign from flipping J x gradG to gradG x J

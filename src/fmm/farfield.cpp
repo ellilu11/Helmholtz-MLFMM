@@ -204,18 +204,23 @@ void FMM::Node::evalFarSols() {
 
     size_t iObs = 0;
     for (const auto& obs : srcs) {
+        // TODO: Deduplicate code
         cmplx intRad = 0;
-
-        Coeffs recPat = 
-            config.alpha * radPats[iObs] + 
-            config.beta * recPatsH[iObs];
-
+        Coeffs& recPat = radPats[iObs];
         Eigen::Map<arrXcd> recPatTheta(recPat.theta.data(), nDir);
         Eigen::Map<arrXcd> recPatPhi(recPat.phi.data(), nDir);
         intRad += (recPatTheta.conjugate() * localTheta +
             recPatPhi.conjugate() * localPhi).sum();
 
-        Solver::rvec[obs->getIdx()] += config.C * 4.0 * PI * intRad;
+        cmplx intRadH = 0;
+        Coeffs& recPatH = recPatsH[iObs];
+        Eigen::Map<arrXcd> recPatThetaH(recPatH.theta.data(), nDir);
+        Eigen::Map<arrXcd> recPatPhiH(recPatH.phi.data(), nDir);
+        intRadH += (recPatThetaH.conjugate() * localTheta +
+            recPatPhiH.conjugate() * localPhi).sum();
+
+        Solver::rvec[obs->getIdx()] += config.C * 4.0 * PI * 
+            (config.alpha * intRad + config.beta * intRadH);
 
         ++iObs;
     }

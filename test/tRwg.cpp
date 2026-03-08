@@ -41,16 +41,15 @@ void testMomentsEFIE(const Mesh::Triangle& obsTri, const Mesh::Triangle& srcTri)
             double r = (obs-src).norm();
             assert(!Math::fzero(r));
 
-            cmplx G;
+            cmplx G = obsWeight*srcWeight / (4.0*PI);
             if (triPair.nCommon >= 2)
-                G = (Math::fzero(r) ? iu*k : (exp(iu*k*r)-1.0) / r);
+                G *= (Math::fzero(r) ? iu*k : (exp(iu*k*r)-1.0) / r);
             else {
                 assert(!Math::fzero(r));
-                G = exp(iu*k*r) / r;
+                G *= exp(iu*k*r) / r;
             }
 
-            rad += ((obs-vobs).dot(src-vsrc) - 4.0/k2) * G
-                * obsWeight * srcWeight;
+            rad += ((obs-vobs).dot(src-vsrc) - 4.0/k2) * G;
         }
     }
 
@@ -83,14 +82,13 @@ void testMomentsMFIE(const Mesh::Triangle& obsTri, const Mesh::Triangle& srcTri)
             double r = R.norm(), r2 = r*r, r3 = r*r2;
             assert(!Math::fzero(r));
 
-            vec3cd gradG = R / r3;
+            vec3cd gradG = gradG = obsWeight*srcWeight * R / (4.0*PI*r3);
             if (triPair.nCommon == 2)
                 gradG = gradG * ((-1.0+iu*k*r)*exp(iu*k*r) + 0.5*k*k*r2 + 1.0);
             else if (triPair.nCommon < 2)
                 gradG = gradG * (-1.0+iu*k*r)*exp(iu*k*r);
 
-            rad -= (obs-vobs).dot(nhat.cross(gradG.cross(src-vsrc)))
-                * obsWeight * srcWeight;
+            rad -= (obs-vobs).dot(nhat.cross(gradG.cross(src-vsrc)));
         }
     }
 
@@ -105,8 +103,9 @@ void testMomentsMFIE(const Mesh::Triangle& obsTri, const Mesh::Triangle& srcTri)
         << "Diff: " << rad - radMoments << '\n';
 }
 
-void testSingularEFIE(const Mesh::Triangle& obsTri, const Mesh::Triangle& srcTri) {
+void testSingularEFIE(const Mesh::Triangle& obsTri, const Mesh::Triangle& srcTri, std::ofstream& os) {
     assert(config.alpha == 1.0); // only EFIE part should be tested here
+    if (obsTri.getIdx() == srcTri.getIdx()) return;
 
     double k2 = config.k * config.k;
     vec3d vobs = obsTri.getVerts()[0];
@@ -121,7 +120,7 @@ void testSingularEFIE(const Mesh::Triangle& obsTri, const Mesh::Triangle& srcTri
         for (const auto& [src, srcWeight] : srcTri.getQuads()) {
             double r = (obs-src).norm();
 
-            double G = 1.0 / r;
+            double G = 1.0 / (4.0*PI*r);
             radNumNum += ((obs-vobs).dot(src-vsrc) - 4.0/k2) * G
                 * obsWeight * srcWeight;
         }
@@ -137,13 +136,18 @@ void testSingularEFIE(const Mesh::Triangle& obsTri, const Mesh::Triangle& srcTri
     //    << "NumAnl EFIE: " << radNumAnl << ' '
     //    << "Diff: " << radNumNum - radNumAnl << '\n';
 
-    std::cout << std::setprecision(9) << " # common verts: " << triPair.nCommon << ' '
-        << "Rel diff: " << (radNumNum - radNumAnl) / radNumAnl << '\n';
+    //std::cout << std::setprecision(9) << " # common verts: " << triPair.nCommon << ' '
+    //    << "Rel diff: " << (radNumNum - radNumAnl) / radNumAnl << '\n';
+
+    os << std::setprecision(9)
+        << (obsTri.getCenter() - srcTri.getCenter()).norm() << ' '
+        << (radNumNum - radNumAnl) / radNumAnl << '\n';
 }
 
 
-void testSingularMFIE(const Mesh::Triangle& obsTri, const Mesh::Triangle& srcTri) {
+void testSingularMFIE(const Mesh::Triangle& obsTri, const Mesh::Triangle& srcTri, std::ofstream& os) {
     assert(config.alpha == 0.0); // only MFIE part should be tested here
+    if (obsTri.getIdx() == srcTri.getIdx()) return;
 
     double k2 = config.k * config.k;
     vec3d vobs = obsTri.getVerts()[0];
@@ -155,27 +159,43 @@ void testSingularMFIE(const Mesh::Triangle& obsTri, const Mesh::Triangle& srcTri
     // Double numeric integration of k^2/2 * 1/R + 1/R^3
     double radNumNum = 0.0;
     for (const auto& [obs, obsWeight] : obsTri.getQuads()) {
+        vec3d nhat = obsTri.getNormal();
+
         for (const auto& [src, srcWeight] : srcTri.getQuads()) {
             vec3d R = obs-src;
             double r = R.norm(), r2 = r*r, r3 = r*r2;
 
-            vec3d gradG = R/r3 * (0.5*k2*r2 + 1.0);
+            vec3d gradG = R/(4.0*PI*r3) * (-0.5*k2*r2 + 1.0);
+            // double G = 1/(4.0*PI*r3) * (-0.5*k2*r2 + 1.0);
 
-            radNumNum -= (obs-vobs).dot(obsTri.getNormal().cross(gradG.cross(src-vsrc)))
+            radNumNum -= (obs-vobs).dot(nhat.cross(gradG.cross(src-vsrc)))
                 * obsWeight * srcWeight;
+            //radNumNum -= (obs-vobs).dot(gradG.cross(src-vsrc))
+            //    * obsWeight * srcWeight;
+            //radNumNum -= (obs-vobs).dot(src-vsrc) * G
+            //    * obsWeight * srcWeight;
+
         }
     }
 
     // Numeric-analytic integration of k^2/2 * 1/R + 1/R^3
-    double radNumAnl = -obsTri.getSingularMFIE(srcTri, triPair, vobs, vsrc);
+    // Overall minus sign from flipping J x gradG to gradG x J
+    double radNumAnl = -
+        obsTri.getSingularMFIE(srcTri, triPair, vobs, vsrc);
+        //(obsTri.getSingularMFIE(srcTri, triPair, vobs, vsrc) +
+        // srcTri.getSingularMFIE(obsTri, triPair, vsrc, vobs)) / 2.0;
 
     //std::cout << std::setprecision(15)
     //    << "NumNum MFIE: " << radNumNum << ' '
     //    << "NumAnl MFIE: " << radNumAnl << ' '
     //    << "Diff: " << radNumNum - radNumAnl << '\n';
 
-    std::cout << std::setprecision(9) << " # common verts: " << triPair.nCommon << ' '
-        << "Rel diff: " << (radNumNum - radNumAnl) / radNumAnl << '\n';
+    //std::cout << std::setprecision(9) << " # common verts: " << triPair.nCommon << ' '
+    //    << "Rel diff: " << (radNumNum - radNumAnl) / radNumAnl << '\n';
+
+    os << std::setprecision(9) 
+       << (obsTri.getCenter() - srcTri.getCenter()).norm() << ' '
+       << (radNumNum - radNumAnl) / radNumAnl << '\n';
 }
 
 /*
@@ -246,11 +266,13 @@ int main() {
     Time duration_ms = Clock::now() - start;
     std::cout << " in " << duration_ms.count() << " ms\n\n";
 
+    std::ofstream file("out/test/mesh/singular_efie_q13.txt");
+
     for (const auto& triMap : Mesh::glTriPairs) {
         const auto& [obsTri, srcTri] = triMap.second.getTriPair();
 
-        testSingularMFIE(obsTri, srcTri);
-        testSingularMFIE(srcTri, obsTri);
+        testSingularEFIE(obsTri, srcTri, file);
+        testSingularEFIE(srcTri, obsTri, file);
     }
 
     /* Numeric vs analytic 1/R or 1/R^3 integration test
