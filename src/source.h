@@ -42,7 +42,7 @@ public:
 
     virtual cmplx getIntegratedMFIE(const std::shared_ptr<Source>) const = 0;
 
-    virtual cmplx getIntegratedMass(const std::shared_ptr<Source>) const = 0;
+    virtual double getIntegratedMass(const std::shared_ptr<Source>) const = 0;
 
 protected:
     std::shared_ptr<Exc::PlaneWave> Einc;

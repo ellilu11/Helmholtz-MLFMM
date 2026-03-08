@@ -21,7 +21,7 @@ void FMM::Node::buildRadPats() {
 
             auto [rad, radNormal] = src->getRadsAlongDir(center, kvec);
             radPat.setCoeffAlongDir(toThPh * rad, iDir);
-            recPatH.setCoeffAlongDir(toThPh * radNormal, iDir);
+            recPatH.setCoeffAlongDir(toThPh * kvec.cross(radNormal).conjugate(), iDir);
         }
 
         radPats[iSrc] = std::move(radPat);

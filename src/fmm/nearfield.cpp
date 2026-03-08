@@ -62,8 +62,6 @@ void FMM::Nearfield::buildTriPairs() {
 }
 
 void FMM::Nearfield::buildPairRads() {
-    std::cout << std::setprecision(15);
-
     for (auto& nearPair : nearPairs) {
         const auto [obsLeaf, srcNode] = nearPair.pair;
         // assert(obsLeaf < srcNode);
@@ -80,20 +78,9 @@ void FMM::Nearfield::buildPairRads() {
 
                 nearPair.efie[pairIdx] = obs->getIntegratedEFIE(src);
 
+                double mass = obs->getIntegratedMass(src);
                 nearPair.mfie[pairIdx] =
-                    { obs->getIntegratedMFIE(src), src->getIntegratedMFIE(obs) };
-
-                /*
-                cmplx obsSrc = obs->getIntegratedMFIE(src);
-                cmplx srcObs = src->getIntegratedMFIE(obs);
-                std::cout << obsSrc << ' ' << srcObs << ' ' << obsSrc - srcObs << '\n';
-                assert(Math::fzero(obsSrc.real() - srcObs.real()));
-                assert(Math::fzero(obsSrc.imag() - srcObs.imag()));
-
-                cmplx mfie = obs->getIntegratedMFIE(src);
-                cmplx selfMfie = obs->getIntegratedMass(src);
-                nearPair.mfie[pairIdx] = { mfie + selfMfie, -mfie + selfMfie };
-                */
+                    { obs->getIntegratedMFIE(src)+mass, src->getIntegratedMFIE(obs)+mass };
 
                 ++pairIdx;
             }
@@ -121,12 +108,9 @@ void FMM::Nearfield::buildSelfRads() {
 
                 selfPair.efie[pairIdx] = obs->getIntegratedEFIE(src);
 
+                double mass = obs->getIntegratedMass(src);
                 selfPair.mfie[pairIdx] =
-                    { obs->getIntegratedMFIE(src), src->getIntegratedMFIE(obs) };
-
-                //cmplx mfie = obs->getIntegratedMFIE(src);
-                //cmplx selfMfie = obs->getIntegratedMass(src);
-                //selfPair.mfie[pairIdx] = { mfie + selfMfie, -mfie + selfMfie };
+                    { obs->getIntegratedMFIE(src)+mass, src->getIntegratedMFIE(obs)+mass };
 
                 ++pairIdx;
             }

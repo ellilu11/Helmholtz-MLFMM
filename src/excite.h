@@ -8,11 +8,14 @@ extern const Config config;
 namespace Exc {
     struct PlaneWave {
         PlaneWave()
-            : pol(vec3d{1,0,0}), wavevec(vec3d{0,0,1}), amplitude(1.0)
+            : pol(vec3d{ 1,0,0 }), wavehat(vec3d{ 0,0,1 }), wavevec(vec3d{ 0,0,1 }), amplitude(1.0)
         {};
 
         PlaneWave(const vec3d& pol, const vec3d& wavehat, double amplitude)
-            : pol(pol.normalized()), wavevec(config.k*wavehat.normalized()), amplitude(amplitude)
+            : pol(pol.normalized()), 
+              wavehat(wavehat.normalized()),
+              wavevec(config.k*this->wavehat), 
+              amplitude(amplitude)
         {
             if (std::abs(pol.dot(wavehat)) > 1e-6)
                 throw std::runtime_error("Polarization and wave vector must be orthogonal");
@@ -23,6 +26,7 @@ namespace Exc {
         };
 
         vec3d pol;          // unit polarization
+        vec3d wavehat;      // unit wavevector
         vec3d wavevec;      // wavevector
         double amplitude;   // amplitude
     };

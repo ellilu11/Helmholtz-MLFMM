@@ -78,7 +78,7 @@ public:
         return phat.dot(rad);
     }
 
-    cmplx getIntegratedMass(const std::shared_ptr<Source> src) const override {
+    double getIntegratedMass(const std::shared_ptr<Source> src) const override {
         return 0.0; // Dipole magnetic self interaction?
     }
 

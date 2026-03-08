@@ -14,7 +14,7 @@ public:
 
     cmplx getIntegratedMFIE(const std::shared_ptr<Source>) const override;
 
-    cmplx getIntegratedMass(const std::shared_ptr<Source>) const override;
+    double getIntegratedMass(const std::shared_ptr<Source>) const override;
 
     std::array<int,2> getTrisIdx() const { return iTris; }
 
@@ -43,8 +43,13 @@ public:
     double getLeng() const { return leng; }
 
     void buildVoltage() override {
-        voltage = -Einc->amplitude
-            * conj((getIntegratedPlaneWave(Einc->wavevec).first).dot(Einc->pol)); // Hermitian dot!
+        auto [inc, incNormal] = getIntegratedPlaneWave(Einc->wavevec);
+        vec3d polE = config.alpha * Einc->pol;
+        vec3d polH = config.beta * Einc->wavehat.cross(Einc->pol);
+
+        // inc . (nhat x polH) = polH . (inc x nhat) = -polH . (nhat x inc) = -polH . incNormal
+        voltage = -Einc->amplitude * conj( // Hermitian dot!
+            inc.dot(polE) - incNormal.dot(polH)); 
     }
 
     std::pair<vec3cd,vec3cd> getRadsAlongDir(const vec3d& X, const vec3d& kvec) const override {
