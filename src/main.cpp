@@ -11,9 +11,6 @@ void mainLoop(const SrcVec& srcs, bool doFMM, bool doIter = true) {
     size_t nsrcs = srcs.size();
     std::string method = doFMM ? "FMM" : "Direct";
 
-    std::string ieStr = getIEStr(config.ie);
-    std::transform(ieStr.begin(), ieStr.end(), ieStr.begin(), ::tolower);
-
     // ==================== Build nodes ========================= //
     auto start = Clock::now();
 
@@ -34,7 +31,7 @@ void mainLoop(const SrcVec& srcs, bool doFMM, bool doIter = true) {
     // ==================== Solve for current =================== //
     std::unique_ptr<Solver> solver;
     if (doFMM || (!doFMM && doIter))
-        solver = std::make_unique<GMRES>(srcs, std::move(nf), root, 1.0E-6, config.maxIter);
+        solver = std::make_unique<GMRES>(srcs, std::move(nf), root, 1.0E-6, nsrcs);
     else 
         solver = std::make_unique<Direct>(srcs, std::move(nf));
 
@@ -45,7 +42,7 @@ void mainLoop(const SrcVec& srcs, bool doFMM, bool doIter = true) {
 
     // ==================== Compute scattered field ============= //
     Mesh::printScattered(srcs,
-        (doFMM ? "ff_n" : "ffDir_n")+to_string(nsrcs)+"_"+ieStr+".txt", 200);
+        (doFMM ? "ff_n" : "ffDir_n")+to_string(nsrcs)+".txt", 200);
 }
 
 int main() {
