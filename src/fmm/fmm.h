@@ -8,7 +8,7 @@
 #include "../types.h"
 
 extern const Config config;
-extern ClockTimes t;
+extern auto t = ClockTimes();
 
 namespace FMM {
     // Constants
@@ -42,7 +42,7 @@ namespace FMM {
     inline int maxLevel = 0;
 
     // Functions
-    void buildTables();
+    void buildLevels();
 
     void buildRadPats();
 
@@ -53,9 +53,9 @@ namespace FMM {
     void addAnterpCoeffs(const Coeffs&, Coeffs&, int, int);
 
     void resetNodes() { 
-        numNodes = 0;
-        maxLevel = 0;
         leaves.clear(); 
         nonNearPairs.clear();
+        numNodes = 0;
+        maxLevel = 0;
     }
 }

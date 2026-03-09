@@ -6,7 +6,7 @@ class GMRES final : public Solver {
 
 public:
     GMRES(const SrcVec& srcs,
-        std::shared_ptr<FMM::Nearfield>,
+        std::unique_ptr<FMM::Nearfield>,
         std::shared_ptr<FMM::Node>,
         double, int);
 

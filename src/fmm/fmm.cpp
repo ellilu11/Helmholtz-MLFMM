@@ -1,6 +1,6 @@
 #include "fmm.h"
 
-void FMM::buildTables() {
+void FMM::buildLevels() {
     std::cout << " Building FMM operators...        ";
 
     auto start = Clock::now();

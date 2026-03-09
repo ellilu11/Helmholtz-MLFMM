@@ -68,7 +68,6 @@ SrcVec Mesh::importMesh(
 
     importVertices(path/"vertices.txt");
     importTriangles(path/"faces.txt");
-    // printNormals("out/nhats.txt");
     return importRWGs(path/"rwgs.txt", std::move(Einc));
 }
 
@@ -111,7 +110,7 @@ void Mesh::printScattered(const SrcVec& srcs, const std::string& fname, int nth)
         thfile << theta << '\n';
     }
 
-    std::cout << " Mean RCS: " 
+    std::cout << "   Mean RCS: " 
         << std::setprecision(9) << rcsSum/nth << std::setprecision(3) << "\n\n";
 }
 

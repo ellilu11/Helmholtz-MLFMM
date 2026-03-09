@@ -8,7 +8,6 @@
 using namespace FMM;
 
 extern const Config config("config/config.txt");
-extern auto t = ClockTimes();
 
 void testInvRNumVsAnl(const Mesh::Triangle& tri, const vec3d& obs) {
     std::cout << std::setprecision(15);

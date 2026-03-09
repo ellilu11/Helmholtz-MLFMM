@@ -6,7 +6,7 @@
 class Solver {
 
 public:
-    Solver(const SrcVec&, std::shared_ptr<FMM::Nearfield>);
+    Solver(const SrcVec&, std::unique_ptr<FMM::Nearfield>);
 
     virtual void solve(const std::string&) = 0;
 
