@@ -68,6 +68,7 @@ SrcVec Mesh::importMesh(
 
     importVertices(path/"vertices.txt");
     importTriangles(path/"faces.txt");
+    // printNormals("out/nhats.txt");
     return importRWGs(path/"rwgs.txt", std::move(Einc));
 
     // Mesh::refineMesh(srcs);

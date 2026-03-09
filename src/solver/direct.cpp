@@ -2,7 +2,7 @@
 #include "../fmm/nearfield.h"
 #include "../fmm/node.h"
 
-Direct::Direct(SrcVec& srcs,
+Direct::Direct(const SrcVec& srcs,
     std::shared_ptr<FMM::Nearfield> nf)
     : Solver(srcs, std::move(nf))
 {
@@ -18,9 +18,10 @@ void Direct::solve(const std::string& fname) {
     auto selfPairs = nf->getSelfPairs();
     assert(selfPairs.size() == 1); // only one self pair for direct solver
 
+    std::cout << " Solving for current w/ direct LU...";
+
     auto start = Clock::now();
 
-    // Assemble full nearfield matrix
     matXcd Zmat = selfPairs[0].getNearMatrix();
     assert(Zmat.rows() == rvec.rows());
     assert(Zmat.cols() == currents.rows());
@@ -32,8 +33,6 @@ void Direct::solve(const std::string& fname) {
 
     std::cout << "   Current norm: "
         << std::setprecision(9) << currents.norm() << std::setprecision(3) << "\n";
-
-    // std::cout << std::setprecision(9) << (Zmat * currents - rvec).transpose() << "\n";
 
     printSols(fname, currents);
 }

@@ -10,17 +10,17 @@ using namespace FMM;
 extern const Config config("config/config.txt");
 extern auto t = ClockTimes();
 
-int main() {
-    // ==================== Import sources ====================== //
-    auto Einc = Exc::importPlaneWaves("config/pwave.txt");
-    auto srcs = Mesh::importMesh(
-        "config/rwg/sph_r5.0_n"+to_string(config.nsrcs), Einc);
+void mainLoop(const SrcVec& srcs, bool doFMM) {
     size_t nsrcs = srcs.size();
+    std::string method = doFMM ? "FMM" : "Direct";
+
+    std::string ieStr = getIEStr(config.ie);
+    std::transform(ieStr.begin(), ieStr.end(), ieStr.begin(), ::tolower);
 
     // ==================== Build nodes ========================= //
-    auto start0 = Clock::now();
+    auto start = Clock::now();
 
-    bool isRootLeaf = nsrcs <= config.maxNodeSrcs;
+    bool isRootLeaf = nsrcs <= config.maxNodeSrcs || !doFMM;
     auto root = std::make_shared<Node>(srcs, 0, nullptr, isRootLeaf);
 
     root->buildLists();
@@ -33,40 +33,34 @@ int main() {
 
     // ==================== Build expansions ==================== //
     root->resizeCoeffs(); // TODO: Hide this call
-    if(!isRootLeaf) buildRadPats();
+    if (!isRootLeaf) buildRadPats();
 
-    // ==================== Solve iterative FMM ================= //
-    const int MAX_ITER = nsrcs;
-    constexpr double EPS = 1.0E-6;
-
-    auto solver = std::make_unique<GMRES>(srcs, nf, root, EPS, MAX_ITER);
-    solver->solve("sol.txt");
-
-    Time duration_ms0 = Clock::now() - start0;
-    std::cout << " FMM total elapsed time: " << duration_ms0.count() << " ms\n\n";
-
-    Mesh::printScattered(srcs, "ff_n"+to_string(nsrcs)+".txt", 200);
-
-    if (config.mode == Mode::FMM) return 0;
-
-    // ================== Solve iterative direct ================ //
-    start0 = Clock::now();
-
-    resetNodes();
-    root = std::make_shared<Node>(srcs, 0, nullptr, 1);
-    root->buildLists();
-
-    nf = std::make_shared<Nearfield>();
-
-    solver = std::make_unique<GMRES>(srcs, nf, root, EPS, MAX_ITER);
-    solver->solve("solDir.txt");
+    // ==================== Solve for current =================== //
+    auto solver = std::make_unique<GMRES>(srcs, nf, root, 1.0E-6, config.maxIter);
+    solver->solve(doFMM ? "sol.txt" : "solDir.txt");
     //auto solverDir = std::make_unique<Direct>(srcs, nf);
     //solverDir->solve("solDir.txt");
 
-    duration_ms0 = Clock::now() - start0;
-    std::cout << " Direct total elapsed time: " << duration_ms0.count() << " ms\n\n";
+    Time duration_ms = Clock::now() - start;
+    std::cout << " " + method + " total elapsed time : " << duration_ms.count() << " ms\n\n";
 
-    Mesh::printScattered(srcs, "ffDir_n"+to_string(nsrcs)+".txt", 200);
+    // ==================== Compute scattered field ============= //
+    Mesh::printScattered(srcs,
+        (doFMM ? "ff_n" : "ffDir_n")+to_string(nsrcs)+"_"+ieStr+".txt", 200);
+}
+
+int main() {
+    auto Einc = Exc::importPlaneWaves("config/pwave.txt");
+    auto srcs = Mesh::importMesh(
+        "config/rwg/sph_r5.0_n"+to_string(config.nsrcs), Einc);
+
+    mainLoop(srcs, true);
+
+    if (config.mode == Mode::FMM) return 0;
+
+    resetNodes();
+
+    mainLoop(srcs, false);
 
     return 0;
 }
