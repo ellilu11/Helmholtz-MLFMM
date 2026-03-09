@@ -4,7 +4,7 @@
  * Build radiation patterns due to sources in this leaf
  */
 void FMM::Node::buildRadPats() {
-    // assert(isLeaf());
+    assert(isLeaf());
     const Angles& angles_lvl = angles[level];
     size_t nDir = angles_lvl.getNumDirs();
 
@@ -21,7 +21,7 @@ void FMM::Node::buildRadPats() {
 
             auto [rad, radNormal] = src->getRadsAlongDir(center, kvec);
             radPat.setCoeffAlongDir(toThPh * rad, iDir);
-            recPatH.setCoeffAlongDir(toThPh * iu*(kvec.cross(radNormal).conjugate()), iDir);
+            recPatH.setCoeffAlongDir(toThPh * iu * (kvec.cross(radNormal).conjugate()), iDir);
         }
 
         radPats[iSrc] = std::move(radPat);
@@ -219,8 +219,8 @@ void FMM::Node::evalFarSols() {
         intRadH += (recPatThetaH.conjugate() * localTheta +
             recPatPhiH.conjugate() * localPhi).sum();
 
-        Solver::rvec[obs->getIdx()] += config.C * 4.0 * PI * 
-            (config.alpha * intRad + config.beta * intRadH);
+        Solver::rvec[obs->getIdx()] += 4.0 * PI * 
+            (config.C_efie * intRad + config.C_mfie * intRadH);
 
         ++iObs;
     }

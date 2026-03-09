@@ -66,7 +66,7 @@ int main() {
     Time duration_ms0 = Clock::now() - start0;
     std::cout << " FMM total elapsed time: " << duration_ms0.count() << " ms\n\n";
 
-    Mesh::printScattered(srcs, "ff_n"+to_string(nsrcs)+".txt", 200);
+    Mesh::printScattered(srcs, "ff_n"+to_string(nsrcs)+"_mfie.txt", 200);
 
     if (config.mode == Mode::FMM) return 0;
 
@@ -92,7 +92,7 @@ int main() {
     duration_ms0 = Clock::now() - start0;
     std::cout << " Direct total elapsed time: " << duration_ms0.count() << " ms\n\n";
 
-    Mesh::printScattered(srcs, "ffDir_n"+to_string(nsrcs)+".txt", 200);
+    Mesh::printScattered(srcs, "ffDir_n"+to_string(nsrcs)+"_mfie.txt", 200);
 
     return 0;
 }

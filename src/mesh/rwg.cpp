@@ -24,8 +24,9 @@ void Mesh::RWG::buildVoltage() {
     auto [inc, incNormal] = getIntegratedPlaneWave(Einc->wavevec);
 
     // inc . (nhat x pol) = pol . (inc x nhat) = -pol . (nhat x inc) = -pol . incNormal
+    // (1-alpha) * eta * H_inc = (1-alpha) * khat x E_inc = -(1-alpha) * incNormal
     voltage = -Einc->amplitude * Einc->pol.dot(
-        config.alpha * inc - config.beta * incNormal);
+        config.alpha * inc - (1.0-config.alpha) * incNormal);
 }
 
 /* getIntegratedPlaneWave(kvec, doNumeric)
@@ -116,7 +117,6 @@ cmplx Mesh::RWG::getIntegratedEFIE(const std::shared_ptr<Source> src) const {
 cmplx Mesh::RWG::getIntegratedMFIE(const std::shared_ptr<Source> src) const {
     if (config.alpha == 1) return 0.0;
     const auto srcRWG = dynamic_pointer_cast<RWG>(src);
-    double k = config.k, k2 = k*k;
 
     cmplx intRad = 0.0;
     int iObs = 0;
@@ -155,7 +155,6 @@ cmplx Mesh::RWG::getIntegratedMFIE(const std::shared_ptr<Source> src) const {
 double Mesh::RWG::getIntegratedMass(const std::shared_ptr<Source> src) const {
     if (config.alpha == 1) return 0.0;
     const auto srcRWG = dynamic_pointer_cast<RWG>(src);
-    double k = config.k, k2 = k*k;
 
     double mass = 0.0;
     int iObs = 0;

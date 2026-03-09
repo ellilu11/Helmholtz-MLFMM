@@ -140,12 +140,12 @@ void FMM::Nearfield::evalPairSols(const NearPair& nearPair) {
             cmplx lvecSrc = Solver::lvec[src->getIdx()];
             cmplx& rvecSrc = Solver::rvec[src->getIdx()]; // &
 
-            cmplx radAtObs = config.C *
-                (config.alpha * nearPair.efie[pairIdx]
-                    + config.beta * nearPair.mfie[pairIdx].first);
-            cmplx radAtSrc = config.C *
-                (config.alpha * nearPair.efie[pairIdx]
-                    + config.beta * nearPair.mfie[pairIdx].second);
+            cmplx radAtObs =
+                (config.C_efie * nearPair.efie[pairIdx]
+                    + config.C_mfie * nearPair.mfie[pairIdx].first);
+            cmplx radAtSrc = 
+                (config.C_efie * nearPair.efie[pairIdx]
+                    + config.C_mfie * nearPair.mfie[pairIdx].second);
             ++pairIdx;
 
             rvecObs += lvecSrc * radAtObs;
@@ -176,12 +176,12 @@ void FMM::Nearfield::evalSelfSols(const NearPair& selfPair) {
             cmplx lvecSrc = Solver::lvec[src->getIdx()];
             cmplx& rvecSrc = Solver::rvec[src->getIdx()]; // &
 
-            cmplx radAtObs = config.C *
-                (config.alpha * selfPair.efie[pairIdx]
-                    + config.beta * selfPair.mfie[pairIdx].first);
-            cmplx radAtSrc = config.C *
-                (config.alpha * selfPair.efie[pairIdx]
-                    + config.beta * selfPair.mfie[pairIdx].second);
+            cmplx radAtObs =
+                (config.C_efie * selfPair.efie[pairIdx]
+                    + config.C_mfie * selfPair.mfie[pairIdx].first);
+            cmplx radAtSrc =
+                (config.C_efie * selfPair.efie[pairIdx]
+                    + config.C_mfie * selfPair.mfie[pairIdx].second);
             ++pairIdx;
 
             // Only add self-term contribution once!
@@ -226,12 +226,12 @@ void FMM::Nearfield::evaluateSols() {
          size_t iTri = iObs*(iObs+1)/2; // triangular numbers
 
          for (size_t iSrc = 0; iSrc <= iObs; ++iSrc) {
-             cmplx radAtObs = config.C *
-                 (config.alpha * efie[iTri+iSrc]
-                     + config.beta * mfie[iTri+iSrc].first);
-             cmplx radAtSrc = config.C *
-                 (config.alpha * efie[iTri+iSrc]
-                     + config.beta * mfie[iTri+iSrc].second);
+             cmplx radAtObs = 
+                 (config.C_efie * efie[iTri+iSrc]
+                     + config.C_mfie * mfie[iTri+iSrc].first);
+             cmplx radAtSrc = 
+                 (config.C_efie * efie[iTri+iSrc]
+                     + config.C_mfie * mfie[iTri+iSrc].second);
 
              mat(iObs, iSrc) = radAtObs;
              mat(iSrc, iObs) = radAtSrc;

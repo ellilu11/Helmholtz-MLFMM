@@ -79,9 +79,9 @@ struct Config {
             >> digits >> interpOrder >> overInterp
             >> rootLeng >> k
             >> alpha >> maxIter;
-        beta = 1.0 - alpha;
-        C = -iu * Phys::c0 * Phys::mu0 * k; // / (4.0 * PI);
-
+        C_efie = iu * k * Phys::eta * alpha;
+        C_mfie = Phys::eta * (1.0 - alpha);
+        
         std::cout << " *************************** \n";
         std::cout << " ***** Helmholtz-MLFMM ***** \n";
         std::cout << " *************************** \n";
@@ -108,10 +108,12 @@ struct Config {
     double overInterp;
     double rootLeng;
     double k;
-    double alpha;
-    double beta;
     int maxIter;
-    cmplx C;
+
+    // CFIE parameters
+    double alpha;
+    cmplx C_efie;
+    cmplx C_mfie;
 
     // Point dipoles only
     Dist pdist;
