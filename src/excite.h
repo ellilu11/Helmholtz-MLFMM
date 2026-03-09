@@ -14,6 +14,8 @@ namespace Exc {
         PlaneWave(const vec3d& pol, const vec3d& wavehat, double amplitude)
             : pol(pol.normalized()), wavevec(config.k*wavehat.normalized()), amplitude(amplitude)
         {
+            std::cout << " Importing excitation...\n";
+
             if (std::abs(pol.dot(wavehat)) > 1e-6)
                 throw std::runtime_error("Polarization and wave vector must be orthogonal");
 

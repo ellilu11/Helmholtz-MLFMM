@@ -1,6 +1,10 @@
 #include "fmm.h"
 
 void FMM::buildTables() {
+    std::cout << " Building FMM operators...        ";
+
+    auto start = Clock::now();
+
     // std::cout << "   (Lvl,Nth,Nph) =\n";
     angles.reserve(maxLevel+1);
     for (int level = 0; level <= maxLevel; ++level)
@@ -10,11 +14,21 @@ void FMM::buildTables() {
     tables.reserve(maxLevel+1);
     for (int level = 0; level <= maxLevel; ++level)
         tables.emplace_back(level, maxLevel);
+
+    Time duration_ms = Clock::now() - start;
+    std::cout << " in " << duration_ms.count() << " ms\n\n";
 }
 
 void FMM::buildRadPats() {
+    std::cout << " Building plane wave expansions...";
+
+    auto start = Clock::now();
+
     for (const auto& leaf : leaves)
         leaf->buildRadPats();
+
+    Time duration_ms = Clock::now() - start;
+    std::cout << " in " << duration_ms.count() << " ms\n\n";
 }
 
 void FMM::evaluateSols() {

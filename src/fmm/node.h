@@ -32,10 +32,6 @@ public:
 
     void evalFarSols();
 
-    static int getMaxLvl() { return maxLevel; }
-
-    static int getNumNodes() { return numNodes; }
-
     SrcVec getSrcs() const { return srcs; }
     
     int getBranchIdx() const { return branchIdx; }
@@ -80,8 +76,6 @@ private:
     }
 
 private:
-    inline static int numNodes = 0;
-
     std::vector<Coeffs> radPats;
     Coeffs coeffs;
     Coeffs localCoeffs;

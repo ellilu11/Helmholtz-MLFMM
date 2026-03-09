@@ -177,7 +177,7 @@ void FMM::Node::buildLocalCoeffs() {
 
         // Add L2L to M2L
         start = Clock::now();
-        if (!base->isRoot())
+        if (!base->isRoot()) // TODO: Avoid adding Coeffs directly
             localCoeffs += base->getShiftedLocalCoeffs(branchIdx);
         t.L2L += Clock::now() - start;
     }

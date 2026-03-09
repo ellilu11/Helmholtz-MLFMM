@@ -103,6 +103,9 @@ void GMRES::solve(const std::string& fname) {
         return;
     }
 
+    std::string method = root->isLeaf() ? "Direct... " : "FMM...    ";
+    std::cout << " Solving for current w/ " << method;
+
     auto start = Clock::now();
     int iter = 0;
     do {

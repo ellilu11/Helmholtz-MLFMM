@@ -2,6 +2,10 @@
 #include "../mesh/tripair.h"
 
 FMM::Nearfield::Nearfield() {
+    std::cout << " Building nearfield matrix...     ";
+
+    auto start = Clock::now();
+
     findNodePairs();
     buildTriPairs();
 
@@ -9,6 +13,9 @@ FMM::Nearfield::Nearfield() {
     buildSelfRads();
 
     Mesh::glTriPairs.clear();
+
+    Time duration_ms = Clock::now() - start;
+    std::cout << " in " << duration_ms.count() << " ms\n\n";
 }
 
 /* findNodePairs()

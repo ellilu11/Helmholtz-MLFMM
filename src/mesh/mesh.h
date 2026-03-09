@@ -24,14 +24,10 @@ namespace Mesh {
     void importTriangles(const std::filesystem::path&);
 
     SrcVec importRWGs(
-        const std::filesystem::path&,
-        const std::shared_ptr<Exc::PlaneWave>);
+        const std::filesystem::path&, std::shared_ptr<Exc::PlaneWave>);
 
     SrcVec importMesh(
-        const std::filesystem::path&,
-        const std::filesystem::path&,
-        const std::filesystem::path&,
-        std::shared_ptr<Exc::PlaneWave>);
+        const std::filesystem::path&, std::shared_ptr<Exc::PlaneWave>);
 
     void printScattered(const SrcVec&, const std::string&, int);
 

@@ -9,7 +9,6 @@
 
 #include "dipole.cpp"
 #include "math.cpp"
-#include "source.cpp"
 #include "solver/direct.cpp"
 #include "solver/gmres.cpp"
 #include "solver/solver.cpp"

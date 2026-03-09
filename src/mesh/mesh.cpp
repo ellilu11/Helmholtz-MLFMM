@@ -1,5 +1,5 @@
-#include "mesh.h"
 #include "rwg.h"
+#include "triangle.h"
 
 void Mesh::importVertices(const std::filesystem::path& path) {
     std::ifstream file(path);
@@ -38,8 +38,7 @@ void Mesh::importTriangles(const std::filesystem::path& path) {
 }
 
 SrcVec Mesh::importRWGs(
-    const std::filesystem::path& path,
-    const std::shared_ptr<Exc::PlaneWave> Einc)
+    const std::filesystem::path& path, std::shared_ptr<Exc::PlaneWave> Einc)
 {
     std::ifstream file(path);
     std::string line;
@@ -61,16 +60,17 @@ SrcVec Mesh::importRWGs(
 }
 
 SrcVec Mesh::importMesh(
-    const std::filesystem::path& vpath,
-    const std::filesystem::path& tpath,
-    const std::filesystem::path& rpath,
-    std::shared_ptr<Exc::PlaneWave> Einc) 
+    const std::filesystem::path& path, std::shared_ptr<Exc::PlaneWave> Einc) 
 {
-    importVertices(vpath); 
+    std::cout << " Importing sources...\n\n";
 
-    importTriangles(tpath);
+    Triangle::buildQuadCoeffs(config.quadPrec);
 
-    return importRWGs(rpath, std::move(Einc));
+    importVertices(path/"vertices.txt");
+    importTriangles(path/"faces.txt");
+    return importRWGs(path/"rwgs.txt", std::move(Einc));
+
+    // Mesh::refineMesh(srcs);
 }
 
 void Mesh::printScattered(const SrcVec& srcs, const std::string& fname, int nth) {
@@ -113,5 +113,5 @@ void Mesh::printScattered(const SrcVec& srcs, const std::string& fname, int nth)
     }
 
     std::cout << " Mean RCS: " 
-        << std::setprecision(9) << rcsSum/nth << std::setprecision(3) << "\n";
+        << std::setprecision(9) << rcsSum/nth << std::setprecision(3) << "\n\n";
 }

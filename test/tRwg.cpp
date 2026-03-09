@@ -65,7 +65,8 @@ int main() {
     std::cout << " Building sources...\n";
 
     const auto Einc = Exc::importPlaneWaves("config/pwave.txt");
-    const auto srcs = importSources(Einc);
+    auto srcs = Mesh::importMesh(
+        "config/rwg/sph_r5.0_n"+to_string(config.nsrcs), Einc);
     size_t nsrcs = srcs.size();
 
     /* Numeric vs analytic 1/R near integration test
