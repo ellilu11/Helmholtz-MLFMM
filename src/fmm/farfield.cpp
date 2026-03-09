@@ -202,25 +202,20 @@ void FMM::Node::evalFarSols() {
     Eigen::Map<arrXcd> localTheta(localCoeffs.theta.data(), nDir);
     Eigen::Map<arrXcd> localPhi(localCoeffs.phi.data(), nDir);
 
+    auto getIntRad = [&](Coeffs& rec) {
+        Eigen::Map<arrXcd> recTheta(rec.theta.data(), nDir);
+        Eigen::Map<arrXcd> recPhi(rec.phi.data(), nDir);
+        return (recTheta.conjugate() * localTheta +
+            recPhi.conjugate() * localPhi).sum();
+    };
+
     size_t iObs = 0;
     for (const auto& obs : srcs) {
-        // TODO: Deduplicate code
-        cmplx intRad = 0;
-        Coeffs& recPat = radPats[iObs];
-        Eigen::Map<arrXcd> recPatTheta(recPat.theta.data(), nDir);
-        Eigen::Map<arrXcd> recPatPhi(recPat.phi.data(), nDir);
-        intRad += (recPatTheta.conjugate() * localTheta +
-            recPatPhi.conjugate() * localPhi).sum();
+        cmplx intRadE = getIntRad(radPats[iObs]);
+        cmplx intRadH = getIntRad(recPatsH[iObs]);
 
-        cmplx intRadH = 0;
-        Coeffs& recPatH = recPatsH[iObs];
-        Eigen::Map<arrXcd> recPatThetaH(recPatH.theta.data(), nDir);
-        Eigen::Map<arrXcd> recPatPhiH(recPatH.phi.data(), nDir);
-        intRadH += (recPatThetaH.conjugate() * localTheta +
-            recPatPhiH.conjugate() * localPhi).sum();
-
-        Solver::rvec[obs->getIdx()] += 4.0 * PI * 
-            (config.C_efie * intRad + config.C_mfie * intRadH);
+        Solver::rvec[obs->getIdx()] += 4.0 * PI * // cancel extra factor of 1/(4pi)
+            (config.C_efie * intRadE + config.C_mfie * intRadH);
 
         ++iObs;
     }

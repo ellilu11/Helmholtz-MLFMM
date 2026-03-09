@@ -8,7 +8,7 @@ FMM::Nearfield::Nearfield() {
     buildPairRads();
     buildSelfRads();
 
-    // Mesh::glTriPairs.clear();
+    Mesh::glTriPairs.clear();
 }
 
 /* findNodePairs()
@@ -84,8 +84,6 @@ void FMM::Nearfield::buildPairRads() {
             }
         }
     }
-
-    std::cout << std::setprecision(3);
 }
 
 void FMM::Nearfield::buildSelfRads() {
@@ -212,11 +210,8 @@ void FMM::Nearfield::evaluateSols() {
          size_t iTri = iObs*(iObs+1)/2; // triangular numbers
 
          for (size_t iSrc = 0; iSrc <= iObs; ++iSrc) {
-             cmplx radAtObs = cfie[iTri+iSrc].first;
-             cmplx radAtSrc = cfie[iTri+iSrc].second;
-
-             mat(iObs, iSrc) = radAtObs;
-             mat(iSrc, iObs) = radAtSrc;
+             mat(iObs, iSrc) = cfie[iTri+iSrc].first; // std::move ?
+             mat(iSrc, iObs) = cfie[iTri+iSrc].second;
          }
      }
 

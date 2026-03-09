@@ -5,7 +5,7 @@
 
 namespace Mesh {
     // constants
-    constexpr int nCommonThres = 2;
+    constexpr int nCommonThres = 1;
     // constexpr double distThres = 2.0;
 
     // Types

@@ -8,6 +8,8 @@
 
 enum class Mode { FMM, FMMDIR };
 
+enum class IE { EFIE, MFIE, CFIE };
+
 enum class Precision { VERYLOW, LOW, MEDIUM, HIGH, VERYHIGH };
 
 enum class Dist { UNIFORM, GAUSSIAN, SPHERE, CYLINDER };
@@ -58,6 +60,16 @@ std::string getModeStr(Mode mode) {
         } ();
 }
 
+std::string getIEStr(IE ie) {
+    return [&]() {
+        switch (ie) {
+            case IE::EFIE: return "EFIE";
+            case IE::MFIE: return "MFIE";
+            case IE::CFIE: return "CFIE";
+        };
+        } ();
+}
+
 int getNumQuads(Precision prec) {
     return [&]() {
         switch (prec) {
@@ -79,6 +91,8 @@ struct Config {
             >> digits >> interpOrder >> overInterp
             >> rootLeng >> k
             >> alpha >> maxIter;
+
+        ie = (alpha == 0.0) ? IE::MFIE : (alpha == 1.0) ? IE::EFIE : IE::CFIE;
         C_efie = Phys::eta * alpha * iu * k;
         C_mfie = Phys::eta * (1.0 - alpha);
         
@@ -88,6 +102,7 @@ struct Config {
 
         std::cout << std::fixed << std::setprecision(3);
         std::cout << "   Mode:            " << getModeStr(mode) << '\n';
+        std::cout << "   IE (alpha):      " << getIEStr(ie) << " (" << alpha << ")\n";
         std::cout << "   # Sources:       " << nsrcs << '\n';
         std::cout << "   Max in node:     " << maxNodeSrcs << '\n';
         std::cout << "   Digit precision: " << digits << '\n';
@@ -95,8 +110,7 @@ struct Config {
         std::cout << "   Overinterp:      " << overInterp << '\n';
         std::cout << "   Tri quad rule:   " << getNumQuads(quadPrec) << "-point\n";
         std::cout << "   Root length:     " << rootLeng << " m\n";
-        std::cout << "   Wavenumber:      " << k << " /m\n";
-        std::cout << "   CFIE alpha:      " << alpha << "\n\n";
+        std::cout << "   Wavenumber:      " << k << " /m\n\n";
     }
 
     Mode mode;
@@ -111,11 +125,12 @@ struct Config {
     int maxIter;
 
     // CFIE parameters
+    IE ie;
     double alpha;
     cmplx C_efie;
     cmplx C_mfie;
 
-    // Point dipoles only
+    // Point dipoles only (remove?)
     Dist pdist;
     QDist qdist;
 };

@@ -17,7 +17,7 @@ namespace Exc {
               wavevec(config.k*this->wavehat), 
               amplitude(amplitude)
         {
-            if (std::abs(pol.dot(wavehat)) > 1e-6)
+            if (std::abs(this->pol.dot(this->wavehat)) > 1e-6)
                 throw std::runtime_error("Polarization and wave vector must be orthogonal");
 
             std::cout << "   Polarization:    " << this->pol << '\n';

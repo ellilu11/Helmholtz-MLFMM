@@ -20,11 +20,11 @@ Mesh::RWG::RWG(
     buildVoltage();
 }
 
+// inc . (nhat x polH) = polH . (inc x nhat) = -polH . (nhat x inc) = -polH . incNormal
+// (1-alpha) * eta * H_inc = (1-alpha) * khat x E_inc = -(1-alpha) * incNormal
 void Mesh::RWG::buildVoltage() {
     auto [inc, incNormal] = getIntegratedPlaneWave(Einc->wavevec);
 
-    // inc . (nhat x polH) = polH . (inc x nhat) = -polH . (nhat x inc) = -polH . incNormal
-    // (1-alpha) * eta * H_inc = (1-alpha) * khat x E_inc = -(1-alpha) * incNormal
     voltage = -Einc->amplitude * Einc->pol.dot(
         config.alpha * inc - (1.0-config.alpha) * incNormal);
 
@@ -32,6 +32,31 @@ void Mesh::RWG::buildVoltage() {
     vec3d polE = config.alpha * Einc->pol;
     vec3d polH = (1.0 - config.alpha) * Einc->wavehat.cross(Einc->pol);
     voltage = -Einc->amplitude * (polE.dot(inc) - polH.dot(incNormal));
+    */
+
+    /*
+    vec3d kvec = Einc->wavevec;
+    vec3d polE = config.alpha * Einc->pol;
+    vec3d polH = (1.0 - config.alpha) * Einc->wavehat.cross(Einc->pol);
+
+    vec3cd inc = vec3cd::Zero();
+    cmplx voltH = 0.0;
+    int iTri = 0;
+    for (const auto& [tri, vert] : getTrisAndVerts()) {
+        vec3d X0 = tri.getVerts()[0];
+        const auto& [scaRad, vecRad] = tri.getIntegratedPlaneWave(kvec);
+
+        vec3cd triRad =
+            exp(iu*kvec.dot(X0)) * (scaRad * (X0 - vert) + vecRad) * Math::sign(iTri++);
+
+        inc += triRad;
+        voltH += triRad.dot(tri.nhat.cross(polH));
+    }
+
+    inc *= leng;
+    voltH *= leng;
+
+    voltage = -Einc->amplitude * (polE.dot(inc) + voltH);
     */
 }
 
@@ -187,7 +212,8 @@ double Mesh::RWG::getIntegratedMass(const std::shared_ptr<Source> src) const {
                 - (vobs + vsrc).dot(obsTri.center) / 2.0
                 + vobs.dot(vsrc) / 2.0;
 
-            mass += pairMass / (2.0 * obsTri.area) * Math::sign(iObs) * Math::sign(iSrc);
+            mass += pairMass / (2.0 * obsTri.area) 
+                * Math::sign(iObs) * Math::sign(iSrc);
             ++iSrc;
         }
 
@@ -223,20 +249,19 @@ cmplx Mesh::RWG::getIntegratedMFIE(const std::shared_ptr<Source> src) const {
                     double r = R.norm(), r2 = r*r, r3 = r*r2;
                     assert(!Math::fzero(r));
 
-                    vec3cd gradG = R / r3;
-                    if (triPair.nCommon == 2)
+                    vec3cd gradG = obsWeight*srcWeight * R / (4.0*PI*r3);
+                    if (triPair.nCommon >= nCommonThres)
                         gradG = gradG * ((-1.0+iu*k*r)*exp(iu*k*r)+1.0+0.5*k*k*r2);
-                    else if (triPair.nCommon < 2)
+                    else
                         gradG = gradG * (-1.0+iu*k*r)*exp(iu*k*r);
 
                     // minus sign from flipping J x gradG to gradG x J
-                    pairRad -= (obs-vobs).dot(nhat.cross(gradG.cross(src-vsrc)))
-                        * obsWeight * srcWeight;
+                    pairRad -= (obs-vobs).dot(nhat.cross(gradG.cross(src-vsrc)));
                 }
             }
 
             // For edge adjacent triangles, integrate 1/R term (analytically)
-            if (triPair.nCommon == 2)
+            if (triPair.nCommon >= nCommonThres)
                 pairRad -= // minus sign since 1.0+0.5*k*k*r2 was added to gradG in MFIE moments
                     obsTri.getSingularMFIE(srcTri, triPair, vobs, vsrc);
 
