@@ -23,10 +23,16 @@ Mesh::RWG::RWG(
 void Mesh::RWG::buildVoltage() {
     auto [inc, incNormal] = getIntegratedPlaneWave(Einc->wavevec);
 
-    // inc . (nhat x pol) = pol . (inc x nhat) = -pol . (nhat x inc) = -pol . incNormal
+    // inc . (nhat x polH) = polH . (inc x nhat) = -polH . (nhat x inc) = -polH . incNormal
     // (1-alpha) * eta * H_inc = (1-alpha) * khat x E_inc = -(1-alpha) * incNormal
     voltage = -Einc->amplitude * Einc->pol.dot(
         config.alpha * inc - (1.0-config.alpha) * incNormal);
+
+    /*
+    vec3d polE = config.alpha * Einc->pol;
+    vec3d polH = (1.0 - config.alpha) * Einc->wavehat.cross(Einc->pol);
+    voltage = -Einc->amplitude * (polE.dot(inc) - polH.dot(incNormal));
+    */
 }
 
 /* getIntegratedPlaneWave(kvec, doNumeric)

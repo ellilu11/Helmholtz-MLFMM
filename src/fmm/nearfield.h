@@ -14,8 +14,7 @@ struct FMM::NearPair {
     matXcd getNearMatrix() const;
 
     NodePair pair;
-    std::vector<cmplx> efie;
-    std::vector<pair2cd> mfie;
+    std::vector<pair2cd> cfie;
 };
 
 class FMM::Nearfield {

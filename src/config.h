@@ -79,7 +79,7 @@ struct Config {
             >> digits >> interpOrder >> overInterp
             >> rootLeng >> k
             >> alpha >> maxIter;
-        C_efie = iu * k * Phys::eta * alpha;
+        C_efie = Phys::eta * alpha * iu * k;
         C_mfie = Phys::eta * (1.0 - alpha);
         
         std::cout << " *************************** \n";
