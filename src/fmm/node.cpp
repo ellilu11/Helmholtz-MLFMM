@@ -17,10 +17,7 @@ FMM::Node::Node(
     center(base == nullptr ? zeroVec : // TODO: add config.center
         base->center + nodeLeng/2.0 * Math::idx2pm(branchIdx))
 {
-    if (isRoot()) {
-        std::cout << " Building FMM tree...\n";
-
-    }
+    if (isRoot()) std::cout << " Building FMM tree...\n";
 
     if (buildLeaf) maxLevel = std::max(level, maxLevel);
     else subdivideNode();

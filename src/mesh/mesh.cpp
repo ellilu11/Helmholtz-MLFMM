@@ -67,10 +67,8 @@ SrcVec Mesh::importMesh(
     Triangle::buildQuadCoeffs(config.quadPrec);
 
     importVertices(path/"vertices.txt");
-
     importTriangles(path/"faces.txt");
-    printNormals("out/nhats.txt");
-
+    // printNormals("out/nhats.txt");
     return importRWGs(path/"rwgs.txt", std::move(Einc));
 }
 

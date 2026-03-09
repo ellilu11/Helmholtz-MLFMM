@@ -22,22 +22,24 @@ Mesh::RWG::RWG(
 
 // inc . (nhat x polH) = polH . (inc x nhat) = -polH . (nhat x inc) = -polH . incNormal
 // (1-alpha) * eta * H_inc = (1-alpha) * khat x E_inc = -(1-alpha) * incNormal
+//
 void Mesh::RWG::buildVoltage() {
     auto [inc, incNormal] = getIntegratedPlaneWave(Einc->wavevec);
 
     voltage = -Einc->amplitude * Einc->pol.dot(
         config.alpha * inc - (1.0-config.alpha) * incNormal);
 
-    /*
-    vec3d polE = config.alpha * Einc->pol;
-    vec3d polH = (1.0 - config.alpha) * Einc->wavehat.cross(Einc->pol);
-    voltage = -Einc->amplitude * (polE.dot(inc) - polH.dot(incNormal));
-    */
+    // vec3d polE = config.alpha * Einc->pol;
+    // vec3d polH = (1.0 - config.alpha) * Einc->wavehat.cross(Einc->pol);
+    // voltage = -Einc->amplitude * (polE.dot(inc) - polH.dot(incNormal));
+}
+//
 
-    /*
+/* Not using getIntegratedPlaneWave()
+void Mesh::RWG::buildVoltage() {
     vec3d kvec = Einc->wavevec;
     vec3d polE = config.alpha * Einc->pol;
-    vec3d polH = (1.0 - config.alpha) * Einc->wavehat.cross(Einc->pol);
+    vec3d polH = (1.0 - config.alpha) * Einc->pol; // Einc->wavehat.cross(Einc->pol);
 
     vec3cd inc = vec3cd::Zero();
     cmplx voltH = 0.0;
@@ -50,15 +52,15 @@ void Mesh::RWG::buildVoltage() {
             exp(iu*kvec.dot(X0)) * (scaRad * (X0 - vert) + vecRad) * Math::sign(iTri++);
 
         inc += triRad;
-        voltH += triRad.dot(tri.nhat.cross(polH));
+        voltH += tri.nhat.cross(polH).dot(triRad); // Hermitian dot!
     }
 
     inc *= leng;
     voltH *= leng;
 
     voltage = -Einc->amplitude * (polE.dot(inc) + voltH);
-    */
 }
+*/
 
 /* getIntegratedPlaneWave(kvec, doNumeric)
  * Return integral of exp(ik dot r'} * f(r') dr' at this RWG

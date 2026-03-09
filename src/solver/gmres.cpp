@@ -3,7 +3,7 @@
 #include "../fmm/node.h"
 
 GMRES::GMRES(
-    SrcVec& srcs,
+    const SrcVec& srcs,
     std::shared_ptr<FMM::Nearfield> nf,
     std::shared_ptr<FMM::Node> root,
     double EPS, int maxIter)
@@ -103,7 +103,7 @@ void GMRES::solve(const std::string& fname) {
         return;
     }
 
-    std::string method = root->isLeaf() ? "Direct... " : "FMM...    ";
+    std::string method = root->isLeaf() ? "direct... " : "FMM...    ";
     std::cout << " Solving for current w/ " << method;
 
     auto start = Clock::now();
