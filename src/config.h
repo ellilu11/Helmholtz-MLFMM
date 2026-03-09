@@ -6,7 +6,7 @@
 #include <type_traits>
 #include "phys.h"
 
-enum class Mode { FMM, FMMDIR };
+enum class Mode { FMM, DIR, FMMDIR };
 
 enum class IE { EFIE, MFIE, CFIE };
 
@@ -54,7 +54,7 @@ std::string getModeStr(Mode mode) {
     return [&]() {
         switch (mode) {
             case Mode::FMM:    return "FMM";
-            // case Mode::DIR:    return "DIRECT";
+            case Mode::DIR:    return "DIRECT";
             case Mode::FMMDIR: return "FMM+DIRECT";
         };
         } ();

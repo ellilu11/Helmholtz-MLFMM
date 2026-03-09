@@ -18,7 +18,7 @@ void Direct::solve(const std::string& fname) {
     auto selfPairs = nf->getSelfPairs();
     assert(selfPairs.size() == 1); // only one self pair for direct solver
 
-    std::cout << " Solving for current w/ direct LU...";
+    std::cout << " Solving for current w/ LU...     ";
 
     auto start = Clock::now();
 

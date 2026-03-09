@@ -10,7 +10,7 @@ using namespace FMM;
 extern const Config config("config/config.txt");
 extern auto t = ClockTimes();
 
-void mainLoop(const SrcVec& srcs, bool doFMM) {
+void mainLoop(const SrcVec& srcs, bool doFMM, bool doGMRES = true) {
     size_t nsrcs = srcs.size();
     std::string method = doFMM ? "FMM" : "Direct";
 
@@ -36,10 +36,13 @@ void mainLoop(const SrcVec& srcs, bool doFMM) {
     if (!isRootLeaf) buildRadPats();
 
     // ==================== Solve for current =================== //
-    auto solver = std::make_unique<GMRES>(srcs, nf, root, 1.0E-6, config.maxIter);
+    std::unique_ptr<Solver> solver;
+    if (doFMM || (!doFMM && doGMRES))
+        solver = std::make_unique<GMRES>(srcs, nf, root, 1.0E-6, config.maxIter);
+    else 
+        solver = std::make_unique<Direct>(srcs, nf);
+
     solver->solve(doFMM ? "sol.txt" : "solDir.txt");
-    //auto solverDir = std::make_unique<Direct>(srcs, nf);
-    //solverDir->solve("solDir.txt");
 
     Time duration_ms = Clock::now() - start;
     std::cout << " " + method + " total elapsed time : " << duration_ms.count() << " ms\n\n";
@@ -54,13 +57,17 @@ int main() {
     auto srcs = Mesh::importMesh(
         "config/rwg/sph_r5.0_n"+to_string(config.nsrcs), Einc);
 
-    mainLoop(srcs, true);
-
-    if (config.mode == Mode::FMM) return 0;
-
-    resetNodes();
-
-    mainLoop(srcs, false);
+    constexpr bool doGMRES = false;
+    switch (config.mode) {
+        case Mode::FMM: mainLoop(srcs, true); break;
+        case Mode::DIR: mainLoop(srcs, false, doGMRES); break;
+        case Mode::FMMDIR: {
+            mainLoop(srcs, true);
+            resetNodes();
+            mainLoop(srcs, false, doGMRES);
+        }
+        break;
+    }
 
     return 0;
 }
