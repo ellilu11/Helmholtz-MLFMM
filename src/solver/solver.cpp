@@ -4,10 +4,8 @@ vecXcd Solver::currents;
 vecXcd Solver::lvec;
 vecXcd Solver::rvec;
 
-Solver::Solver(const SrcVec& srcs,
-    std::shared_ptr<FMM::Nearfield> nf)
-    : nf(std::move(nf)),
-    numSrcs(srcs.size())
+Solver::Solver(const SrcVec& srcs, std::unique_ptr<FMM::Nearfield> nf)
+    : nf(std::move(nf)), numSrcs(srcs.size())
 {
 };
 

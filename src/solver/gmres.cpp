@@ -4,7 +4,7 @@
 
 GMRES::GMRES(
     const SrcVec& srcs,
-    std::shared_ptr<FMM::Nearfield> nf,
+    std::unique_ptr<FMM::Nearfield> nf,
     std::shared_ptr<FMM::Node> root,
     double EPS, int maxIter)
     : Solver(srcs, std::move(nf)),

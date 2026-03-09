@@ -19,7 +19,7 @@ struct FMM::NearPair {
 
 class FMM::Nearfield {
 
-public :
+public:
     Nearfield();
 
     void evaluateSols();
@@ -28,7 +28,7 @@ public :
 
     std::vector<NearPair> getSelfPairs() const { return selfPairs; }
 
-private : 
+private: 
     void findNodePairs();
 
     void buildTriPairs();

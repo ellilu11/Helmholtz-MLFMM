@@ -2,8 +2,7 @@
 #include "../fmm/nearfield.h"
 #include "../fmm/node.h"
 
-Direct::Direct(const SrcVec& srcs,
-    std::shared_ptr<FMM::Nearfield> nf)
+Direct::Direct(const SrcVec& srcs, std::unique_ptr<FMM::Nearfield> nf)
     : Solver(srcs, std::move(nf))
 {
     currents = vecXcd::Zero(numSrcs);
