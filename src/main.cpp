@@ -11,54 +11,31 @@ extern const Config config("config/config.txt");
 extern auto t = ClockTimes();
 
 int main() {
-    // ===================== Build sources ==================== //
-    std::cout << " Importing excitation and sources...\n";
-
+    // ==================== Import sources ====================== //
     auto Einc = Exc::importPlaneWaves("config/pwave.txt");
-    auto srcs = importSources(Einc);
+    auto srcs = Mesh::importMesh(
+        "config/rwg/sph_r5.0_n"+to_string(config.nsrcs), Einc);
     size_t nsrcs = srcs.size();
 
-    // ==================== Build nodes ==================== //
-    std::cout << " Building FMM tree...\n";
-
+    // ==================== Build nodes ========================= //
     auto start0 = Clock::now();
+
     bool isRootLeaf = nsrcs <= config.maxNodeSrcs;
     auto root = std::make_shared<Node>(srcs, 0, nullptr, isRootLeaf);
 
     root->buildLists();
 
-    std::cout << "   # Nodes: " << Node::getNumNodes() << '\n';
-    std::cout << "   # Leaves: " << leaves.size() << '\n';
-    std::cout << "   Max node level: " << Node::getMaxLvl() << "\n\n";
-
     // ==================== Build nearfield ===================== //
-    std::cout << " Building nearfield matrix...     ";
-
-    auto start = Clock::now();
     auto nf = std::make_shared<Nearfield>();
-    Time duration_ms = Clock::now() - start;
-    std::cout << " in " << duration_ms.count() << " ms\n\n";
 
-    // ==================== Build FMM operators =============== //
-    std::cout << " Building FMM operators...        ";
-
-    start = Clock::now();
+    // ==================== Build FMM operators ================= //
     if (!isRootLeaf) buildTables();
-    duration_ms = Clock::now() - start;
-    std::cout << " in " << duration_ms.count() << " ms\n\n";
 
     // ==================== Build expansions ==================== //
-    std::cout << " Building plane wave expansions...";
-
-    start = Clock::now();
     root->resizeCoeffs(); // TODO: Hide this call
     if(!isRootLeaf) buildRadPats();
-    duration_ms = Clock::now() - start;
-    std::cout << " in " << duration_ms.count() << " ms\n\n";
 
     // ==================== Solve iterative FMM ================ //
-    std::cout << " Solving with FMM...              ";
-
     constexpr double EPS = 1.0E-6;
     std::string ieStr = getIEStr(config.ie);
     std::transform(ieStr.begin(), ieStr.end(), ieStr.begin(), ::tolower);
@@ -75,22 +52,17 @@ int main() {
 
     // ================== Solve iterative direct ================ //
     start0 = Clock::now();
-    resetLeaves();
+
+    resetNodes();
     root = std::make_shared<Node>(srcs, 0, nullptr, 1);
     root->buildLists();
 
-    std::cout << "\n Building nearfield matrix...     ";
-
-    start = Clock::now();
     nf = std::make_shared<Nearfield>();
-    duration_ms = Clock::now() - start;
-    std::cout << " in " << duration_ms.count() << " ms\n\n";
 
-    std::cout << " Solving with direct...           ";
-    //solver = std::make_unique<GMRES>(srcs, nf, root, EPS, config.maxIter);
-    //solver->solve("solDir.txt");
-    auto solverDir = std::make_unique<Direct>(srcs, nf);
-    solverDir->solve("solDir.txt");
+    solver = std::make_unique<GMRES>(srcs, nf, root, EPS, config.maxIter);
+    solver->solve("solDir.txt");
+    //auto solverDir = std::make_unique<Direct>(srcs, nf);
+    //solverDir->solve("solDir.txt");
 
     duration_ms0 = Clock::now() - start0;
     std::cout << " Direct total elapsed time: " << duration_ms0.count() << " ms\n\n";

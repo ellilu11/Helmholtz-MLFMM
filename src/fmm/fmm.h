@@ -38,6 +38,7 @@ namespace FMM {
     std::vector<Tables> tables;
     NodeVec leaves;
     std::vector<NodePair> nonNearPairs;
+    inline int numNodes = 0;
     inline int maxLevel = 0;
 
     // Functions
@@ -51,7 +52,9 @@ namespace FMM {
 
     void addAnterpCoeffs(const Coeffs&, Coeffs&, int, int);
 
-    void resetLeaves() { 
+    void resetNodes() { 
+        numNodes = 0;
+        maxLevel = 0;
         leaves.clear(); 
         nonNearPairs.clear();
     }

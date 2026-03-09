@@ -17,6 +17,8 @@ namespace Exc {
               wavevec(config.k*this->wavehat), 
               amplitude(amplitude)
         {
+            std::cout << " Importing excitation...\n";
+
             if (std::abs(this->pol.dot(this->wavehat)) > 1e-6)
                 throw std::runtime_error("Polarization and wave vector must be orthogonal");
 

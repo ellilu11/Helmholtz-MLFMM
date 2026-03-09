@@ -2,6 +2,44 @@
 
 using namespace std;
 
+std::filesystem::path makePath(const Config& config) {
+    std::string distStr =
+        [&]() -> std::string {
+        switch (config.pdist) {
+            case Dist::UNIFORM:    return "uniform";
+            case Dist::GAUSSIAN:   return "gauss";
+            case Dist::SPHERE:     return "sphere";
+            case Dist::CYLINDER:   return "cyl";
+        }
+        }();
+
+    return
+        std::filesystem::path("config") / "dipole" /
+        (distStr + "_n" + std::to_string(config.nsrcs) + ".txt");
+}
+
+SrcVec importDipoles(
+    const filesystem::path& fpath, shared_ptr<Exc::PlaneWave>& Einc)
+{
+    ifstream inFile(fpath);
+    if (!inFile) throw runtime_error("Unable to find file");
+    string line;
+    SrcVec dipoles;
+    size_t idx = 0;
+
+    while (getline(inFile, line)) {
+        istringstream iss(line);
+
+        vec3d pos, dip;
+        if (iss >> pos >> dip)
+            dipoles.emplace_back(make_shared<Dipole>(Einc, idx++, pos, dip));
+        else
+            throw std::runtime_error("Unable to parse line");
+    }
+
+    return dipoles;
+}
+
 template <class dist0, class dist1 = dist0, class dist2 = dist0>
 SrcVec makeDipoles(const Config& config, const shared_ptr<Exc::PlaneWave> Einc)
 {
@@ -82,26 +120,29 @@ SrcVec makeDipoles(const Config& config, const shared_ptr<Exc::PlaneWave> Einc)
     return dipoles;
 }
 
-// TODO: Make Dipole static method
-SrcVec importDipoles(
-    const filesystem::path& fpath,
-    const shared_ptr<Exc::PlaneWave>& Einc)
+SrcVec buildDipoles(std::shared_ptr<Exc::PlaneWave> Einc)
 {
-    ifstream inFile(fpath);
-    if (!inFile) throw runtime_error("Unable to find file");
-    string line;
-    SrcVec dipoles;
-    size_t idx = 0;
+    // Dipole sources
+    const auto fpath = makePath(config);
+    SrcVec srcs;
+    srcs = importDipoles("config/dipole/sphere_n"+to_string(config.nsrcs)+".txt", Einc);
 
-    while (getline(inFile, line)) {
-        istringstream iss(line);
+    /*
+    switch (config.mode) {
+        case Mode::FMM:
+            srcs = importDipoles(fpath, Einc);
+            break;
 
-        vec3d pos, dip;
-        if (iss >> pos >> dip)
-            dipoles.emplace_back(make_shared<Dipole>(Einc, idx++, pos, dip));
-        else
-            throw std::runtime_error("Unable to parse line");
+        case Mode::FMMDIR: {
+            srcs = makeDipoles<uniform_real_distribution<double>>(config, Einc);
+
+            ofstream srcFile(fpath);
+            for (const auto& src : srcs) srcFile << *(dynamic_pointer_cast<Dipole>(src));
+            break;
+        }
     }
+    // cout << "   Source file:     " << fpath.generic_string() << '\n';
+    */
 
-    return dipoles;
+    return srcs;
 }

@@ -17,6 +17,11 @@ FMM::Node::Node(
     center(base == nullptr ? zeroVec : // TODO: add config.center
         base->center + nodeLeng/2.0 * Math::idx2pm(branchIdx))
 {
+    if (isRoot()) {
+        std::cout << " Building FMM tree...\n";
+
+    }
+
     if (buildLeaf) maxLevel = std::max(level, maxLevel);
     else subdivideNode();
 
@@ -119,6 +124,12 @@ void FMM::Node::buildLists() {
 
     for (const auto& branch : branches)
         branch->buildLists();
+
+    if (isRoot()) {
+        std::cout << "   # Nodes: " << numNodes << '\n';
+        std::cout << "   # Leaves: " << leaves.size() << '\n';
+        std::cout << "   Max node level: " << maxLevel << "\n\n";
+    }
 }
 
 void FMM::Node::resizeCoeffs() {

@@ -5,7 +5,7 @@
 
 namespace Mesh {
     // constants
-    constexpr int nCommonThres = 1;
+    constexpr int nCommonThres = 2;
     // constexpr double distThres = 2.0;
 
     // Types
@@ -28,14 +28,10 @@ namespace Mesh {
     void importTriangles(const std::filesystem::path&);
 
     SrcVec importRWGs(
-        const std::filesystem::path&,
-        const std::shared_ptr<Exc::PlaneWave>);
+        const std::filesystem::path&, std::shared_ptr<Exc::PlaneWave>);
 
     SrcVec importMesh(
-        const std::filesystem::path&,
-        const std::filesystem::path&,
-        const std::filesystem::path&,
-        std::shared_ptr<Exc::PlaneWave>);
+        const std::filesystem::path&, std::shared_ptr<Exc::PlaneWave>);
 
     void printScattered(const SrcVec&, const std::string&, int);
 
