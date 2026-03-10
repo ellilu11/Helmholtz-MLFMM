@@ -44,8 +44,10 @@ void mainLoop(const SrcVec& srcs, bool doFMM, bool doIter = true) {
     std::cout << " " + method + " total elapsed time : " << duration_ms.count() << " ms\n\n";
 
     // ==================== Compute scattered field ============= //
+    //Mesh::printScattered(srcs,
+    //    (doFMM ? "ff_n" : "ffDir_n")+to_string(nsrcs)+"_"+ieStr+".txt", 200);
     Mesh::printScattered(srcs,
-        (doFMM ? "ff_n" : "ffDir_n")+to_string(nsrcs)+"_"+ieStr+".txt", 200);
+        (doFMM ? "ff_n" : "ffDir_n")+to_string(nsrcs)+".txt", 200);
 }
 
 int main() {
@@ -60,7 +62,7 @@ int main() {
         case Mode::DIR: mainLoop(srcs, false, doIter); break;
         case Mode::FMMDIR: {
             mainLoop(srcs, true);
-            FMM::resetNodes();
+            FMM::reset();
             mainLoop(srcs, false, doIter);
         } break;
     }

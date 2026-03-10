@@ -23,7 +23,7 @@ GMRES::GMRES(
     // lvec = r = ZI - w = -w assuming I = 0 initially
     // std::transform
     for (int idx = 0; idx < numSrcs; ++idx)
-        lvec[idx] = -srcs[idx]->getVoltage();
+        lvec[idx] = -srcs[idx]->getVoltage(); // check sign convention
 
     g0 = lvec.norm(); // store g0 for use later
     gvec[0] = g0;

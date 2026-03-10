@@ -20,22 +20,18 @@ Mesh::RWG::RWG(
     buildVoltage();
 }
 
-// inc . (nhat x polH) = polH . (inc x nhat) = -polH . (nhat x inc) = -polH . incNormal
-// (1-alpha) * eta * H_inc = (1-alpha) * khat x E_inc = -(1-alpha) * incNormal
-//
 void Mesh::RWG::buildVoltage() {
     auto [inc, incNormal] = getIntegratedPlaneWave(Einc->wavevec);
 
-    voltage = -Einc->amplitude * Einc->pol.dot(
-        config.alpha * inc - (1.0-config.alpha) * incNormal);
+    // (1-alpha) * eta * H_inc = (1-alpha) * khat x E_inc
+    vec3d polE = config.alpha * Einc->pol;
+    vec3d polH = (1.0 - config.alpha) * Einc->wavehat.cross(Einc->pol);
 
-    // vec3d polE = config.alpha * Einc->pol;
-    // vec3d polH = (1.0 - config.alpha) * Einc->wavehat.cross(Einc->pol);
-    // voltage = -Einc->amplitude * (polE.dot(inc) - polH.dot(incNormal));
+    // inc . (nhat x polH) = polH . (inc x nhat) = -polH . (nhat x inc) = -polH . incNormal
+    voltage = -Einc->amplitude * (polE.dot(inc) - polH.dot(incNormal));
 }
-//
 
-/* Not using getIntegratedPlaneWave()
+/* Using inc . (nhat x polH) directly
 void Mesh::RWG::buildVoltage() {
     vec3d kvec = Einc->wavevec;
     vec3d polE = config.alpha * Einc->pol;
@@ -77,7 +73,7 @@ Mesh::RWG::getIntegratedPlaneWave(const vec3d& kvec, bool doNumeric) const {
                 vec3cd nodeRad = 
                     weight * exp(iu*kvec.dot(node)) * (node - vert) * Math::sign(iTri);
                 rad += nodeRad;
-                radNormal += tri.nhat.cross(nodeRad);
+                radNormal += tri.nhat.cross(nodeRad).conjugate();
             }
             ++iTri;
         }
@@ -223,7 +219,8 @@ double Mesh::RWG::getIntegratedMass(const std::shared_ptr<Source> src) const {
     }
 
     assert(!std::isnan(mass));
-    return -0.5 * leng * srcRWG->leng * mass; // factor of -1/2 = -Omega/(4pi)
+    // PUZZLE: Why plus sign here?
+    return 0.5 * leng * srcRWG->leng * mass; // factor of 1/2 = Omega/(4pi)
 }
 
 /* Debug version, no precomputed moments

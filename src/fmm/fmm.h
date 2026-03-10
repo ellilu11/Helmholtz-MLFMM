@@ -52,7 +52,9 @@ namespace FMM {
 
     void addAnterpCoeffs(const Coeffs&, Coeffs&, int, int);
 
-    void resetNodes() { 
+    void reset() {
+        angles.clear();
+        tables.clear();
         leaves.clear(); 
         nonNearPairs.clear();
         numNodes = 0;

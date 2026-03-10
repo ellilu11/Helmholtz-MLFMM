@@ -73,7 +73,7 @@ SrcVec Mesh::importMesh(
 
 void Mesh::printScattered(const SrcVec& srcs, const std::string& fname, int nth) {
     namespace fs = std::filesystem;
-    fs::path dir = "out/ff/cfie";
+    fs::path dir = "out/ff/px_kz_r5.0_cfie";
     std::error_code ec;
 
     std::cout << " Computing scattered farfield...\n";
@@ -118,5 +118,7 @@ void Mesh::printNormals(const std::string& fname) {
     std::ofstream file(fname);
     file << std::setprecision(15) << std::scientific;
     for (const auto& tri : glTris)
-        file << tri.getCenter() << ' ' << tri.getNormal() << '\n';
+        file << tri.getCenter() << ' ' << tri.getNormal() 
+        << ' ' << tri.getCenter().dot(tri.getNormal())
+        << '\n';
 }
