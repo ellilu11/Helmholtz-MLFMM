@@ -67,9 +67,34 @@ public:
         return os;
     }
 
+    friend SrcVec importDipoles(
+        const std::filesystem::path& fpath, std::shared_ptr<Exc::PlaneWave>& Einc)
+    {
+        std::ifstream inFile(fpath);
+        if (!inFile) throw std::runtime_error("Unable to find file");
+        std::string line;
+        SrcVec dipoles;
+        size_t idx = 0;
+
+        while (std::getline(inFile, line)) {
+            std::istringstream iss(line);
+
+            vec3d pos, dip;
+            if (iss >> pos >> dip)
+                dipoles.emplace_back(std::make_shared<Dipole>(Einc, idx++, pos, dip));
+            else
+                throw std::runtime_error("Unable to parse line");
+        }
+
+        return dipoles;
+        //auto srcs = importDipoles(
+        //    "config/dipole/sphere_n"+to_string(config.nsrcs)+".txt", Einc);
+    }
+
 private:
     vec3d pos;   // position
     vec3d pol;   // pol. density vector
     vec3d phat;  // unit pol. density vector
     double pmag; // pol. density magnitude 
 };
+
