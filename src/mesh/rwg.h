@@ -41,6 +41,8 @@ public:
     void buildVoltage() override {
         voltage = -Einc->amplitude
             * conj(getIntegratedPlaneWave(Einc->wavevec).dot(Einc->pol)); // Hermitian dot!
+
+        assert(!std::isnan(voltage.real()) && !std::isnan(voltage.imag()));
     }
 
     vec3cd getRadAlongDir(const vec3d& X, const vec3d& kvec) const override {

@@ -5,7 +5,6 @@ void FMM::buildLevels() {
 
     auto start = Clock::now();
 
-    // std::cout << "   (Lvl,Nth,Nph) =\n";
     angles.reserve(maxLevel+1);
     for (int level = 0; level <= maxLevel; ++level)
         angles.emplace_back(level);

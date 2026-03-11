@@ -75,9 +75,9 @@ struct Config {
     Config(const std::string& fileName) {
         std::ifstream is(fileName);
         is >> mode >> quadPrec // TODO: fix enums first
-           >> nsrcs >> maxNodeSrcs
-           >> digits >> interpOrder >> overInterp
-           >> rootLeng >> k;
+            >> nsrcs >> maxNodeSrcs
+            >> digits >> interpOrder >> overInterp
+            >> rootLeng >> k;
 
         std::cout << " *************************** \n";
         std::cout << " ***** Helmholtz-MLFMM ***** \n";

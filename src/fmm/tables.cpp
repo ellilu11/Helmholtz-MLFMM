@@ -88,7 +88,7 @@ Map<vecXcd> FMM::Tables::getAlpha() {
     int L = angles[level].L;
     int nth = angles[level].getNumAngles().first;
     int nps = std::floor(config.overInterp*(nth-1));
-    double nodeLeng = config.rootLeng / pow(2.0, level);
+    double nodeLeng = Mesh::rootLeng / pow(2.0, level);
 
     Map<vecXcd> alpha;
     for (const auto& dist : dists) {

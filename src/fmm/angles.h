@@ -1,5 +1,6 @@
 #pragma once
 
+#include  "../mesh/mesh.h"
 #include "fmm.h"
 
 struct FMM::Angles {

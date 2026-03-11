@@ -18,10 +18,15 @@ namespace Mesh {
     size_t nverts;                // number of coarse mesh vertices
     size_t ntris;                 // number of coarse mesh triangles
 
+    vec3d rootCenter; 
+    double rootLeng;
+
     // Functions
     void importVertices(const std::filesystem::path&);
 
     void importTriangles(const std::filesystem::path&);
+
+    void buildRootCoords();
 
     SrcVec importRWGs(
         const std::filesystem::path&, std::shared_ptr<Exc::PlaneWave>);
@@ -29,9 +34,9 @@ namespace Mesh {
     SrcVec importMesh(
         const std::filesystem::path&, std::shared_ptr<Exc::PlaneWave>);
 
-    void printScattered(const SrcVec&, const std::string&, int);
+    void printScattered(const SrcVec&, const std::filesystem::path&, const std::string&, int);
 
     // void evaluateJ();
 
-    // void printRWGs(const SrcVec& rwgs, const std::string&);
+    void printNormals(const std::string&);
 }

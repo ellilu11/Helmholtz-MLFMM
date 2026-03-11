@@ -59,44 +59,66 @@ SrcVec Mesh::importRWGs(
     return rwgs;
 }
 
+void Mesh::buildRootCoords() {
+    vec3d maxVert = vec3d::Constant(-std::numeric_limits<double>::infinity());
+    vec3d minVert = vec3d::Constant(std::numeric_limits<double>::infinity());
+
+    for (const auto& vert : glVerts) {
+        maxVert = maxVert.cwiseMax(vert);
+        minVert = minVert.cwiseMin(vert);
+    }
+
+    rootCenter = 0.5*(maxVert + minVert);
+    rootLeng = (maxVert - minVert).lpNorm<Eigen::Infinity>() 
+        * (1.0 + 1e-3); // add wiggle room
+    std::cout << "   Root center: " << rootCenter << '\n';
+    std::cout << "   Root length: " << rootLeng << " m\n\n";
+}
+
 SrcVec Mesh::importMesh(
     const std::filesystem::path& path, std::shared_ptr<Exc::PlaneWave> Einc) 
 {
-    std::cout << " Importing sources...\n\n";
+    std::cout << " Importing mesh...\n";
 
     Triangle::buildQuadCoeffs(config.quadPrec);
 
     importVertices(path/"vertices.txt");
+
+    buildRootCoords();
+
     importTriangles(path/"faces.txt");
+
     return importRWGs(path/"rwgs.txt", std::move(Einc));
 
     // Mesh::refineMesh(srcs);
 }
 
-void Mesh::printScattered(const SrcVec& srcs, const std::string& fname, int nth) {
+void Mesh::printScattered(
+    const SrcVec& srcs, const std::filesystem::path& dir, const std::string& fname, int nth) {
     namespace fs = std::filesystem;
-    fs::path dir = "out/ff/px_kz_r5.0";
     std::error_code ec;
 
     std::cout << " Computing scattered farfield...\n";
 
     if (fs::create_directory(dir, ec))
-        std::cout << " Created directory " << dir.generic_string() << "/\n";
+        std::cout << "   Created directory " << dir.generic_string() << "/\n";
     else if (ec)
-        std::cerr << " Error creating directory " << ec.message() << "\n";
+        std::cerr << "   Error creating directory " << ec.message() << "\n";
 
     std::ofstream farfile(dir/fname);
     farfile << std::setprecision(15) << std::scientific;
 
     // Also print out angles (coordinates of farsols)
-    std::ofstream thfile(dir/"thetas.txt"); // phfile(dir/"phis.txt");
-    // thfile << std::setprecision(15) << std::scientific;
+    std::ofstream thfile(dir/"angles.txt");
 
     double k = config.k;
-    double phi = 0.0; // pick phi = 0
     double rcsSum = 0.0;
-    for (int ith = 0; ith < nth; ++ith) {
-        double theta = (ith+0.5)*PI/static_cast<double>(nth);
+    for (int ith = 0; ith < 2*nth; ++ith) {
+        double theta0 = (ith+0.5)*PI/static_cast<double>(nth); // in [0, 2*pi]
+        double theta = (theta0 < PI) ? theta0 : 2*PI - theta0; // fold back to [0, pi]
+        double phi = (theta0 < PI) ? 0.0 : PI; // fold back to [0, 2pi]
+        assert(theta >= 0.0 && theta <= PI);
+
         const vec3d& rhat = Math::fromSph(vec3d(1.0, theta, phi));
 
         vec3cd dirFar = vec3cd::Zero();
@@ -109,9 +131,19 @@ void Mesh::printScattered(const SrcVec& srcs, const std::string& fname, int nth)
         rcsSum += rcs;
         farfile << rcs << '\n'; // squared magnitude of theta and phi components
 
-        thfile << theta << '\n';
+        thfile << theta0 << ' ' << theta << ' ' << phi << '\n';
     }
 
     std::cout << "   Mean RCS: " 
-        << std::setprecision(9) << rcsSum/nth << std::setprecision(3) << "\n\n";
+        << std::setprecision(9) << rcsSum/nth << std::setprecision(3) << "\n";
+    std::cout << "   File: " << (dir/fname).generic_string() << "\n\n";
+}
+
+void Mesh::printNormals(const std::string& fname) {
+    std::ofstream file(fname);
+    file << std::setprecision(15) << std::scientific;
+    for (const auto& tri : glTris)
+        file << tri.getCenter() << ' ' << tri.getNormal()
+            << ' ' << tri.getCenter().dot(tri.getNormal())
+            << '\n';
 }

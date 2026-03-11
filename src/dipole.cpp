@@ -40,6 +40,7 @@ SrcVec importDipoles(
     return dipoles;
 }
 
+/* TODO: Compile a separate executable for this 
 template <class dist0, class dist1 = dist0, class dist2 = dist0>
 SrcVec makeDipoles(const Config& config, const shared_ptr<Exc::PlaneWave> Einc)
 {
@@ -119,6 +120,7 @@ SrcVec makeDipoles(const Config& config, const shared_ptr<Exc::PlaneWave> Einc)
 
     return dipoles;
 }
+*/
 
 SrcVec buildDipoles(std::shared_ptr<Exc::PlaneWave> Einc)
 {

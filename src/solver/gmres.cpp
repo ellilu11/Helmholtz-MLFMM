@@ -27,8 +27,9 @@ GMRES::GMRES(
 
     g0 = lvec.norm(); // store g0 for use later
     gvec[0] = g0;
-
+ 
     lvec.normalize(); // lvec_0
+
     Qmat.col(0) = lvec; // store lvec as first column of Qmat
 }
 
@@ -109,7 +110,7 @@ void GMRES::solve(const std::string& fname) {
     auto start = Clock::now();
     int iter = 0;
     do {
-        // if (iter && !(iter%10)) std::cout << "   #" << iter << '\n';
+        if (iter && !(iter%100)) std::cout << " #" << iter << ' ';
         updateRvec(iter);
         iterateArnoldi(iter);
         updateGvec(iter);

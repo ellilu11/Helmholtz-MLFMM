@@ -48,6 +48,10 @@ public:
 
     vec3d proj(const vec3d& X) const { return X - (nhat.dot(X))*nhat; }
 
+    vec3d getCenter() const { return center; }
+
+    vec3d getNormal() const { return nhat; }
+
 private:
     static int numQuads;
     static std::vector<quadPair<vec3d>> quadCoeffs;
