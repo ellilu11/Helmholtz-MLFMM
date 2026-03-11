@@ -90,7 +90,7 @@ struct Config {
             >> nsrcs >> maxNodeSrcs
             >> digits >> interpOrder >> overInterp
             >> rootLeng >> k
-            >> alpha >> maxIter;
+            >> alpha;
 
         if (alpha < 0.0 || alpha > 1.0)
             throw std::runtime_error("Alpha must be in [0,1]");
@@ -125,7 +125,6 @@ struct Config {
     double overInterp;
     double rootLeng;
     double k;
-    int maxIter;
 
     // CFIE parameters
     IE ie;

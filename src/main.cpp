@@ -11,8 +11,8 @@ void mainLoop(const SrcVec& srcs, bool doFMM, bool doIter = true) {
     size_t nsrcs = srcs.size();
     std::string method = doFMM ? "FMM" : "Direct";
 
-    std::string ieStr = getIEStr(config.ie);
-    std::transform(ieStr.begin(), ieStr.end(), ieStr.begin(), ::tolower);
+    //std::string ieStr = getIEStr(config.ie);
+    //std::transform(ieStr.begin(), ieStr.end(), ieStr.begin(), ::tolower);
 
     // ==================== Build nodes ========================= //
     auto start = Clock::now();
@@ -34,7 +34,7 @@ void mainLoop(const SrcVec& srcs, bool doFMM, bool doIter = true) {
     // ==================== Solve for current =================== //
     std::unique_ptr<Solver> solver;
     if (doFMM || (!doFMM && doIter))
-        solver = std::make_unique<GMRES>(srcs, std::move(nf), root, 1.0E-6, config.maxIter);
+        solver = std::make_unique<GMRES>(srcs, std::move(nf), root, 1.0E-6, nsrcs);
     else 
         solver = std::make_unique<Direct>(srcs, std::move(nf));
 
@@ -44,19 +44,16 @@ void mainLoop(const SrcVec& srcs, bool doFMM, bool doIter = true) {
     std::cout << " " + method + " total elapsed time : " << duration_ms.count() << " ms\n\n";
 
     // ==================== Compute scattered field ============= //
-    //Mesh::printScattered(srcs,
-    //    "out/ff/px_km1.0z_plate",
-    //    (doFMM ? "ff_n" : "ffDir_n")+to_string(nsrcs)+".txt", 100);
     Mesh::printScattered(srcs,
-        "out/ff/py_km1.0x_plate",
-        std::string(doFMM ? "ff_g" : "ffDir_g")+"3.00.txt", 100);
+        "out/ff/px_k1.0z_r5.0_cfie",
+        (doFMM ? "ff_n" : "ffDir_n")+to_string(nsrcs)+".txt", 200);
 }
 
 int main() {
     auto Einc = Exc::importPlaneWaves("config/pwave.txt");
     auto srcs = Mesh::importMesh(
-        "config/rwg/rect/rect_g3.00_n"+to_string(config.nsrcs), Einc);
-    Mesh::printNormals("out/nhats.txt");
+        "config/rwg/sph_r5.0/sph_r5.0_n"+to_string(config.nsrcs), Einc);
+    // Mesh::printNormals("out/nhats.txt");
 
     constexpr bool doIter = true;
     switch (config.mode) {

@@ -61,10 +61,6 @@ public:
 
     vec3d getNormal() const { return nhat; }
 
-    vec3d getCenter() const { return center; }
-
-    vec3d getNormal() const { return nhat; }
-
 private:
     static int numQuads;
     static std::vector<quadPair<vec3d>> quadCoeffs;

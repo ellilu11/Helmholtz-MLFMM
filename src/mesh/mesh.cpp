@@ -111,7 +111,7 @@ void Mesh::printScattered(
 
     double k = config.k;
     double rcsSum = 0.0;
-    for (int ith = 0; ith < 2*nth; ++ith) {
+    for (int ith = 0; ith < nth; ++ith) { // 2*nth to cover great circle
         double theta0 = (ith+0.5)*PI/static_cast<double>(nth); // in [0, 2*pi]
         double theta = (theta0 < PI) ? theta0 : 2*PI - theta0; // fold back to [0, pi]
         double phi = (theta0 < PI) ? 0.0 : PI; // fold back to [0, 2pi]
