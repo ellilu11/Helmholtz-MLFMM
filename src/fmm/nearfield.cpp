@@ -214,3 +214,60 @@ void FMM::Nearfield::evaluateSols() {
 
      return mat;
  }
+
+sparseMat<cmplx> FMM::Nearfield::getNearMatrix() const {
+    sparseMat<cmplx> mat;
+
+     for (const auto& nearPair : nearPairs) {
+        const auto& [obsLeaf, srcLeaf] = nearPair.pair;
+
+        const SrcVec& srcs = obsLeaf->srcs;
+        const SrcVec& srcSrcs = srcLeaf->srcs;
+        size_t nObs = srcs.size(), nSrcs = srcSrcs.size();
+
+        std::vector<Eigen::Triplet<cmplx>> triplets;
+        triplets.reserve(nObs*nSrcs);
+
+        int pairIdx = 0;
+        for (size_t iObs = 0; iObs < nObs; ++iObs) {
+            size_t obsIdx = srcs[iObs]->getIdx();
+
+            for (size_t iSrc = 0; iSrc < nSrcs; ++iSrc) {
+                size_t srcIdx = srcSrcs[iSrc]->getIdx();
+
+                cmplx rad = Phys::C * config.k * nearPair.rads[pairIdx++];
+                triplets.emplace_back(obsIdx, srcIdx, rad);
+                triplets.emplace_back(srcIdx, obsIdx, rad);
+            }
+        }
+
+        mat.setFromTriplets(triplets.begin(), triplets.end());
+     }
+
+     // Same for selfPairs
+     for (const auto& selfPair : selfPairs) {
+        const auto& [leaf, srcLeaf] = selfPair.pair;
+        assert(leaf == srcLeaf);
+        const SrcVec& srcs = leaf->srcs;
+        size_t nSrcs = srcs.size();
+        std::vector<Eigen::Triplet<cmplx>> triplets;
+        triplets.reserve(nSrcs*(nSrcs+1)/2);
+
+        int pairIdx = 0;
+        for (size_t iObs = 0; iObs < nSrcs; ++iObs) {
+            size_t obsIdx = srcs[iObs]->getIdx();
+            for (size_t iSrc = 0; iSrc <= iObs; ++iSrc) {
+                size_t srcIdx = srcs[iSrc]->getIdx();
+                cmplx rad = Phys::C * config.k * selfPair.rads[pairIdx++];
+                triplets.emplace_back(obsIdx, srcIdx, rad);
+                if (iSrc != iObs)
+                    triplets.emplace_back(srcIdx, obsIdx, rad);
+            }
+        }
+        mat.setFromTriplets(triplets.begin(), triplets.end());
+     }
+
+     mat.makeCompressed();
+
+     return mat;
+ }
