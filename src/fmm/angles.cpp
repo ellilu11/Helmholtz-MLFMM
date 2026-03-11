@@ -2,7 +2,7 @@
 
 void FMM::Angles::buildAngularSamples(int level)
 {
-    double nodeLeng = config.rootLeng / pow(2.0, level);
+    double nodeLeng = Mesh::rootLeng / pow(2.0, level);
 
     // Use excess bandwidth formula
     int tau = ceil((1.73*config.k*nodeLeng +

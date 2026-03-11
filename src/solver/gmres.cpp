@@ -27,8 +27,9 @@ GMRES::GMRES(
 
     g0 = lvec.norm(); // store g0 for use later
     gvec[0] = g0;
-
+ 
     lvec.normalize(); // lvec_0
+
     Qmat.col(0) = lvec; // store lvec as first column of Qmat
 }
 
