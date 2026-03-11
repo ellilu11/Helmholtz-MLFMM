@@ -24,7 +24,7 @@ public:
 
     void evaluateSols();
 
-    sparseMat<cmplx> getNearMatrix() const;
+    sparseMat<cmplx> getNearMatrix(int) const;
 
     std::vector<NearPair> getNearPairs() const { return nearPairs; }
 

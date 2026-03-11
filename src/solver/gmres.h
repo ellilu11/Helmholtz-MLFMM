@@ -23,6 +23,8 @@ public:
 private:
     std::shared_ptr<FMM::Node> root;
 
+    Eigen::SparseLU<sparseMat<cmplx>, Eigen::COLAMDOrdering<int>> precond;
+
     matXcd Qmat;
     matXcd Hmat;
     vecXcd gvec;

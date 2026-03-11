@@ -19,7 +19,15 @@ FMM::Node::Node(
 {
     if (isRoot()) std::cout << " Building FMM tree...\n";
 
-    if (buildLeaf) maxLevel = std::max(level, maxLevel);
+    if (buildLeaf) {
+        maxLevel = std::max(level, maxLevel);
+        // Assign indices to all sources in this leaf
+        for (const auto& src : srcs) {
+            src->setIdx(glSrcIdx++);
+            // std::cout << src->getIdx() << ' ';
+        }
+        // if (!isSrcless()) std::cout << '\n';
+    }
     else subdivideNode();
 
     ++numNodes;
@@ -115,7 +123,7 @@ void FMM::Node::buildLists() {
         pushSelfToNearNonNbors();
     }
 
-    if (isLeaf()) leaves.push_back(shared_from_this());
+    if (isLeaf()) leaves.push_back(shared_from_this()); // TODO: only record leaves with sources
 
     findTris(); // TODO: Only call for leaves and non-near stems
 

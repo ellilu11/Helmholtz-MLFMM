@@ -20,10 +20,23 @@ GMRES::GMRES(
     lvec = vecXcd::Zero(numSrcs);
     rvec = vecXcd::Zero(numSrcs);
 
+    // Sort sources by srcIdx
+    SrcVec sortedSrcs = srcs;
+    std::sort(sortedSrcs.begin(), sortedSrcs.end(),
+        [](std::shared_ptr<Source> src0, std::shared_ptr<Source> src1)
+        { return src0->getIdx() < src1->getIdx(); }
+    );
+
+    auto M = this->nf->getNearMatrix(numSrcs);
+    // precond.compute(M); // compute LU of M for preconditioning
+    precond.analyzePattern(M);
+    precond.factorize(M);
+
     // lvec = r = ZI - w = -w assuming I = 0 initially
     // std::transform
     for (int idx = 0; idx < numSrcs; ++idx)
-        lvec[idx] = -srcs[idx]->getVoltage();
+        lvec[idx] = -sortedSrcs[idx]->getVoltage();
+    lvec = precond.solve(lvec); // apply M^{-1} here if preconditioning is desired
 
     g0 = lvec.norm(); // store g0 for use later
     gvec[0] = g0;
@@ -40,6 +53,9 @@ void GMRES::updateRvec(int k) {
         FMM::evaluateSols();
     }
     nf->evaluateSols();
+
+    // Apply M^{-1} here if preconditioning is desired
+    rvec = precond.solve(rvec);
 }
 
 void GMRES::iterateArnoldi(int k) {

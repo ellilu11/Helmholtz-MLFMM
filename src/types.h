@@ -5,6 +5,7 @@
 #include <vector>
 #include <Eigen/Dense>
 #include <Eigen/SparseCore>
+#include <Eigen/SparseLU>
 
 using cmplx = std::complex<double>;
 
@@ -29,7 +30,7 @@ using mat23d = Eigen::Matrix<double, 2, 3>;
 using matXcd = Eigen::MatrixXcd;
 
 template <typename T>
-using sparseMat = Eigen::SparseMatrix<T>;
+using sparseMat = Eigen::SparseMatrix<T, Eigen::ColMajor>;
 
 using interpPair = std::pair<vecXd, int>;
 

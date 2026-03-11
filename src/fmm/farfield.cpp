@@ -4,7 +4,7 @@
  * Build radiation patterns due to sources in this leaf
  */
 void FMM::Node::buildRadPats() {
-    // assert(isLeaf());
+    if (isSrcless()) return;
     const Angles& angles_lvl = angles[level];
     size_t nDir = angles_lvl.getNumDirs();
 
