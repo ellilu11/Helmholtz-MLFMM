@@ -2,6 +2,9 @@
 
 #include <array>
 #include <complex>
+#include <iostream>
+#include <memory>
+#include <utility>
 #include <vector>
 
 using cmplx = std::complex<double>;
@@ -22,11 +25,6 @@ std::ostream& operator<< (std::ostream& os, cmplx z) {
     //os << z.real() << sign << abs(z.imag()) << 'i';
     os << z.real() << ' ' << z.imag();
     return os;
-}
-
-std::array<bool, 3> operator> (const vec3d& x, const vec3d& y) {
-    std::array<bool, 3> bools{ x[0] > y[0], x[1] > y[1], x[2] > y[2] };
-    return bools;
 }
 
 template <typename T>
