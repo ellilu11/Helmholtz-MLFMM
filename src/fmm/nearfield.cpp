@@ -1,16 +1,23 @@
 #include "nearfield.h"
 #include "../mesh/tripair.h"
 
-FMM::Nearfield::Nearfield() {
+FMM::Nearfield::Nearfield(int nsrcs) 
+    : nearMat(nsrcs, nsrcs)
+{
     std::cout << " Building nearfield matrix...     ";
 
     auto start = Clock::now();
 
+    std::vector<Eigen::Triplet<cmplx>> trips;
+
     findNodePairs();
     buildTriPairs();
 
-    buildPairRads();
-    buildSelfRads();
+    buildPairRads(trips);
+    buildSelfRads(trips);
+
+    nearMat.setFromTriplets(trips.begin(), trips.end());
+    nearMat.makeCompressed();
 
     Mesh::glTriPairs.clear();
 
@@ -68,7 +75,16 @@ void FMM::Nearfield::buildTriPairs() {
     }
 }
 
-void FMM::Nearfield::buildPairRads() {
+void FMM::Nearfield::buildPairRads(std::vector<Eigen::Triplet<cmplx>>& trips) {
+    // Precompute trips capacity
+    size_t totalCap = 0;
+    for (const auto& nearPair : nearPairs) {
+        const auto [obsLeaf, srcNode] = nearPair.pair;
+        size_t nObss = obsLeaf->srcs.size(), nSrcs = srcNode->srcs.size();
+        totalCap += 2*nObss*nSrcs;
+    }
+    trips.reserve(trips.capacity() + totalCap);
+
     for (auto& nearPair : nearPairs) {
         const auto [obsLeaf, srcNode] = nearPair.pair;
         // assert(obsLeaf < srcNode);
@@ -82,13 +98,26 @@ void FMM::Nearfield::buildPairRads() {
             for (size_t iSrc = 0; iSrc < nSrcs; ++iSrc) {
                 auto src = srcNode->srcs[iSrc];
 
-                nearPair.rads[pairIdx++] = obs->getIntegratedRad(src);
+                cmplx rad = Phys::C * config.k * obs->getIntegratedRad(src);
+
+                nearPair.rads[pairIdx++] = rad;
+                trips.emplace_back(obs->getIdx(), src->getIdx(), rad);
+                trips.emplace_back(src->getIdx(), obs->getIdx(), rad);
             }
         }
     }
 }
 
-void FMM::Nearfield::buildSelfRads() {
+void FMM::Nearfield::buildSelfRads(std::vector<Eigen::Triplet<cmplx>>& trips) {
+    // Precompute trips capacity
+    size_t totalCap = 0;
+    for (const auto& selfPair : selfPairs) {
+        const auto [leaf, srcLeaf] = selfPair.pair;
+        size_t nSrcs = leaf->srcs.size();
+        totalCap += nSrcs*nSrcs;
+    }
+    trips.reserve(trips.capacity() + totalCap);
+
     for (auto& selfPair : selfPairs) {
         const auto [leaf, srcLeaf] = selfPair.pair;
         assert(leaf == srcLeaf);
@@ -103,7 +132,12 @@ void FMM::Nearfield::buildSelfRads() {
             for (size_t iSrc = 0; iSrc <= iObs; ++iSrc) { // iSrc <= iObs 
                 auto src = leaf->srcs[iSrc];
 
-                selfPair.rads[pairIdx++] = obs->getIntegratedRad(src);
+                cmplx rad = Phys::C * config.k * obs->getIntegratedRad(src);
+
+                selfPair.rads[pairIdx++] = rad;
+                trips.emplace_back(obs->getIdx(), src->getIdx(), rad);
+                if (iSrc != iObs) // Only add self-term contribution once!
+                    trips.emplace_back(src->getIdx(), obs->getIdx(), rad);
             }
         }
     }
@@ -131,7 +165,7 @@ void FMM::Nearfield::evalPairSols(const NearPair& nearPair) {
             cmplx lvecSrc = Solver::lvec[src->getIdx()];
             cmplx& rvecSrc = Solver::rvec[src->getIdx()]; // &
 
-            cmplx rad = Phys::C * config.k * nearPair.rads[pairIdx++];
+            cmplx rad = nearPair.rads[pairIdx++];
 
             rvecObs += lvecSrc * rad;
             rvecSrc += lvecObs * rad;
@@ -161,7 +195,7 @@ void FMM::Nearfield::evalSelfSols(const NearPair& selfPair) {
             cmplx lvecSrc = Solver::lvec[src->getIdx()];
             cmplx& rvecSrc = Solver::rvec[src->getIdx()]; // &
 
-            cmplx rad = Phys::C * config.k * selfPair.rads[pairIdx++];
+            cmplx rad = selfPair.rads[pairIdx++];
 
             // Only add self-term contribution once!
             if (iSrc == iObs) {
@@ -215,9 +249,9 @@ void FMM::Nearfield::evaluateSols() {
      return mat;
  }
 
+/*
 sparseMat<cmplx> FMM::Nearfield::getNearMatrix(int nsrcs) const {
-    sparseMat<cmplx> mat(nsrcs, nsrcs);
-    std::vector<Eigen::Triplet<cmplx>> triplets;
+
 
     // Near pairs first
     for (const auto& nearPair : nearPairs) {
@@ -272,7 +306,7 @@ sparseMat<cmplx> FMM::Nearfield::getNearMatrix(int nsrcs) const {
      mat.setFromTriplets(triplets.begin(), triplets.end());
      mat.makeCompressed();
 
-     /* Print mat for debugging
+     // Print mat for debugging
      std::ofstream ofs("out/nfmat.txt");
      matXcd denseMat(mat);
      for (int i = 0; i < denseMat.rows(); ++i) {
@@ -280,7 +314,8 @@ sparseMat<cmplx> FMM::Nearfield::getNearMatrix(int nsrcs) const {
              ofs << denseMat(i, j).real() << " ";
          }
          ofs << "\n";
-     }*/
+     }//
 
      return mat;
  }
+ */

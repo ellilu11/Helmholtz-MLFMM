@@ -20,11 +20,11 @@ struct FMM::NearPair {
 class FMM::Nearfield {
 
 public:
-    Nearfield();
+    Nearfield(int);
 
     void evaluateSols();
 
-    sparseMat<cmplx> getNearMatrix(int) const;
+    // sparseMat<cmplx> getNearMatrix(int) const;
 
     std::vector<NearPair> getNearPairs() const { return nearPairs; }
 
@@ -35,13 +35,16 @@ private:
 
     void buildTriPairs();
 
-    void buildPairRads();
+    void buildPairRads(std::vector<Eigen::Triplet<cmplx>>&);
 
-    void buildSelfRads();
+    void buildSelfRads(std::vector<Eigen::Triplet<cmplx>>&);
 
     static void evalPairSols(const NearPair&);
 
     static void evalSelfSols(const NearPair&);
+
+public:
+    sparseMat<cmplx> nearMat;
 
 private:
     std::vector<NearPair> nearPairs;

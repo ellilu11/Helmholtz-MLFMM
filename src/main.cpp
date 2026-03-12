@@ -19,7 +19,7 @@ void mainLoop(const SrcVec& srcs, bool doFMM, bool doIter = true) {
     root->buildLists();
    
     // ==================== Build nearfield ===================== //
-    auto nf = std::make_unique<FMM::Nearfield>();
+    auto nf = std::make_unique<FMM::Nearfield>(nsrcs);
 
     // ==================== Build FMM quantities ================ //
     if (!isRootLeaf) {

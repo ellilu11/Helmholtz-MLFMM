@@ -27,10 +27,18 @@ GMRES::GMRES(
         { return src0->getIdx() < src1->getIdx(); }
     );
 
-    auto M = this->nf->getNearMatrix(numSrcs);
-    // precond.compute(M); // compute LU of M for preconditioning
-    precond.analyzePattern(M);
-    precond.factorize(M);
+    std::cout << " Building sparse nearfield matrix... ";
+    auto start = Clock::now();
+    auto Zmat = this->nf->nearMat;
+    Time duration_ms = Clock::now() - start;
+    std::cout << " in " << duration_ms.count() << " ms\n\n";
+
+    std::cout << " Analyzing and factorizing preconditioner... ";
+    start = Clock::now();
+    precond.analyzePattern(Zmat);
+    precond.factorize(Zmat);
+    duration_ms = Clock::now() - start;
+    std::cout << " in " << duration_ms.count() << " ms\n\n";
 
     // lvec = r = ZI - w = -w assuming I = 0 initially
     // std::transform
