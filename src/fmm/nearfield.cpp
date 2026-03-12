@@ -15,14 +15,25 @@ FMM::Nearfield::Nearfield(int nsrcs)
 
     buildPairRads(trips);
     buildSelfRads(trips);
+    Mesh::glTriPairs.clear();
 
     nearMat.setFromTriplets(trips.begin(), trips.end());
     nearMat.makeCompressed();
-
-    Mesh::glTriPairs.clear();
+    trips.clear();
 
     Time duration_ms = Clock::now() - start;
     std::cout << " in " << duration_ms.count() << " ms\n\n";
+
+    /* Print mat for debugging
+    std::ofstream ofs("out/nfmat.txt");
+    matXcd denseMat(nearMat);
+    for (int i = 0; i < denseMat.rows(); ++i) {
+        for (int j = 0; j < denseMat.cols(); ++j) {
+            ofs << denseMat(i, j).real() << " ";
+        }
+        ofs << "\n";
+    }
+    */
 }
 
 /* findNodePairs()
@@ -306,15 +317,7 @@ sparseMat<cmplx> FMM::Nearfield::getNearMatrix(int nsrcs) const {
      mat.setFromTriplets(triplets.begin(), triplets.end());
      mat.makeCompressed();
 
-     // Print mat for debugging
-     std::ofstream ofs("out/nfmat.txt");
-     matXcd denseMat(mat);
-     for (int i = 0; i < denseMat.rows(); ++i) {
-         for (int j = 0; j < denseMat.cols(); ++j) {
-             ofs << denseMat(i, j).real() << " ";
-         }
-         ofs << "\n";
-     }//
+
 
      return mat;
  }

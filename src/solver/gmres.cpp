@@ -27,17 +27,16 @@ GMRES::GMRES(
         { return src0->getIdx() < src1->getIdx(); }
     );
 
-    std::cout << " Building sparse nearfield matrix... ";
-    auto start = Clock::now();
-    auto Zmat = this->nf->nearMat;
-    Time duration_ms = Clock::now() - start;
-    std::cout << " in " << duration_ms.count() << " ms\n\n";
+    precond.setDroptol(1.0E-2); // TODO: Tune this parameter
+    precond.setFillfactor(5); // TODO: Tune this parameter
 
-    std::cout << " Analyzing and factorizing preconditioner... ";
-    start = Clock::now();
-    precond.analyzePattern(Zmat);
-    precond.factorize(Zmat);
-    duration_ms = Clock::now() - start;
+    std::cout << " LU factorizing nearfield matrix... ";
+    auto start = Clock::now();
+    const sparseMat<cmplx>& Zmat = this->nf->nearMat;
+    //precond.analyzePattern(Zmat);
+    //precond.factorize(Zmat);
+    precond.compute(Zmat);
+    Time duration_ms = Clock::now() - start;
     std::cout << " in " << duration_ms.count() << " ms\n\n";
 
     // lvec = r = ZI - w = -w assuming I = 0 initially

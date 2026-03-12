@@ -20,13 +20,11 @@ FMM::Node::Node(
     if (isRoot()) std::cout << " Building FMM tree...\n";
 
     if (buildLeaf) {
+        // Assign contiguous global indices to srcs in this leaf node
+        for (const auto& src : srcs) src->setIdx(glSrcIdx++);
+
+        // Update maxLevel if needed
         maxLevel = std::max(level, maxLevel);
-        // Assign indices to all sources in this leaf
-        for (const auto& src : srcs) {
-            src->setIdx(glSrcIdx++);
-            // std::cout << src->getIdx() << ' ';
-        }
-        // if (!isSrcless()) std::cout << '\n';
     }
     else subdivideNode();
 
