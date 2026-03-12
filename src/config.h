@@ -85,8 +85,7 @@ struct Config {
         is >> mode >> quadPrec // TODO: fix enums first
             >> nsrcs >> maxNodeSrcs
             >> digits >> interpOrder >> overInterp
-            >> rootLeng >> k
-            >> alpha;
+            >> k >> alpha;
 
         if (alpha < 0.0 || alpha > 1.0)
             throw std::runtime_error("Alpha must be in [0,1]");
@@ -126,8 +125,4 @@ struct Config {
     double alpha;
     cmplx C_efie;
     cmplx C_mfie;
-
-    // Point dipoles only (remove?)
-    Dist pdist;
-    QDist qdist;
 };

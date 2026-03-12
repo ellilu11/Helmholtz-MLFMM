@@ -252,7 +252,7 @@ int main() {
     root->buildLists();
 
     // ==================== Build nearfield ===================== //
-    auto nf = std::make_shared<Nearfield>();
+    auto nf = std::make_shared<Nearfield>(nsrcs);
 
     // ===================== Test ========================== //
     std::ofstream file("out/test/mesh/singular_efie_q13.txt");

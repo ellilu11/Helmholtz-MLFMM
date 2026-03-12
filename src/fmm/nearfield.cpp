@@ -1,7 +1,7 @@
 #include "nearfield.h"
 #include "../mesh/tripair.h"
 
-FMM::Nearfield::Nearfield(size_t nsrcs) 
+FMM::Nearfield::Nearfield(size_t nsrcs)
     : nearMat(nsrcs, nsrcs)
 {
     std::cout << " Building nearfield matrix...     ";
@@ -57,7 +57,7 @@ void FMM::Nearfield::buildTriPairs() {
 
     for (const auto& nearPair : nearPairs) {
         const auto& [obsLeaf, srcNode] = nearPair;
-        const auto &iTris0 = obsLeaf->iTris, &iTris1 = srcNode->iTris;
+        const auto& iTris0 = obsLeaf->iTris, & iTris1 = srcNode->iTris;
 
         for (auto iTri0 : iTris0)
             for (auto iTri1 : iTris1) {
@@ -76,36 +76,16 @@ size_t FMM::Nearfield::getNearCapacity() {
     for (const auto& nearPair : nearPairs) {
         const auto [obsLeaf, srcNode] = nearPair;
         size_t nObss = obsLeaf->srcs.size(), nSrcs = srcNode->srcs.size();
-        nearPair.rads.resize(nObss*nSrcs);
-
-        int pairIdx = 0;
-        for (size_t iObs = 0; iObs < nObss; ++iObs) {
-            auto obs = obsLeaf->srcs[iObs];
-            for (size_t iSrc = 0; iSrc < nSrcs; ++iSrc) {
-                auto src = srcNode->srcs[iSrc];
-
-                nearPair.rads[pairIdx++] = obs->getIntegratedRad(src);
-            }
-        }
+        cap += 2*nObss*nSrcs;
     }
-}
 
     for (const auto& selfPair : selfPairs) {
         const auto [leaf, srcLeaf] = selfPair;
         size_t nSrcs = leaf->srcs.size();
-        selfPair.rads.resize(nSrcs*(nSrcs+1)/2);
-
-        int pairIdx = 0;
-        for (size_t iObs = 0; iObs < nSrcs; ++iObs) { // iObs = 0
-            auto obs = leaf->srcs[iObs];
-
-            for (size_t iSrc = 0; iSrc <= iObs; ++iSrc) { // iSrc <= iObs 
-                auto src = leaf->srcs[iSrc];
-
-                selfPair.rads[pairIdx++] = obs->getIntegratedRad(src);
-            }
-        }
+        cap += nSrcs*nSrcs;
     }
+
+    return cap;
 }
 
 /* buildNearMatrix()
@@ -129,13 +109,16 @@ void FMM::Nearfield::buildNearMatrix() {
                 auto src = srcNode->srcs[iSrc];
                 size_t srcIdx = src->getIdx(); // global index of src
 
-            cmplx rad = Phys::C * config.k * nearPair.rads[pairIdx++];
+                double mass = obs->getIntegratedMass(src);
+                cmplx efie = config.C_efie * obs->getIntegratedEFIE(src),
+                    mfieObs = config.C_mfie * (obs->getIntegratedMFIE(src) + mass),
+                    mfieSrc = config.C_mfie * (src->getIntegratedMFIE(obs) + mass);
 
-            rvecObs += lvecSrc * rad;
-            rvecSrc += lvecObs * rad;
+                trips.emplace_back(obsIdx, srcIdx, efie+mfieObs);
+                trips.emplace_back(srcIdx, obsIdx, efie+mfieSrc);
+            }
         }
     }
-}
 
     // Build self-node contributions to near matrix
     for (auto& selfPair : selfPairs) {
@@ -144,7 +127,6 @@ void FMM::Nearfield::buildNearMatrix() {
 
         size_t nSrcs = leaf->srcs.size();
 
-        int pairIdx = 0;
         for (size_t iObs = 0; iObs < nSrcs; ++iObs) { // iObs = 0
             auto obs = leaf->srcs[iObs];
             size_t obsIdx = obs->getIdx(); // global index of obs
@@ -153,16 +135,15 @@ void FMM::Nearfield::buildNearMatrix() {
                 auto src = leaf->srcs[iSrc];
                 size_t srcIdx = src->getIdx(); // global index of src
 
-            cmplx rad = Phys::C * config.k * selfPair.rads[pairIdx++];
+                double mass = obs->getIntegratedMass(src);
+                cmplx efie = config.C_efie * obs->getIntegratedEFIE(src),
+                    mfieObs = config.C_mfie * (obs->getIntegratedMFIE(src) + mass),
+                    mfieSrc = config.C_mfie * (src->getIntegratedMFIE(obs) + mass);
 
-            // Only add self-term contribution once!
-            if (iSrc == iObs) {
-                rvecObs += lvecSrc * rad;
-                continue;
+                trips.emplace_back(obsIdx, srcIdx, efie+mfieObs);
+                if (iSrc != iObs) // Only add self-term contribution once!
+                    trips.emplace_back(srcIdx, obsIdx, efie+mfieSrc);
             }
-
-            rvecObs += lvecSrc * rad;
-            rvecSrc += lvecObs * rad;
         }
     }
 
@@ -172,10 +153,10 @@ void FMM::Nearfield::buildNearMatrix() {
 
 /* evaluateSols()
  * Multiply near matrix by lvec and add to rvec to get nearfield contribution to rvec
- */ 
+ */
 void FMM::Nearfield::evaluateSols() {
     auto start = Clock::now();
-  
+
     assert(nearMat.cols() == Solver::lvec.rows());
     assert(nearMat.rows() == Solver::rvec.rows());
 
@@ -187,24 +168,74 @@ void FMM::Nearfield::evaluateSols() {
 /* printNearMatrix()
  * Print near matrix to file for debugging
  */
- matXcd FMM::NearPair::getNearMatrix() const {
-     const auto& [leaf, srcLeaf] = pair;
-     assert(leaf == srcLeaf);
+void FMM::Nearfield::printNearMatrix(const std::string& fname) const {
+    std::ofstream of(fname);
+    matXcd denseMat(nearMat);
+    for (int i = 0; i < denseMat.rows(); ++i) {
+        for (int j = 0; j < denseMat.cols(); ++j)
+            of << denseMat(i, j).real() << ' ';
+        of << '\n';
+    }
+}
 
-     const SrcVec& srcs = leaf->getSrcs();
-     size_t nSrcs = srcs.size();
-     matXcd mat(nSrcs, nSrcs);
 
-     for (size_t iObs = 0; iObs < nSrcs; ++iObs) {
-         size_t iTri = iObs*(iObs+1)/2; // triangular numbers
+/* void FMM::Nearfield::evalPairSols(const NearPair& nearPair) {
+    const auto& [obsLeaf, srcLeaf] = nearPair.pair;
 
-         for (size_t iSrc = 0; iSrc <= iObs; ++iSrc) {
-             cmplx rad = Phys::C * config.k * rads[iTri+iSrc];
+    const SrcVec& srcs = obsLeaf->srcs;
+    const SrcVec& srcSrcs = srcLeaf->srcs;
+    size_t nObs = srcs.size(), nSrcs = srcSrcs.size();
 
-             mat(iObs, iSrc) = rad;
-             mat(iSrc, iObs) = rad;
-         }
-     }
+    int pairIdx = 0;
+    for (size_t iObs = 0; iObs < nObs; ++iObs) {
+        auto obs = srcs[iObs];
+        cmplx lvecObs = Solver::lvec[obs->getIdx()];
+        cmplx& rvecObs = Solver::rvec[obs->getIdx()]; // &
 
-     return mat;
- }
+        for (size_t iSrc = 0; iSrc < nSrcs; ++iSrc) {
+            auto src = srcSrcs[iSrc];
+            cmplx lvecSrc = Solver::lvec[src->getIdx()];
+            cmplx& rvecSrc = Solver::rvec[src->getIdx()]; // &
+
+            rvecObs += lvecSrc * nearPair.cfie[pairIdx].first;
+            rvecSrc += lvecObs * nearPair.cfie[pairIdx].second;
+
+            ++pairIdx;
+        }
+    }
+}
+
+void FMM::Nearfield::evalSelfSols(const NearPair& selfPair) {
+    const auto& [leaf, srcLeaf] = selfPair.pair;
+    assert(leaf == srcLeaf);
+
+    const SrcVec& srcs = leaf->srcs;
+    size_t nSrcs = srcs.size();
+
+    int pairIdx = 0;
+    for (size_t iObs = 0; iObs < nSrcs; ++iObs) { // iObs = 0
+        auto obs = srcs[iObs];
+        cmplx lvecObs = Solver::lvec[obs->getIdx()];
+        cmplx& rvecObs = Solver::rvec[obs->getIdx()]; // &
+
+        for (size_t iSrc = 0; iSrc <= iObs; ++iSrc) { // iSrc <= iObs
+            auto src = srcs[iSrc];
+            cmplx lvecSrc = Solver::lvec[src->getIdx()];
+            cmplx& rvecSrc = Solver::rvec[src->getIdx()]; // &
+
+            cmplx radAtObs = selfPair.cfie[pairIdx].first;
+            cmplx radAtSrc = selfPair.cfie[pairIdx].second;
+            ++pairIdx;
+
+            // Only add self-term contribution once!
+            if (iSrc == iObs) {
+                rvecObs += lvecSrc * radAtObs;
+                continue;
+            }
+
+            rvecObs += lvecSrc * radAtObs;
+            rvecSrc += lvecObs * radAtSrc;
+        }
+    }
+}
+*/

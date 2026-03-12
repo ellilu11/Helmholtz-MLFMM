@@ -11,8 +11,8 @@ void mainLoop(const SrcVec& srcs, bool doFMM, bool doIter = true) {
     size_t nsrcs = srcs.size();
     std::string method = doFMM ? "FMM" : "Direct";
 
-    //std::string ieStr = getIEStr(config.ie);
-    //std::transform(ieStr.begin(), ieStr.end(), ieStr.begin(), ::tolower);
+    std::string ieStr = getIEStr(config.ie);
+    std::transform(ieStr.begin(), ieStr.end(), ieStr.begin(), ::tolower);
 
     // ==================== Build nodes ========================= //
     auto start = Clock::now();
@@ -45,7 +45,7 @@ void mainLoop(const SrcVec& srcs, bool doFMM, bool doIter = true) {
 
     // ==================== Compute scattered field ============= //
     Mesh::printScattered(srcs,
-        "out/ff/px_k1.0z_r5.0_efie",
+        "out/ff/px_k1.0z_r5.0_"+ieStr,
         (doFMM ? "ff_n" : "ffDir_n")+std::to_string(nsrcs)+".txt", 200);
     //Mesh::printScattered(srcs,
     //    "out/ff/px_k1.0z_plate",
