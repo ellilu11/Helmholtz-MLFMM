@@ -7,7 +7,6 @@
 #include <memory>
 #include <utility>
 
-#include "dipole.cpp"
 #include "math.cpp"
 #include "solver/direct.cpp"
 #include "solver/gmres.cpp"

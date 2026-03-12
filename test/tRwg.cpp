@@ -240,7 +240,7 @@ int main() {
     // ==================== Import sources ====================== //
     auto Einc = Exc::importPlaneWaves("config/pwave.txt");
     auto srcs = Mesh::importMesh(
-        "config/rwg/sph_r5.0_n"+to_string(config.nsrcs), Einc);
+        "config/rwg/sph_r5.0_n"+std::to_string(config.nsrcs), Einc);
     size_t nsrcs = srcs.size();
 
     // ==================== Build nodes ========================= //

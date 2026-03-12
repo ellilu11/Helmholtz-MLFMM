@@ -89,6 +89,8 @@ SrcVec Mesh::importMesh(
     importTriangles(path/"faces.txt");
 
     return importRWGs(path/"rwgs.txt", std::move(Einc));
+
+    return importRWGs(path/"rwgs.txt", std::move(Einc));
 }
 
 void Mesh::printScattered(

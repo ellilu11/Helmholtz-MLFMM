@@ -2,7 +2,7 @@
 #include "main.h"
 #include "clock.h"
 #include "config.h"
-#include "source.h"
+#include "dipole.h"
 #include "fmm/fmm.h"
 
 extern const Config config("config/config.txt");
@@ -20,9 +20,9 @@ void mainLoop(const SrcVec& srcs, bool doFMM, bool doIter = true) {
     bool isRootLeaf = nsrcs <= config.maxNodeSrcs || !doFMM;
     auto root = std::make_shared<FMM::Node>(srcs, 0, nullptr, isRootLeaf);
     root->buildLists();
-
+   
     // ==================== Build nearfield ===================== //
-    auto nf = std::make_unique<FMM::Nearfield>();
+    auto nf = std::make_unique<FMM::Nearfield>(nsrcs);
 
     // ==================== Build FMM quantities ================ //
     if (!isRootLeaf) {
@@ -45,14 +45,19 @@ void mainLoop(const SrcVec& srcs, bool doFMM, bool doIter = true) {
 
     // ==================== Compute scattered field ============= //
     Mesh::printScattered(srcs,
-        "out/ff/px_k1.0z_r5.0_cfie",
-        (doFMM ? "ff_n" : "ffDir_n")+to_string(nsrcs)+".txt", 200);
+        "out/ff/px_k1.0z_r5.0_efie",
+        (doFMM ? "ff_n" : "ffDir_n")+std::to_string(nsrcs)+".txt", 200);
+    //Mesh::printScattered(srcs,
+    //    "out/ff/px_k1.0z_plate",
+    //    std::string(doFMM ? "ff_g" : "ffDir_g")+"0.50.txt", 100);
 }
 
 int main() {
     auto Einc = Exc::importPlaneWaves("config/pwave.txt");
     auto srcs = Mesh::importMesh(
-        "config/rwg/sph_r5.0/sph_r5.0_n"+to_string(config.nsrcs), Einc);
+        "config/rwg/sph_r5.0/sph_r5.0_n"+std::to_string(config.nsrcs), Einc);
+    //auto srcs = Mesh::importMesh(
+    //    "config/rwg/rect/rect_g0.50_n"+std::to_string(config.nsrcs), Einc);
     // Mesh::printNormals("out/nhats.txt");
 
     constexpr bool doIter = true;

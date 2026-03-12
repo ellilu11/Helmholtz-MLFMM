@@ -21,7 +21,8 @@ void Direct::solve(const std::string& fname) {
 
     auto start = Clock::now();
 
-    matXcd Zmat = selfPairs[0].getNearMatrix();
+    // Convert sparse nearMat to dense matrix for direct solver
+    matXcd Zmat = nf->nearMat;
     assert(Zmat.rows() == rvec.rows());
     assert(Zmat.cols() == currents.rows());
 

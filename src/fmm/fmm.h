@@ -40,6 +40,7 @@ namespace FMM {
     std::vector<NodePair> nonNearPairs;
     inline int numNodes = 0;
     inline int maxLevel = 0;
+    inline int glSrcIdx = 0;
 
     // Functions
     void buildLevels();
@@ -59,5 +60,6 @@ namespace FMM {
         nonNearPairs.clear();
         numNodes = 0;
         maxLevel = 0;
+        glSrcIdx = 0;
     }
 }

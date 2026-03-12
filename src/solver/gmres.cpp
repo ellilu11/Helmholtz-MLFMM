@@ -20,17 +20,43 @@ GMRES::GMRES(
     lvec = vecXcd::Zero(numSrcs);
     rvec = vecXcd::Zero(numSrcs);
 
+    // Sort sources by srcIdx
+    SrcVec sortedSrcs = srcs;
+    std::sort(sortedSrcs.begin(), sortedSrcs.end(),
+        [](std::shared_ptr<Source> src0, std::shared_ptr<Source> src1)
+        { return src0->getIdx() < src1->getIdx(); }
+    );
+
+    constexpr double dropTol = 5.0E-3; // TODO: Tune this parameter
+    constexpr int fillFact = 2; // TODO: Tune this parameter
+    buildPreconditioner(dropTol, fillFact);
+
     // lvec = r = ZI - w = -w assuming I = 0 initially
     // std::transform
     for (int idx = 0; idx < numSrcs; ++idx)
-        lvec[idx] = -srcs[idx]->getVoltage(); // check sign convention
+        lvec[idx] = -sortedSrcs[idx]->getVoltage();
+    lvec = ilu.solve(lvec); // Apply M^(-1) to lvec
 
     g0 = lvec.norm(); // store g0 for use later
     gvec[0] = g0;
- 
-    lvec.normalize(); // lvec_0
+
+    lvec.normalize(); // initial lvec
 
     Qmat.col(0) = lvec; // store lvec as first column of Qmat
+}
+
+void GMRES::buildPreconditioner(double dropTol, int fillFact) {
+    ilu.setDroptol(dropTol);
+    ilu.setFillfactor(fillFact);
+
+    std::cout << " Building preconditioner...       ";
+    auto start = Clock::now();
+
+    const auto& Zmat = this->nf->nearMat;
+    ilu.compute(Zmat);
+    
+    Time duration_ms = Clock::now() - start;
+    std::cout << " in " << duration_ms.count() << " ms\n\n";
 }
 
 void GMRES::updateRvec(int k) {
@@ -40,6 +66,8 @@ void GMRES::updateRvec(int k) {
         FMM::evaluateSols();
     }
     nf->evaluateSols();
+
+    rvec = ilu.solve(rvec); // Apply M^(-1) to rvec = Z * lvec
 }
 
 void GMRES::iterateArnoldi(int k) {
@@ -106,8 +134,8 @@ void GMRES::solve(const std::string& fname) {
 
     std::string method = root->isLeaf() ? "direct... " : "FMM...    ";
     std::cout << " Solving for current w/ " << method;
-
     auto start = Clock::now();
+
     int iter = 0;
     do {
         if (iter && !(iter%100)) std::cout << " #" << iter << ' ';
@@ -124,6 +152,7 @@ void GMRES::solve(const std::string& fname) {
 
     std::cout << "   # Iterations: " << iter << "\n";
 
+    // Solve least squares problem to get yvec, then compute currents = Qmat * yvec
     const matXcd& Hp = Hmat.block(0, 0, Hmat.rows()-1, Hmat.cols());
     vecXcd yvec = Hp.lu().solve(gvec.segment(0, iter));
     currents = Qmat.leftCols(iter) * yvec;

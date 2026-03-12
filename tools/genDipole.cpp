@@ -1,6 +1,5 @@
-#include "dipole.h"
-
-using namespace std;
+#include <filesystem>
+#include "../src/dipole.h"
 
 std::filesystem::path makePath(const Config& config) {
     std::string distStr =
@@ -18,32 +17,11 @@ std::filesystem::path makePath(const Config& config) {
         (distStr + "_n" + std::to_string(config.nsrcs) + ".txt");
 }
 
-SrcVec importDipoles(
-    const filesystem::path& fpath, shared_ptr<Exc::PlaneWave>& Einc)
-{
-    ifstream inFile(fpath);
-    if (!inFile) throw runtime_error("Unable to find file");
-    string line;
-    SrcVec dipoles;
-    size_t idx = 0;
-
-    while (getline(inFile, line)) {
-        istringstream iss(line);
-
-        vec3d pos, dip;
-        if (iss >> pos >> dip)
-            dipoles.emplace_back(make_shared<Dipole>(Einc, idx++, pos, dip));
-        else
-            throw std::runtime_error("Unable to parse line");
-    }
-
-    return dipoles;
-}
-
-/* TODO: Compile a separate executable for this 
 template <class dist0, class dist1 = dist0, class dist2 = dist0>
-SrcVec makeDipoles(const Config& config, const shared_ptr<Exc::PlaneWave> Einc)
+void genDipoles(const Config& config, const shared_ptr<Exc::PlaneWave> Einc)
 {
+    using namespace std;
+
     SrcVec dipoles;
 
     random_device rd;
@@ -118,33 +96,8 @@ SrcVec makeDipoles(const Config& config, const shared_ptr<Exc::PlaneWave> Einc)
         dipoles.emplace_back(make_shared<Dipole>(Einc, n, X, P));
     }
 
-    return dipoles;
-}
-*/
+    auto fpath = makePath(config);
 
-SrcVec buildDipoles(std::shared_ptr<Exc::PlaneWave> Einc)
-{
-    // Dipole sources
-    const auto fpath = makePath(config);
-    SrcVec srcs;
-    srcs = importDipoles("config/dipole/sphere_n"+to_string(config.nsrcs)+".txt", Einc);
-
-    /*
-    switch (config.mode) {
-        case Mode::FMM:
-            srcs = importDipoles(fpath, Einc);
-            break;
-
-        case Mode::FMMDIR: {
-            srcs = makeDipoles<uniform_real_distribution<double>>(config, Einc);
-
-            ofstream srcFile(fpath);
-            for (const auto& src : srcs) srcFile << *(dynamic_pointer_cast<Dipole>(src));
-            break;
-        }
-    }
-    // cout << "   Source file:     " << fpath.generic_string() << '\n';
-    */
-
-    return srcs;
+    ofstream srcFile(fpath);
+    for (const auto& src : srcs) srcFile << dipoles);
 }
