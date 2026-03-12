@@ -236,25 +236,53 @@ void testMassMatrix(const Mesh::Triangle& tri) {
 }
 */
 
+void testSelfIntegrated(const Mesh::Triangle& obsTri, const Mesh::Triangle& srcTri) {
+    assert(config.alpha == 1.0); // only EFIE part should be tested here
+
+    std::cout << std::setprecision(9);
+    std::cout << "obsTri #" << obsTri.getIdx() << '\n';
+    std::cout << "srcTri #" << srcTri.getIdx() << '\n';
+
+    vec3d vobs = obsTri.getVerts()[0];
+    vec3d vsrc = obsTri.getVerts()[1];
+
+    pair2i pair = std::minmax(obsTri.getIdx(), srcTri.getIdx());
+    Mesh::TriPair triPair(pair);
+
+    double selfRad = obsTri.getDoubleSelfIntegratedInvR(vobs, vsrc);
+    double pairRad = obsTri.getSingularEFIE(srcTri, triPair, vobs, vsrc);
+        //(obsTri.getSingularEFIE(srcTri, triPair, vobs, vsrc) +
+        //    srcTri.getSingularEFIE(obsTri, triPair, vsrc, vobs)) / 2.0;
+
+    std::cout << "Z diff: " <<
+        srcTri.getVerts()[0][2] - obsTri.getVerts()[0][2] << '\n';
+
+    std::cout << std::setprecision(15)
+        << "Self intRad: " << selfRad << '\n'
+        << "Pair intRad: " << pairRad << '\n'
+        << "Diff: " << pairRad - selfRad << '\n';
+}
+
 int main() {
     // ==================== Import sources ====================== //
     auto Einc = Exct::importPlaneWaves("config/pwave.txt");
     auto srcs = Mesh::importMesh(
-        "config/rwg/sph_r5.0_n"+std::to_string(config.nsrcs), Einc);
+        "config/rwg/test/n"+std::to_string(config.nsrcs)+"self", Einc);
     size_t nsrcs = srcs.size();
 
-    // ==================== Build nodes ========================= //
-    auto start0 = Clock::now();
+    /* ==================== Build nodes ========================= //
+    auto start = Clock::now();
 
     bool isRootLeaf = nsrcs <= config.maxNodeSrcs;
-    auto root = std::make_shared<Node>(srcs, 0, nullptr, isRootLeaf);
-
+    auto root = std::make_shared<FMM::Node>(srcs, 0, nullptr, isRootLeaf);
     root->buildLists();
 
     // ==================== Build nearfield ===================== //
-    auto nf = std::make_shared<Nearfield>(nsrcs);
+    auto nf = std::make_unique<FMM::Nearfield>(nsrcs);
+    */
 
     // ===================== Test ========================== //
+    /*
     std::ofstream file("out/test/mesh/singular_efie_q13.txt");
 
     for (const auto& triMap : Mesh::glTriPairs) {
@@ -262,7 +290,7 @@ int main() {
 
         testSingularEFIE(obsTri, srcTri, file);
         testSingularEFIE(srcTri, obsTri, file);
-    }
+    }*/
 
     /* Numeric vs analytic 1/R or 1/R^3 integration test
     const auto tri = dynamic_pointer_cast<Mesh::RWG>(srcs[0])->getTris()[0];
@@ -282,23 +310,10 @@ int main() {
     testMassMatrix(tri);
     */
 
-    /* Near/self integration test
-    auto rwg0 = dynamic_pointer_cast<Mesh::RWG>(srcs[0]);
-    auto rwg1 = dynamic_pointer_cast<Mesh::RWG>(srcs[1]);
-
-    auto selfRad = rwg0->getIntegratedRad(rwg0);
-    auto pairRad = rwg1->getIntegratedRad(rwg0);
-
-    //std::cout << std::setprecision(15)
-    //    << "Self intRad: " << selfRad << '\n'
-    //    << "Pair intRad: " << pairRad << '\n'
-    //    << "Diff: " << pairRad - selfRad << '\n';
-    
-    std::cout << std::setprecision(15)
-        << rwg1->getTris()[0].getVerts()[0][2] - rwg0->getTris()[0].getVerts()[0][2] << ' '
-        << (pairRad-selfRad).real() << ' ' 
-        << pairRad.real() << '\n';
-    */
+    // Near/self integration test
+    auto obsTri = dynamic_pointer_cast<Mesh::RWG>(srcs[0])->getTris()[0];
+    auto srcTri = dynamic_pointer_cast<Mesh::RWG>(srcs[1])->getTris()[0];
+    testSelfIntegrated(obsTri, srcTri);
 
     return 0;
 }

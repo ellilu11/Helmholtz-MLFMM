@@ -1,5 +1,9 @@
 #include "tripair.h"
 
+/* TriPair(iTris)
+ * Construct triangle pair from global indices of triangles
+ * iTris : global indices of triangles (ordered)
+ */
 Mesh::TriPair::TriPair(pair2i iTris)
     : iTris(iTris)
 {

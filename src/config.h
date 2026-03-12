@@ -8,7 +8,43 @@
 
 enum class Mode { FMM, DIR, FMMDIR };
 
-enum class Precision { VERYLOW, LOW, MEDIUM, HIGH, VERYHIGH };
+enum class IE { EFIE, MFIE, CFIE };
+
+enum class Precision { VERYLOW, LOW, MEDLOW, MEDIUM, MEDHIGH, HIGH, VERYHIGH};
+
+std::string getModeStr(Mode mode) {
+    return [&]() {
+        switch (mode) {
+            case Mode::FMM:    return "FMM";
+            case Mode::DIR:    return "DIRECT";
+            case Mode::FMMDIR: return "FMM+DIRECT";
+        };
+        } ();
+}
+
+std::string getIEStr(IE ie) {
+    return [&]() {
+        switch (ie) {
+            case IE::EFIE: return "EFIE";
+            case IE::MFIE: return "MFIE";
+            case IE::CFIE: return "CFIE";
+        };
+        } ();
+}
+
+int getNumQuads(Precision prec) {
+    return [&]() {
+        switch (prec) {
+            case Precision::VERYLOW:  return 1;
+            case Precision::LOW:      return 3;
+            case Precision::MEDLOW:   return 4;
+            case Precision::MEDIUM:   return 6;
+            case Precision::MEDHIGH:  return 7;
+            case Precision::HIGH:     return 12;
+            case Precision::VERYHIGH: return 13;
+        };
+    } ();
+}
 
 void getDigit(std::istringstream& iss, char ch) {
     while (iss.get(ch)) {
@@ -44,28 +80,6 @@ std::ifstream& operator>>(std::ifstream& is, T& val) {
     return is;
 }
 
-std::string getModeStr(Mode mode) {
-    return [&]() {
-        switch (mode) {
-            case Mode::FMM:    return "FMM";
-            case Mode::DIR:    return "DIRECT";
-            case Mode::FMMDIR: return "FMM+DIRECT";
-        };
-        } ();
-}
-
-int getNumQuads(Precision prec) {
-    return [&]() {
-        switch (prec) {
-            case Precision::VERYLOW:  return 1;
-            case Precision::LOW:      return 3;
-            case Precision::MEDIUM:   return 7;
-            case Precision::HIGH:     return 13;
-            case Precision::VERYHIGH: return 19;
-        };
-        } ();
-}
-
 struct Config {
     Config() = default;
     Config(const std::string& fileName) {
@@ -97,6 +111,5 @@ struct Config {
     int digits;
     int interpOrder;
     double overInterp;
-    // double rootLeng;
     double k;
 };
