@@ -3,10 +3,6 @@
 
 #pragma once
 
-#include <iostream>
-#include <memory>
-#include <utility>
-
 #include "math.cpp"
 #include "solver/direct.cpp"
 #include "solver/gmres.cpp"

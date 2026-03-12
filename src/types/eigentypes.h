@@ -22,6 +22,11 @@ using matXcd = Eigen::MatrixXcd;
 template <typename T>
 using sparseMat = Eigen::SparseMatrix<T, Eigen::ColMajor>;
 
+std::array<bool, 3> operator> (const vec3d& x, const vec3d& y) {
+    std::array<bool, 3> bools{ x[0] > y[0], x[1] > y[1], x[2] > y[2] };
+    return bools;
+}
+
 std::ostream& operator<< (std::ostream& os, const vec3d& X) {
     os << X[0] << " " << X[1] << " " << X[2];
     // os << '(' << X[0] << " " << X[1] << " " << X[2] << ')';
