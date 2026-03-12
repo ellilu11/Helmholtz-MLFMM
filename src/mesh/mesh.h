@@ -29,10 +29,10 @@ namespace Mesh {
     void buildRootCoords();
 
     SrcVec importRWGs(
-        const std::filesystem::path&, std::shared_ptr<Exc::PlaneWave>);
+        const std::filesystem::path&, std::shared_ptr<Exct::PlaneWave>);
 
     SrcVec importMesh(
-        const std::filesystem::path&, std::shared_ptr<Exc::PlaneWave>);
+        const std::filesystem::path&, std::shared_ptr<Exct::PlaneWave>);
 
     void printScattered(const SrcVec&, const std::filesystem::path&, const std::string&, int);
 

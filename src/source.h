@@ -2,7 +2,7 @@
 
 #include <filesystem>
 #include "config.h"
-#include "excite.h"
+#include "exct.h"
 #include "math.h"
 #include "phys.h"
 
@@ -15,7 +15,7 @@ class Source {
 public:
     Source() = default;
     
-    Source(std::shared_ptr<Exc::PlaneWave> Einc, size_t iSrc)
+    Source(std::shared_ptr<Exct::PlaneWave> Einc, size_t iSrc)
         : Einc(std::move(Einc)), iSrc(iSrc), voltage(0.0), rval(0.0)
     {};
 
@@ -41,7 +41,7 @@ public:
     virtual cmplx getIntegratedRad(const std::shared_ptr<Source>) const = 0;
 
 protected:
-    std::shared_ptr<Exc::PlaneWave> Einc;
+    std::shared_ptr<Exct::PlaneWave> Einc;
     cmplx voltage;
     size_t iSrc;
 

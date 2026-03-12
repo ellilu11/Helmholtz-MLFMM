@@ -1,7 +1,7 @@
 #include "srcrwg.h"
 
 Mesh::SrcRWG::SrcRWG( // TODO: Initialize iSubs
-    std::shared_ptr<Exc::PlaneWave> Einc,
+    std::shared_ptr<Exct::PlaneWave> Einc,
     size_t iSrc,
     const Eigen::Vector4i& idx4)
     : RWG(std::move(Einc), iSrc, idx4)

@@ -38,7 +38,7 @@ void Mesh::importTriangles(const std::filesystem::path& path) {
 }
 
 SrcVec Mesh::importRWGs(
-    const std::filesystem::path& path, std::shared_ptr<Exc::PlaneWave> Einc)
+    const std::filesystem::path& path, std::shared_ptr<Exct::PlaneWave> Einc)
 {
     std::ifstream file(path);
     std::string line;
@@ -76,7 +76,7 @@ void Mesh::buildRootCoords() {
 }
 
 SrcVec Mesh::importMesh(
-    const std::filesystem::path& path, std::shared_ptr<Exc::PlaneWave> Einc) 
+    const std::filesystem::path& path, std::shared_ptr<Exct::PlaneWave> Einc) 
 {
     std::cout << " Importing mesh...\n";
 

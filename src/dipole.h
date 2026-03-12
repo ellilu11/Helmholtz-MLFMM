@@ -8,13 +8,13 @@ public:
     Dipole() = default;
 
     Dipole(
-        std::shared_ptr<Exc::PlaneWave> Einc, size_t iSrc, const vec3d& X)
+        std::shared_ptr<Exct::PlaneWave> Einc, size_t iSrc, const vec3d& X)
         : Source(std::move(Einc), iSrc), pos(X), 
         pmag(Phys::p0), pol(vec3d(pmag, 0, 0)), phat(pol/pmag)
     {};
 
     Dipole(
-        std::shared_ptr<Exc::PlaneWave> Einc, size_t iSrc, const vec3d& X, const vec3d& P)
+        std::shared_ptr<Exct::PlaneWave> Einc, size_t iSrc, const vec3d& X, const vec3d& P)
         : Dipole(std::move(Einc), iSrc, X)
     {
         pol = P;
@@ -75,7 +75,7 @@ private:
 };
 
 SrcVec importDipoles(
-    const std::filesystem::path& fpath, std::shared_ptr<Exc::PlaneWave>& Einc)
+    const std::filesystem::path& fpath, std::shared_ptr<Exct::PlaneWave>& Einc)
 {
     std::ifstream inFile(fpath);
     if (!inFile) throw std::runtime_error("Unable to find file");

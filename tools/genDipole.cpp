@@ -18,7 +18,7 @@ std::filesystem::path makePath(const Config& config) {
 }
 
 template <class dist0, class dist1 = dist0, class dist2 = dist0>
-void genDipoles(const Config& config, const shared_ptr<Exc::PlaneWave> Einc)
+void genDipoles(const Config& config, const shared_ptr<Exct::PlaneWave> Einc)
 {
     using namespace std;
 

@@ -2,7 +2,7 @@
 
 #include "../clock.h"
 #include "../config.h"
-#include "../excite.h"
+#include "../exct.h"
 #include "../math.h"
 #include "../phys.h"
 #include "../types.h"
