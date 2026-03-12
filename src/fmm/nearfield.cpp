@@ -136,13 +136,15 @@ void FMM::Nearfield::buildNearMatrix() {
                 size_t srcIdx = src->getIdx(); // global index of src
 
                 double mass = obs->getIntegratedMass(src);
-                cmplx efie = config.C_efie * obs->getIntegratedEFIE(src),
-                    mfieObs = config.C_mfie * (obs->getIntegratedMFIE(src) + mass),
-                    mfieSrc = config.C_mfie * (src->getIntegratedMFIE(obs) + mass);
+                cmplx efie = config.C_efie * obs->getIntegratedEFIE(src);
+                cmplx mfieObs = config.C_mfie * (obs->getIntegratedMFIE(src) + mass);
 
                 trips.emplace_back(obsIdx, srcIdx, efie+mfieObs);
-                if (iSrc != iObs) // Only add self-term contribution once!
+
+                if (iSrc != iObs) { // Only add self-term contribution once!
+                    cmplx mfieSrc = config.C_mfie * (src->getIntegratedMFIE(obs) + mass);
                     trips.emplace_back(srcIdx, obsIdx, efie+mfieSrc);
+                }
             }
         }
     }

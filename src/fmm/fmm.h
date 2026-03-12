@@ -5,7 +5,7 @@
 #include "../excite.h"
 #include "../math.h"
 #include "../phys.h"
-#include "../types.h"
+#include "../types/types.h"
 
 extern const Config config;
 extern auto t = ClockTimes();

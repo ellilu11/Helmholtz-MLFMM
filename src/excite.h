@@ -1,7 +1,7 @@
 #pragma once
 
 #include <filesystem>
-#include "types.h"
+#include "types/types.h"
 
 extern const Config config;
 

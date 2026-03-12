@@ -67,7 +67,7 @@ void Mesh::SubRWG::buildMassCoeffs() {
         // Compute self coeffs
         massCoeffs.push_back(rwg.getMassCoeff(rwg));
         idxMassCoeffs.emplace(
-            makeUnordered(rwg.iSrc, rwg.iSrc), idx++);
+            std::minmax(rwg.iSrc, rwg.iSrc), idx++);
 
         // Compute pairwise coeffs
         for (auto iTri : rwg.iTris) {
@@ -80,7 +80,7 @@ void Mesh::SubRWG::buildMassCoeffs() {
                 if (rwg.iSrc < other.iSrc) {
                     massCoeffs.push_back(rwg.getMassCoeff(other));
                     idxMassCoeffs.emplace(
-                        makeUnordered(rwg.iSrc, other.iSrc), idx++);
+                        std::minmax(rwg.iSrc, other.iSrc), idx++);
                 }
             }
         }
@@ -93,7 +93,7 @@ void Mesh::SubRWG::buildMassCoeffs() {
     std::cout << std::setprecision(6);
     for (int i = 0; i < glSubrwgs.size(); ++i) {
         for (int j = 0; j < glSubrwgs.size(); ++j) {
-            const auto key = makeUnordered(i,j);
+            const auto key = std::minmax(i,j);
             if (idxMassCoeffs.find(key) != idxMassCoeffs.end()) {
                 std::cout << massCoeffs[idxMassCoeffs[key]] << ' ';
             } else {
