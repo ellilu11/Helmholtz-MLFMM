@@ -37,11 +37,11 @@ void Mesh::SrcRWG::refineRWGs() {
 
 void Mesh::SrcRWG::findSubRWGs() {
     auto getMidIdx = [&](int i0, int i1) {
-        return edgeToMid.at(makeUnordered(i0, i1));
+        return edgeToMid.at(std::minmax(i0, i1));
     };
 
     auto getSubIdx = [&](int i0, int i1) {
-        return fineEdgeToSub.at(makeUnordered(i0, i1));
+        return fineEdgeToSub.at(std::minmax(i0, i1));
     };
 
     auto iMid1 = getMidIdx(iVertsC[0], iVertsC[1]); // midpoint of common edge

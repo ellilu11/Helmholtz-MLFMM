@@ -1,7 +1,7 @@
 #pragma once
 
 #include "triangle.h"
-#include "../types.h"
+#include "../types/types.h"
 
 struct Mesh::TriPair {
 
