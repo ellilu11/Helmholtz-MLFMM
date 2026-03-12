@@ -37,8 +37,6 @@ public:
 
     // cmplx getSurfaceCurrent() const;
 
-    // cmplx getDuffyIntegrated(const vec3d&, const vec3d&, const vec3d&) const;
-
     void buildTriQuads();
 
     static void refineVertices();
@@ -64,7 +62,6 @@ public:
 private:
     static int numQuads;
     static std::vector<quadPair<vec3d>> quadCoeffs;
-    // static std::vector<quadPair<double>> linQuads; // linear quadrature nodes and weights
 
     // Integral quantities
     std::vector<quadPair<vec3d>> triQuads; // triangle quadrature nodes and weights

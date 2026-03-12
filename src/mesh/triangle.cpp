@@ -22,7 +22,7 @@ Mesh::Triangle::Triangle(const vec3i& iVerts, int iTri)
 
     buildTriQuads();
     reverseOrient();
-    // buildSelfIntegrated();
+    buildSelfIntegratedInvR();
     //std::cout << "Built triangle #" << iTri << " with edge lengths " 
     //    << Ds[0].norm() << ", " << Ds[1].norm() << ", " << Ds[2].norm() << '\n';
 }
@@ -93,10 +93,10 @@ double Mesh::Triangle::getDoubleSelfIntegratedInvR(const vec3d& vobs, const vec3
     double a00 = V0.dot(V0), a01 = V0.dot(V1), a02 = V0.dot(V2); // cache?
     const vec3d& vsum = vsrc + vobs;
     
-    return selfInts[0]
+    return (selfInts[0]
         + selfInts[1] * (-2.0*a00 + 2.0*a01 + (V0-V1).dot(vsum))
         + selfInts[2] * (-2.0*a00 + 2.0*a02 + (V0-V2).dot(vsum))
-        + selfInts[3] * (a00 - V0.dot(vsum) + vsrc.dot(vobs) - 4.0/k2);
+        + selfInts[3] * (a00 - V0.dot(vsum) + vsrc.dot(vobs) - 4.0/k2)) / (4.0*PI);
 }
 
 std::pair<cmplx, vec3cd>
@@ -281,11 +281,6 @@ double Mesh::Triangle::getSingularMFIE(
         auto [scaInvR3, vecInvR3] = (iTri <= srcTri.iTri ?
             triPair.integratedInvRcubed[iObs] : triPair.integratedInvRcubed2[iObs]);
 
-        //rad += 0.5*k2 * (obs-vobs).dot(nhat.cross(R.cross(vecInvR+(obsProj-vsrcProj)*scaInvR)))
-        //    * obsWeight;
-        //rad += (obs-vobs).dot(nhat.cross(R.cross(vecInvR3+(obsProj-vsrcProj)*scaInvR3)))
-        //    * obsWeight;
-
         vec3d sumInvR = 0.5*k2 * (vecInvR + (obsProj-vsrcProj)*scaInvR);
         vec3d sumInvR3 = vecInvR3 + (obsProj-vsrcProj)*scaInvR3;
 
@@ -331,47 +326,3 @@ cmplx Mesh::Triangle::getSurfaceCurrent() const {
     return J;
 }
 */
-
-/*
-cmplx Mesh::Triangle::getDuffyIntegrated(
-    const vec3d& src, const vec3d& vobs, const vec3d& vsrc) const 
-{
-    const double k = FMM::wavenum;
-
-    cmplx rad = 0.0;
-    // double areaSum = 0.0;
-    for (int i = 0; i < 3; ++i) {
-        const auto& V0 = glVerts[iVerts[i]];
-        const auto& V1 = glVerts[iVerts[(i+1)%3]];
-        const double area = (V0-src).cross(V1-src).norm()/2.0; // cache?
-        if (Math::fzero(area)) continue;
-
-        // areaSum += area;
-
-        cmplx triRad = 0.0;
-        for (const auto& [u, uweight] : linQuads) {
-            for (const auto& [v, vweight] : linQuads) {
-                const vec3d& obs = src + u*(V0 - src) + u*v*(V1 - V0);
-
-                const double dr = (obs-src).norm();
-                const double alpha = dr / u;
-
-                triRad += 
-                    ((obs-vobs).dot(src-vsrc) - 4.0 / (k*k))
-                    * exp(iu*k*dr) / alpha // u * Math::helmholtzG(dr, k)
-                    * uweight * vweight;
-            }
-        }
-
-        rad += area * triRad;
-    }
-
-    // assert(Math::fzero(areaSum-area));
-    // std::cout << areaSum << ' ' << area << '\n';
-
-    return rad;
-}*/
-
-
-
-

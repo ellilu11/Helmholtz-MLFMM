@@ -117,17 +117,16 @@ cmplx Mesh::RWG::getIntegratedEFIE(const std::shared_ptr<Source> src) const {
             vec3d v1 = (obsTri.iTri <= srcTri.iTri) ? vsrc : vobs;
             cmplx pairRad = m11 - v1.dot(m10) - v0.dot(m01) + (v0.dot(v1) - 4.0/k2)*m00;
 
-            // Integrate 1/R term (analytically)
+            // Integrate 1/R term (numeric-analytic)
             // Average obs-src and src-obs to preserve symmetry
             if (triPair.nCommon >= nCommonThres)
                 pairRad += (
                     obsTri.getSingularEFIE(srcTri, triPair, vobs, vsrc) +
                     srcTri.getSingularEFIE(obsTri, triPair, vsrc, vobs)) / 2.0;
 
-            /* For common triangles, integrate 1/R term (analytically)
-            if (nCommon == 3)
-                pairRad += obsTri.getDoubleSelfIntegratedInvR(vobs, vsrc);
-            */
+            // For common triangles, integrate 1/R term (full-analytic)
+            //if (triPair.nCommon == 3)
+            //    pairRad += obsTri.getDoubleSelfIntegratedInvR(vobs, vsrc);
 
             intRad += pairRad * Math::sign(iSrc) * Math::sign(iObs);
             ++iSrc;
@@ -165,7 +164,7 @@ cmplx Mesh::RWG::getIntegratedMFIE(const std::shared_ptr<Source> src) const {
             cmplx pairRad = m11 - vsrc.dot(m10) - vobs.dot(m01) + 
                 (vobs.dot(vsrc))*m000 + obsTri.nhat.dot(vsrc)*vobs.dot(m001);
 
-            // Integrate 1/R term (analytically)
+            // Integrate 1/R term (numeric-analytic)
             if (triPair.nCommon >= nCommonThres)
                 pairRad -= // minus sign since 1.0+0.5*k*k*r2 was added to gradG in MFIE moments
                     obsTri.getSingularMFIE(srcTri, triPair, vobs, vsrc);

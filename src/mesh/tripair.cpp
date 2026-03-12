@@ -1,5 +1,9 @@
 #include "tripair.h"
 
+/* TriPair(iTris)
+ * Construct triangle pair from global indices of triangles
+ * iTris : global indices of triangles (ordered)
+ */
 Mesh::TriPair::TriPair(pair2i iTris)
     : iTris(iTris)
 {
@@ -12,10 +16,24 @@ Mesh::TriPair::TriPair(pair2i iTris)
         buildIntegratedInvR();
         if (config.alpha != 1.0) buildIntegratedInvRcubed();
     }
+}
+
+/* Debug version
+Mesh::TriPair::TriPair(pair2i iTris)
+    : iTris(iTris)
+{
+    assert(iTris.first <= iTris.second);
+    buildNumCommon();
+
+    // if (config.alpha != 0.0) buildMomentsEFIE();
+    // if (config.alpha != 1.0) buildMomentsMFIE();
+    // if (nCommon >= nCommonThres) {
+    buildIntegratedInvR();
+    if (config.alpha != 1.0) buildIntegratedInvRcubed();
 
      //std::cout << "Built TriPair (" << iTris.first << "," << iTris.second
      //    << ") with nCommon = " << nCommon << '\n';
-}
+}*/
 
 void Mesh::TriPair::buildNumCommon() {
     if (iTris.first == iTris.second) {

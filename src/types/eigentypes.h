@@ -28,8 +28,8 @@ std::array<bool, 3> operator> (const vec3d& x, const vec3d& y) {
 }
 
 std::ostream& operator<< (std::ostream& os, const vec3d& X) {
-    os << X[0] << " " << X[1] << " " << X[2];
-    // os << '(' << X[0] << " " << X[1] << " " << X[2] << ')';
+    // os << X[0] << " " << X[1] << " " << X[2];
+    os << '(' << X[0] << " " << X[1] << " " << X[2] << ')';
     return os;
 }
 
