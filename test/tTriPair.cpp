@@ -14,7 +14,7 @@ int main() {
     // ===================== Build sources ==================== //
     std::cout << " Importing excitation and sources...\n";
 
-    auto Einc = Exc::importPlaneWaves("config/pwave.txt");
+    auto Einc = Exct::importPlaneWaves("config/pwave.txt");
     auto srcs = importSources(Einc);
     size_t nsrcs = srcs.size();
 

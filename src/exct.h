@@ -5,7 +5,7 @@
 
 extern const Config config;
 
-namespace Exc {
+namespace Exct {
     struct PlaneWave {
         PlaneWave()
             : pol(vec3d{ 1,0,0 }), wavehat(vec3d{ 0,0,1 }), wavevec(vec3d{ 0,0,1 }), amplitude(1.0)
@@ -36,8 +36,8 @@ namespace Exc {
     std::shared_ptr<PlaneWave> importPlaneWaves(const std::filesystem::path&);
 }
 
-std::shared_ptr<Exc::PlaneWave> 
-    Exc::importPlaneWaves(const std::filesystem::path& fpath)
+std::shared_ptr<Exct::PlaneWave> 
+    Exct::importPlaneWaves(const std::filesystem::path& fpath)
 {
     std::ifstream inFile(fpath);
     if (!inFile) throw std::runtime_error("Unable to find file");
@@ -46,12 +46,12 @@ std::shared_ptr<Exc::PlaneWave>
     std::getline(inFile, line);
     std::istringstream iss(line);
 
-    std::shared_ptr<Exc::PlaneWave> Einc;
+    std::shared_ptr<Exct::PlaneWave> Einc;
 
     vec3d pol, wavehat;
     double amplitude;
     if (iss >> pol >> wavehat >> amplitude)
-        Einc = std::make_shared<Exc::PlaneWave>(pol, wavehat, amplitude);
+        Einc = std::make_shared<Exct::PlaneWave>(pol, wavehat, amplitude);
     else
         throw std::runtime_error("Unable to parse line");
 

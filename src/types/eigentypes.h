@@ -61,9 +61,9 @@ std::istream& operator>>(std::istream& is, vec3i& X) {
     return is;
 }
 
-std::istream& operator>>(std::istream& is, Eigen::Vector4i& X) {
+std::istream& operator>>(std::istream& is, vec4i& X) {
     int x, y, z, w;
     if (is >> x >> y >> z >> w)
-        X = Eigen::Vector4i{ x, y, z, w };
+        X = vec4i{ x, y, z, w };
     return is;
 }

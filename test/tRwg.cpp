@@ -238,7 +238,7 @@ void testMassMatrix(const Mesh::Triangle& tri) {
 
 int main() {
     // ==================== Import sources ====================== //
-    auto Einc = Exc::importPlaneWaves("config/pwave.txt");
+    auto Einc = Exct::importPlaneWaves("config/pwave.txt");
     auto srcs = Mesh::importMesh(
         "config/rwg/sph_r5.0_n"+std::to_string(config.nsrcs), Einc);
     size_t nsrcs = srcs.size();

@@ -53,7 +53,7 @@ void mainLoop(const SrcVec& srcs, bool doFMM, bool doIter = true) {
 }
 
 int main() {
-    auto Einc = Exc::importPlaneWaves("config/pwave.txt");
+    auto Einc = Exct::importPlaneWaves("config/pwave.txt");
     auto srcs = Mesh::importMesh(
         "config/rwg/sph_r5.0/sph_r5.0_n"+std::to_string(config.nsrcs), Einc);
     //auto srcs = Mesh::importMesh(

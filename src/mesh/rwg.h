@@ -6,7 +6,7 @@
 
 class Mesh::RWG : public Source {
 public:
-    RWG(std::shared_ptr<Exc::PlaneWave>, size_t, const vec4i&);
+    RWG(std::shared_ptr<Exct::PlaneWave>, size_t, const vec4i&);
 
     void buildVoltage() override;
 
