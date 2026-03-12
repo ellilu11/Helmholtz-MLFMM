@@ -2,51 +2,32 @@
 
 #include "node.h"
 
-struct FMM::NearPair {
-    friend class Nearfield;
-
-    NearPair(
-        std::shared_ptr<Node> obsLeaf, 
-        std::shared_ptr<Node> srcLeaf)
-        : pair(std::move(obsLeaf), std::move(srcLeaf)) 
-    {}
-
-    matXcd getNearMatrix() const;
-
-    NodePair pair;
-    std::vector<cmplx> rads;
-};
-
 class FMM::Nearfield {
 
 public:
-    Nearfield(int);
+    Nearfield(size_t);
 
     void evaluateSols();
 
-    // sparseMat<cmplx> getNearMatrix(int) const;
+    std::vector<NodePair> getNearPairs() const { return nearPairs; }
 
-    std::vector<NearPair> getNearPairs() const { return nearPairs; }
+    std::vector<NodePair> getSelfPairs() const { return selfPairs; }
 
-    std::vector<NearPair> getSelfPairs() const { return selfPairs; }
+    void printNearMatrix(const std::string&) const;
 
 private: 
     void findNodePairs();
 
     void buildTriPairs();
 
-    void buildPairRads(std::vector<Eigen::Triplet<cmplx>>&);
+    size_t getNearCapacity();
 
-    void buildSelfRads(std::vector<Eigen::Triplet<cmplx>>&);
-
-    static void evalPairSols(const NearPair&);
-
-    static void evalSelfSols(const NearPair&);
+    void buildNearMatrix();
 
 public:
     sparseMat<cmplx> nearMat;
 
 private:
-    std::vector<NearPair> nearPairs;
-    std::vector<NearPair> selfPairs;
+    std::vector<NodePair> nearPairs;
+    std::vector<NodePair> selfPairs;
 };

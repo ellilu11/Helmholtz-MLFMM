@@ -10,6 +10,8 @@ public:
         std::shared_ptr<FMM::Node>,
         double, int);
 
+    void buildPreconditioner(double, int);
+
     void updateRvec(int);
 
     void iterateArnoldi(int);
@@ -23,8 +25,7 @@ public:
 private:
     std::shared_ptr<FMM::Node> root;
 
-    // Eigen::SparseLU<sparseMat<cmplx>, Eigen::COLAMDOrdering<int>> precond;
-    Eigen::IncompleteLUT<cmplx> precond;
+    Eigen::IncompleteLUT<cmplx> ilu;
 
     matXcd Qmat;
     matXcd Hmat;

@@ -27,23 +27,15 @@ GMRES::GMRES(
         { return src0->getIdx() < src1->getIdx(); }
     );
 
-    precond.setDroptol(1.0E-2); // TODO: Tune this parameter
-    precond.setFillfactor(5); // TODO: Tune this parameter
-
-    std::cout << " LU factorizing nearfield matrix... ";
-    auto start = Clock::now();
-    const sparseMat<cmplx>& Zmat = this->nf->nearMat;
-    //precond.analyzePattern(Zmat);
-    //precond.factorize(Zmat);
-    precond.compute(Zmat);
-    Time duration_ms = Clock::now() - start;
-    std::cout << " in " << duration_ms.count() << " ms\n\n";
+    constexpr double dropTol = 1.0E-3; // TODO: Tune this parameter
+    constexpr int fillFact = 10; // TODO: Tune this parameter
+    buildPreconditioner(dropTol, fillFact);
 
     // lvec = r = ZI - w = -w assuming I = 0 initially
     // std::transform
     for (int idx = 0; idx < numSrcs; ++idx)
         lvec[idx] = -sortedSrcs[idx]->getVoltage();
-    lvec = precond.solve(lvec); // apply M^{-1} here if preconditioning is desired
+    lvec = ilu.solve(lvec); // Apply M^(-1) to lvec
 
     g0 = lvec.norm(); // store g0 for use later
     gvec[0] = g0;
@@ -51,6 +43,18 @@ GMRES::GMRES(
     lvec.normalize(); // lvec_0
 
     Qmat.col(0) = lvec; // store lvec as first column of Qmat
+}
+
+void GMRES::buildPreconditioner(double dropTol, int fillFact) {
+    ilu.setDroptol(dropTol);
+    ilu.setFillfactor(fillFact);
+
+    std::cout << " Building preconditioner...       ";
+    auto start = Clock::now();
+    const auto& Zmat = this->nf->nearMat;
+    ilu.compute(Zmat);
+    Time duration_ms = Clock::now() - start;
+    std::cout << " in " << duration_ms.count() << " ms\n\n";
 }
 
 void GMRES::updateRvec(int k) {
@@ -61,8 +65,7 @@ void GMRES::updateRvec(int k) {
     }
     nf->evaluateSols();
 
-    // Apply M^{-1} here if preconditioning is desired
-    rvec = precond.solve(rvec);
+    rvec = ilu.solve(rvec); // Apply M^(-1) to rvec = Z * lvec
 }
 
 void GMRES::iterateArnoldi(int k) {
