@@ -153,6 +153,9 @@ void FMM::Nearfield::buildNearMatrix() {
 void FMM::Nearfield::evaluateSols() {
     auto start = Clock::now();
   
+    assert(nearMat.cols() == Solver::lvec.rows());
+    assert(nearMat.rows() == Solver::rvec.rows());
+
     Solver::rvec += nearMat * Solver::lvec;
 
     t.S2T += Clock::now() - start;

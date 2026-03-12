@@ -10,10 +10,6 @@ enum class Mode { FMM, DIR, FMMDIR };
 
 enum class Precision { VERYLOW, LOW, MEDIUM, HIGH, VERYHIGH };
 
-enum class Dist { UNIFORM, GAUSSIAN, SPHERE, CYLINDER };
-
-enum class QDist { UNIFORM, RANDSIGN, RANDOM };
-
 void getDigit(std::istringstream& iss, char ch) {
     while (iss.get(ch)) {
         if (std::isdigit(static_cast<unsigned char>(ch))) {
@@ -77,7 +73,7 @@ struct Config {
         is >> mode >> quadPrec // TODO: fix enums first
             >> nsrcs >> maxNodeSrcs
             >> digits >> interpOrder >> overInterp
-            >> rootLeng >> k;
+            >> k;
 
         std::cout << " *************************** \n";
         std::cout << " ***** Helmholtz-MLFMM ***** \n";
@@ -91,7 +87,6 @@ struct Config {
         std::cout << "   Interp order:    " << interpOrder << '\n';
         std::cout << "   Overinterp:      " << overInterp << '\n';
         std::cout << "   Tri quad rule:   " << getNumQuads(quadPrec) << "-point\n";
-        std::cout << "   Root length:     " << rootLeng << " m\n";
         std::cout << "   Wavenumber:      " << k << " /m\n\n";
     }
 
@@ -102,10 +97,6 @@ struct Config {
     int digits;
     int interpOrder;
     double overInterp;
-    double rootLeng;
+    // double rootLeng;
     double k;
-
-    // Point dipoles only
-    Dist pdist;
-    QDist qdist;
 };
