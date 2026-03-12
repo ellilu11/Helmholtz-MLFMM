@@ -21,6 +21,7 @@ FMM::Node::Node(
 
     if (buildLeaf) {
         // Assign contiguous global indices to srcs in this leaf node
+        // TODO: Use Morton ordering to improve spatial locality of srcs in leaf nodes
         for (const auto& src : srcs) src->setIdx(glSrcIdx++);
 
         // Update maxLevel if needed
@@ -161,8 +162,6 @@ void FMM::Node::findTris() {
         iTris.push_back(iTri1);
     }
 
-    // std::cout << "# tris in leaf: " << iTris.size() << '\n';
     std::sort(iTris.begin(), iTris.end());
     iTris.erase(std::unique(iTris.begin(), iTris.end()), iTris.end());
-    // std::cout << "# unique tris in leaf: " << iTris.size() << '\n';
 }

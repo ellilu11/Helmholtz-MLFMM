@@ -27,8 +27,8 @@ GMRES::GMRES(
         { return src0->getIdx() < src1->getIdx(); }
     );
 
-    constexpr double dropTol = 1.0E-3; // TODO: Tune this parameter
-    constexpr int fillFact = 10; // TODO: Tune this parameter
+    constexpr double dropTol = 5.0E-3; // TODO: Tune this parameter
+    constexpr int fillFact = 2; // TODO: Tune this parameter
     buildPreconditioner(dropTol, fillFact);
 
     // lvec = r = ZI - w = -w assuming I = 0 initially
@@ -39,8 +39,8 @@ GMRES::GMRES(
 
     g0 = lvec.norm(); // store g0 for use later
     gvec[0] = g0;
- 
-    lvec.normalize(); // lvec_0
+
+    lvec.normalize(); // initial lvec
 
     Qmat.col(0) = lvec; // store lvec as first column of Qmat
 }
@@ -51,8 +51,10 @@ void GMRES::buildPreconditioner(double dropTol, int fillFact) {
 
     std::cout << " Building preconditioner...       ";
     auto start = Clock::now();
+
     const auto& Zmat = this->nf->nearMat;
     ilu.compute(Zmat);
+    
     Time duration_ms = Clock::now() - start;
     std::cout << " in " << duration_ms.count() << " ms\n\n";
 }
@@ -132,8 +134,8 @@ void GMRES::solve(const std::string& fname) {
 
     std::string method = root->isLeaf() ? "direct... " : "FMM...    ";
     std::cout << " Solving for current w/ " << method;
-
     auto start = Clock::now();
+
     int iter = 0;
     do {
         if (iter && !(iter%100)) std::cout << " #" << iter << ' ';
@@ -150,6 +152,7 @@ void GMRES::solve(const std::string& fname) {
 
     std::cout << "   # Iterations: " << iter << "\n";
 
+    // Solve least squares problem to get yvec, then compute currents = Qmat * yvec
     const matXcd& Hp = Hmat.block(0, 0, Hmat.rows()-1, Hmat.cols());
     vecXcd yvec = Hp.lu().solve(gvec.segment(0, iter));
     currents = Qmat.leftCols(iter) * yvec;

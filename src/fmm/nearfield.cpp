@@ -5,7 +5,6 @@ FMM::Nearfield::Nearfield(size_t nsrcs)
     : nearMat(nsrcs, nsrcs)
 {
     std::cout << " Building nearfield matrix...     ";
-
     auto start = Clock::now();
 
     findNodePairs();
