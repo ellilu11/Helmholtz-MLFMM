@@ -27,8 +27,8 @@ void mainLoop(const SrcVec& srcs, bool doFMM, bool doIter = true) {
     // ==================== Solve for current =================== //
     std::unique_ptr<Solver> solver;
     if (doFMM || (!doFMM && doIter))
-        solver = std::make_unique<GMRES>(
-            srcs, std::move(nf), std::move(ff), root, 1.0E-6, nsrcs);
+        solver = std::make_unique<GMRES>(srcs, std::move(nf),
+            std::move(ff), root, 1.0E-6, nsrcs);
     else 
         solver = std::make_unique<Direct>(srcs, std::move(nf));
 

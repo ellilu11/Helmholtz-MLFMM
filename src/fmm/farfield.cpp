@@ -34,27 +34,25 @@ void FMM::Farfield::buildRadPats() {
     auto start = Clock::now();
 
     for (const auto& leaf : leaves) 
-        buildRadPats(leaf);
+        buildRadPatsOfNode(leaf);
 
     Time duration_ms = Clock::now() - start;
     std::cout << " in " << duration_ms.count() << " ms\n\n";
 }
 
 void FMM::Farfield::resizeCoeffs(const std::shared_ptr<FMM::Node>& node) {
-    if (node->isRoot() && node->isLeaf()) return;
-
-    const auto [nth, nph] = angles[node->level].getNumAngles();
-    node->coeffs.resize(nth*nph);
-    node->localCoeffs.resize(nth*nph);
+    size_t nDir = angles[node->level].getNumDirs();
+    node->coeffs.resize(nDir);
+    node->localCoeffs.resize(nDir);
 
     for (const auto& branch : node->branches)
         resizeCoeffs(branch);
 }
 
-/* buildRadPats()
+/* buildRadPatsOfNode()
  * Build radiation patterns due to sources in node
  */
-void FMM::Farfield::buildRadPats(const std::shared_ptr<FMM::Node>& node) {
+void FMM::Farfield::buildRadPatsOfNode(const std::shared_ptr<FMM::Node>& node) {
     if (node->isSrcless()) return;
     const Angles& angles_lvl = angles[node->level];
     size_t nDir = angles_lvl.getNumDirs();
