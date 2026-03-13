@@ -11,6 +11,7 @@
 #include "../source.h"
 
 class FMM::Node : public std::enable_shared_from_this<Node> {
+    friend class Farfield;
     friend class Nearfield;
 
 public:
@@ -18,19 +19,11 @@ public:
 
     void buildLists();
 
-    void resizeCoeffs();
-
     void findTris();
 
-    void buildRadPats();
+    Coeffs getMpoleCoeffs() const { return coeffs; }
 
-    Coeffs buildMpoleCoeffs();
-
-    Coeffs mergeMpoleCoeffs();
-
-    void buildLocalCoeffs();
-
-    void evalFarSols();
+    Coeffs getLocalCoeffs() const { return localCoeffs; }
 
     SrcVec getSrcs() const { return srcs; }
     
@@ -43,10 +36,6 @@ public:
     int getLevel() const { return level; }
 
     vec3d getCenter() const { return center; }
-    
-    Coeffs getMpoleCoeffs() const { return coeffs; }
-    
-    Coeffs getLocalCoeffs() const { return localCoeffs; }
 
     bool isRoot() const { return base == nullptr; }
 
@@ -66,10 +55,6 @@ private:
     void buildInteractionList();
     
     void pushSelfToNearNonNbors();
-
-    Coeffs getShiftedLocalCoeffs(int) const;
-
-    void translateCoeffs();
 
     void pushToNearNonNbors(const std::shared_ptr<Node>& node) {
         nearNonNbors.push_back(node);

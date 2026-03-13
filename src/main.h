@@ -9,7 +9,7 @@
 #include "solver/solver.cpp"
 #include "fmm/angles.cpp"
 #include "fmm/farfield.cpp"
-#include "fmm/fmm.cpp"
+#include "fmm/interp.cpp"
 #include "fmm/nbor.cpp"
 #include "fmm/nearfield.cpp"
 #include "fmm/node.cpp"
