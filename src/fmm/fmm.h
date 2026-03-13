@@ -35,8 +35,8 @@ namespace FMM {
     using NodePair = std::pair<std::shared_ptr<Node>, std::shared_ptr<Node>>;
 
     // Global data
-    std::vector<Angles> angles;
-    std::vector<Tables> tables;
+    std::vector<Angles> angles; // make Farfield private member
+    std::vector<Tables> tables; // make Farfield private member
     NodeVec leaves;
     std::vector<NodePair> nonNearPairs;
     inline int numNodes = 0;
@@ -44,14 +44,9 @@ namespace FMM {
     inline int glSrcIdx = 0;
 
     // Functions
-
-    void addInterpCoeffs(const Coeffs&, Coeffs&, int, int);
-
-    void addAnterpCoeffs(const Coeffs&, Coeffs&, int, int);
-
     void reset() {
-        angles.clear(); // make Farfield private member?
-        tables.clear(); // make Farfield private member?
+        angles.clear(); 
+        tables.clear(); 
         leaves.clear(); 
         nonNearPairs.clear();
         numNodes = 0;

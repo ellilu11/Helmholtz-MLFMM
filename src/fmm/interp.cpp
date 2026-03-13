@@ -1,7 +1,7 @@
 #include "fmm.h"
 
 void FMM::Farfield::addInterpCoeffs(
-    const Coeffs& inCoeffs, Coeffs& outCoeffs, int srcLvl, int tgtLvl) const
+    const Coeffs& inCoeffs, Coeffs& outCoeffs, int srcLvl, int tgtLvl)
 {
     int order = config.interpOrder;
 
@@ -57,7 +57,7 @@ void FMM::Farfield::addInterpCoeffs(
 }
 
 void FMM::Farfield::addAnterpCoeffs(
-    const Coeffs& inCoeffs, Coeffs& outCoeffs, int srcLvl, int tgtLvl) const
+    const Coeffs& inCoeffs, Coeffs& outCoeffs, int srcLvl, int tgtLvl)
 {
     int order = config.interpOrder;
 
