@@ -16,7 +16,17 @@ class FMM::Node : public std::enable_shared_from_this<Node> {
 public:
     Node(const SrcVec&, const int, Node* const, bool);
 
-    void buildLists();
+    void buildNeighbors(bool);
+
+    void doPreBalance();
+
+    static void balanceNodes();
+
+    void buildInteractionList();
+
+    void pushSelfToNearNonNbors();
+
+    void doPostBalance();
 
     void resizeCoeffs();
 
@@ -61,12 +71,6 @@ private:
     
     void subdivideNode();
 
-    void buildNeighbors();
-
-    void buildInteractionList();
-    
-    void pushSelfToNearNonNbors();
-
     Coeffs getShiftedLocalCoeffs(int) const;
 
     void translateCoeffs();
@@ -74,6 +78,9 @@ private:
     void pushToNearNonNbors(const std::shared_ptr<Node>& node) {
         nearNonNbors.push_back(node);
     }
+
+public:
+    static std::vector<int> numNodesPerLvl; // for debugging
 
 private:
     std::vector<Coeffs> radPats;

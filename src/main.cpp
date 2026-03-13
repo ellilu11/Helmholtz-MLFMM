@@ -19,8 +19,17 @@ void mainLoop(const SrcVec& srcs, bool doFMM, bool doIter = true) {
 
     bool isRootLeaf = nsrcs <= config.maxNodeSrcs || !doFMM;
     auto root = std::make_shared<FMM::Node>(srcs, 0, nullptr, isRootLeaf);
-    root->buildLists();
+
+    // TODO: Hide or combine these calls
+    root->doPreBalance();
+    FMM::Node::balanceNodes();
+    root->doPostBalance();
+
+    Time duration_ms = Clock::now() - start;
+    std::cout << "   in " << duration_ms.count() << " ms\n\n";
    
+    // return;
+
     // ==================== Build nearfield ===================== //
     auto nf = std::make_unique<FMM::Nearfield>(nsrcs);
 
@@ -40,7 +49,7 @@ void mainLoop(const SrcVec& srcs, bool doFMM, bool doIter = true) {
 
     solver->solve(doFMM ? "sol.txt" : "solDir.txt");
 
-    Time duration_ms = Clock::now() - start;
+    duration_ms = Clock::now() - start;
     std::cout << " " + method + " total elapsed time : " << duration_ms.count() << " ms\n\n";
 
     // ==================== Compute scattered field ============= //

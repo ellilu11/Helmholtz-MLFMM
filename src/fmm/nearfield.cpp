@@ -34,6 +34,8 @@ void FMM::Nearfield::findNodePairs() {
         const auto& [obsNode, srcNode] = pair;
         nearPairs.emplace_back(obsNode, srcNode);
     }
+
+    // std::cout << "   # non-near pairs: " << nonNearPairs.size() << '\n';
 }
 
 /* findTriPairs()
@@ -96,30 +98,6 @@ void FMM::Nearfield::buildNearMatrix() {
     std::vector<Eigen::Triplet<cmplx>> trips;
     trips.reserve(getNearCapacity());
 
-    // Build pair-node contributions to near matrix
-    for (auto& nearPair : nearPairs) {
-        const auto [obsLeaf, srcNode] = nearPair;
-        size_t nObss = obsLeaf->srcs.size(), nSrcs = srcNode->srcs.size();
-
-        for (size_t iObs = 0; iObs < nObss; ++iObs) {
-            auto obs = obsLeaf->srcs[iObs];
-            size_t obsIdx = obs->getIdx(); // global index of obs
-
-            for (size_t iSrc = 0; iSrc < nSrcs; ++iSrc) {
-                auto src = srcNode->srcs[iSrc];
-                size_t srcIdx = src->getIdx(); // global index of src
-
-                double mass = obs->getIntegratedMass(src);
-                cmplx efie = config.C_efie * obs->getIntegratedEFIE(src),
-                    mfieObs = config.C_mfie * (obs->getIntegratedMFIE(src) + mass),
-                    mfieSrc = config.C_mfie * (src->getIntegratedMFIE(obs) + mass);
-
-                trips.emplace_back(obsIdx, srcIdx, efie+mfieObs);
-                trips.emplace_back(srcIdx, obsIdx, efie+mfieSrc);
-            }
-        }
-    }
-
     // Build self-node contributions to near matrix
     for (auto& selfPair : selfPairs) {
         const auto [leaf, srcLeaf] = selfPair;
@@ -139,12 +117,41 @@ void FMM::Nearfield::buildNearMatrix() {
                 cmplx efie = config.C_efie * obs->getIntegratedEFIE(src);
                 cmplx mfieObs = config.C_mfie * (obs->getIntegratedMFIE(src) + mass);
 
+                assert(obsIdx < nearMat.rows() && srcIdx < nearMat.cols());
                 trips.emplace_back(obsIdx, srcIdx, efie+mfieObs);
 
                 if (iSrc != iObs) { // Only add self-term contribution once!
                     cmplx mfieSrc = config.C_mfie * (src->getIntegratedMFIE(obs) + mass);
+
+                    assert(srcIdx < nearMat.rows() && obsIdx < nearMat.cols());
                     trips.emplace_back(srcIdx, obsIdx, efie+mfieSrc);
                 }
+            }
+        }
+    }
+
+    // Build pair-node contributions to near matrix
+    for (auto& nearPair : nearPairs) {
+        const auto [obsLeaf, srcNode] = nearPair;
+        size_t nObss = obsLeaf->srcs.size(), nSrcs = srcNode->srcs.size();
+
+        for (size_t iObs = 0; iObs < nObss; ++iObs) {
+            auto obs = obsLeaf->srcs[iObs];
+            size_t obsIdx = obs->getIdx(); // global index of obs
+
+            for (size_t iSrc = 0; iSrc < nSrcs; ++iSrc) {
+                auto src = srcNode->srcs[iSrc];
+                size_t srcIdx = src->getIdx(); // global index of src
+
+                double mass = obs->getIntegratedMass(src);
+                cmplx efie = config.C_efie * obs->getIntegratedEFIE(src),
+                    mfieObs = config.C_mfie * (obs->getIntegratedMFIE(src) + mass),
+                    mfieSrc = config.C_mfie * (src->getIntegratedMFIE(obs) + mass);
+
+                assert(obsIdx < nearMat.rows() && srcIdx < nearMat.cols());
+                trips.emplace_back(obsIdx, srcIdx, efie+mfieObs);
+                assert(srcIdx < nearMat.rows() && obsIdx < nearMat.cols());
+                trips.emplace_back(srcIdx, obsIdx, efie+mfieSrc);
             }
         }
     }
