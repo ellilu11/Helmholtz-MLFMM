@@ -57,7 +57,7 @@ void FMM::Farfield::buildRadPatsOfNode(const std::shared_ptr<FMM::Node>& node) {
     const Angles& angles_lvl = angles[node->level];
     size_t nDir = angles_lvl.getNumDirs();
 
-    radPats.resize(srcs.size());
+    node->radPats.resize(node->srcs.size());
     size_t iSrc = 0;
     for (const auto& src : node->srcs) {
         Coeffs radPat(nDir);
@@ -67,10 +67,10 @@ void FMM::Farfield::buildRadPatsOfNode(const std::shared_ptr<FMM::Node>& node) {
             const mat23d& toThPh = angles_lvl.toThPh[iDir];
 
             radPat.setCoeffAlongDir(
-                toThPh * src->getRadAlongDir(center, kvec), iDir);
+                toThPh * src->getRadAlongDir(node->center, kvec), iDir);
         }
 
-        radPats[iSrc++] = std::move(radPat);
+        node->radPats[iSrc++] = std::move(radPat);
     }
 }
 
@@ -252,10 +252,10 @@ void FMM::Farfield::evalFarSols(const std::shared_ptr<FMM::Node>& node) {
     Eigen::Map<arrXcd> localPhi(node->localCoeffs.phi.data(), nDir);
 
     size_t iObs = 0;
-    for (const auto& obs : srcs) {
+    for (const auto& obs : node->srcs) {
         cmplx intRad = 0;
 
-        Coeffs& radPat = radPats[iObs++];
+        Coeffs& radPat = node->radPats[iObs++];
         Eigen::Map<arrXcd> radPatTheta(radPat.theta.data(), nDir);
         Eigen::Map<arrXcd> radPatPhi(radPat.phi.data(), nDir);
 
