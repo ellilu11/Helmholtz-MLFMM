@@ -33,8 +33,6 @@ public:
     double getSingularMFIE(
         const Triangle&, const TriPair&, const vec3d&, const vec3d&) const;
 
-    int getNumCommonVerts(const Triangle&) const;
-
     // cmplx getSurfaceCurrent() const;
 
     void buildTriQuads();

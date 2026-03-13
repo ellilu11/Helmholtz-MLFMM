@@ -28,6 +28,13 @@ std::ostream& operator<< (std::ostream& os, cmplx z) {
 }
 
 template <typename T>
+std::ostream& operator<< (std::ostream& os, const std::vector<T>& vec) {
+    for (const auto& val : vec) os << val << " ";
+    os << '\n';
+    return os;
+}
+
+template <typename T>
 std::vector<T> operator+= (std::vector<T>& lhs, const std::vector<T>& rhs) {
     assert(lhs.size() == rhs.size());
     for (size_t i = 0; i < lhs.size(); ++i)
@@ -54,10 +61,4 @@ std::vector<T> operator* (T val, std::vector<T> vec) {
     return vec;
 }
 
-template <typename T>
-std::ostream& operator<< (std::ostream& os, const std::vector<T>& vec) {
-    for (const auto& val : vec) os << val << " ";
-    os << '\n';
-    return os;
-}
 

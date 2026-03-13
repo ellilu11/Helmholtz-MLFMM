@@ -27,14 +27,13 @@ GMRES::GMRES(
         { return src0->getIdx() < src1->getIdx(); }
     );
 
-    constexpr double dropTol = 5.0E-3; // TODO: Tune this parameter
-    constexpr int fillFact = 2; // TODO: Tune this parameter
-    buildPreconditioner(dropTol, fillFact);
-
     // lvec = r = ZI - w = -w assuming I = 0 initially
-    // std::transform
-    for (int idx = 0; idx < numSrcs; ++idx)
-        lvec[idx] = -sortedSrcs[idx]->getVoltage();
+    std::transform(sortedSrcs.begin(), sortedSrcs.end(), lvec.data(),
+        [](const std::shared_ptr<Source>& src) { return -src->getVoltage(); });
+
+    constexpr double dropTol = 1.0E-3; // TODO: Tune this parameter
+    constexpr int fillFact = 10; // TODO: Tune this parameter
+    buildPreconditioner(dropTol, fillFact);
     lvec = ilu.solve(lvec); // Apply M^(-1) to lvec
 
     g0 = lvec.norm(); // store g0 for use later
@@ -52,8 +51,7 @@ void GMRES::buildPreconditioner(double dropTol, int fillFact) {
     std::cout << " Building preconditioner...       ";
     auto start = Clock::now();
 
-    const auto& Zmat = this->nf->nearMat;
-    ilu.compute(Zmat);
+    ilu.compute(nf->nearMat);
     
     Time duration_ms = Clock::now() - start;
     std::cout << " in " << duration_ms.count() << " ms\n\n";

@@ -71,21 +71,21 @@ void FMM::Nearfield::buildTriPairs() {
  * Get number of nonzero entries in near matrix to reserve space for triplets
  */
 size_t FMM::Nearfield::getNearCapacity() {
-    size_t cap = 0;
-
-    for (const auto& nearPair : nearPairs) {
-        const auto [obsLeaf, srcNode] = nearPair;
-        size_t nObss = obsLeaf->srcs.size(), nSrcs = srcNode->srcs.size();
-        cap += 2*nObss*nSrcs;
-    }
-
-    for (const auto& selfPair : selfPairs) {
-        const auto [leaf, srcLeaf] = selfPair;
-        size_t nSrcs = leaf->srcs.size();
-        cap += nSrcs*nSrcs;
-    }
-
-    return cap;
+    return
+        std::accumulate(nearPairs.begin(), nearPairs.end(), 0,
+            [](size_t sum, const auto& nearPair) {
+                const auto& [obsLeaf, srcNode] = nearPair;
+                size_t nObss = obsLeaf->srcs.size(), nSrcs = srcNode->srcs.size();
+                return sum + 2*nObss*nSrcs;
+            }
+        ) +
+        std::accumulate(selfPairs.begin(), selfPairs.end(), 0,
+            [](size_t sum, const auto& selfPair) {
+                const auto& [leaf, srcLeaf] = selfPair;
+                size_t nSrcs = leaf->srcs.size();
+                return sum + nSrcs*nSrcs;
+            }
+        );
 }
 
 /* buildNearMatrix()

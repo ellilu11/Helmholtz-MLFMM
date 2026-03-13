@@ -2,7 +2,6 @@
 
 int Mesh::Triangle::numQuads;
 std::vector<quadPair<vec3d>> Mesh::Triangle::quadCoeffs;
-// std::vector<quadPair<double>> Mesh::Triangle::linQuads;
 
 /* Triangle(iVerts)
  * Construct triangle from global indices of vertices
@@ -22,9 +21,19 @@ Mesh::Triangle::Triangle(const vec3i& iVerts, int iTri)
 
     buildTriQuads();
     reverseOrient();
-    buildSelfIntegratedInvR();
-    //std::cout << "Built triangle #" << iTri << " with edge lengths " 
-    //    << Ds[0].norm() << ", " << Ds[1].norm() << ", " << Ds[2].norm() << '\n';
+    // buildSelfIntegratedInvR();
+}
+
+void Mesh::Triangle::buildTriQuads() {
+    auto [X0, X1, X2] = getVerts();
+
+    auto baryToPos = [&](const vec3d& ws) {
+        return ws[0]*X0 + ws[1]*X1 + ws[2]*X2;
+        };
+
+    triQuads.reserve(numQuads);
+    for (const auto& [coeffs, weight] : quadCoeffs)
+        triQuads.emplace_back(baryToPos(coeffs), weight);
 }
 
 /* If nhat is pointing inward, reverse it
@@ -169,7 +178,7 @@ Mesh::Triangle::getIntegratedInvR(const vec3d& obs, bool doNumeric) const
 
         const vec3d& P = P0 - l0*lhat;
         double p = P.norm(), p0 = P0.norm(), p1 = P1.norm();
-        const vec3d& phat = (fzero(p) ? zeroVec : P.normalized());
+        const vec3d& phat = (fzero(p) ? vec3d::Zero() : P.normalized());
 
         double rsq = p*p + dsq, r0 = std::sqrt(p0*p0 + dsq), r1 = std::sqrt(p1*p1 + dsq);
   
@@ -223,7 +232,7 @@ Mesh::Triangle::getIntegratedInvRcubed(const vec3d& obs, bool doNumeric) const
         const vec3d& P = P0 - l0*lhat;
         double p = P.norm(), p0 = P0.norm(), p1 = P1.norm();
 
-        const vec3d& phat = (fzero(p) ? zeroVec : P.normalized());
+        const vec3d& phat = (fzero(p) ? vec3d::Zero() : P.normalized());
 
         double rsq = p*p + dsq, r0 = std::sqrt(p0*p0 + dsq), r1 = std::sqrt(p1*p1 + dsq);
 
@@ -291,20 +300,6 @@ double Mesh::Triangle::getSingularMFIE(
     }
 
     return rad / (4.0*PI); // apply factor of 1/(4pi)
-}
-
-// Debugging only
-int Mesh::Triangle::getNumCommonVerts(const Triangle& other) const {
-    if (iTri == other.iTri) return 3;
-
-    int numVerts = 0;
-    for (int i = 0; i < 3; ++i)
-        for (int j = 0; j < 3; ++j)
-            if (iVerts[i] == other.iVerts[j])
-                ++numVerts;
-
-    assert(numVerts < 3);
-    return numVerts;
 }
 
 /*

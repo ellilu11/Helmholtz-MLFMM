@@ -1,7 +1,6 @@
 #pragma once
 
 #include <cmath>
-#include <utility>
 #include "types/types.h"
 
 #define _USE_MATH_DEFINES
@@ -9,13 +8,10 @@
 constexpr cmplx iu(0, 1);
 const double PI = std::acos(-1.0);
 
-const vec3d zeroVec = vec3d::Zero();
-const std::array<vec3d, 2> poles{ vec3d(0, 0, 1), vec3d(0, 0, -1) };
-
 namespace Math {
     constexpr double FEPS = 1.0E-6; // floating point error tolerance
 
-    inline size_t bools2Idx(const std::array<bool,3>& x) noexcept {
+    inline size_t bools2Idx(const vec3i& x) noexcept {
         return x[0] + 2 * x[1] + 4 * x[2];
     }
 

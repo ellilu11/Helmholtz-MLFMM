@@ -22,8 +22,8 @@ using matXcd = Eigen::MatrixXcd;
 template <typename T>
 using sparseMat = Eigen::SparseMatrix<T, Eigen::ColMajor>;
 
-std::array<bool, 3> operator> (const vec3d& x, const vec3d& y) {
-    std::array<bool, 3> bools{ x[0] > y[0], x[1] > y[1], x[2] > y[2] };
+vec3i operator> (const vec3d& X, const vec3d& Y) {
+    vec3i bools{ X[0] > Y[0], X[1] > Y[1], X[2] > Y[2] };
     return bools;
 }
 
