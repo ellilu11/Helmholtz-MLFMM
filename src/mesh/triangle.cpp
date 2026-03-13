@@ -21,24 +21,9 @@ Mesh::Triangle::Triangle(const vec3i& iVerts, int iTri)
     area = (Ds[0].cross(-Ds[2])).norm() / 2.0;
 
     buildTriQuads();
-    reverseOrient();
-    buildSelfIntegratedInvR();
+    // buildSelfIntegratedInvR();
     //std::cout << "Built triangle #" << iTri << " with edge lengths " 
     //    << Ds[0].norm() << ", " << Ds[1].norm() << ", " << Ds[2].norm() << '\n';
-}
-
-// Return global indices of vertices shared by this and other triangle
-int Mesh::Triangle::getNumCommonVerts(const Triangle& other) const {
-    if (iTri == other.iTri) return 3;
-
-    int numVerts = 0;
-    for (int i = 0; i < 3; ++i)
-        for (int j = 0; j < 3; ++j)
-            if (iVerts[i] == other.iVerts[j])
-                ++numVerts;
-
-    assert(numVerts < 3);
-    return numVerts;
 }
 
 void Mesh::Triangle::buildSelfIntegratedInvR() {
