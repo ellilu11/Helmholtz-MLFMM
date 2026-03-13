@@ -23,12 +23,13 @@ namespace FMM {
     };
 
     class Node;
+
+    class Farfield;
     class Nearfield;
-    struct NearPair;
-    struct NearSelf;
+
     struct Coeffs;
     struct Angles;
-    class Tables;
+    struct Tables;
 
     using NodeVec = std::vector<std::shared_ptr<Node>>;
     using NodePair = std::pair<std::shared_ptr<Node>, std::shared_ptr<Node>>;
@@ -43,11 +44,6 @@ namespace FMM {
     inline int glSrcIdx = 0;
 
     // Functions
-    void buildLevels();
-
-    void buildRadPats();
-
-    void evaluateSols();
 
     void addInterpCoeffs(const Coeffs&, Coeffs&, int, int);
 

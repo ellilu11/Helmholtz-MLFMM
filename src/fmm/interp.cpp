@@ -1,44 +1,7 @@
 #include "fmm.h"
 
-void FMM::buildLevels() {
-    std::cout << " Building FMM operators...        ";
-
-    auto start = Clock::now();
-
-    angles.reserve(maxLevel+1);
-    for (int level = 0; level <= maxLevel; ++level)
-        angles.emplace_back(level);
-
-    Tables::buildDists();
-    tables.reserve(maxLevel+1);
-    for (int level = 0; level <= maxLevel; ++level)
-        tables.emplace_back(level, maxLevel);
-
-    Time duration_ms = Clock::now() - start;
-    std::cout << " in " << duration_ms.count() << " ms\n\n";
-}
-
-void FMM::buildRadPats() {
-    std::cout << " Building plane wave expansions...";
-
-    auto start = Clock::now();
-
-    for (const auto& leaf : leaves)
-        leaf->buildRadPats();
-
-    Time duration_ms = Clock::now() - start;
-    std::cout << " in " << duration_ms.count() << " ms\n\n";
-}
-
-void FMM::evaluateSols() {
-    auto start = Clock::now();
-    for (const auto& leaf : leaves)
-        leaf->evalFarSols();
-    t.L2T += Clock::now() - start;
-}
-
-void FMM::addInterpCoeffs(
-    const Coeffs& inCoeffs, Coeffs& outCoeffs, int srcLvl, int tgtLvl)
+void FMM::Farfield::addInterpCoeffs(
+    const Coeffs& inCoeffs, Coeffs& outCoeffs, int srcLvl, int tgtLvl) const
 {
     int order = config.interpOrder;
 
@@ -93,8 +56,8 @@ void FMM::addInterpCoeffs(
     }
 }
 
-void FMM::addAnterpCoeffs(
-    const Coeffs& inCoeffs, Coeffs& outCoeffs, int srcLvl, int tgtLvl)
+void FMM::Farfield::addAnterpCoeffs(
+    const Coeffs& inCoeffs, Coeffs& outCoeffs, int srcLvl, int tgtLvl) const
 {
     int order = config.interpOrder;
 

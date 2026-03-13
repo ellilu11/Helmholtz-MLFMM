@@ -4,7 +4,7 @@
 #include "../math.h"
 #include "fmm.h"
 
-class FMM::Tables {
+struct FMM::Tables {
 
 public:
     Tables() = default;

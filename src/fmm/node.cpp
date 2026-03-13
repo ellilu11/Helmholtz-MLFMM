@@ -136,17 +136,6 @@ void FMM::Node::buildLists() {
     }
 }
 
-void FMM::Node::resizeCoeffs() {
-    if (isRoot() && isLeaf()) return;
-
-    const auto [nth, nph] = angles[level].getNumAngles();
-    coeffs.resize(nth*nph);
-    localCoeffs.resize(nth*nph);
-
-    for (const auto& branch : branches)
-        branch->resizeCoeffs();
-}
-
 /* findTris()
  * Find all unique triangles of RWGs in this node
  */

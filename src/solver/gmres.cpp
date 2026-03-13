@@ -1,13 +1,16 @@
 #include "gmres.h"
+#include "../fmm/farfield.h"
 #include "../fmm/nearfield.h"
 #include "../fmm/node.h"
 
 GMRES::GMRES(
     const SrcVec& srcs,
     std::unique_ptr<FMM::Nearfield> nf,
+    std::unique_ptr<FMM::Farfield> ff,
     std::shared_ptr<FMM::Node> root,
     double EPS, int maxIter)
     : Solver(srcs, std::move(nf)),
+      ff(std::move(ff)),
       root(std::move(root)),
       Qmat(matXcd(numSrcs, 1)),
       gvec(vecXcd::Zero(maxIter+1)),
@@ -60,9 +63,9 @@ void GMRES::buildPreconditioner(double dropTol, int fillFact) {
 
 void GMRES::updateRvec(int k) {
     if (!root->isLeaf()) {
-        root->mergeMpoleCoeffs();
-        root->buildLocalCoeffs();
-        FMM::evaluateSols();
+        ff->mergeMpoleCoeffs(root);
+        ff->buildLocalCoeffs(root);
+        ff->evaluateSols();
     }
     nf->evaluateSols();
 

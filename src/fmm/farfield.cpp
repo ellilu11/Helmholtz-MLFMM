@@ -1,16 +1,67 @@
-#include "node.h"
+#include "farfield.h"
+
+FMM::Farfield::Farfield(const std::shared_ptr<FMM::Node>& root) {
+    if (root->isLeaf()) return;
+
+    buildLevels();
+
+    buildRadPats();
+
+    resizeCoeffs(root);
+}
+
+void FMM::Farfield::buildLevels() {
+    std::cout << " Building FMM operators...        ";
+
+    auto start = Clock::now();
+
+    angles.reserve(maxLevel+1);
+    for (int level = 0; level <= maxLevel; ++level)
+        angles.emplace_back(level);
+
+    Tables::buildDists();
+    tables.reserve(maxLevel+1);
+    for (int level = 0; level <= maxLevel; ++level)
+        tables.emplace_back(level, maxLevel);
+
+    Time duration_ms = Clock::now() - start;
+    std::cout << " in " << duration_ms.count() << " ms\n\n";
+}
+
+void FMM::Farfield::buildRadPats() {
+    std::cout << " Building plane wave expansions...";
+
+    auto start = Clock::now();
+
+    for (const auto& leaf : leaves) 
+        buildRadPats(leaf);
+
+    Time duration_ms = Clock::now() - start;
+    std::cout << " in " << duration_ms.count() << " ms\n\n";
+}
+
+void FMM::Farfield::resizeCoeffs(const std::shared_ptr<FMM::Node>& node) {
+    if (node->isRoot() && node->isLeaf()) return;
+
+    const auto [nth, nph] = angles[node->level].getNumAngles();
+    node->coeffs.resize(nth*nph);
+    node->localCoeffs.resize(nth*nph);
+
+    for (const auto& branch : node->branches)
+        resizeCoeffs(branch);
+}
 
 /* buildRadPats()
- * Build radiation patterns due to sources in this leaf
+ * Build radiation patterns due to sources in node
  */
-void FMM::Node::buildRadPats() {
-    if (isSrcless()) return;
-    const Angles& angles_lvl = angles[level];
+void FMM::Farfield::buildRadPats(const std::shared_ptr<FMM::Node>& node) {
+    if (node->isSrcless()) return;
+    const Angles& angles_lvl = angles[node->level];
     size_t nDir = angles_lvl.getNumDirs();
 
     radPats.resize(srcs.size());
     size_t iSrc = 0;
-    for (const auto& src : srcs) {
+    for (const auto& src : node->srcs) {
         Coeffs radPat(nDir);
 
         for (int iDir = 0; iDir < nDir; ++iDir) {
@@ -28,19 +79,21 @@ void FMM::Node::buildRadPats() {
 /* buildMpoleCoeffs()
  * (S2M) Build multipole coefficients from sources in this leaf
  */
-FMM::Coeffs FMM::Node::buildMpoleCoeffs() {
+void FMM::Farfield::buildMpoleCoeffs(const std::shared_ptr<FMM::Node>& node) {
+    Coeffs& coeffs = node->coeffs;
+
     coeffs.fillZero();
-    if (isSrcless() || isRoot()) return coeffs;
+    if (node->isSrcless() || node->isRoot()) return;
 
     auto start = Clock::now();
 
-    size_t nDir = angles[level].getNumDirs();
+    size_t nDir = angles[node->level].getNumDirs();
     Eigen::Map<arrXcd> coeffsTheta(coeffs.theta.data(), nDir);
     Eigen::Map<arrXcd> coeffsPhi(coeffs.phi.data(), nDir);
 
     size_t iSrc = 0;
-    for (const auto& src : srcs) {
-        Coeffs& radPat = radPats[iSrc++];
+    for (const auto& src : node->srcs) {
+        Coeffs& radPat = node->radPats[iSrc++];
 
         Eigen::Map<arrXcd> radPatTheta(radPat.theta.data(), nDir);
         Eigen::Map<arrXcd> radPatPhi(radPat.phi.data(), nDir);
@@ -50,29 +103,29 @@ FMM::Coeffs FMM::Node::buildMpoleCoeffs() {
     }
 
     t.S2M += Clock::now() - start;
-
-    return coeffs;
 }
 
 /* mergeMpoleCoeffs()
  * (M2M) Build mpole coeffs by merging branch mpole coeffs
  */
-FMM::Coeffs FMM::Node::mergeMpoleCoeffs() {
+void FMM::Farfield::mergeMpoleCoeffs(const std::shared_ptr<FMM::Node>& node) {
     int order = config.interpOrder;
+    int level = node->level;
     size_t mDir = angles[level+1].getNumDirs();
 
-    coeffs.fillZero();
+    node->coeffs.fillZero();
 
-    for (const auto& branch : branches) {
+    for (const auto& branch : node->branches) {
         if (branch->isSrcless()) continue;
 
-        const Coeffs& branchCoeffs = (branch->isLeaf() ? 
-            branch->buildMpoleCoeffs() : branch->mergeMpoleCoeffs() );
+        if (branch->isLeaf()) buildMpoleCoeffs(branch);
+        else mergeMpoleCoeffs(branch);
+        const Coeffs& branchCoeffs = branch->getMpoleCoeffs();
 
         auto start = Clock::now();
 
         // Shift branch coeffs to center of this node
-        vec3d dX = center - branch->getCenter();
+        vec3d dX = node->center - branch->getCenter();
 
         Coeffs shiftedCoeffs(mDir);
         for (int iDir = 0; iDir < mDir; ++iDir) {
@@ -84,42 +137,41 @@ FMM::Coeffs FMM::Node::mergeMpoleCoeffs() {
         }
 
         // Interpolate shifted coeffs to this node's angular grid
-        addInterpCoeffs(shiftedCoeffs, coeffs, level+1, level);
+        addInterpCoeffs(shiftedCoeffs, node->coeffs, level+1, level);
 
         t.M2M += Clock::now() - start;
     }
-
-    return coeffs;
 }
 
 /* translateCoeffs()
  * (M2L) Translate mpole coeffs of interaction nodes into local coeffs at center,
  * then apply integration weights for anterpolation
  */
-void FMM::Node::translateCoeffs() {
-    if (iList.empty()) return;
+void FMM::Farfield::translateCoeffs(const std::shared_ptr<FMM::Node>& node) {
+    if (node->iList.empty()) return;
 
+    Coeffs& localCoeffs = node->localCoeffs;
     localCoeffs.fillZero();
     size_t nDir = localCoeffs.size();
 
     // Translate mpole coeffs into local coeffs
-    const VecHashMap<arrXcd>& transl = tables[level].transl;
+    const VecHashMap<arrXcd>& transl = tables[node->level].transl;
     Eigen::Map<arrXcd> localTheta(localCoeffs.theta.data(), nDir);
     Eigen::Map<arrXcd> localPhi(localCoeffs.phi.data(), nDir);
 
-    for (const auto& node : iList) {
-        vec3d dX = center - node->center;
-        arrXcd transl_dX = transl.at(dX/nodeLeng);
+    for (const auto& srcNode : node->iList) {
+        vec3d dX = node->center - srcNode->center;
+        arrXcd transl_dX = transl.at(dX/node->nodeLeng);
 
-        Eigen::Map<arrXcd> mpoleTheta(node->coeffs.theta.data(), nDir);
-        Eigen::Map<arrXcd> mpolePhi(node->coeffs.phi.data(), nDir);
+        Eigen::Map<arrXcd> mpoleTheta(srcNode->coeffs.theta.data(), nDir);
+        Eigen::Map<arrXcd> mpolePhi(srcNode->coeffs.phi.data(), nDir);
 
         localTheta += transl_dX * mpoleTheta;
         localPhi += transl_dX * mpolePhi;
     }
 
     // Apply integration weights
-    const Angles& angles_lvl = angles[level];
+    const Angles& angles_lvl = angles[node->level];
     auto [nth, nph] = angles_lvl.getNumAngles();
     double phiWeight = 2.0*PI / static_cast<double>(nph);
 
@@ -139,23 +191,26 @@ void FMM::Node::translateCoeffs() {
  * (L2L) Return local coeffs shifted to center of branch labeled by branchIdx
  * branchIdx : index of branch \in {0, ..., 7}
  */
-FMM::Coeffs FMM::Node::getShiftedLocalCoeffs(int branchIdx) const {
+FMM::Coeffs FMM::Farfield::getShiftedLocalCoeffs(
+    FMM::Node* node, int branchIdx) const 
+{
+    int level = node->level;
     size_t mDir = angles[level].getNumDirs();
     size_t nDir = angles[level+1].getNumDirs();
 
     Coeffs outCoeffs(nDir);
-    if (iList.empty()) return outCoeffs;
+    if (node->iList.empty()) return outCoeffs;
 
     // Shift local coeffs to center of branch
-    vec3d dX = branches[branchIdx]->getCenter() - center;
+    vec3d dX = node->branches[branchIdx]->getCenter() - node->center;
 
     Coeffs shiftedCoeffs(mDir);
     for (int iDir = 0; iDir < mDir; ++iDir) {
         vec3d kvec = angles[level].khat[iDir] * config.k;
         cmplx shift = exp(iu*kvec.dot(dX));
 
-        shiftedCoeffs.theta[iDir] = shift * localCoeffs.theta[iDir];
-        shiftedCoeffs.phi[iDir] = shift * localCoeffs.phi[iDir];
+        shiftedCoeffs.theta[iDir] = shift * node->localCoeffs.theta[iDir];
+        shiftedCoeffs.phi[iDir] = shift * node->localCoeffs.phi[iDir];
     }
 
     // Anterpolate shifted coeffs to branch's angular grid
@@ -168,34 +223,35 @@ FMM::Coeffs FMM::Node::getShiftedLocalCoeffs(int branchIdx) const {
  * (M2L) Translate mpole coeffs of interaction nodes into local coeffs at center
  * (L2L) Shift base local coeffs to center and add to local coeffs
  */
-void FMM::Node::buildLocalCoeffs() {
-    if (!isRoot()) {
+void FMM::Farfield::buildLocalCoeffs(const std::shared_ptr<FMM::Node>& node) {
+    if (!node->isRoot()) {
         // M2L
         auto start = Clock::now();
-        translateCoeffs();
+        translateCoeffs(node);
         t.M2L += Clock::now() - start;
 
         // Add L2L to M2L
         start = Clock::now();
-        if (!base->isRoot()) // TODO: Avoid adding Coeffs directly
-            localCoeffs += base->getShiftedLocalCoeffs(branchIdx);
+
+        if (!node->base->isRoot()) // TODO: Avoid adding Coeffs directly
+            node->localCoeffs += getShiftedLocalCoeffs(node->base, node->branchIdx);
         t.L2L += Clock::now() - start;
     }
 
-    for (const auto& branch : branches)
-        branch->buildLocalCoeffs();
+    for (const auto& branch : node->branches)
+        buildLocalCoeffs(branch);
 }
 
 /* evalFarSols()
  * (L2T) Evaluate sols from local expansion due to far nodes
  */
-void FMM::Node::evalFarSols() {
-    if (isSrcless() || level <= 1) return;
+void FMM::Farfield::evalFarSols(const std::shared_ptr<FMM::Node>& node) {
+    int level = node->level;
+    if (node->isSrcless() || level <= 1) return;
 
     size_t nDir = angles[level].getNumDirs();
-
-    Eigen::Map<arrXcd> localTheta(localCoeffs.theta.data(), nDir);
-    Eigen::Map<arrXcd> localPhi(localCoeffs.phi.data(), nDir);
+    Eigen::Map<arrXcd> localTheta(node->localCoeffs.theta.data(), nDir);
+    Eigen::Map<arrXcd> localPhi(node->localCoeffs.phi.data(), nDir);
 
     size_t iObs = 0;
     for (const auto& obs : srcs) {
@@ -210,4 +266,13 @@ void FMM::Node::evalFarSols() {
 
         Solver::rvec[obs->getIdx()] += Phys::C * config.k * intRad;
     }
+}
+
+void FMM::Farfield::evaluateSols() {
+    auto start = Clock::now();
+
+    for (const auto& leaf : leaves) 
+        evalFarSols(leaf);
+
+    t.L2T += Clock::now() - start;
 }
