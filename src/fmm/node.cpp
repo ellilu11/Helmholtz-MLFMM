@@ -13,9 +13,9 @@ FMM::Node::Node(
     bool buildLeaf)
     : srcs(srcs), branchIdx(branchIdx), base(base),
     nodeLeng(base == nullptr ? Mesh::rootLeng : base->nodeLeng/2.0),
-    level(base == nullptr ? 0 : base->level + 1),
     center(base == nullptr ? Mesh::rootCenter :
-        base->center + nodeLeng/2.0 * Math::idx2pm(branchIdx))
+        base->center + nodeLeng/2.0 * Math::idx2pm(branchIdx)),
+    level(base == nullptr ? 0 : base->level + 1)
 {
     if (isRoot()) std::cout << " Building FMM tree...\n";
 

@@ -152,7 +152,7 @@ namespace Math {
 
     std::vector<double> getINodeDistances();
 
-    std::array<vec3d, 316> getINodeDistVecs();
+    std::vector<vec3d> getINodeDistVecs();
 
     std::vector<vec3d> getINodeDirections();
 

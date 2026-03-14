@@ -23,6 +23,7 @@ void FMM::Farfield::buildLevels() {
     tables.reserve(maxLevel+1);
     for (int level = 0; level <= maxLevel; ++level)
         tables.emplace_back(level, maxLevel);
+    Tables::clearDists();
 
     Time duration_ms = Clock::now() - start;
     std::cout << " in " << duration_ms.count() << " ms\n\n";
@@ -123,12 +124,12 @@ void FMM::Farfield::mergeMpoleCoeffs(const std::shared_ptr<FMM::Node>& node) {
 
         if (branch->isLeaf()) buildMpoleCoeffs(branch);
         else mergeMpoleCoeffs(branch);
-        const Coeffs& branchCoeffs = branch->getMpoleCoeffs();
+        const Coeffs& branchCoeffs = branch->coeffs;
 
         auto start = Clock::now();
 
         // Shift branch coeffs to center of this node
-        vec3d dX = node->center - branch->getCenter();
+        vec3d dX = node->center - branch->center;
 
         Coeffs shiftedCoeffs(mDir);
         for (int iDir = 0; iDir < mDir; ++iDir) {
@@ -205,7 +206,7 @@ FMM::Coeffs FMM::Farfield::getShiftedLocalCoeffs(
     if (node->iList.empty()) return outCoeffs;
 
     // Shift local coeffs to center of branch
-    vec3d dX = node->branches[branchIdx]->getCenter() - node->center;
+    vec3d dX = node->branches[branchIdx]->center - node->center;
 
     Coeffs shiftedCoeffs(mDir);
     for (int iDir = 0; iDir < mDir; ++iDir) {
@@ -235,9 +236,9 @@ void FMM::Farfield::buildLocalCoeffs(const std::shared_ptr<FMM::Node>& node) {
 
         // Add L2L to M2L
         start = Clock::now();
-
         if (!node->base->isRoot()) // TODO: Avoid adding Coeffs directly
-            node->localCoeffs += getShiftedLocalCoeffs(node->base, node->branchIdx);
+            node->localCoeffs += 
+                getShiftedLocalCoeffs(node->base, node->branchIdx);
         t.L2L += Clock::now() - start;
     }
 

@@ -31,33 +31,6 @@ void Mesh::RWG::buildVoltage() {
     voltage = -Einc->amplitude * (polE.dot(inc) - polH.dot(incNormal));
 }
 
-/* Using inc . (nhat x polH) directly
-void Mesh::RWG::buildVoltage() {
-    vec3d kvec = Einc->wavevec;
-    vec3d polE = config.alpha * Einc->pol;
-    vec3d polH = (1.0 - config.alpha) * Einc->pol; // Einc->wavehat.cross(Einc->pol);
-
-    vec3cd inc = vec3cd::Zero();
-    cmplx voltH = 0.0;
-    int iTri = 0;
-    for (const auto& [tri, vert] : getTrisAndVerts()) {
-        vec3d X0 = tri.getVerts()[0];
-        const auto& [scaRad, vecRad] = tri.getIntegratedPlaneWave(kvec);
-
-        vec3cd triRad =
-            exp(iu*kvec.dot(X0)) * (scaRad * (X0 - vert) + vecRad) * Math::sign(iTri++);
-
-        inc += triRad;
-        voltH += tri.nhat.cross(polH).dot(triRad); // Hermitian dot!
-    }
-
-    inc *= leng;
-    voltH *= leng;
-
-    voltage = -Einc->amplitude * (polE.dot(inc) + voltH);
-}
-*/
-
 /* getIntegratedPlaneWave(kvec, doNumeric)
  * Return integral of exp(ik dot r'} * f(r') dr' at this RWG
  */
@@ -96,7 +69,7 @@ Mesh::RWG::getIntegratedPlaneWave(const vec3d& kvec, bool doNumeric) const {
 }
 
 /* getIntegratedEFIE(src)
- * Return the radiated field due to src tested with this RWG
+ * Return the electric field due to src tested with this RWG
  */
 cmplx Mesh::RWG::getIntegratedEFIE(const std::shared_ptr<Source> src) const {
     if (config.alpha == 0.0) return 0.0;
@@ -223,6 +196,33 @@ double Mesh::RWG::getIntegratedMass(const std::shared_ptr<Source> src) const {
     // PUZZLE: Why plus sign here?
     return 0.5 * leng * srcRWG->leng * mass; // factor of 1/2 = Omega/(4pi)
 }
+
+/* Using inc . (nhat x polH) directly
+void Mesh::RWG::buildVoltage() {
+    vec3d kvec = Einc->wavevec;
+    vec3d polE = config.alpha * Einc->pol;
+    vec3d polH = (1.0 - config.alpha) * Einc->pol; // Einc->wavehat.cross(Einc->pol);
+
+    vec3cd inc = vec3cd::Zero();
+    cmplx voltH = 0.0;
+    int iTri = 0;
+    for (const auto& [tri, vert] : getTrisAndVerts()) {
+        vec3d X0 = tri.getVerts()[0];
+        const auto& [scaRad, vecRad] = tri.getIntegratedPlaneWave(kvec);
+
+        vec3cd triRad =
+            exp(iu*kvec.dot(X0)) * (scaRad * (X0 - vert) + vecRad) * Math::sign(iTri++);
+
+        inc += triRad;
+        voltH += tri.nhat.cross(polH).dot(triRad); // Hermitian dot!
+    }
+
+    inc *= leng;
+    voltH *= leng;
+
+    voltage = -Einc->amplitude * (polE.dot(inc) + voltH);
+}
+*/
 
 /* Debug version, no precomputed moments
 cmplx Mesh::RWG::getIntegratedMFIE(const std::shared_ptr<Source> src) const {

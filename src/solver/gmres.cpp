@@ -36,7 +36,7 @@ GMRES::GMRES(
 
     constexpr double dropTol = 1.0E-3; // TODO: Tune this parameter
     constexpr int fillFact = 10; // TODO: Tune this parameter
-    buildPreconditioner(dropTol, fillFact);
+    buildILU(dropTol, fillFact);
     lvec = ilu.solve(lvec); // Apply M^(-1) to lvec
 
     g0 = lvec.norm(); // store g0 for use later
@@ -47,7 +47,7 @@ GMRES::GMRES(
     Qmat.col(0) = lvec; // store lvec as first column of Qmat
 }
 
-void GMRES::buildPreconditioner(double dropTol, int fillFact) {
+void GMRES::buildILU(double dropTol, int fillFact) {
     ilu.setDroptol(dropTol);
     ilu.setFillfactor(fillFact);
 

@@ -2,7 +2,7 @@
 
 std::vector<double> FMM::Tables::dists;
 std::vector<vec3d> FMM::Tables::rhats;
-std::array<vec3d, 316> FMM::Tables::dXs;
+std::vector<vec3d> FMM::Tables::dXs;
 
 std::vector<interpPair> FMM::Tables::getInterpTheta(int srcLvl, int tgtLvl)
 {
