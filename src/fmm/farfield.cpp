@@ -15,7 +15,6 @@ FMM::Farfield::Farfield(const std::shared_ptr<FMM::Node>& root) {
  */
 void FMM::Farfield::buildLevels() {
     std::cout << " Building FMM operators...        ";
-
     auto start = Clock::now();
 
     angles.reserve(maxLevel+1);
@@ -25,7 +24,7 @@ void FMM::Farfield::buildLevels() {
     Tables::buildDists();
     tables.reserve(maxLevel+1);
     for (int level = 0; level <= maxLevel; ++level)
-        tables.emplace_back(level, maxLevel);
+        tables.emplace_back(level);
     Tables::clearDists();
 
     Time duration_ms = Clock::now() - start;
@@ -34,7 +33,6 @@ void FMM::Farfield::buildLevels() {
 
 void FMM::Farfield::buildRadPats() {
     std::cout << " Building plane wave expansions...";
-
     auto start = Clock::now();
 
     for (const auto& leaf : leaves) 

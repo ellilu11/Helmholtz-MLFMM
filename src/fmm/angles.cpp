@@ -12,7 +12,7 @@ void FMM::Angles::buildAngularSamples(int level)
     int tau = ceil((1.73*config.k*nodeLeng +
         2.16*pow(config.digits, 2.0/3.0)*pow(config.k*nodeLeng, 1.0/3.0)));
 
-    L = floor(0.50*tau); // TODO: Find optimal formula
+    L = floor(0.50*tau); // TODO: Find optimal formula for M2L series truncation number
 
     // Construct thetas
     int nth = tau+1;

@@ -15,7 +15,7 @@ using pair2d = std::pair<double, double>;
 using pair2di = std::pair<double, int>;
 using pair2cd = std::pair<cmplx, cmplx>;
 
-using interpPair = std::pair<vecXd, int>;
+using interpPair = std::pair<std::vector<double>, int>;
 
 template <typename T>
 using quadPair = std::pair<T, double>;

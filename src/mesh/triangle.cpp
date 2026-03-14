@@ -202,7 +202,9 @@ Mesh::Triangle::getIntegratedPlaneWave(const vec3d& kvec) const
     return std::make_pair(scaRad, vecRad);
 }
 
-/*
+/* getSurfaceCurrent()
+ * Get the surface current on this triangle by summing contributions from adjacent RWGs
+ * Use the center of the triangle as the evaluation point for the RWG function
 cmplx Mesh::Triangle::getSurfaceCurrent() const {
     auto triToRWG = triToRWGs[iTri];
 

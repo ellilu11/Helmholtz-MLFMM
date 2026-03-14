@@ -25,11 +25,7 @@ public:
     
     bool isSrcless() const { return srcs.empty(); }
 
-private:
-    std::shared_ptr<Node> getNeighborGeqSize(const Dir) const;
-
-    NodeVec getNeighborsLeqSize(const std::shared_ptr<Node>, const Dir) const;
-    
+private:    
     void subdivide();
 
     void buildNeighbors();
@@ -41,6 +37,10 @@ private:
     void pushToNearNonNbors(const std::shared_ptr<Node>& node) {
         nearNonNbors.push_back(node);
     }
+
+    std::shared_ptr<Node> getNeighborGeqSize(const Dir) const;
+
+    NodeVec getNeighborsLeqSize(const std::shared_ptr<Node>, const Dir) const;
 
     void findTris();
 

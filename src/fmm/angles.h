@@ -32,5 +32,5 @@ struct FMM::Angles {
     std::vector<double> thetas;  // theta samples
     std::vector<double> weights; // weights of theta samples
     std::vector<double> phis;    // phi samples
-    int L;           // M2L series truncation number
+    int L;                       // M2L series truncation number
 };
