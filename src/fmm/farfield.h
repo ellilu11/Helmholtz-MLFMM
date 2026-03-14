@@ -18,9 +18,9 @@ public:
 private:
     void buildLevels();
 
-    void buildRadPats();
+    void buildGlRadPats();
 
-    void buildRadPatsOfNode(const std::shared_ptr<Node>&);
+    void buildRadPats(const std::shared_ptr<Node>&);
 
     void resizeCoeffs(const std::shared_ptr<Node>&);
 
