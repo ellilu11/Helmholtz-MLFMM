@@ -10,41 +10,22 @@ GMRES::GMRES(
     std::shared_ptr<FMM::Node> root,
     double EPS, int maxIter)
     : Solver(srcs, std::move(nf)),
-      ff(std::move(ff)),
-      root(std::move(root)),
+      ff(std::move(ff)), root(std::move(root)),
       Qmat(matXcd(numSrcs, 1)),
       gvec(vecXcd::Zero(maxIter+1)),
       vcos(vecXcd::Zero(maxIter)),
       vsin(vecXcd::Zero(maxIter)),
-      EPS(EPS),
-      maxIter(maxIter)
+      EPS(EPS), maxIter(maxIter)
 {
-    currents = vecXcd::Zero(numSrcs);
-    lvec = vecXcd::Zero(numSrcs);
-    rvec = vecXcd::Zero(numSrcs);
-
-    // Sort sources by srcIdx
-    SrcVec sortedSrcs = srcs;
-    std::sort(sortedSrcs.begin(), sortedSrcs.end(),
-        [](std::shared_ptr<Source> src0, std::shared_ptr<Source> src1)
-        { return src0->getIdx() < src1->getIdx(); }
-    );
-
-    // lvec = r = ZI - w = -w assuming I = 0 initially
-    std::transform(sortedSrcs.begin(), sortedSrcs.end(), lvec.data(),
-        [](const std::shared_ptr<Source>& src) { return -src->getVoltage(); });
-
     constexpr double dropTol = 1.0E-3; // TODO: Tune this parameter
     constexpr int fillFact = 10; // TODO: Tune this parameter
     buildILU(dropTol, fillFact);
-    lvec = ilu.solve(lvec); // Apply M^(-1) to lvec
 
-    g0 = lvec.norm(); // store g0 for use later
-    gvec[0] = g0;
-
-    lvec.normalize(); // initial lvec
-
-    Qmat.col(0) = lvec; // store lvec as first column of Qmat
+    lvec = ilu.solve(lvec); // apply M^(-1) to lvec
+    g0 = lvec.norm();   // store g0 for use later
+    gvec[0] = g0;       // store g0 as first entry of gvec
+    lvec.normalize();   
+    Qmat.col(0) = lvec; // store normalized lvec as first column of Qmat
 }
 
 /* buildILU()
@@ -76,7 +57,7 @@ void GMRES::updateRvec(int k) {
     }
     nf->evaluateSols();
 
-    rvec = ilu.solve(rvec); // Apply M^(-1) to rvec = Z * lvec
+    rvec = ilu.solve(rvec); // apply M^(-1) to rvec = Z * lvec
 }
 
 /* iterateArnoldi()
@@ -148,7 +129,7 @@ void GMRES::updateGvec(int k) {
  * Main GMRES loop to solve for currents, and print solutions to file
  */
 void GMRES::solve(const std::string& fname) {
-    // If maxIter = 0, just do one MVM and exit
+    // If maxIter = 0, just do one MVM and print rvec
     if (!maxIter) {
         updateRvec(0);
         printSols(fname, rvec);

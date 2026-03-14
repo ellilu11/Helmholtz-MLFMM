@@ -4,7 +4,6 @@
 #pragma once
 
 #include "math.cpp"
-#include "solver/direct.cpp"
 #include "solver/gmres.cpp"
 #include "solver/solver.cpp"
 #include "fmm/angles.cpp"

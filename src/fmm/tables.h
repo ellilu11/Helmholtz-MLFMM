@@ -9,8 +9,7 @@ struct FMM::Tables {
 public:
     Tables() = default;
 
-    Tables(int level, int maxLevel)
-        : level(level)
+    Tables(int level) : level(level)
     {
         if (level < maxLevel) buildInterpTables();
         buildTranslationTable();
@@ -28,23 +27,12 @@ public:
         dXs.clear();
     }
 
-    // M2M interpolation tables
-    std::vector<interpPair> interpTheta;
-    std::vector<interpPair> interpPhi;
-
-    // L2L interpolation tables
-    std::vector<interpPair> invInterpTheta;
-    std::vector<interpPair> invInterpPhi;
-
-    // M2L translation table
-    VecHashMap<arrXcd> transl;
-
 private:
     std::vector<interpPair> getInterpTheta(int, int);
 
     std::vector<interpPair> getInterpPhi(int, int);
 
-    Map<vecXcd> getAlpha();
+    Map<std::vector<cmplx>> getAlpha();
 
     HashMap<interpPair> getInterpPsi();
 
@@ -52,6 +40,15 @@ private:
 
     void buildTranslationTable();
 
+public:
+    // M2M interpolation tables
+    std::vector<interpPair> interpTheta;
+    std::vector<interpPair> interpPhi;
+
+    // M2L translation table
+    VecHashMap<arrXcd> transl;
+
+private:
     static std::vector<double> dists;
     static std::vector<vec3d> rhats;
     static std::vector<vec3d> dXs;

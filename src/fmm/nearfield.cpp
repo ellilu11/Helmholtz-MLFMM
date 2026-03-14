@@ -154,7 +154,7 @@ void FMM::Nearfield::buildNearMatrix() {
 }
 
 /* evaluateSols()
- * Multiply near matrix by lvec and add to rvec to get nearfield contribution to rvec
+ * (S2T) Multiply near matrix by lvec and add to rvec to get nearfield contribution to rvec
  */
 void FMM::Nearfield::evaluateSols() {
     auto start = Clock::now();

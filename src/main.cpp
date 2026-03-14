@@ -2,8 +2,9 @@
 #include "main.h"
 #include "clock.h"
 #include "config.h"
-#include "dipole.h"
+// #include "dipole.h"
 #include "fmm/fmm.h"
+#include "solver/direct.h"
 
 extern const Config config("config/config.txt");
 
@@ -57,7 +58,7 @@ int main() {
     //    "config/rwg/rect/rect_g"+config.lengStr+"_n"+std::to_string(config.nsrcs), Einc);
     // Mesh::printNormals("out/nhats.txt");
 
-    constexpr bool doIter = true;
+    constexpr bool doIter = false;
     switch (config.mode) {
         case Mode::FMM: mainLoop(srcs, true); break;
         case Mode::DIR: mainLoop(srcs, false, doIter); break;

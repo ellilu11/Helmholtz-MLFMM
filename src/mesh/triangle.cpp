@@ -42,7 +42,7 @@ void Mesh::Triangle::buildTriQuads() {
 
 /* reverseOrient()
  * If nhat is pointing inward, reverse it
- * Assume a closed, star-shaped mesh enclosing rootCenter
+ * Assume a closed, star-shaped mesh centered at and enclosing rootCenter
  */
 void Mesh::Triangle::reverseOrient() {
     if ((center-rootCenter).dot(nhat) < 0.0) {
@@ -343,7 +343,9 @@ double Mesh::Triangle::getSingularMFIE(
     return rad / (4.0*PI); // apply factor of 1/(4pi)
 }
 
-/*
+/* getSurfaceCurrent()
+ * Get the surface current on this triangle by summing contributions from adjacent RWGs
+ * Use the center of the triangle as the evaluation point for the RWG function
 cmplx Mesh::Triangle::getSurfaceCurrent() const {
     auto triToRWG = triToRWGs[iTri];
 
