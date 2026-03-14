@@ -19,24 +19,6 @@ public:
 
     void buildLists();
 
-    void findTris();
-
-    Coeffs getMpoleCoeffs() const { return coeffs; }
-
-    Coeffs getLocalCoeffs() const { return localCoeffs; }
-
-    SrcVec getSrcs() const { return srcs; }
-    
-    int getBranchIdx() const { return branchIdx; }
-
-    Node* getBase() const { return base; }
-    
-    double getNodeLeng() const { return nodeLeng; }
-    
-    int getLevel() const { return level; }
-
-    vec3d getCenter() const { return center; }
-
     bool isRoot() const { return base == nullptr; }
 
     bool isLeaf() const { return branches.empty(); }
@@ -60,6 +42,8 @@ private:
         nearNonNbors.push_back(node);
     }
 
+    void findTris();
+
 private:
     std::vector<Coeffs> radPats;
     Coeffs coeffs;
@@ -72,12 +56,12 @@ private:
     NodeVec nearNonNbors; // list 3
     NodeVec leafIlist; // list 4
 
+    std::vector<int> iTris; // indices of unique triangles of RWGs in this node
+
     SrcVec srcs;
     const int branchIdx;
     Node* const base;
-    const double nodeLeng;
-    const int level;
+    const double nodeLeng; // declare before center!
     const vec3d center;
-
-    std::vector<int> iTris; // indices of unique triangles of RWGs in this node
+    const int level;
 };

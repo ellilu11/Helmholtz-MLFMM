@@ -22,6 +22,12 @@ public:
         dXs = Math::getINodeDistVecs();
     }
 
+    static void clearDists() {
+        dists.clear();
+        rhats.clear();
+        dXs.clear();
+    }
+
     // M2M interpolation tables
     std::vector<interpPair> interpTheta;
     std::vector<interpPair> interpPhi;
@@ -48,7 +54,7 @@ private:
 
     static std::vector<double> dists;
     static std::vector<vec3d> rhats;
-    static std::array<vec3d,316> dXs;
+    static std::vector<vec3d> dXs;
 
     int level;
 };

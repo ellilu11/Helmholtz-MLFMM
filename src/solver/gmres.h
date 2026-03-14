@@ -11,7 +11,7 @@ public:
         std::shared_ptr<FMM::Node>,
         double, int);
 
-    void buildPreconditioner(double, int);
+    void buildILU(double, int);
 
     void updateRvec(int);
 

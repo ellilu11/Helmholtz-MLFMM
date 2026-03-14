@@ -205,8 +205,8 @@ std::vector<double> Math::getINodeDistances() {
     return dists;
 }
 
-std::array<vec3d, 316> Math::getINodeDistVecs() {
-    std::array<vec3d, 316> dvecs;
+std::vector<vec3d> Math::getINodeDistVecs() {
+    std::vector<vec3d> dvecs(316);
 
     int idx = 0;
     for (double dz = -3; dz <= 3; ++dz)
