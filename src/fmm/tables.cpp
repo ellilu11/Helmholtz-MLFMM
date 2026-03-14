@@ -4,6 +4,10 @@ std::vector<double> FMM::Tables::dists;
 std::vector<vec3d> FMM::Tables::rhats;
 std::vector<vec3d> FMM::Tables::dXs;
 
+/* getInterpTheta(srcLvl, tgtLvl)
+ * Return interpolation pairs for interpolating from srcLvl to tgtLvl over theta
+ * Each pair contains interpolation coefficients and index of nearest source theta
+ */
 std::vector<interpPair> FMM::Tables::getInterpTheta(int srcLvl, int tgtLvl)
 {
     int order = config.interpOrder;
@@ -46,6 +50,10 @@ std::vector<interpPair> FMM::Tables::getInterpTheta(int srcLvl, int tgtLvl)
     return interpPairs;
 }
 
+/* getInterpPhi(srcLvl, tgtLvl)
+ * Return interpolation pairs for interpolating from srcLvl to tgtLvl over phi
+ * Each pair contains interpolation coefficients and index of nearest source phi
+ */
 std::vector<interpPair> FMM::Tables::getInterpPhi(int srcLvl, int tgtLvl)
 {
     int order = config.interpOrder;
@@ -82,6 +90,10 @@ void FMM::Tables::buildInterpTables() {
     interpPhi = getInterpPhi(level+1, level);
 }
 
+/* getAlpha()
+ * Return translation coefficients for each distance between interacting nodes
+ * Each entry contains the coefficients for interpolating over the distance
+ */
 Map<vecXcd> FMM::Tables::getAlpha() {
     using namespace Math;
 
@@ -114,6 +126,10 @@ Map<vecXcd> FMM::Tables::getAlpha() {
     return alpha;
 };
 
+/* getInterpPsi()
+ * Return interpolation pairs for interpolating over psi = acos(khat.dot(rhat))
+ * Each pair contains interpolation coefficients and index of nearest source psi
+ */
 HashMap<interpPair> FMM::Tables::getInterpPsi() {
     int order = config.interpOrder;
 
@@ -161,6 +177,10 @@ HashMap<interpPair> FMM::Tables::getInterpPsi() {
     return interpPairs;
 }
 
+/* buildTranslationTable()
+ * Build translation table for each distance in dXs
+ * Each entry contains the translation coefficients for each direction in angles
+ */
 void FMM::Tables::buildTranslationTable() {
     int order = config.interpOrder;
 

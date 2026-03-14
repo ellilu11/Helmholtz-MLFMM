@@ -27,12 +27,15 @@ FMM::Node::Node(
         // Update maxLevel if needed
         maxLevel = std::max(level, maxLevel);
     }
-    else subdivideNode();
+    else subdivide();
 
     ++numNodes;
 }
 
-void FMM::Node::subdivideNode() {
+/* subdivide()
+ * Subdivide node into 8 branches and assign srcs to branches
+ */
+void FMM::Node::subdivide() {
     // Assign every src to a branch based on src center relative to node center
     std::array<SrcVec, 8> branchSrcs;
     for (const auto& src : srcs) {

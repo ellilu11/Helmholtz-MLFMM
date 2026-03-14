@@ -20,6 +20,9 @@ Mesh::RWG::RWG(
     buildVoltage();
 }
 
+/* buildVoltage()
+ * Compute voltage of this RWG due to incident plane wave
+ */
 void Mesh::RWG::buildVoltage() {
     auto [inc, incNormal] = getIntegratedPlaneWave(Einc->wavevec);
 
@@ -32,7 +35,7 @@ void Mesh::RWG::buildVoltage() {
 }
 
 /* getIntegratedPlaneWave(kvec, doNumeric)
- * Return integral of exp(ik dot r'} * f(r') dr' at this RWG
+ * Return integral of exp(i kvec . r'} * f(r') dr' at this RWG
  */
 std::pair<vec3cd,vec3cd> 
 Mesh::RWG::getIntegratedPlaneWave(const vec3d& kvec, bool doNumeric) const {

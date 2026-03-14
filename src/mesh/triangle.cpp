@@ -20,10 +20,14 @@ Mesh::Triangle::Triangle(const vec3i& iVerts, int iTri)
     area = (Ds[0].cross(-Ds[2])).norm() / 2.0;
 
     buildTriQuads();
-    reverseOrient();
+    // reverseOrient();
     // buildSelfIntegratedInvR();
 }
 
+/* buildTriQuads()
+ * Build quadrature nodes and weights for this triangle
+ * Use barycentric coordinates to transform from reference triangle to this triangle
+ */
 void Mesh::Triangle::buildTriQuads() {
     auto [X0, X1, X2] = getVerts();
 
@@ -36,16 +40,20 @@ void Mesh::Triangle::buildTriQuads() {
         triQuads.emplace_back(baryToPos(coeffs), weight);
 }
 
-/* If nhat is pointing inward, reverse it
-   Assume a closed, star-shaped mesh centered at and enclosing the origin
+/* reverseOrient()
+ * If nhat is pointing inward, reverse it
+ * Assume a closed, star-shaped mesh enclosing rootCenter
  */
 void Mesh::Triangle::reverseOrient() {
-    if (center.dot(nhat) < 0.0) {
+    if ((center-rootCenter).dot(nhat) < 0.0) {
         nhat *= -1.0;
         std::swap(this->iVerts[0], this->iVerts[2]); // Swap verts per right-hand rule
     }
 }
 
+/* buildSelfIntegratedInvR()
+ * Build self-integrated 1/R and its related integrals for this triangle
+ */
 void Mesh::Triangle::buildSelfIntegratedInvR() {
     auto [V0, V1, V2] = getVerts();
     double a00 = V0.dot(V0), a01 = V0.dot(V1), a02 = V0.dot(V2);
@@ -95,6 +103,9 @@ void Mesh::Triangle::buildSelfIntegratedInvR() {
     selfInts[3] = (log0/l0 + log1/l1 + log2/l2) / 3.0;
 }
 
+/* getDoubleSelfIntegratedInvR(vobs, vsrc)
+ * Get the double integral of 1/|vobs-r'| over this triangle
+ */
 double Mesh::Triangle::getDoubleSelfIntegratedInvR(const vec3d& vobs, const vec3d& vsrc) const
 {
     double k2 = config.k * config.k;
@@ -108,6 +119,12 @@ double Mesh::Triangle::getDoubleSelfIntegratedInvR(const vec3d& vobs, const vec3
         + selfInts[3] * (a00 - V0.dot(vsum) + vsrc.dot(vobs) - 4.0/k2)) / (4.0*PI);
 }
 
+/* getIntegratedPlaneWave(kvec)
+ * Get the integral of exp(i kvec . r') dr' over this triangle
+ * Return a pair of scalar and vector parts of the integral, 
+ * where the scalar part is the integral of exp(i kvec . r') 
+ * and the vector part is the integral of (r' - center) * exp(i kvec . r')
+ */
 std::pair<cmplx, vec3cd>
 Mesh::Triangle::getIntegratedPlaneWave(const vec3d& kvec) const
 {
@@ -144,6 +161,14 @@ Mesh::Triangle::getIntegratedPlaneWave(const vec3d& kvec) const
     return std::make_pair(scaRad, vecRad);
 }
 
+/* getIntegratedInvR(obs, doNumeric)
+ * Get the integral of 1/|obs-r'| dr' over this triangle
+ * Return a pair of scalar and vector parts of the integral, 
+ * where the scalar part is the integral of 1/|obs-r'| 
+ * and the vector part is the integral of (proj(r') - proj(obs)) / |obs-r'|
+ * where proj() is the projection onto the plane of the triangle
+ * If doNumeric is true, use numerical quadrature instead of analytical formula
+ */
 std::pair<double, vec3d>
 Mesh::Triangle::getIntegratedInvR(const vec3d& obs, bool doNumeric) const
 {
@@ -197,6 +222,14 @@ Mesh::Triangle::getIntegratedInvR(const vec3d& obs, bool doNumeric) const
     return std::make_pair(scaRad, vecRad);
 }
 
+/* getIntegratedInvRcubed(obs, doNumeric)
+ * Get the integral of 1/|obs-r'|^3 dr' over this triangle
+ * Return a pair of scalar and vector parts of the integral, 
+ * where the scalar part is the integral of 1/|obs-r'|^3
+ * and the vector part is the integral of (proj(r') - proj(obs)) / |obs-r'|^3
+ * where proj() is the projection onto the plane of the triangle
+ * If doNumeric is true, use numerical quadrature instead of analytical formula
+ */
 std::pair<double, vec3d>
 Mesh::Triangle::getIntegratedInvRcubed(const vec3d& obs, bool doNumeric) const
 {
@@ -251,6 +284,10 @@ Mesh::Triangle::getIntegratedInvRcubed(const vec3d& obs, bool doNumeric) const
     return std::make_pair(scaRad3, vecRad3);
 }
 
+/* getSingularEFIE(srcTri, triPair, vobs, vsrc)
+ * Get the singular part of the EFIE integral
+ * Use the precomputed integratedInvR from triPair to avoid numerical quadrature
+ */
 double Mesh::Triangle::getSingularEFIE(
     const Triangle& srcTri, const TriPair& triPair, const vec3d& vobs, const vec3d& vsrc) const
 {
@@ -272,6 +309,10 @@ double Mesh::Triangle::getSingularEFIE(
     return rad / (4.0*PI); // apply factor of 1/(4pi)
 }
 
+/* getSingularMFIE(srcTri, triPair, vobs, vsrc)
+ * Get the singular part of the MFIE integral
+ * Use the precomputed integratedInvR and integratedInvRcubed from triPair to avoid numerical quadrature
+ */
 double Mesh::Triangle::getSingularMFIE(
     const Triangle& srcTri, const TriPair& triPair, const vec3d& vobs, const vec3d& vsrc) const
 {

@@ -1,18 +1,24 @@
 #include "triangle.h"
 
+/* buildQuadCoeffs(prec)
+ * Build quadrature nodes and weights for given precision
+ * prec : precision level
+ */
 void Mesh::Triangle::buildQuadCoeffs(Precision prec) {
     numQuads = getNumQuads(prec);
     quadCoeffs.reserve(numQuads);
 
     switch (prec) {
-        case Precision::VERYLOW: { // 1-point
+        // 1-point
+        case Precision::VERYLOW: { 
             constexpr double weight = 1.0/2.0;
             const vec3d ws0(1.0/3.0, 1.0/3.0, 1.0/3.0);
             quadCoeffs.emplace_back(ws0, weight);
             break;
         }
 
-        case Precision::LOW: { // 3-point
+        // 3-point
+        case Precision::LOW: { 
             constexpr double weight0 = 1.0/6.0;
             std::vector<vec3d> wss0;
             wss0.emplace_back(2.0/3.0, 1.0/6.0, 1.0/6.0);
@@ -22,8 +28,9 @@ void Mesh::Triangle::buildQuadCoeffs(Precision prec) {
                 quadCoeffs.emplace_back(ws, weight0);
             break;
         }
-
-        case Precision::MEDLOW: { // 4-point
+    
+        // 4-point
+        case Precision::MEDLOW: { 
             constexpr double weight0 = -0.281250000000000;
             const vec3d ws0(1.0/3.0, 1.0/3.0, 1.0/3.0);
             quadCoeffs.emplace_back(ws0, weight0);
@@ -42,7 +49,8 @@ void Mesh::Triangle::buildQuadCoeffs(Precision prec) {
             break;
         }
 
-        case Precision::MEDIUM: { // 6-point
+        // 6-point
+        case Precision::MEDIUM: {
             constexpr double weight1 = 0.111690794839005;
             constexpr double alpha1 = 0.108103018168070, beta1 = 0.445948490915965;
             std::vector<vec3d> wss1;
@@ -65,8 +73,9 @@ void Mesh::Triangle::buildQuadCoeffs(Precision prec) {
             static_assert(weightErr > -Math::FEPS && weightErr < Math::FEPS);
             break;
         }
-
-        case Precision::MEDHIGH: { // 7-point
+    
+        // 7-point
+        case Precision::MEDHIGH: { 
             constexpr double weight0 = 0.1125;
             const vec3d ws0(1.0/3.0, 1.0/3.0, 1.0/3.0);
             quadCoeffs.emplace_back(ws0, weight0);
@@ -94,7 +103,8 @@ void Mesh::Triangle::buildQuadCoeffs(Precision prec) {
             break;
         }
 
-        case Precision::HIGH: { // 12-point
+        // 12-point
+        case Precision::HIGH: { 
             constexpr double weight1 = 0.058393137863189;
             constexpr double alpha1 = 0.501426509658179, beta1 = 0.249286745170910;
             vec3d ws1(alpha1, beta1, beta1);
@@ -134,7 +144,8 @@ void Mesh::Triangle::buildQuadCoeffs(Precision prec) {
             break;
         }
 
-        case Precision::VERYHIGH: { // 13-point
+        // 13-point
+        case Precision::VERYHIGH: { 
             constexpr double weight0 = -0.074785022233841;
             const vec3d ws0(1.0/3.0, 1.0/3.0, 1.0/3.0);
             quadCoeffs.emplace_back(ws0, weight0);
@@ -178,8 +189,8 @@ void Mesh::Triangle::buildQuadCoeffs(Precision prec) {
             break;
         }
 
-        /*
-        case Precision::VERYHIGH: { // 19-point, for debugging
+        /* // 19-point, for debugging
+        case Precision::VERYHIGH: { 
             constexpr double weight0 = 0.048567898141400;
             const vec3d ws0(1.0/3.0, 1.0/3.0, 1.0/3.0);
             quadCoeffs.emplace_back(ws0, weight0);

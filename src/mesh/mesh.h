@@ -4,7 +4,7 @@
 #include "../maps.h"
 
 namespace Mesh {
-    // constants
+    // Constants
     constexpr int nCommonThres = 2;
     // constexpr double distThres = 2.0;
 
@@ -17,7 +17,7 @@ namespace Mesh {
     using MomentsEFIE = std::tuple<cmplx, vec3cd, vec3cd, cmplx>;
     using MomentsMFIE = std::tuple<cmplx, vec3cd, vec3cd, vec3cd, cmplx>;
 
-    // Coarse mesh data
+    // Global data
     std::vector<vec3d> glVerts;   // list of vertices (including fine)
     std::vector<Triangle> glTris; // list of triangles (including fine)
     PairHashMap<TriPair> glTriPairs; // nearfield triangle pairs

@@ -36,6 +36,9 @@ Mesh::TriPair::TriPair(pair2i iTris)
      //    << ") with nCommon = " << nCommon << '\n';
 }*/
 
+/* buildNumCommon()
+ * Compute number of common vertices between triangle pair
+ */
 void Mesh::TriPair::buildNumCommon() {
     if (iTris.first == iTris.second) {
         nCommon = 3;
@@ -54,6 +57,9 @@ void Mesh::TriPair::buildNumCommon() {
     assert(nCommon < 3);
 }
 
+/* buildMomentsEFIE()
+ * Build EFIE moments for triangle pair
+ */
 void Mesh::TriPair::buildMomentsEFIE() {
     if (config.alpha == 0.0) {
         momentsEFIE.reset();
@@ -87,7 +93,9 @@ void Mesh::TriPair::buildMomentsEFIE() {
     }
 }
 
-// Build N-MFIE moments
+/* buildMomentsMFIE()
+ * Build N-MFIE moments for triangle pair
+ */
 void Mesh::TriPair::buildMomentsMFIE() {
     if (config.alpha == 1.0) {
         momentsMFIE.reset();
@@ -137,6 +145,9 @@ void Mesh::TriPair::buildMomentsMFIE() {
     }
 }
 
+/* buildIntegratedInvR()
+ * Build integrated 1/R and its symmetric case for triangle pair
+ */
 void Mesh::TriPair::buildIntegratedInvR() {
     const auto [obsTri, srcTri] = getTriPair();
 
@@ -149,6 +160,9 @@ void Mesh::TriPair::buildIntegratedInvR() {
         integratedInvR2.emplace_back(obsTri.getIntegratedInvR(src));
 }
 
+/* buildIntegratedInvRcubed()
+ * Build integrated 1/R^3 and its symmetric case for triangle pair
+ */
 void Mesh::TriPair::buildIntegratedInvRcubed() {
     const auto [obsTri, srcTri] = getTriPair();
 

@@ -13,6 +13,9 @@ Direct::Direct(const SrcVec& srcs, std::unique_ptr<FMM::Nearfield> nf)
         rvec[idx] = -srcs[idx]->getVoltage(); // Double check sign convention here
 };
 
+/* solve()
+ * Solve for currents using direct solver, and print solutions to file
+ */
 void Direct::solve(const std::string& fname) {
     auto selfPairs = nf->getSelfPairs();
     assert(selfPairs.size() == 1); // only one self pair for direct solver
