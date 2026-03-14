@@ -20,7 +20,7 @@ private :
     void buildIntegratedInvR();
 
 public : 
-    std::tuple<cmplx, vec3cd, vec3cd, cmplx> momentsEFIE;
+    MomentsEFIE momentsEFIE;
     std::vector<std::pair<double,vec3d>> integratedInvR; 
     std::vector<std::pair<double, vec3d>> integratedInvR2; // symmetric case
 

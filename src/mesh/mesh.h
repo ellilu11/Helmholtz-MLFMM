@@ -10,7 +10,9 @@ namespace Mesh {
     struct TriPair;
     struct TriToRWG;
 
-    // Coarse mesh data
+    using MomentsEFIE = std::tuple<cmplx, vec3cd, vec3cd, cmplx>;
+
+    // Global data
     std::vector<vec3d> glVerts;   // list of vertices (including fine)
     std::vector<Triangle> glTris; // list of triangles (including fine)
     PairHashMap<TriPair> glTriPairs; // nearfield triangle pairs

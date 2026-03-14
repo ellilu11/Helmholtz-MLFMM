@@ -2,7 +2,6 @@
 #include "main.h"
 #include "clock.h"
 #include "config.h"
-// #include "dipole.h"
 #include "fmm/fmm.h"
 #include "solver/direct.h"
 
@@ -40,19 +39,16 @@ void mainLoop(const SrcVec& srcs, bool doFMM, bool doIter = true) {
 
     // ==================== Compute scattered field ============= //
     Mesh::printScattered(srcs,
-        "out/ff/px_k1.0z_r5.0_efie",
-        (doFMM ? "ff_n" : "ffDir_n")+std::to_string(nsrcs)+".txt", 200);
-    //Mesh::printScattered(srcs,
-    //    "out/ff/py_k1.0x_plate",
-    //    std::string(doFMM ? "ff_g" : "ffDir_g")+config.lengStr+".txt", 100);
+        "out/ff/px_k1.0z_plate",
+        std::string(doFMM ? "ff_g" : "ffDir_g")+config.lengStr+".txt", 100);
 }
 
 int main() {
     auto Einc = Exct::importPlaneWaves("config/pwave.txt");
-    auto srcs = Mesh::importMesh(
-        "config/rwg/sph_r5.0/sph_r5.0_n"+std::to_string(config.nsrcs), Einc);
     //auto srcs = Mesh::importMesh(
-    //    "config/rwg/rect/rect_g"+config.lengStr+"_n"+std::to_string(config.nsrcs), Einc);
+    //    "config/rwg/sph_r5.0/sph_r5.0_n"+std::to_string(config.nsrcs), Einc);
+    auto srcs = Mesh::importMesh(
+        "config/rwg/rect/rect_g"+config.lengStr+"_n"+std::to_string(config.nsrcs), Einc);
     // Mesh::printNormals("out/nhats.txt");
 
     constexpr bool doIter = false;
