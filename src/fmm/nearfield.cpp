@@ -1,5 +1,5 @@
 #include "nearfield.h"
-#include "../mesh/tripair.h"
+#include "../mesh/trimoments.h"
 
 FMM::Nearfield::Nearfield(size_t nsrcs)
     : nearMat(nsrcs, nsrcs)
@@ -41,6 +41,8 @@ void FMM::Nearfield::findNodePairs() {
  * and populate Mesh::glTriPairs
  */
 void FMM::Nearfield::buildTriPairs() {
+    // TODO: Precompute number of triangle pairs to reserve space for glTriPairs
+
     for (const auto& selfPair : selfPairs) {
         const auto& [leaf, srcLeaf] = selfPair;
         assert(leaf == srcLeaf);
@@ -51,7 +53,7 @@ void FMM::Nearfield::buildTriPairs() {
                 if (iTri0 > iTri1) continue;
 
                 pair2i pair(iTri0, iTri1);
-                Mesh::glTriPairs.emplace(pair, Mesh::TriPair(pair));
+                Mesh::glTriPairs.emplace_back(pair);
             }
     }
 
@@ -62,7 +64,7 @@ void FMM::Nearfield::buildTriPairs() {
         for (auto iTri0 : iTris0)
             for (auto iTri1 : iTris1) {
                 pair2i pair = std::minmax(iTri0, iTri1);
-                Mesh::glTriPairs.emplace(pair, Mesh::TriPair(pair));
+                Mesh::glTriPairs.emplace_back(pair);
             }
     }
 }

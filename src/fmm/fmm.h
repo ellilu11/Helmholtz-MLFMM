@@ -27,6 +27,8 @@ namespace FMM {
     struct Angles;
     struct Tables;
 
+    using interpPair = std::pair<std::vector<double>, int>;
+
     enum class Dir {
         W, E, S, N, D, U,
         SW, SE, NW, NE, DW, DE, UW, UE, DS, DN, US, UN,

@@ -75,7 +75,7 @@ Mesh::RWG::getIntegratedPlaneWave(const vec3d& kvec, bool doNumeric) const {
  * Return the electric field due to src tested with this RWG
  */
 cmplx Mesh::RWG::getIntegratedEFIE(const std::shared_ptr<Source> src) const {
-    if (config.alpha == 0.0) return 0.0;
+    if (config.ie == IE::MFIE) return 0.0;
     const auto srcRWG = dynamic_pointer_cast<RWG>(src);
     double k2 = config.k * config.k;
     
@@ -87,7 +87,6 @@ cmplx Mesh::RWG::getIntegratedEFIE(const std::shared_ptr<Source> src) const {
         int iSrc = 0;
         for (const auto& [srcTri, vsrc] : srcRWG->getTrisAndVerts() ) {
             const TriPair& triPair = glTriPairs.at(std::minmax(obsTri.iTri, srcTri.iTri));
-            assert(triPair.momentsEFIE != nullptr);
 
             const auto& [m00, m10, m01, m11] = *triPair.momentsEFIE;
             vec3d v0 = (obsTri.iTri <= srcTri.iTri) ? vobs : vsrc;
@@ -120,7 +119,7 @@ cmplx Mesh::RWG::getIntegratedEFIE(const std::shared_ptr<Source> src) const {
  * Return the magnetic field due to src tested with this RWG
  */
 cmplx Mesh::RWG::getIntegratedMFIE(const std::shared_ptr<Source> src) const {
-    if (config.alpha == 1.0) return 0.0;
+    if (config.ie == IE::EFIE) return 0.0;
     const auto srcRWG = dynamic_pointer_cast<RWG>(src);
 
     cmplx intRad = 0.0;
@@ -135,7 +134,6 @@ cmplx Mesh::RWG::getIntegratedMFIE(const std::shared_ptr<Source> src) const {
             }
 
             const TriPair& triPair = glTriPairs.at(std::minmax(obsTri.iTri, srcTri.iTri));
-            assert(triPair.momentsMFIE != nullptr && triPair.momentsMFIE2 != nullptr);
             
             const auto& [m000, m001, m10, m01, m11] =
                 (obsTri.iTri <= srcTri.iTri) ? *triPair.momentsMFIE : *triPair.momentsMFIE2;
@@ -159,7 +157,7 @@ cmplx Mesh::RWG::getIntegratedMFIE(const std::shared_ptr<Source> src) const {
 }
 
 double Mesh::RWG::getIntegratedMass(const std::shared_ptr<Source> src) const {
-    if (config.alpha == 1) return 0.0;
+    if (config.ie == IE::EFIE) return 0.0;
     const auto srcRWG = dynamic_pointer_cast<RWG>(src);
 
     double mass = 0.0;

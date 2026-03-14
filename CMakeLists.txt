@@ -7,9 +7,12 @@ cmake_minimum_required (VERSION 3.8)
 if (POLICY CMP0141)
   cmake_policy(SET CMP0141 NEW)
   set(CMAKE_MSVC_DEBUG_INFORMATION_FORMAT "$<IF:$<AND:$<C_COMPILER_ID:MSVC>,$<CXX_COMPILER_ID:MSVC>>,$<$<CONFIG:Debug,RelWithDebInfo>:EditAndContinue>,$<$<CONFIG:Debug,RelWithDebInfo>:ProgramDatabase>>")
+  set(CMAKE_MSVC_DEBUG_INFORMATION_FORMAT "$<$<CONFIG:Debug,RelWithDebInfo,Release>:ProgramDatabase>")
 endif()
 
 project ("MLFMA")
+
+set(CMAKE_EXE_LINKER_FLAGS_RELEASE "/DEBUG")
 
 # Add eigen library
 add_library(eigen INTERFACE)
@@ -26,12 +29,12 @@ target_link_libraries(MLFMA PRIVATE eigen)
 # target_compile_options(MLFMA PRIVATE $<$<CONFIG:Release>:/Wall>)
 
 # Add test executable
-add_executable (test "test/tRwg.cpp" "src/main.h")
+# add_executable (test "test/tRwg.cpp" "src/main.h")
 
-target_link_libraries(test PRIVATE eigen)
+# target_link_libraries(test PRIVATE eigen)
 
 # Specify C++20 standard
 if (CMAKE_VERSION VERSION_GREATER 3.12)
   set_property(TARGET MLFMA PROPERTY CXX_STANDARD 20)
-  set_property(TARGET test PROPERTY CXX_STANDARD 20)
+  # set_property(TARGET test PROPERTY CXX_STANDARD 20)
 endif()

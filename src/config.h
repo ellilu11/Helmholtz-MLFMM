@@ -92,7 +92,6 @@ struct Config {
 
         if (alpha < 0.0 || alpha > 1.0)
             throw std::runtime_error("Alpha must be in [0,1]");
-
         ie = (alpha == 0.0) ? IE::MFIE : (alpha == 1.0) ? IE::EFIE : IE::CFIE;
         C_efie = -Phys::eta * alpha * iu * k;
         C_mfie = Phys::eta * (1.0 - alpha);

@@ -6,6 +6,7 @@
 class Mesh::Triangle {
 public:
     friend class TriPair;
+    friend class TriMoments;
     friend class RWG;
     friend class SrcRWG;
     friend class SubRWG;
