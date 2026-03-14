@@ -1,5 +1,10 @@
-#include "fmm.h"
+#include "farfield.h"
 
+/* addInterpCoeffs(inCoeffs, outCoeffs, srcLvl, tgtLvl)
+ * Add interpolated coefficients from inCoeffs to outCoeffs
+ * srcLvl and tgtLvl are levels of the source and target nodes, respectively
+ * Interpolation is done in two steps: first over theta, then over phi
+ */
 void FMM::Farfield::addInterpCoeffs(
     const Coeffs& inCoeffs, Coeffs& outCoeffs, int srcLvl, int tgtLvl)
 {
@@ -56,6 +61,11 @@ void FMM::Farfield::addInterpCoeffs(
     }
 }
 
+/* addAnterpCoeffs(inCoeffs, outCoeffs, srcLvl, tgtLvl)
+ * Add anterpolated coefficients from inCoeffs to outCoeffs
+ * srcLvl and tgtLvl are levels of the source and target nodes, respectively
+ * Anterpolation is done in two steps: first over phi, then over theta
+ */
 void FMM::Farfield::addAnterpCoeffs(
     const Coeffs& inCoeffs, Coeffs& outCoeffs, int srcLvl, int tgtLvl)
 {

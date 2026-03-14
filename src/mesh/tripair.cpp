@@ -28,6 +28,9 @@ void Mesh::TriPair::buildNumCommon() {
     assert(nCommon < 3);
 }
 
+/* buildMomentsEFIE()
+ * Build EFIE moments for triangle pair
+ */
 void Mesh::TriPair::buildMomentsEFIE() {
     double k = config.k;
     const auto& [obsTri, srcTri] = getTriPair();

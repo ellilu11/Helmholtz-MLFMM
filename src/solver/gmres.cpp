@@ -47,6 +47,9 @@ GMRES::GMRES(
     Qmat.col(0) = lvec; // store lvec as first column of Qmat
 }
 
+/* buildILU()
+ * Build ILU decomposition of nearfield matrix for use as preconditioner
+ */
 void GMRES::buildILU(double dropTol, int fillFact) {
     ilu.setDroptol(dropTol);
     ilu.setFillfactor(fillFact);
@@ -61,7 +64,12 @@ void GMRES::buildILU(double dropTol, int fillFact) {
     std::cout << " in " << duration_ms.count() << " ms\n\n";
 }
 
+/* updateRvec()
+ * Update rvec = Z * lvec by evaluating nearfield and farfield contributions
+ * Then apply preconditioner M^(-1) to rvec
+ */
 void GMRES::updateRvec(int k) {
+    // Main FMM loop: upward pass, downward pass, evaluate sols
     if (!root->isLeaf()) {
         ff->mergeMpoleCoeffs(root);
         ff->buildLocalCoeffs(root);
@@ -72,6 +80,10 @@ void GMRES::updateRvec(int k) {
     rvec = ilu.solve(rvec); // Apply M^(-1) to rvec = Z * lvec
 }
 
+/* iterateArnoldi()
+ * Perform one iteration of Arnoldi process to get new lvec, 
+ * and update Hmat and Qmat
+ */
 void GMRES::iterateArnoldi(int k) {
     assert(Qmat.cols() == k+1);
 
@@ -98,6 +110,10 @@ void GMRES::iterateArnoldi(int k) {
     Hmat.col(k) = hcol;
 }
 
+/* applyGivensRotation()
+ * Apply Givens rotations to hcol to introduce zeros below diagonal,
+ * and store new cos and sin values for next iteration
+ */
 void GMRES::applyGivensRotation(vecXcd& hcol, int k) {
     assert(hcol.size() == k+2);
 
@@ -116,6 +132,10 @@ void GMRES::applyGivensRotation(vecXcd& hcol, int k) {
     vsin[k] = vsin_k;
 }
 
+/* updateGvec()
+ * Update gvec by applying the same Givens rotations to introduce zeros below diagonal,
+ * and update gvec values for next iteration
+ */
 void GMRES::updateGvec(int k) {
     vecXcd hcol_k = Hmat.col(k);
     applyGivensRotation(hcol_k, k);
@@ -125,6 +145,9 @@ void GMRES::updateGvec(int k) {
     gvec[k] = vcos[k] * gvec[k];
 }
 
+/* solve()
+ * Main GMRES loop to solve for currents, and print solutions to file
+ */
 void GMRES::solve(const std::string& fname) {
     // If maxIter = 0, just do one MVM and exit
     if (!maxIter) {

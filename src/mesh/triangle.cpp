@@ -75,6 +75,9 @@ void Mesh::Triangle::buildSelfIntegratedInvR() {
     selfInts[3] = (log0/l0 + log1/l1 + log2/l2) / 3.0;
 }
 
+/* getDoubleSelfIntegratedInvR(vobs, vsrc)
+ * Get the double integral of 1/|vobs-r'| over this triangle
+ */
 double Mesh::Triangle::getDoubleSelfIntegratedInvR(const vec3d& vobs, const vec3d& vsrc) const
 {
     double k2 = config.k * config.k;

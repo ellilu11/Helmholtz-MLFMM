@@ -1,5 +1,9 @@
 #include "angles.h"
 
+/* buildAngularSamples(level)
+ * Build angular samples and weights for given level
+ * Use excess bandwidth formula to determine number of samples needed to resolve oscillations
+ */
 void FMM::Angles::buildAngularSamples(int level)
 {
     double nodeLeng = Mesh::rootLeng / pow(2.0, level);
@@ -29,6 +33,9 @@ void FMM::Angles::buildAngularSamples(int level)
     // std::cout << "   (" << level << "," << thetas.size() << "," << phis.size() << ")\n";
 }
 
+/* buildAngularMatrices()
+ * Build matrices for converting between Cartesian and spherical coordinates
+ */
 void FMM::Angles::buildAngularMatrices() {
     const auto [nth, nph] = getNumAngles();
     const size_t nDirs = nth*nph;

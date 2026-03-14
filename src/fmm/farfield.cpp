@@ -10,6 +10,9 @@ FMM::Farfield::Farfield(const std::shared_ptr<FMM::Node>& root) {
     resizeCoeffs(root);
 }
 
+/* buildLevels()
+ * Build angular samples and interpolation/translation tables for each level
+ */
 void FMM::Farfield::buildLevels() {
     std::cout << " Building FMM operators...        ";
 
@@ -41,6 +44,10 @@ void FMM::Farfield::buildRadPats() {
     std::cout << " in " << duration_ms.count() << " ms\n\n";
 }
 
+/* resizeCoeffs(node)
+ * Resize mpole and local coeffs of node and its branches to match 
+ * number of directions at each level
+ */
 void FMM::Farfield::resizeCoeffs(const std::shared_ptr<FMM::Node>& node) {
     size_t nDir = angles[node->level].getNumDirs();
     node->coeffs.resize(nDir);
@@ -50,8 +57,8 @@ void FMM::Farfield::resizeCoeffs(const std::shared_ptr<FMM::Node>& node) {
         resizeCoeffs(branch);
 }
 
-/* buildRadPatsOfNode()
- * Build radiation patterns due to sources in node
+/* buildRadPats()
+ * Build radiation patterns due to sources in leaf node
  */
 void FMM::Farfield::buildRadPatsOfNode(const std::shared_ptr<FMM::Node>& node) {
     if (node->isSrcless()) return;
@@ -267,6 +274,9 @@ void FMM::Farfield::evalFarSols(const std::shared_ptr<FMM::Node>& node) {
     }
 }
 
+/* evaluateSols()
+ * (L2T) Evaluate sols from local expansion due to far nodes for all leaves
+ */
 void FMM::Farfield::evaluateSols() {
     auto start = Clock::now();
 

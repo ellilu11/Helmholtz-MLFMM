@@ -30,7 +30,7 @@ private:
 
     NodeVec getNeighborsLeqSize(const std::shared_ptr<Node>, const Dir) const;
     
-    void subdivideNode();
+    void subdivide();
 
     void buildNeighbors();
 

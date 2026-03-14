@@ -33,7 +33,7 @@ Mesh::RWG::RWG(
 }
 
 /* getIntegratedPlaneWave(kvec, doNumeric)
- * Return integral of exp(ik dot r'} * f(r') dr' at this RWG
+ * Return integral of exp(i kvec . r'} * f(r') dr' at this RWG
  */
 vec3cd Mesh::RWG::getIntegratedPlaneWave(const vec3d& kvec, bool doNumeric) const {
     using namespace Math;

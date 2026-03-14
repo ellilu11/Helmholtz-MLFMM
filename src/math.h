@@ -49,7 +49,7 @@ namespace Math {
         return x < y;
     }
 
-    inline bool vecEquals(const vec3d& X,const vec3d& Y) noexcept {
+    inline bool vecEquals(const vec3d& X, const vec3d& Y) noexcept {
     // inline bool vecEquals(const vec3d& X, const vec3d& Y, double EPS2 = FEPS*FEPS) noexcept {
         // return ((X-Y).norm()) < FEPS;
         return ((X-Y).squaredNorm()) < FEPS*FEPS;
