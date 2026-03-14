@@ -23,7 +23,7 @@ public:
 
     std::pair<double,vec3d> getIntegratedInvR(const vec3d&, bool = 0) const;
 
-    double getDoubleIntegratedInvR(
+    double getSingularEFIE(
         const Triangle&, const TriPair&, const vec3d&, const vec3d&) const;
 
     std::pair<cmplx,vec3cd> getIntegratedPlaneWave(const vec3d&) const;

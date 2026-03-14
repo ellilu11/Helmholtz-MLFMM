@@ -13,6 +13,9 @@ Mesh::TriPair::TriPair(pair2i iTris)
     if (nCommon >= 2) buildIntegratedInvR();
 }
 
+/* buildNumCommon()
+ * Compute number of common vertices between triangle pair
+ */
 void Mesh::TriPair::buildNumCommon() {
     if (iTris.first == iTris.second) {
         nCommon = 3;
@@ -57,14 +60,19 @@ void Mesh::TriPair::buildMomentsEFIE() {
     }
 }
 
+/* buildIntegratedInvR()
+ * Build integrated 1/R and its symmetric case for triangle pair
+ */
 void Mesh::TriPair::buildIntegratedInvR() {
     const auto [obsTri, srcTri] = getTriPair();
 
+    integratedInvR.reserve(obsTri.triQuads.size());
     for (const auto& [obs, weight] : obsTri.triQuads)
-        integratedInvR.push_back(srcTri.getIntegratedInvR(obs));
+        integratedInvR.emplace_back(srcTri.getIntegratedInvR(obs));
 
+    integratedInvR2.reserve(srcTri.triQuads.size());
     for (const auto& [src, weight] : srcTri.triQuads)
-        integratedInvR2.push_back(obsTri.getIntegratedInvR(src));
+        integratedInvR2.emplace_back(obsTri.getIntegratedInvR(src));
 }
 
 /*

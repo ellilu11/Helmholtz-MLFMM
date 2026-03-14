@@ -244,16 +244,3 @@ void Mesh::Triangle::buildQuadCoeffs(Precision prec) {
 
     assert(quadCoeffs.size() == numQuads);
 }
-
-// Build triangular quadrature nodes and weights
-void Mesh::Triangle::buildTriQuads() {
-    auto [X0, X1, X2] = getVerts();
-
-    auto baryToPos = [&](const vec3d& ws) {
-        return ws[0]*X0 + ws[1]*X1 + ws[2]*X2;
-    };
-
-    triQuads.reserve(numQuads);
-    for (const auto& [coeffs, weight] : quadCoeffs)
-        triQuads.emplace_back(baryToPos(coeffs), weight);
-}

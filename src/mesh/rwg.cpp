@@ -92,8 +92,8 @@ cmplx Mesh::RWG::getIntegratedRad(const std::shared_ptr<Source> src) const {
             // Average obs-src and src-obs to preserve symmetry
             if (triPair.nCommon >= 2)
                 pairRad += (
-                    obsTri.getDoubleIntegratedInvR(srcTri, triPair, vobs, vsrc) +
-                    srcTri.getDoubleIntegratedInvR(obsTri, triPair, vsrc, vobs)) / 2.0;
+                    obsTri.getSingularEFIE(srcTri, triPair, vobs, vsrc) +
+                    srcTri.getSingularEFIE(obsTri, triPair, vsrc, vobs)) / 2.0;
 
             // For common triangles, integrate 1/R term (full-analytic)
             //if (triPair.nCommon == 3)
