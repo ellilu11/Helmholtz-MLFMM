@@ -99,7 +99,7 @@ Mesh::RWG::getIntegratedPlaneWave(const vec3d& kvec, bool doNumeric) const {
  * Return the radiated field due to src tested with this RWG
  */
 cmplx Mesh::RWG::getIntegratedEFIE(const std::shared_ptr<Source> src) const {
-    if (config.alpha == 0) return 0.0;
+    if (config.alpha == 0.0) return 0.0;
     const auto srcRWG = dynamic_pointer_cast<RWG>(src);
     double k2 = config.k * config.k;
     
@@ -111,8 +111,9 @@ cmplx Mesh::RWG::getIntegratedEFIE(const std::shared_ptr<Source> src) const {
         int iSrc = 0;
         for (const auto& [srcTri, vsrc] : srcRWG->getTrisAndVerts() ) {
             const TriPair& triPair = glTriPairs.at(std::minmax(obsTri.iTri, srcTri.iTri));
+            assert(triPair.momentsEFIE != nullptr);
 
-            const auto& [m00, m10, m01, m11] = triPair.momentsEFIE;
+            const auto& [m00, m10, m01, m11] = *triPair.momentsEFIE;
             vec3d v0 = (obsTri.iTri <= srcTri.iTri) ? vobs : vsrc;
             vec3d v1 = (obsTri.iTri <= srcTri.iTri) ? vsrc : vobs;
             cmplx pairRad = m11 - v1.dot(m10) - v0.dot(m01) + (v0.dot(v1) - 4.0/k2)*m00;
@@ -143,7 +144,7 @@ cmplx Mesh::RWG::getIntegratedEFIE(const std::shared_ptr<Source> src) const {
  * Return the magnetic field due to src tested with this RWG
  */
 cmplx Mesh::RWG::getIntegratedMFIE(const std::shared_ptr<Source> src) const {
-    if (config.alpha == 1) return 0.0;
+    if (config.alpha == 1.0) return 0.0;
     const auto srcRWG = dynamic_pointer_cast<RWG>(src);
 
     cmplx intRad = 0.0;
@@ -158,9 +159,10 @@ cmplx Mesh::RWG::getIntegratedMFIE(const std::shared_ptr<Source> src) const {
             }
 
             const TriPair& triPair = glTriPairs.at(std::minmax(obsTri.iTri, srcTri.iTri));
+            assert(triPair.momentsMFIE != nullptr && triPair.momentsMFIE2 != nullptr);
             
             const auto& [m000, m001, m10, m01, m11] =
-                (obsTri.iTri <= srcTri.iTri) ? triPair.momentsMFIE : triPair.momentsMFIE2;
+                (obsTri.iTri <= srcTri.iTri) ? *triPair.momentsMFIE : *triPair.momentsMFIE2;
             cmplx pairRad = m11 - vsrc.dot(m10) - vobs.dot(m01) + 
                 (vobs.dot(vsrc))*m000 + obsTri.nhat.dot(vsrc)*vobs.dot(m001);
 

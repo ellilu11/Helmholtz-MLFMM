@@ -5,7 +5,7 @@ FMM::Farfield::Farfield(const std::shared_ptr<FMM::Node>& root) {
 
     buildLevels();
 
-    buildRadPats();
+    buildGlRadPats();
 
     resizeCoeffs(root);
 }
@@ -28,13 +28,13 @@ void FMM::Farfield::buildLevels() {
     std::cout << " in " << duration_ms.count() << " ms\n\n";
 }
 
-void FMM::Farfield::buildRadPats() {
+void FMM::Farfield::buildGlRadPats() {
     std::cout << " Building plane wave expansions...";
 
     auto start = Clock::now();
 
-    for (const auto& leaf : leaves) 
-        buildRadPatsOfNode(leaf);
+    for (const auto& leaf : glLeaves) 
+        buildRadPats(leaf);
 
     Time duration_ms = Clock::now() - start;
     std::cout << " in " << duration_ms.count() << " ms\n\n";
@@ -49,10 +49,10 @@ void FMM::Farfield::resizeCoeffs(const std::shared_ptr<FMM::Node>& node) {
         resizeCoeffs(branch);
 }
 
-/* buildRadPatsOfNode()
+/* buildRadPats()
  * Build radiation patterns due to sources in node
  */
-void FMM::Farfield::buildRadPatsOfNode(const std::shared_ptr<FMM::Node>& node) {
+void FMM::Farfield::buildRadPats(const std::shared_ptr<FMM::Node>& node) {
     if (node->isSrcless()) return;
     const Angles& angles_lvl = angles[node->level];
     size_t nDir = angles_lvl.getNumDirs();
@@ -279,7 +279,7 @@ void FMM::Farfield::evalFarSols(const std::shared_ptr<FMM::Node>& node) {
 void FMM::Farfield::evaluateSols() {
     auto start = Clock::now();
 
-    for (const auto& leaf : leaves) 
+    for (const auto& leaf : glLeaves) 
         evalFarSols(leaf);
 
     t.L2T += Clock::now() - start;

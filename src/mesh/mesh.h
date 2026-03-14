@@ -14,6 +14,9 @@ namespace Mesh {
     struct TriPair;
     struct TriToRWG;
 
+    using MomentsEFIE = std::tuple<cmplx, vec3cd, vec3cd, cmplx>;
+    using MomentsMFIE = std::tuple<cmplx, vec3cd, vec3cd, vec3cd, cmplx>;
+
     // Coarse mesh data
     std::vector<vec3d> glVerts;   // list of vertices (including fine)
     std::vector<Triangle> glTris; // list of triangles (including fine)

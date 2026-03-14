@@ -52,7 +52,7 @@ void testMomentsEFIE(const Mesh::Triangle& obsTri, const Mesh::Triangle& srcTri)
         }
     }
 
-    const auto& [m00, m10, m01, m11] = triPair.momentsEFIE;
+    const auto& [m00, m10, m01, m11] = *triPair.momentsEFIE;
     vec3d v0 = (obsTri.getIdx() <= srcTri.getIdx()) ? vobs : vsrc;
     vec3d v1 = (obsTri.getIdx() <= srcTri.getIdx()) ? vsrc : vobs;
     cmplx radMoments = m11 - v1.dot(m10) - v0.dot(m01) + (v0.dot(v1) - 4.0/k2)*m00;
@@ -92,7 +92,7 @@ void testMomentsMFIE(const Mesh::Triangle& obsTri, const Mesh::Triangle& srcTri)
     }
 
     const auto& [m000, m001, m10, m01, m11] = 
-        (obsTri.getIdx() <= srcTri.getIdx()) ? triPair.momentsMFIE : triPair.momentsMFIE2;
+        (obsTri.getIdx() <= srcTri.getIdx()) ? *triPair.momentsMFIE : *triPair.momentsMFIE2;
     cmplx radMoments = 
         m11 - vsrc.dot(m10) - vobs.dot(m01) + (vobs.dot(vsrc))*m000 + nhat.dot(vsrc)*vobs.dot(m001);
 

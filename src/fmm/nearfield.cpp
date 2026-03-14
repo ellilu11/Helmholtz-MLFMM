@@ -21,7 +21,7 @@ FMM::Nearfield::Nearfield(size_t nsrcs)
  * From list of leaves, find all near neighbor leaf pairs
  */
 void FMM::Nearfield::findNodePairs() {
-    for (const auto& leaf : leaves) {
+    for (const auto& leaf : glLeaves) {
         selfPairs.emplace_back(leaf, leaf);
 
         for (const auto& nbor : leaf->nearNbors) {
@@ -30,7 +30,7 @@ void FMM::Nearfield::findNodePairs() {
         }
     }
 
-    for (const auto& pair : nonNearPairs) {
+    for (const auto& pair : glNonNearPairs) {
         const auto& [obsNode, srcNode] = pair;
         nearPairs.emplace_back(obsNode, srcNode);
     }

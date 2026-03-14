@@ -16,13 +16,9 @@ namespace FMM {
     constexpr int numDir = 26;
 
     // Types
-    enum class Dir {
-        W, E, S, N, D, U,
-        SW, SE, NW, NE, DW, DE, UW, UE, DS, DN, US, UN,
-        DSW, DSE, DNW, DNE, USW, USE, UNW, UNE
-    };
-
     class Node;
+    using NodeVec = std::vector<std::shared_ptr<Node>>;
+    using NodePair = std::pair<std::shared_ptr<Node>, std::shared_ptr<Node>>;
 
     class Farfield;
     class Nearfield;
@@ -31,14 +27,19 @@ namespace FMM {
     struct Angles;
     struct Tables;
 
-    using NodeVec = std::vector<std::shared_ptr<Node>>;
-    using NodePair = std::pair<std::shared_ptr<Node>, std::shared_ptr<Node>>;
+    enum class Dir {
+        W, E, S, N, D, U,
+        SW, SE, NW, NE, DW, DE, UW, UE, DS, DN, US, UN,
+        DSW, DSE, DNW, DNE, USW, USE, UNW, UNE
+    };
 
     // Global data
-    std::vector<Angles> angles; // make Farfield private member
-    std::vector<Tables> tables; // make Farfield private member
-    NodeVec leaves;
-    std::vector<NodePair> nonNearPairs;
+    // TODO: Merge into "levels" and make Farfield private member
+    std::vector<Angles> angles;
+    std::vector<Tables> tables;
+
+    NodeVec glLeaves;
+    std::vector<NodePair> glNonNearPairs;
     inline int numNodes = 0;
     inline int maxLevel = 0;
     inline int glSrcIdx = 0;
@@ -47,8 +48,8 @@ namespace FMM {
     void reset() {
         angles.clear(); 
         tables.clear(); 
-        leaves.clear(); 
-        nonNearPairs.clear();
+        glLeaves.clear(); 
+        glNonNearPairs.clear();
         numNodes = 0;
         maxLevel = 0;
         glSrcIdx = 0;

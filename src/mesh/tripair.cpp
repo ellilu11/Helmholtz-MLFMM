@@ -10,8 +10,9 @@ Mesh::TriPair::TriPair(pair2i iTris)
     assert(iTris.first <= iTris.second);
     buildNumCommon();
 
-    if (config.alpha != 0.0) buildMomentsEFIE();
-    if (config.alpha != 1.0) buildMomentsMFIE();
+    buildMomentsEFIE();
+    buildMomentsMFIE();
+
     if (nCommon >= nCommonThres) {
         buildIntegratedInvR();
         if (config.alpha != 1.0) buildIntegratedInvRcubed();
@@ -25,8 +26,8 @@ Mesh::TriPair::TriPair(pair2i iTris)
     assert(iTris.first <= iTris.second);
     buildNumCommon();
 
-    // if (config.alpha != 0.0) buildMomentsEFIE();
-    // if (config.alpha != 1.0) buildMomentsMFIE();
+    buildMomentsEFIE();
+    buildMomentsMFIE();
     // if (nCommon >= nCommonThres) {
     buildIntegratedInvR();
     if (config.alpha != 1.0) buildIntegratedInvRcubed();
@@ -54,9 +55,16 @@ void Mesh::TriPair::buildNumCommon() {
 }
 
 void Mesh::TriPair::buildMomentsEFIE() {
+    if (config.alpha == 0.0) {
+        momentsEFIE.reset();
+        return;
+    }
+
     double k = config.k;
 
-    auto& [m00, m10, m01, m11] = momentsEFIE;
+    momentsEFIE = std::make_unique<MomentsEFIE>();
+    auto& [m00, m10, m01, m11] = *momentsEFIE;
+
     const auto& [obsTri, srcTri] = getTriPair();
 
     for (const auto& [obs, obsWeight] : obsTri.triQuads) {
@@ -81,10 +89,18 @@ void Mesh::TriPair::buildMomentsEFIE() {
 
 // Build N-MFIE moments
 void Mesh::TriPair::buildMomentsMFIE() {
+    if (config.alpha == 1.0) {
+        momentsMFIE.reset();
+        momentsMFIE2.reset();
+        return;
+    }
+
     double k = config.k, k2 = k*k;
 
-    auto& [m000, m001, m10, m01, m11] = momentsMFIE;
-    auto& [n000, n001, n10, n01, n11] = momentsMFIE2;
+    momentsMFIE = std::make_unique<MomentsMFIE>();
+    momentsMFIE2 = std::make_unique<MomentsMFIE>();
+    auto& [m000, m001, m10, m01, m11] = *momentsMFIE;
+    auto& [n000, n001, n10, n01, n11] = *momentsMFIE2;
 
     const auto& [obsTri, srcTri] = getTriPair();
     vec3d obsNhat = obsTri.nhat, srcNhat = srcTri.nhat;
@@ -124,21 +140,25 @@ void Mesh::TriPair::buildMomentsMFIE() {
 void Mesh::TriPair::buildIntegratedInvR() {
     const auto [obsTri, srcTri] = getTriPair();
 
+    integratedInvR.reserve(obsTri.triQuads.size());
     for (const auto& [obs, weight] : obsTri.triQuads)
-        integratedInvR.push_back(srcTri.getIntegratedInvR(obs));
+        integratedInvR.emplace_back(srcTri.getIntegratedInvR(obs));
 
+    integratedInvR2.reserve(srcTri.triQuads.size());
     for (const auto& [src, weight] : srcTri.triQuads)
-        integratedInvR2.push_back(obsTri.getIntegratedInvR(src));
+        integratedInvR2.emplace_back(obsTri.getIntegratedInvR(src));
 }
 
 void Mesh::TriPair::buildIntegratedInvRcubed() {
     const auto [obsTri, srcTri] = getTriPair();
 
+    integratedInvRcubed.reserve(obsTri.triQuads.size());
     for (const auto& [obs, weight] : obsTri.triQuads)
-        integratedInvRcubed.push_back(srcTri.getIntegratedInvRcubed(obs));
+        integratedInvRcubed.emplace_back(srcTri.getIntegratedInvRcubed(obs));
 
+    integratedInvRcubed2.reserve(srcTri.triQuads.size());
     for (const auto& [src, weight] : srcTri.triQuads)
-        integratedInvRcubed2.push_back(obsTri.getIntegratedInvRcubed(src));
+        integratedInvRcubed2.emplace_back(obsTri.getIntegratedInvRcubed(src));
 }
 
 /*

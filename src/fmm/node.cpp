@@ -107,7 +107,7 @@ void FMM::Node::pushSelfToNearNonNbors() {
 
     for (const auto& node : leafIlist) {
         node->pushToNearNonNbors(shared_from_this());
-        nonNearPairs.emplace_back(node, shared_from_this()); // record list4-list3 pair
+        glNonNearPairs.emplace_back(node, shared_from_this()); // record list4-list3 pair
     }
 }
 
@@ -122,7 +122,7 @@ void FMM::Node::buildLists() {
         pushSelfToNearNonNbors();
     }
 
-    if (isLeaf()) leaves.push_back(shared_from_this()); // TODO: only record leaves with sources
+    if (isLeaf()) glLeaves.push_back(shared_from_this()); // TODO: only record leaves with sources
 
     findTris(); // TODO: Only call for leaves and non-near stems
 
@@ -131,7 +131,7 @@ void FMM::Node::buildLists() {
 
     if (isRoot()) {
         std::cout << "   # Nodes: " << numNodes << '\n';
-        std::cout << "   # Leaves: " << leaves.size() << '\n';
+        std::cout << "   # Leaves: " << glLeaves.size() << '\n';
         std::cout << "   Max node level: " << maxLevel << "\n\n";
     }
 }

@@ -19,17 +19,14 @@ private:
 
     void buildMomentsMFIE();
 
-    // void buildMomentsMFIE_T();
-
     void buildIntegratedInvR();
 
     void buildIntegratedInvRcubed();
 
 public:
-    std::tuple<cmplx, vec3cd, vec3cd, cmplx> momentsEFIE;
-    std::tuple<cmplx, vec3cd, vec3cd, vec3cd, cmplx> momentsMFIE;
-    std::tuple<cmplx, vec3cd, vec3cd, vec3cd, cmplx> momentsMFIE2; // symmetric case
-    // std::tuple<vec3cd, vec3cd, vec3cd, cmplx> momentsMFIE_T;
+    std::unique_ptr<MomentsEFIE> momentsEFIE;
+    std::unique_ptr<MomentsMFIE> momentsMFIE;
+    std::unique_ptr<MomentsMFIE> momentsMFIE2; // symmetric case
 
     std::vector<std::pair<double, vec3d>> integratedInvR;
     std::vector<std::pair<double, vec3d>> integratedInvR2; // symmetric case
