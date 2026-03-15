@@ -4,10 +4,6 @@
 #include "triangle.h"
 #include "tripair.h"
 
-class Mesh::RWG;
-
-using RWGVec = std::vector<std::shared_ptr<Mesh::RWG>>;
-
 class Mesh::RWG : public Source {
 public:
     RWG(const vec4i&, size_t);
@@ -42,11 +38,10 @@ public:
 
     double getLeng() const { return leng; }
 
-    void buildVoltage() override {
-        voltage = -Einc->amplitude
+    cmplx getVoltage() override {
+        using namespace Exct;
+        return -Einc->amplitude
             * conj(getIntegratedPlaneWave(Einc->wavevec).dot(Einc->pol)); // Hermitian dot!
-
-        assert(!std::isnan(voltage.real()) && !std::isnan(voltage.imag()));
     }
 
     vec3cd getRadAlongDir(const vec3d& X, const vec3d& kvec) const override {

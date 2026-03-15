@@ -39,7 +39,7 @@ void mainLoop(const SrcVec& srcs, bool doFMM, bool doIter = true) {
 
     // ==================== Compute scattered field ============= //
     Mesh::getScattered(srcs,
-        "out/ff/px_k1.0z_r5.0_"+ieStr,
+        "out/ff/px_k1.0z_r5.0_efie",
         (doFMM ? "ff_n" : "ffDir_n")+std::to_string(nsrcs)+".txt", 200);
     //Mesh::getScattered(srcs,
     //    "out/ff/px_k1.0z_plate",

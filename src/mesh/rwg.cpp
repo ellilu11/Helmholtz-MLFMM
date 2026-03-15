@@ -17,19 +17,6 @@ Mesh::RWG::RWG(const vec4i& idx4, size_t iSrc)
                 iVertsNC[i] = iVert;
 }
 
-    /* Update triToRWG
-    for (int i = 0; i < 2; ++i) {
-        int iTri = iTris[i];
-        auto& triToRWG = triToRWGs[iTri];
-        triToRWG.iRWGs.push_back(iSrc);
-
-        assert(iTri == idx4[2] || iTri == idx4[3]);
-        triToRWG.isMinus.push_back(iTri == idx4[3]);
-
-        assert(triToRWG.iRWGs.size() <= 3 && triToRWG.isMinus.size() <= 3);
-    }*/
-}
-
 /* getIntegratedPlaneWave(kvec, doNumeric)
  * Return integral of exp(i kvec . r'} * f(r') dr' at this RWG
  */
