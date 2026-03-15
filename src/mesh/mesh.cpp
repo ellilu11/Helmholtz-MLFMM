@@ -1,29 +1,6 @@
 #include "rwg.h"
 #include "triangle.h"
 
-// TODO: Use importLines
-SrcVec Mesh::importRWGs(
-    const std::filesystem::path& path, std::shared_ptr<Exct::PlaneWave> Einc)
-{
-    std::ifstream file(path);
-    std::string line;
-    if (!file) throw std::runtime_error("Unable to find file");
-    SrcVec rwgs;
-    size_t iSrc = 0;
-
-    while (std::getline(file, line)) {
-        std::istringstream iss(line);
-        Eigen::Vector4i idx4;
-
-        if (iss >> idx4)
-            rwgs.push_back(std::make_shared<RWG>(Einc, iSrc++, idx4));
-        else
-            throw std::runtime_error("Unable to parse line");
-    }
-
-    return rwgs;
-}
-
 void Mesh::buildRootCoords() {
     vec3d maxVert = vec3d::Constant(-std::numeric_limits<double>::infinity());
     vec3d minVert = vec3d::Constant(std::numeric_limits<double>::infinity());
@@ -40,8 +17,7 @@ void Mesh::buildRootCoords() {
     std::cout << "   Root length: " << rootLeng << " m\n\n";
 }
 
-SrcVec Mesh::importMesh(
-    const std::filesystem::path& path, std::shared_ptr<Exct::PlaneWave> Einc) 
+SrcVec Mesh::importMesh(const std::filesystem::path& path)
 {
     std::cout << " Importing mesh...\n";
 
@@ -51,7 +27,9 @@ SrcVec Mesh::importMesh(
     importLines<vec3i>(path/"faces.txt", glTris);
     buildRootCoords();
 
-    return importRWGs(path/"rwgs.txt", std::move(Einc));
+    SrcVec rwgs;
+    importLines<vec4i>(path/"rwgs.txt", rwgs);
+    return rwgs;
 }
 
 void Mesh::getScattered(
@@ -65,7 +43,7 @@ void Mesh::getScattered(
 
     double k = config.k;
     double rcsSum = 0.0;
-    for (int ith = 0; ith < 2*nth; ++ith) { // 2*nth to cover great circle
+    for (int ith = 0; ith < nth; ++ith) { // 2*nth to cover great circle
         double theta0 = (ith+0.5)*PI/static_cast<double>(nth); // in [0, 2*pi]
         double theta = (theta0 < PI) ? theta0 : 2*PI - theta0; // fold back to [0, pi]
         double phi = (theta0 < PI) ? 0.0 : PI; // fold back to [0, 2pi]

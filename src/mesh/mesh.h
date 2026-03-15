@@ -1,6 +1,6 @@
 #pragma once
 
-#include <filesystem>
+#include "../exct.h"
 #include "../maps.h"
 
 namespace Mesh {
@@ -17,8 +17,6 @@ namespace Mesh {
     std::vector<Triangle> glTris; // list of triangles (including fine)
     PairHashMap<TriPair> glTriPairs; // nearfield triangle pairs
     std::vector<TriToRWG> triToRWGs; // coarse triangle to RWG mappings
-    size_t nverts;                // number of coarse mesh vertices
-    size_t ntris;                 // number of coarse mesh triangles
 
     vec3d rootCenter; 
     double rootLeng;
@@ -26,11 +24,7 @@ namespace Mesh {
     // Functions
     void buildRootCoords();
 
-    SrcVec importRWGs(
-        const std::filesystem::path&, std::shared_ptr<Exct::PlaneWave>);
-
-    SrcVec importMesh(
-        const std::filesystem::path&, std::shared_ptr<Exct::PlaneWave>);
+    SrcVec importMesh(const std::filesystem::path&);
 
     void getScattered(const SrcVec&, const std::filesystem::path&, const std::string&, int);
 

@@ -1,7 +1,7 @@
 #include "subrwg.h"
 
-Mesh::SubRWG::SubRWG(int iSub, const vec4i& idx4)
-    : RWG(nullptr, iSub, idx4)
+Mesh::SubRWG::SubRWG(const vec4i& idx4, size_t iSub)
+    : RWG(idx4, iSub)
 {
     auto [tri0, tri1] = getTris();
 

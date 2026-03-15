@@ -4,9 +4,13 @@
 #include "triangle.h"
 #include "tripair.h"
 
+class Mesh::RWG;
+
+using RWGVec = std::vector<std::shared_ptr<Mesh::RWG>>;
+
 class Mesh::RWG : public Source {
 public:
-    RWG(std::shared_ptr<Exct::PlaneWave>, size_t, const vec4i&);
+    RWG(const vec4i&, size_t);
 
     vec3cd getIntegratedPlaneWave(const vec3d&, bool = 0) const;
 

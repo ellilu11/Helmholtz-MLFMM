@@ -6,6 +6,9 @@
 #include <iostream>
 #include <type_traits>
 
+class Source;
+namespace Mesh { class RWG; }
+
 void getDigit(std::istringstream& iss, char ch) {
     while (iss.get(ch)) {
         if (std::isdigit(static_cast<unsigned char>(ch))) {
@@ -52,8 +55,13 @@ void importLines(const std::filesystem::path& path, std::vector<Tout>& vec) {
         Tin ele;
 
         if (iss >> ele) {
-            if constexpr (std::is_same_v<Tin, Tout>) vec.push_back(ele);
-            else vec.emplace_back(ele, idx++);
+            if constexpr (std::is_same_v<Tin, Tout>)
+                vec.push_back(ele);
+            else if constexpr (std::is_same_v<Tout, std::shared_ptr<Source>>)
+                vec.push_back(std::make_shared<Mesh::RWG>(ele, idx++));
+                // TODO: Handle Exct::PlaneWave and other source types
+            else
+                vec.emplace_back(ele, idx++);
         }
         else throw std::runtime_error("Unable to parse line");
     }

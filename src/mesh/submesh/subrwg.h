@@ -7,7 +7,7 @@ class Mesh::SubRWG final : public RWG {
     friend class BC;
 
 public:
-    SubRWG(int, const vec4i&);
+    SubRWG(const vec4i&, size_t);
 
     static void buildVertsToSubRWGs(int);
 

@@ -265,9 +265,9 @@ void testSelfIntegrated(const Mesh::Triangle& obsTri, const Mesh::Triangle& srcT
 
 int main() {
     // ==================== Import sources ====================== //
-    auto Einc = Exct::importPlaneWaves("config/pwave.txt");
+    Exct::importPlaneWaves("config/pwave.txt");
     auto srcs = Mesh::importMesh(
-        "config/rwg/test/n"+std::to_string(config.nsrcs)+"self", Einc);
+        "config/rwg/test/n"+std::to_string(config.nsrcs)+"self");
     size_t nsrcs = srcs.size();
 
     /* ==================== Build nodes ========================= //

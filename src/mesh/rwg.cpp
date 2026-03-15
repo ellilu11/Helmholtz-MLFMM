@@ -1,8 +1,7 @@
 #include "rwg.h"
 
-Mesh::RWG::RWG(
-    std::shared_ptr<Exct::PlaneWave> Einc, size_t iSrc, const vec4i& idx4)
-    : Source(std::move(Einc), iSrc),
+Mesh::RWG::RWG(const vec4i& idx4, size_t iSrc)
+    : Source(iSrc),
     iTris({ idx4[2], idx4[3] }),
     iVertsC({ idx4[0], idx4[1] })
 {
@@ -16,8 +15,7 @@ Mesh::RWG::RWG(
         for (const auto& iVert : tris[i].iVerts)
             if (iVert != iVertsC[0] && iVert != iVertsC[1])
                 iVertsNC[i] = iVert;
-
-    buildVoltage();
+}
 
     /* Update triToRWG
     for (int i = 0; i < 2; ++i) {

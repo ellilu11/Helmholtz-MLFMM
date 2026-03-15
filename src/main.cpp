@@ -39,19 +39,22 @@ void mainLoop(const SrcVec& srcs, bool doFMM, bool doIter = true) {
 
     // ==================== Compute scattered field ============= //
     Mesh::getScattered(srcs,
-        "out/ff/px_k1.0z_plate",
-        std::string(doFMM ? "ff_g" : "ffDir_g")+config.lengStr+".txt", 100);
+        "out/ff/px_k1.0z_r5.0_"+ieStr,
+        (doFMM ? "ff_n" : "ffDir_n")+std::to_string(nsrcs)+".txt", 200);
+    //Mesh::getScattered(srcs,
+    //    "out/ff/px_k1.0z_plate",
+    //    std::string(doFMM ? "ff_g" : "ffDir_g")+config.lengStr+".txt", 100);
 }
 
 int main() {
-    auto Einc = Exct::importPlaneWaves("config/pwave.txt");
-    //auto srcs = Mesh::importMesh(
-    //    "config/rwg/sph_r5.0/sph_r5.0_n"+std::to_string(config.nsrcs), Einc);
+    Exct::importPlaneWaves("config/pwave.txt");
     auto srcs = Mesh::importMesh(
-        "config/rwg/rect/rect_g"+config.lengStr+"_n"+std::to_string(config.nsrcs), Einc);
+        "config/rwg/sph_r5.0/sph_r5.0_n"+std::to_string(config.nsrcs));
+    //auto srcs = Mesh::importMesh(
+    //    "config/rwg/rect/rect_g"+config.lengStr+"_n"+std::to_string(config.nsrcs));
     // Mesh::printNormals("out/nhats.txt");
 
-    constexpr bool doIter = false;
+    constexpr bool doIter = true;
     switch (config.mode) {
         case Mode::FMM: mainLoop(srcs, true); break;
         case Mode::DIR: mainLoop(srcs, false, doIter); break;
