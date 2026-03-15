@@ -44,7 +44,7 @@ Mesh::RWG::getIntegratedPlaneWave(const vec3d& kvec, bool doNumeric) const {
 
     if (doNumeric) {
         for (const auto& [tri, vert] : getTrisAndVerts()) {
-            for (const auto& [node, weight] : tri.triQuads) {
+            for (const auto& [node, weight] : tri.quads) {
                 vec3cd nodeRad = 
                     weight * exp(iu*kvec.dot(node)) * (node - vert) * Math::sign(iTri);
                 rad += nodeRad;
@@ -174,7 +174,7 @@ double Mesh::RWG::getIntegratedMass(const std::shared_ptr<Source> src) const {
 
             /* Numeric integration
             double pairMass = 0.0;
-            for (const auto& [node, weight] : obsTri.triQuads)
+            for (const auto& [node, weight] : obsTri.quads)
                 pairMass += (node-vobs).dot(node-vsrc) * weight;
             */
 
@@ -242,11 +242,11 @@ cmplx Mesh::RWG::getIntegratedMFIE(const std::shared_ptr<Source> src) const {
             const TriPair& triPair = glTriPairs.at(std::minmax(obsTri.iTri, srcTri.iTri));
 
             cmplx pairRad = 0.0;
-            for (const auto& [obs, obsWeight] : obsTri.triQuads) {
+            for (const auto& [obs, obsWeight] : obsTri.quads) {
                 // For common triangles, use -1/2 J term (numerically)
                 if (triPair.nCommon == 3) continue;
 
-                for (const auto& [src, srcWeight] : srcTri.triQuads) {
+                for (const auto& [src, srcWeight] : srcTri.quads) {
                     vec3d R = obs-src;
                     double r = R.norm(), r2 = r*r, r3 = r*r2;
                     assert(!Math::fzero(r));

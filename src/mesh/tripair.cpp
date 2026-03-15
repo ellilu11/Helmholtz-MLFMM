@@ -73,8 +73,8 @@ void Mesh::TriPair::buildMomentsEFIE() {
 
     const auto& [obsTri, srcTri] = getTriPair();
 
-    for (const auto& [obs, obsWeight] : obsTri.triQuads) {
-        for (const auto& [src, srcWeight] : srcTri.triQuads) {
+    for (const auto& [obs, obsWeight] : obsTri.quads) {
+        for (const auto& [src, srcWeight] : srcTri.quads) {
             double r = (obs-src).norm();
 
             cmplx G = obsWeight*srcWeight / (4.0*PI); // apply 1/(4pi) factor
@@ -113,11 +113,11 @@ void Mesh::TriPair::buildMomentsMFIE() {
     const auto& [obsTri, srcTri] = getTriPair();
     vec3d obsNhat = obsTri.nhat, srcNhat = srcTri.nhat;
 
-    for (const auto& [obs, obsWeight] : obsTri.triQuads) {
+    for (const auto& [obs, obsWeight] : obsTri.quads) {
         // For common triangles, use analytic integration of -1/2 J term
         if (nCommon == 3) continue;
 
-        for (const auto& [src, srcWeight] : srcTri.triQuads) {
+        for (const auto& [src, srcWeight] : srcTri.quads) {
             const vec3d& R = obs-src;
             double r = R.norm(), r2 = r*r, r3 = r*r2;
             assert(!Math::fzero(r));
@@ -151,12 +151,12 @@ void Mesh::TriPair::buildMomentsMFIE() {
 void Mesh::TriPair::buildIntegratedInvR() {
     const auto [obsTri, srcTri] = getTriPair();
 
-    integratedInvR.reserve(obsTri.triQuads.size());
-    for (const auto& [obs, weight] : obsTri.triQuads)
+    integratedInvR.reserve(obsTri.quads.size());
+    for (const auto& [obs, weight] : obsTri.quads)
         integratedInvR.emplace_back(srcTri.getIntegratedInvR(obs));
 
-    integratedInvR2.reserve(srcTri.triQuads.size());
-    for (const auto& [src, weight] : srcTri.triQuads)
+    integratedInvR2.reserve(srcTri.quads.size());
+    for (const auto& [src, weight] : srcTri.quads)
         integratedInvR2.emplace_back(obsTri.getIntegratedInvR(src));
 }
 
@@ -166,12 +166,12 @@ void Mesh::TriPair::buildIntegratedInvR() {
 void Mesh::TriPair::buildIntegratedInvRcubed() {
     const auto [obsTri, srcTri] = getTriPair();
 
-    integratedInvRcubed.reserve(obsTri.triQuads.size());
-    for (const auto& [obs, weight] : obsTri.triQuads)
+    integratedInvRcubed.reserve(obsTri.quads.size());
+    for (const auto& [obs, weight] : obsTri.quads)
         integratedInvRcubed.emplace_back(srcTri.getIntegratedInvRcubed(obs));
 
-    integratedInvRcubed2.reserve(srcTri.triQuads.size());
-    for (const auto& [src, weight] : srcTri.triQuads)
+    integratedInvRcubed2.reserve(srcTri.quads.size());
+    for (const auto& [src, weight] : srcTri.quads)
         integratedInvRcubed2.emplace_back(obsTri.getIntegratedInvRcubed(src));
 }
 
@@ -183,7 +183,7 @@ void Mesh::TriPair::buildMomentsMFIE_T() {
     double k = config.k, k2 = k*k;
     vec3d nhat = obsTri.nhat;
 
-    for (const auto& [obs, obsWeight] : obsTri.triQuads) {
+    for (const auto& [obs, obsWeight] : obsTri.quads) {
         // For common triangles, use -1/2 J term
         if (nCommon == 3) {
             // since numerical integration only cancels one RWG's 1/(2A) factor
@@ -195,7 +195,7 @@ void Mesh::TriPair::buildMomentsMFIE_T() {
             continue;
         }
 
-        for (const auto& [src, srcWeight] : srcTri.triQuads) {
+        for (const auto& [src, srcWeight] : srcTri.quads) {
             const vec3d& R = obs-src;
             double r = R.norm(), r2 = r*r, r3 = r*r2;
             assert(!Math::fzero(r));
@@ -223,7 +223,7 @@ void Mesh::TriPair::buildMomentsInvR() {
     const auto& [obsTri, srcTri] = getTriPair();
 
     momentsInvR = { 0.0, vec3cd::Zero(), 0.0 };
-    for (const auto& [obs, obsWeight] : obsTri.triQuads) {
+    for (const auto& [obs, obsWeight] : obsTri.quads) {
         const auto& [scaRad, vecRad] = srcTri.getIntegratedInvR(obs);
 
         auto& [m0, m1, m11] = momentsInvR;

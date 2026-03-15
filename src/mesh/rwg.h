@@ -4,10 +4,6 @@
 #include "triangle.h"
 #include "tripair.h"
 
-class Mesh::RWG;
-
-using RWGVec = std::vector<std::shared_ptr<Mesh::RWG>>;
-
 class Mesh::RWG : public Source {
 public:
     RWG(const vec4i&, size_t);

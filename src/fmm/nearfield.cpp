@@ -41,8 +41,7 @@ void FMM::Nearfield::findNodePairs() {
  * and populate Mesh::glTriPairs
  */
 void FMM::Nearfield::buildTriPairs() {
-    for (const auto& selfPair : selfPairs) {
-        const auto& [leaf, srcLeaf] = selfPair;
+    for (const auto& [leaf, srcLeaf] : selfPairs) {
         assert(leaf == srcLeaf);
         const auto& iTris = leaf->iTris;
 
@@ -55,8 +54,7 @@ void FMM::Nearfield::buildTriPairs() {
             }
     }
 
-    for (const auto& nearPair : nearPairs) {
-        const auto& [obsLeaf, srcNode] = nearPair;
+    for (const auto& [obsLeaf, srcNode] : nearPairs) {
         const auto& iTris0 = obsLeaf->iTris, & iTris1 = srcNode->iTris;
 
         for (auto iTri0 : iTris0)
@@ -97,8 +95,7 @@ void FMM::Nearfield::buildNearMatrix() {
     trips.reserve(getNearCapacity());
 
     // Build pair-node contributions to near matrix
-    for (auto& nearPair : nearPairs) {
-        const auto [obsLeaf, srcNode] = nearPair;
+    for (const auto& [obsLeaf, srcNode] : nearPairs) {
         size_t nObss = obsLeaf->srcs.size(), nSrcs = srcNode->srcs.size();
 
         for (size_t iObs = 0; iObs < nObss; ++iObs) {
@@ -121,8 +118,7 @@ void FMM::Nearfield::buildNearMatrix() {
     }
 
     // Build self-node contributions to near matrix
-    for (auto& selfPair : selfPairs) {
-        const auto [leaf, srcLeaf] = selfPair;
+    for (const auto& [leaf, srcLeaf] : selfPairs) {
         assert(leaf == srcLeaf);
 
         size_t nSrcs = leaf->srcs.size();

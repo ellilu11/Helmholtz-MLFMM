@@ -14,6 +14,7 @@ namespace Mesh {
     struct TriPair;
     struct TriToRWG;
 
+    using quadPair = std::pair<vec3d, double>;
     using MomentsEFIE = std::tuple<cmplx, vec3cd, vec3cd, cmplx>;
     using MomentsMFIE = std::tuple<cmplx, vec3cd, vec3cd, vec3cd, cmplx>;
 

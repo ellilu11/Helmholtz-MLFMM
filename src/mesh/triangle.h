@@ -4,13 +4,10 @@
 #include "mesh.h"
 
 class Mesh::Triangle {
-public:
     friend class TriPair;
     friend class RWG;
-    friend class SrcRWG;
-    friend class SubRWG;
-    friend class BC;
 
+public:
     static void buildQuadCoeffs(Precision);
 
     Triangle(const vec3i&, int);
@@ -49,7 +46,7 @@ public:
         return { glVerts[iVerts[0]], glVerts[iVerts[1]], glVerts[iVerts[2]] };
     }
 
-    std::vector<quadPair<vec3d>> getQuads() const { return triQuads; }
+    std::vector<quadPair> getQuads() const { return quads; }
 
     int getIdx() const { return iTri; }
 
@@ -58,21 +55,19 @@ public:
     vec3d getNormal() const { return nhat; }
 
 private:
-    static int numQuads;
-    static std::vector<quadPair<vec3d>> quadCoeffs;
+    static std::vector<quadPair> quadCoeffs;
 
     // Integral quantities
-    std::vector<quadPair<vec3d>> triQuads; // triangle quadrature nodes and weights
+    std::vector<quadPair> quads; // triangle quadrature nodes and weights
     std::array<double, 4> selfInts;
 
-    vec3d center;           // barycentric center 
-    std::array<vec3d,3> Ds; // edge displacements (Ds[i] = Xs[i+1] - Xs[i])
-    vec3d nhat;             // surface normal unit vector
-    double area;            // area
+    vec3d center;   // barycentric center 
+    vec3d nhat;     // surface normal unit vector
+    double area;    
 
-    vec3i iVerts; // indices of vertices
-    int iCenter;  // index of center
-    int iTri;     // index in glTris
+    vec3i iVerts;   // indices of vertices
+    // int iCenter; // index of center
+    const int iTri; // index in glTris
 };
 
 struct Mesh::TriToRWG {
