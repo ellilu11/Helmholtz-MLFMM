@@ -10,6 +10,8 @@ FMM::Nearfield::Nearfield(size_t nsrcs)
     findNodePairs();
     buildTriPairs();
 
+    std::cout << " # tripairs: " << Mesh::glTriPairs.size() << '\n';
+
     buildNearMatrix();
     Mesh::glTriPairs.clear();
 
