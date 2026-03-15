@@ -11,6 +11,8 @@ namespace Mesh {
     class BC;
 
     // Fine mesh data
+    size_t nverts;                // number of coarse mesh vertices
+    size_t ntris;                 // number of coarse mesh triangles
     std::vector<SubRWG> glSubrwgs;  // list of fine RWGs
     std::vector<double> massCoeffs; // mass coefficients between fine RWGs
     PairHashMap<int> idxMassCoeffs; // subRWG pairs to mass coeff indices

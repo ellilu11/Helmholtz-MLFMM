@@ -1,8 +1,7 @@
 #include "rwg.h"
 
-Mesh::RWG::RWG(
-    std::shared_ptr<Exct::PlaneWave> Einc, size_t iSrc, const vec4i& idx4)
-    : Source(std::move(Einc), iSrc),
+Mesh::RWG::RWG(const vec4i& idx4, size_t iSrc)
+    : Source(iSrc),
     iTris({ idx4[2], idx4[3] }),
     iVertsC({ idx4[0], idx4[1] })
 {
@@ -16,14 +15,14 @@ Mesh::RWG::RWG(
         for (const auto& iVert : tris[i].iVerts)
             if (iVert != iVertsC[0] && iVert != iVertsC[1])
                 iVertsNC[i] = iVert;
-
-    buildVoltage();
 }
 
-/* buildVoltage()
- * Compute voltage of this RWG due to incident plane wave
+/* getVoltage()
+ * Return voltage of this RWG due to incident plane wave
  */
-void Mesh::RWG::buildVoltage() {
+cmplx Mesh::RWG::getVoltage() {
+    using namespace Exct;
+
     auto [inc, incNormal] = getIntegratedPlaneWave(Einc->wavevec);
 
     // (1-alpha) * eta * H_inc = (1-alpha) * khat x E_inc
@@ -31,7 +30,7 @@ void Mesh::RWG::buildVoltage() {
     vec3d polH = (1.0 - config.alpha) * Einc->wavehat.cross(Einc->pol);
 
     // inc . (nhat x polH) = polH . (inc x nhat) = -polH . (nhat x inc) = -polH . incNormal
-    voltage = -Einc->amplitude * (polE.dot(inc) - polH.dot(incNormal));
+    return -Einc->amplitude * (polE.dot(inc) - polH.dot(incNormal));
 }
 
 /* getIntegratedPlaneWave(kvec, doNumeric)

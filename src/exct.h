@@ -1,14 +1,14 @@
 #pragma once
 
-#include <filesystem>
-#include "types/types.h"
-
 extern const Config config;
 
 namespace Exct {
     struct PlaneWave {
         PlaneWave()
-            : pol(vec3d{ 1,0,0 }), wavehat(vec3d{ 0,0,1 }), wavevec(vec3d{ 0,0,1 }), amplitude(1.0)
+            : pol(vec3d{ 1,0,0 }), 
+            wavehat(vec3d{ 0,0,1 }), 
+            wavevec(vec3d{ 0,0,1 }), 
+            amplitude(1.0)
         {};
 
         PlaneWave(const vec3d& pol, const vec3d& wavehat, double amplitude)
@@ -33,12 +33,13 @@ namespace Exct {
         double amplitude;   // amplitude
     };
 
-    std::shared_ptr<PlaneWave> importPlaneWaves(const std::filesystem::path&);
+    std::shared_ptr<Exct::PlaneWave> Einc; // incident plane wave
+
+    void importPlaneWaves(const std::filesystem::path&);
 }
 
 // TODO: Use importLines
-std::shared_ptr<Exct::PlaneWave> 
-    Exct::importPlaneWaves(const std::filesystem::path& fpath)
+void Exct::importPlaneWaves(const std::filesystem::path& fpath)
 {
     std::ifstream inFile(fpath);
     if (!inFile) throw std::runtime_error("Unable to find file");
@@ -47,15 +48,11 @@ std::shared_ptr<Exct::PlaneWave>
     std::getline(inFile, line);
     std::istringstream iss(line);
 
-    std::shared_ptr<Exct::PlaneWave> Einc;
-
     vec3d pol, wavehat;
     double amplitude;
     if (iss >> pol >> wavehat >> amplitude)
         Einc = std::make_shared<Exct::PlaneWave>(pol, wavehat, amplitude);
     else
         throw std::runtime_error("Unable to parse line");
-
-    return Einc;
 }
 
