@@ -15,16 +15,18 @@ namespace Mesh {
     struct TriMoments;
     struct TriToRWG;
 
-    template <typename T>
-    using quadPair = std::pair<T, double>;
-
+    using quadPair = std::pair<vec3d, double>;
     using MomentsEFIE = std::tuple<cmplx, vec3cd, vec3cd, cmplx>;
     using MomentsMFIE = std::tuple<cmplx, vec3cd, vec3cd, vec3cd, cmplx>;
 
     // Global data
     std::vector<vec3d> glVerts;   // list of vertices (including fine)
     std::vector<Triangle> glTris; // list of triangles (including fine)
-    std::vector<TriPair> glTriPairs; // nearfield triangle pairs
+    PairHashMap<TriPair> glTriPairs; // nearfield triangle pairs
+    std::vector<MomentsEFIE> glMomentsEFIE;
+    std::vector<MomentsMFIE> glMomentsMFIE;
+    std::vector<MomentsMFIE> glMomentsMFIE2; // symmetric case
+
     std::vector<TriToRWG> triToRWGs; // coarse triangle to RWG mappings
     size_t nverts;                // number of coarse mesh vertices
     size_t ntris;                 // number of coarse mesh triangles

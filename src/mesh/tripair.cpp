@@ -7,7 +7,10 @@
 Mesh::TriPair::TriPair(pair2i iTris)
     : iTris(iTris)
 {
-    assert(iTris.first <= iTris.second);
+    auto [iTri0, iTri1] = iTris;
+    assert(iTri0 <= iTri1);
+    iPair = iTri0 + iTri1*(iTri1+1)/2; // index in glTriPairs for this pair
+
     buildNumCommon();
 
     if (nCommon >= nCommonThres) {

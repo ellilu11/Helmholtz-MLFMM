@@ -87,8 +87,9 @@ cmplx Mesh::RWG::getIntegratedEFIE(const std::shared_ptr<Source> src) const {
         int iSrc = 0;
         for (const auto& [srcTri, vsrc] : srcRWG->getTrisAndVerts() ) {
             const TriPair& triPair = glTriPairs.at(std::minmax(obsTri.iTri, srcTri.iTri));
+            size_t iPair = triPair.iPair;
 
-            const auto& [m00, m10, m01, m11] = *triPair.momentsEFIE;
+            const auto& [m00, m10, m01, m11] = glTriMoments.momentsEFIE[iPair];
             vec3d v0 = (obsTri.iTri <= srcTri.iTri) ? vobs : vsrc;
             vec3d v1 = (obsTri.iTri <= srcTri.iTri) ? vsrc : vobs;
             cmplx pairRad = m11 - v1.dot(m10) - v0.dot(m01) + (v0.dot(v1) - 4.0/k2)*m00;
@@ -134,9 +135,11 @@ cmplx Mesh::RWG::getIntegratedMFIE(const std::shared_ptr<Source> src) const {
             }
 
             const TriPair& triPair = glTriPairs.at(std::minmax(obsTri.iTri, srcTri.iTri));
+            size_t iPair = triPair.iPair;
             
             const auto& [m000, m001, m10, m01, m11] =
-                (obsTri.iTri <= srcTri.iTri) ? *triPair.momentsMFIE : *triPair.momentsMFIE2;
+                (obsTri.iTri <= srcTri.iTri) ? 
+                    glMomentsMFIE[iPair] : glMomentsMFIE2[iPair];
             cmplx pairRad = m11 - vsrc.dot(m10) - vobs.dot(m01) + 
                 (vobs.dot(vsrc))*m000 + obsTri.nhat.dot(vsrc)*vobs.dot(m001);
 

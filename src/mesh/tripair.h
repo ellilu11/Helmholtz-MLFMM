@@ -28,7 +28,7 @@ public:
     pair2i iTris; // indices of triangles
     double dist;  // distance between triangle centers
     int nCommon;  // number of common vertices
-    int iPair;    // index in glTriPairs
+    size_t iPair;    // index in glTriPairs
 };
 
 struct Mesh::TriMoments {
@@ -36,15 +36,19 @@ struct Mesh::TriMoments {
 public:
     TriMoments(size_t);
 
+    void clear() {
+        momentsEFIE.clear();
+        momentsMFIE.clear();
+        momentsMFIE2.clear();
+    }
+
 private:
     void buildMomentsEFIE();
 
     void buildMomentsMFIE();
 
 public:
-    std::vector<MomentsEFIE> momentsEFIE;
-    std::vector<MomentsMFIE> momentsMFIE;
-    std::vector<MomentsMFIE> momentsMFIE2; // symmetric case
+
 
 private:
     size_t nPair; // number of triangle pairs

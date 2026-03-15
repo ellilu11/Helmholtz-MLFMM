@@ -1,7 +1,7 @@
 #include "triangle.h"
 
 int Mesh::Triangle::numQuads;
-std::vector<quadPair<vec3d>> Mesh::Triangle::quadCoeffs;
+std::vector<Mesh::quadPair> Mesh::Triangle::quadCoeffs;
 
 /* Triangle(iVerts)
  * Construct triangle from global indices of vertices
@@ -299,7 +299,7 @@ double Mesh::Triangle::getSingularEFIE(
     for (const auto& [obs, obsWeight] : triQuads) {
         vec3d obsProj = srcTri.proj(obs);
         auto [scaInvR, vecInvR] = (iTri <= srcTri.iTri ? 
-            triPair.integratedInvR[iObs] : triPair.integratedInvR2[iObs]);
+            triPair.intInvR[iObs] : triPair.intInvR2[iObs]);
 
         rad += ((obs-vobs).dot(vecInvR+(obsProj-vsrcProj)*scaInvR) - 4.0/k2*scaInvR)
                 * obsWeight;
@@ -327,9 +327,9 @@ double Mesh::Triangle::getSingularMFIE(
         vec3d obsProj = srcTri.proj(obs);
 
         auto [scaInvR, vecInvR] = (iTri <= srcTri.iTri ?
-            triPair.integratedInvR[iObs] : triPair.integratedInvR2[iObs]);
+            triPair.intInvR[iObs] : triPair.intInvR2[iObs]);
         auto [scaInvR3, vecInvR3] = (iTri <= srcTri.iTri ?
-            triPair.integratedInvRcubed[iObs] : triPair.integratedInvRcubed2[iObs]);
+            triPair.intInvRcubed[iObs] : triPair.intInvRcubed2[iObs]);
 
         vec3d sumInvR = 0.5*k2 * (vecInvR + (obsProj-vsrcProj)*scaInvR);
         vec3d sumInvR3 = vecInvR3 + (obsProj-vsrcProj)*scaInvR3;

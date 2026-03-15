@@ -8,7 +8,7 @@ std::vector<vec3d> FMM::Tables::dXs;
  * Return interpolation pairs for interpolating from srcLvl to tgtLvl over theta
  * Each pair contains interpolation coefficients and index of nearest source theta
  */
-std::vector<interpPair> FMM::Tables::getInterpTheta(int srcLvl, int tgtLvl)
+std::vector<FMM::interpPair> FMM::Tables::getInterpTheta(int srcLvl, int tgtLvl)
 {
     int order = config.interpOrder;
 
@@ -55,7 +55,7 @@ std::vector<interpPair> FMM::Tables::getInterpTheta(int srcLvl, int tgtLvl)
  * Return interpolation pairs for interpolating from srcLvl to tgtLvl over phi
  * Each pair contains interpolation coefficients and index of nearest source phi
  */
-std::vector<interpPair> FMM::Tables::getInterpPhi(int srcLvl, int tgtLvl)
+std::vector<FMM::interpPair> FMM::Tables::getInterpPhi(int srcLvl, int tgtLvl)
 {
     int order = config.interpOrder;
 
@@ -131,7 +131,7 @@ Map<std::vector<cmplx>> FMM::Tables::getAlpha() {
  * Return interpolation pairs for interpolating over psi = acos(khat.dot(rhat))
  * Each pair contains interpolation coefficients and index of nearest source psi
  */
-HashMap<interpPair> FMM::Tables::getInterpPsi() {
+HashMap<FMM::interpPair> FMM::Tables::getInterpPsi() {
     int order = config.interpOrder;
 
     // Find all unique psi = acos(khat.dot(rhat))

@@ -50,7 +50,7 @@ public:
         return { glVerts[iVerts[0]], glVerts[iVerts[1]], glVerts[iVerts[2]] };
     }
 
-    std::vector<quadPair<vec3d>> getQuads() const { return triQuads; }
+    std::vector<quadPair> getQuads() const { return triQuads; }
 
     int getIdx() const { return iTri; }
 
@@ -60,10 +60,10 @@ public:
 
 private:
     static int numQuads;
-    static std::vector<quadPair<vec3d>> quadCoeffs;
+    static std::vector<quadPair> quadCoeffs;
 
     // Integral quantities
-    std::vector<quadPair<vec3d>> triQuads; // triangle quadrature nodes and weights
+    std::vector<quadPair> triQuads; // triangle quadrature nodes and weights
     std::array<double, 4> selfInts;
 
     vec3d center;           // barycentric center 

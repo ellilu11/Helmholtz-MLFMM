@@ -2,7 +2,7 @@
 
 #include "../source.h"
 #include "triangle.h"
-#include "tripair.h"
+#include "trimoments.h"
 
 class Mesh::RWG : public Source {
 public:

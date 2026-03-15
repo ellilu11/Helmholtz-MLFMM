@@ -10,8 +10,11 @@ FMM::Nearfield::Nearfield(size_t nsrcs)
     findNodePairs();
     buildTriPairs();
 
+    Mesh::glTriMoments = Mesh::TriMoments(Mesh::glTriPairs.size());
+
     buildNearMatrix();
     Mesh::glTriPairs.clear();
+    Mesh::glTriMoments.clear();
 
     Time duration_ms = Clock::now() - start;
     std::cout << " in " << duration_ms.count() << " ms\n\n";
@@ -53,7 +56,7 @@ void FMM::Nearfield::buildTriPairs() {
                 if (iTri0 > iTri1) continue;
 
                 pair2i pair(iTri0, iTri1);
-                Mesh::glTriPairs.emplace_back(pair);
+                Mesh::glTriPairs.emplace(pair, Mesh::TriPair(pair));
             }
     }
 
@@ -64,7 +67,7 @@ void FMM::Nearfield::buildTriPairs() {
         for (auto iTri0 : iTris0)
             for (auto iTri1 : iTris1) {
                 pair2i pair = std::minmax(iTri0, iTri1);
-                Mesh::glTriPairs.emplace_back(pair);
+                Mesh::glTriPairs.emplace(pair, Mesh::TriPair(pair));
             }
     }
 }
