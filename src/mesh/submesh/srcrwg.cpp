@@ -1,10 +1,7 @@
 #include "srcrwg.h"
 
-Mesh::SrcRWG::SrcRWG( // TODO: Initialize iSubs
-    std::shared_ptr<Exct::PlaneWave> Einc,
-    size_t iSrc,
-    const Eigen::Vector4i& idx4)
-    : RWG(std::move(Einc), iSrc, idx4)
+Mesh::SrcRWG::SrcRWG(const vec4i& idx4, size_t iSrc)
+    : RWG(idx4, iSrc)
 {
     //std::cout << "Built srcRWG #" << iSrc << " w/ common vertices # " 
     //    << iVertsC[0] << ' '<< iVertsC[1] << " and non-common vertices # "
@@ -24,7 +21,7 @@ void Mesh::SrcRWG::refineRWGs() {
         //    << edge.first << ',' << edge.second << ") with tris # "
         //    << iTri[0] << ' ' << iTri[1] << '\n';
 
-        glSubrwgs.emplace_back(iSub, idx4);
+        glSubrwgs.emplace_back(idx4, iSub);
         fineEdgeToSub.emplace(edge, iSub);
         ++iSub;
     }

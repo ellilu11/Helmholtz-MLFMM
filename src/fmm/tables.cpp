@@ -40,7 +40,6 @@ std::vector<FMM::interpPair> FMM::Tables::getInterpTheta(int srcLvl, int tgtLvl)
             interpThetas[k] = srcTheta;
         }
 
-        // TODO: Use std::vector<double> not vecXd
         std::vector<double> coeffs(2*order);
         for (int k = 0; k < 2*order; ++k)
             coeffs[k] = Math::evalLagrangeBasis(tgtTheta, interpThetas, k);
@@ -198,7 +197,7 @@ void FMM::Tables::buildTranslationTable() {
     for (const auto& dX : dXs) {
         double r = dX.norm();
         vec3d rhat = dX / r;
-        std::vector<cmplx> alpha_dX = alphas.at(r);
+        auto alpha_dX = alphas.at(r);
 
         arrXcd transl_dX(nDir);
         for (int iDir = 0; iDir < nDir; ++iDir) {

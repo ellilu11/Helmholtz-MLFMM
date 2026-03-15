@@ -1,6 +1,6 @@
 #pragma once
 
-#include <filesystem>
+#include "../exct.h"
 #include "../maps.h"
 
 namespace Mesh {
@@ -28,28 +28,18 @@ namespace Mesh {
     std::vector<MomentsMFIE> glMomentsMFIE2; // symmetric case
 
     std::vector<TriToRWG> triToRWGs; // coarse triangle to RWG mappings
-    size_t nverts;                // number of coarse mesh vertices
-    size_t ntris;                 // number of coarse mesh triangles
 
     vec3d rootCenter; 
     double rootLeng;
 
     // Functions
-    void importVertices(const std::filesystem::path&);
-
-    void importTriangles(const std::filesystem::path&);
-
     void buildRootCoords();
 
-    SrcVec importRWGs(
-        const std::filesystem::path&, std::shared_ptr<Exct::PlaneWave>);
+    SrcVec importMesh(const std::filesystem::path&);
 
-    SrcVec importMesh(
-        const std::filesystem::path&, std::shared_ptr<Exct::PlaneWave>);
+    void getScattered(const SrcVec&, const std::filesystem::path&, const std::string&, int);
 
-    void printScattered(const SrcVec&, const std::filesystem::path&, const std::string&, int);
-
-    // void printSurfCurr();
+    // void getSurfCurr();
 
     void printNormals(const std::string&);
 }

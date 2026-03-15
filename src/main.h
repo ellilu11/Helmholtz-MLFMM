@@ -18,10 +18,10 @@
 #include "mesh/triangle.cpp"
 #include "mesh/trimoments.cpp"
 #include "mesh/triquads.cpp"
-#include "mesh/submesh/bc.cpp"
-#include "mesh/submesh/srcrwg.cpp"
-#include "mesh/submesh/submesh.cpp"
-#include "mesh/submesh/subrwg.cpp"
-#include "mesh/submesh/subtri.cpp"
+//#include "mesh/submesh/bc.cpp"
+//#include "mesh/submesh/srcrwg.cpp"
+//#include "mesh/submesh/submesh.cpp"
+//#include "mesh/submesh/subrwg.cpp"
+//#include "mesh/submesh/subtri.cpp"
 
 // TODO: Reference additional headers your program requires here.

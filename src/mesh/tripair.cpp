@@ -95,9 +95,9 @@ void Mesh::TriMoments::buildMomentsEFIE() {
         const auto& triPair = glTriPairs[iPair];
         const auto& [obsTri, srcTri] = triPair.getTriPair();
 
-        for (const auto& [obs, obsWeight] : obsTri.triQuads) {
-            for (const auto& [src, srcWeight] : srcTri.triQuads) {
-                double r = (obs-src).norm();
+    for (const auto& [obs, obsWeight] : obsTri.quads) {
+        for (const auto& [src, srcWeight] : srcTri.quads) {
+            double r = (obs-src).norm();
 
                 cmplx G = obsWeight*srcWeight / (4.0*PI); // apply 1/(4pi) factor
                 if (triPair.nCommon >= nCommonThres)
@@ -133,14 +133,14 @@ void Mesh::TriMoments::buildMomentsMFIE() {
 
         vec3d obsNhat = obsTri.nhat, srcNhat = srcTri.nhat;
 
-        for (const auto& [obs, obsWeight] : obsTri.triQuads) {
-            // For common triangles, use analytic integration of -1/2 J term
-            if (triPair.nCommon == 3) continue;
+    for (const auto& [obs, obsWeight] : obsTri.quads) {
+        // For common triangles, use analytic integration of -1/2 J term
+        if (nCommon == 3) continue;
 
-            for (const auto& [src, srcWeight] : srcTri.triQuads) {
-                const vec3d& R = obs-src;
-                double r = R.norm(), r2 = r*r, r3 = r*r2;
-                assert(!Math::fzero(r));
+        for (const auto& [src, srcWeight] : srcTri.quads) {
+            const vec3d& R = obs-src;
+            double r = R.norm(), r2 = r*r, r3 = r*r2;
+            assert(!Math::fzero(r));
 
                 vec3cd gradG = obsWeight*srcWeight * R / (4.0*PI*r3); // apply 1/(4pi) factor
 
@@ -156,14 +156,43 @@ void Mesh::TriMoments::buildMomentsMFIE() {
                 m01 -= obsNhat.cross(gradG.cross(src));
                 m11 -= obs.dot(obsNhat.cross(gradG.cross(src)));
 
-                n000 += -srcNhat.dot(gradG);
-                n001 += gradG;
-                n10 += (src.dot(gradG) * srcNhat - srcNhat.dot(gradG) * src);
-                n01 += srcNhat.cross(gradG.cross(obs));
-                n11 += src.dot(srcNhat.cross(gradG.cross(obs)));
-            }
+            n000 += -srcNhat.dot(gradG);
+            n001 += gradG;
+            n10 += (src.dot(gradG) * srcNhat - srcNhat.dot(gradG) * src);
+            n01 += srcNhat.cross(gradG.cross(obs));
+            n11 += src.dot(srcNhat.cross(gradG.cross(obs)));
         }
     }
+}
+
+/* buildIntegratedInvR()
+ * Build integrated 1/R and its symmetric case for triangle pair
+ */
+void Mesh::TriPair::buildIntegratedInvR() {
+    const auto [obsTri, srcTri] = getTriPair();
+
+    integratedInvR.reserve(obsTri.quads.size());
+    for (const auto& [obs, weight] : obsTri.quads)
+        integratedInvR.emplace_back(srcTri.getIntegratedInvR(obs));
+
+    integratedInvR2.reserve(srcTri.quads.size());
+    for (const auto& [src, weight] : srcTri.quads)
+        integratedInvR2.emplace_back(obsTri.getIntegratedInvR(src));
+}
+
+/* buildIntegratedInvRcubed()
+ * Build integrated 1/R^3 and its symmetric case for triangle pair
+ */
+void Mesh::TriPair::buildIntegratedInvRcubed() {
+    const auto [obsTri, srcTri] = getTriPair();
+
+    integratedInvRcubed.reserve(obsTri.quads.size());
+    for (const auto& [obs, weight] : obsTri.quads)
+        integratedInvRcubed.emplace_back(srcTri.getIntegratedInvRcubed(obs));
+
+    integratedInvRcubed2.reserve(srcTri.quads.size());
+    for (const auto& [src, weight] : srcTri.quads)
+        integratedInvRcubed2.emplace_back(obsTri.getIntegratedInvRcubed(src));
 }
 
 /*
@@ -174,7 +203,7 @@ void Mesh::TriPair::buildMomentsMFIE_T() {
     double k = config.k, k2 = k*k;
     vec3d nhat = obsTri.nhat;
 
-    for (const auto& [obs, obsWeight] : obsTri.triQuads) {
+    for (const auto& [obs, obsWeight] : obsTri.quads) {
         // For common triangles, use -1/2 J term
         if (nCommon == 3) {
             // since numerical integration only cancels one RWG's 1/(2A) factor
@@ -186,7 +215,7 @@ void Mesh::TriPair::buildMomentsMFIE_T() {
             continue;
         }
 
-        for (const auto& [src, srcWeight] : srcTri.triQuads) {
+        for (const auto& [src, srcWeight] : srcTri.quads) {
             const vec3d& R = obs-src;
             double r = R.norm(), r2 = r*r, r3 = r*r2;
             assert(!Math::fzero(r));
@@ -214,7 +243,7 @@ void Mesh::TriPair::buildMomentsInvR() {
     const auto& [obsTri, srcTri] = getTriPair();
 
     momentsInvR = { 0.0, vec3cd::Zero(), 0.0 };
-    for (const auto& [obs, obsWeight] : obsTri.triQuads) {
+    for (const auto& [obs, obsWeight] : obsTri.quads) {
         const auto& [scaRad, vecRad] = srcTri.getIntegratedInvR(obs);
 
         auto& [m0, m1, m11] = momentsInvR;

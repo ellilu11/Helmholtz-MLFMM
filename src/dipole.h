@@ -7,36 +7,27 @@ class Dipole final : public Source {
 public:
     Dipole() = default;
 
-    Dipole(
-        std::shared_ptr<Exct::PlaneWave> Einc, size_t iSrc, const vec3d& X)
-        : Source(std::move(Einc), iSrc), pos(X), 
+    Dipole(const vec3d& X, size_t iSrc)
+        : Source(iSrc), pos(X), 
         pmag(Phys::p0), pol(vec3d(pmag, 0, 0)), phat(pol/pmag)
     {};
 
-    Dipole(
-        std::shared_ptr<Exct::PlaneWave> Einc, size_t iSrc, const vec3d& X, const vec3d& P)
-        : Dipole(std::move(Einc), iSrc, X)
+    Dipole(const vec3d& X, const vec3d& P, size_t iSrc)
+        : Dipole(iSrc, X)
     {
         pol = P;
         pmag = P.norm();
         phat = P / pmag;
-
-        buildVoltage();
     };
 
-    void buildVoltage() override {
-        voltage = -Einc->amplitude * exp(iu*Einc->wavevec.dot(pos))
+    cmplx getVoltage() override {
+        using namespace Exct;
+        return -Einc->amplitude * exp(iu*Einc->wavevec.dot(pos))
             * pol.dot(Einc->pol);
     }
 
     vec3d getCenter() const override { return pos; }
 
-    /* getRadAlongDir(X,kvec)
-     * Return the outgoing radiated amplitude at X along direction kvec
-     * due to this dipole
-     * X    : observation point (Cartesian)
-     * kvec : wavevector
-     */
     std::pair<vec3cd, vec3cd> getRadsAlongDir(const vec3d& X, const vec3d& kvec) const override
     {
         vec3cd rad = exp(iu*kvec.dot(X-pos)) * phat / (4.0*PI); // apply factor of 1/(4pi)
@@ -94,8 +85,8 @@ private:
     double pmag; // pol. density magnitude 
 };
 
-SrcVec importDipoles(
-    const std::filesystem::path& fpath, std::shared_ptr<Exct::PlaneWave>& Einc)
+// TODO: Use importLines
+SrcVec importDipoles(const std::filesystem::path& fpath)
 {
     std::ifstream inFile(fpath);
     if (!inFile) throw std::runtime_error("Unable to find file");
@@ -108,12 +99,10 @@ SrcVec importDipoles(
 
         vec3d pos, dip;
         if (iss >> pos >> dip)
-            dipoles.emplace_back(std::make_shared<Dipole>(Einc, idx++, pos, dip));
+            dipoles.emplace_back(std::make_shared<Dipole>(pos, dip, idx++));
         else
             throw std::runtime_error("Unable to parse line");
     }
 
     return dipoles;
-    //auto srcs = importDipoles(
-    //    "config/dipole/sphere_n"+to_string(config.nsrcs)+".txt", Einc);
 }

@@ -1,10 +1,7 @@
 #pragma once
 
-#include <filesystem>
 #include "config.h"
-#include "exct.h"
 #include "math.h"
-#include "phys.h"
 
 class Source;
 
@@ -15,11 +12,7 @@ class Source {
 public:
     Source() = default;
     
-    Source(std::shared_ptr<Exct::PlaneWave> Einc, size_t iSrc)
-        : Einc(std::move(Einc)), iSrc(iSrc), voltage(0.0), rval(0.0)
-    {};
-
-    cmplx getVoltage() const { return voltage; }
+    Source(size_t iSrc) : iSrc(iSrc), rval(0.0) {};
 
     size_t getIdx() const { return iSrc; }
 
@@ -32,7 +25,7 @@ public:
 
     virtual vec3d getCenter() const = 0;
 
-    virtual void buildVoltage() = 0;
+    virtual cmplx getVoltage() = 0;
 
     virtual std::pair<vec3cd,vec3cd> getRadsAlongDir(const vec3d&, const vec3d&) const = 0;
 
@@ -45,9 +38,6 @@ public:
     virtual double getIntegratedMass(const std::shared_ptr<Source>) const = 0;
 
 protected:
-    std::shared_ptr<Exct::PlaneWave> Einc;
-    cmplx voltage;
     size_t iSrc;
-
     cmplx rval;
 };

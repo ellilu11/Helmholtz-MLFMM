@@ -7,9 +7,7 @@ class Mesh::SrcRWG final : public RWG {
     friend class BC;
 
 public:
-    SrcRWG(std::shared_ptr<Exct::PlaneWave>,
-           size_t,
-           const Eigen::Vector4i&);
+    SrcRWG(const vec4i&, size_t);
 
     static void refineRWGs();
 
