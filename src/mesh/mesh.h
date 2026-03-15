@@ -36,9 +36,9 @@ namespace Mesh {
     SrcVec importMesh(
         const std::filesystem::path&, std::shared_ptr<Exct::PlaneWave>);
 
-    void printScattered(const SrcVec&, const std::filesystem::path&, const std::string&, int);
+    void getScattered(const SrcVec&, const std::filesystem::path&, const std::string&, int);
 
-    // void evaluateJ();
+    // void getSurfCurr();
 
     void printNormals(const std::string&);
 }
