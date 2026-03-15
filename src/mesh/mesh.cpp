@@ -13,10 +13,6 @@ void Mesh::importVertices(const std::filesystem::path& path) {
         if (iss >> vertex) glVerts.push_back(vertex);
         else throw std::runtime_error("Unable to parse line");
     }
-
-    // std::cout << " Sphere radius: " << glVerts[0].norm() << '\n';
-
-    nverts = glVerts.size(); // record number of coarse vertices
 }
 
 void Mesh::importTriangles(const std::filesystem::path& path) {
@@ -32,9 +28,6 @@ void Mesh::importTriangles(const std::filesystem::path& path) {
         if (iss >> iVerts) glTris.emplace_back(iVerts, iTri++);
         else throw std::runtime_error("Unable to parse line");
     }
-
-    ntris = glTris.size(); // record number of coarse triangles
-    triToRWGs.resize(ntris);
 }
 
 SrcVec Mesh::importRWGs(
@@ -91,44 +84,35 @@ SrcVec Mesh::importMesh(
     return importRWGs(path/"rwgs.txt", std::move(Einc));
 }
 
-void Mesh::printScattered(
-    const SrcVec& srcs, const std::filesystem::path& dir, const std::string& fname, int nth) {
-    namespace fs = std::filesystem;
-    std::error_code ec;
+void Mesh::getScattered(
+    const SrcVec& srcs, const std::filesystem::path& dir, const std::string& fname, int nth) 
+{
+    makeDir(dir);
+    std::ofstream farfile(dir/fname), thfile(dir/"angles.txt");
+    farfile << std::setprecision(15) << std::scientific;
 
     std::cout << " Computing scattered farfield...\n";
 
-    if (fs::create_directory(dir, ec))
-        std::cout << "   Created directory " << dir.generic_string() << "/\n";
-    else if (ec)
-        std::cerr << "   Error creating directory " << ec.message() << "\n";
-
-    std::ofstream farfile(dir/fname);
-    farfile << std::setprecision(15) << std::scientific;
-
-    // Also print out angles (coordinates of farsols)
-    std::ofstream thfile(dir/"angles.txt");
-
     double k = config.k;
     double rcsSum = 0.0;
-    for (int ith = 0; ith < nth; ++ith) { // 2*nth to cover great circle
+    for (int ith = 0; ith < 2*nth; ++ith) { // 2*nth to cover great circle
         double theta0 = (ith+0.5)*PI/static_cast<double>(nth); // in [0, 2*pi]
         double theta = (theta0 < PI) ? theta0 : 2*PI - theta0; // fold back to [0, pi]
         double phi = (theta0 < PI) ? 0.0 : PI; // fold back to [0, 2pi]
         assert(theta >= 0.0 && theta <= PI);
 
-        const vec3d& rhat = Math::fromSph(vec3d(1.0, theta, phi));
+        vec3d rhat = Math::fromSph(vec3d(1.0, theta, phi));
 
         vec3cd dirFar = vec3cd::Zero();
         for (const auto& src : srcs)
             dirFar += Solver::currents[src->getIdx()] * src->getFarAlongDir(k*rhat);
 
-        const vec2cd& far = iu*k*Phys::eta * Math::toThPh(theta, phi) * dirFar;
+        vec2cd far = iu*k*Phys::eta * Math::toThPh(theta, phi) * dirFar;
 
         double rcs = 4.0*PI/(k*k) * far.squaredNorm();
         rcsSum += rcs;
-        farfile << rcs << '\n'; // squared magnitude of theta and phi components
 
+        farfile << rcs << '\n'; // squared magnitude of theta and phi components
         thfile << theta0 << ' ' << theta << ' ' << phi << '\n';
     }
 

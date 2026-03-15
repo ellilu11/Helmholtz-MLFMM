@@ -1,9 +1,7 @@
 #pragma once
 
 #include <cctype>
-#include <fstream>
-#include <iostream>
-#include <type_traits>
+#include "fileio.h"
 #include "phys.h"
 
 enum class Mode { FMM, DIR, FMMDIR };
@@ -44,40 +42,6 @@ int getNumQuads(Precision prec) {
             case Precision::VERYHIGH: return 13;
         };
     } ();
-}
-
-void getDigit(std::istringstream& iss, char ch) {
-    while (iss.get(ch)) {
-        if (std::isdigit(static_cast<unsigned char>(ch))) {
-            iss.unget();
-            break;
-        }
-    }
-}
-
-template <typename T>
-std::ifstream& operator>>(std::ifstream& is, T& val) {
-    std::string line;
-    if (std::getline(is, line)) {
-        std::istringstream iss(line);
-
-        char ch = '\0';
-        getDigit(iss, ch);
-
-        if constexpr (std::is_enum_v<T>) {
-            typename std::underlying_type<T>::type eval;
-
-            while (iss >> eval) {
-                val = static_cast<T>(eval);
-                getDigit(iss, ch);
-            }
-
-        } else
-            while (iss >> val)
-                getDigit(iss, ch);
-    }
-
-    return is;
 }
 
 struct Config {
