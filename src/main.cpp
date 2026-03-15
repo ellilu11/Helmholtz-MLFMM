@@ -38,7 +38,7 @@ void mainLoop(const SrcVec& srcs, bool doFMM, bool doIter = true) {
     std::cout << " " + method + " total elapsed time : " << duration_ms.count() << " ms\n\n";
 
     // ==================== Compute scattered field ============= //
-    Mesh::printScattered(srcs,
+    Mesh::getScattered(srcs,
         "out/ff/px_k1.0z_plate",
         std::string(doFMM ? "ff_g" : "ffDir_g")+config.lengStr+".txt", 100);
 }
