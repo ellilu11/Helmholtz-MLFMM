@@ -39,8 +39,8 @@ void Mesh::TriPair::buildMomentsEFIE() {
     const auto& [obsTri, srcTri] = getTriPair();
 
     momentsEFIE = { 0.0, vec3cd::Zero(), vec3cd::Zero(), 0.0 };
-    for (const auto& [obs, obsWeight] : obsTri.triQuads) {
-        for (const auto& [src, srcWeight] : srcTri.triQuads) {
+    for (const auto& [obs, obsWeight] : obsTri.quads) {
+        for (const auto& [src, srcWeight] : srcTri.quads) {
             double r = (obs-src).norm();
 
             cmplx G = obsWeight * srcWeight;
@@ -66,12 +66,12 @@ void Mesh::TriPair::buildMomentsEFIE() {
 void Mesh::TriPair::buildIntegratedInvR() {
     const auto [obsTri, srcTri] = getTriPair();
 
-    integratedInvR.reserve(obsTri.triQuads.size());
-    for (const auto& [obs, weight] : obsTri.triQuads)
+    integratedInvR.reserve(obsTri.quads.size());
+    for (const auto& [obs, weight] : obsTri.quads)
         integratedInvR.emplace_back(srcTri.getIntegratedInvR(obs));
 
-    integratedInvR2.reserve(srcTri.triQuads.size());
-    for (const auto& [src, weight] : srcTri.triQuads)
+    integratedInvR2.reserve(srcTri.quads.size());
+    for (const auto& [src, weight] : srcTri.quads)
         integratedInvR2.emplace_back(obsTri.getIntegratedInvR(src));
 }
 
@@ -80,7 +80,7 @@ void Mesh::TriPair::buildMomentsInvR() {
     const auto& [obsTri, srcTri] = getTriPair();
 
     momentsInvR = { 0.0, vec3cd::Zero(), 0.0 };
-    for (const auto& [obs, obsWeight] : obsTri.triQuads) {
+    for (const auto& [obs, obsWeight] : obsTri.quads) {
         const auto& [scaRad, vecRad] = srcTri.getIntegratedInvR(obs);
 
         auto& [m0, m1, m11] = momentsInvR;

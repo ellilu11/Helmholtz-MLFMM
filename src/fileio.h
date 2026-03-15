@@ -44,7 +44,7 @@ std::ifstream& operator>>(std::ifstream& is, T& val) {
 }
 
 template <typename Tin, typename Tout>
-void importLines(const std::filesystem::path& path, std::vector<Tout>& vec) {
+void importVec(const std::filesystem::path& path, std::vector<Tout>& vec) {
     std::ifstream file(path);
     if (!file) throw std::runtime_error("Unable to find file");
     std::string line;
@@ -55,12 +55,15 @@ void importLines(const std::filesystem::path& path, std::vector<Tout>& vec) {
         Tin ele;
 
         if (iss >> ele) {
+            // Vertices
             if constexpr (std::is_same_v<Tin, Tout>)
                 vec.push_back(ele);
+            // Sources
             else if constexpr (std::is_same_v<Tout, std::shared_ptr<Source>>)
                 vec.push_back(std::make_shared<Mesh::RWG>(ele, idx++));
                 // TODO: Handle Exct::PlaneWave and other source types
-            else
+            // Triangles
+            else 
                 vec.emplace_back(ele, idx++);
         }
         else throw std::runtime_error("Unable to parse line");

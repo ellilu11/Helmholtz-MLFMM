@@ -1,10 +1,7 @@
 #pragma once
 
-#include <filesystem>
 #include "config.h"
-#include "exct.h"
 #include "math.h"
-#include "phys.h"
 
 class Source;
 

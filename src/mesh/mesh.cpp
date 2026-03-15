@@ -1,6 +1,22 @@
 #include "rwg.h"
 #include "triangle.h"
 
+SrcVec Mesh::importMesh(const std::filesystem::path& path)
+{
+    std::cout << " Importing mesh...\n";
+
+    Triangle::buildQuadCoeffs(config.quadPrec);
+
+    SrcVec rwgs;
+    importVec<vec3d>(path/"vertices.txt", glVerts);
+    importVec<vec3i>(path/"faces.txt", glTris);
+    importVec<vec4i>(path/"rwgs.txt", rwgs);
+
+    buildRootCoords();
+
+    return rwgs;
+}
+
 void Mesh::buildRootCoords() {
     vec3d maxVert = vec3d::Constant(-std::numeric_limits<double>::infinity());
     vec3d minVert = vec3d::Constant(std::numeric_limits<double>::infinity());
@@ -17,21 +33,6 @@ void Mesh::buildRootCoords() {
     std::cout << "   Root length: " << rootLeng << " m\n\n";
 }
 
-SrcVec Mesh::importMesh(const std::filesystem::path& path)
-{
-    std::cout << " Importing mesh...\n";
-
-    Triangle::buildQuadCoeffs(config.quadPrec);
-
-    importLines<vec3d>(path/"vertices.txt", glVerts);
-    importLines<vec3i>(path/"faces.txt", glTris);
-    buildRootCoords();
-
-    SrcVec rwgs;
-    importLines<vec4i>(path/"rwgs.txt", rwgs);
-    return rwgs;
-}
-
 void Mesh::getScattered(
     const SrcVec& srcs, const std::filesystem::path& dir, const std::string& fname, int nth) 
 {
@@ -43,7 +44,7 @@ void Mesh::getScattered(
 
     double k = config.k;
     double rcsSum = 0.0;
-    for (int ith = 0; ith < nth; ++ith) { // 2*nth to cover great circle
+    for (int ith = 0; ith < 2*nth; ++ith) { // 2*nth to cover great circle
         double theta0 = (ith+0.5)*PI/static_cast<double>(nth); // in [0, 2*pi]
         double theta = (theta0 < PI) ? theta0 : 2*PI - theta0; // fold back to [0, pi]
         double phi = (theta0 < PI) ? 0.0 : PI; // fold back to [0, 2pi]

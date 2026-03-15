@@ -29,7 +29,7 @@ std::string getIEStr(IE ie) {
         } ();
 }
 
-int getNumQuads(Precision prec) {
+size_t getNumQuads(Precision prec) {
     return [&]() {
         switch (prec) {
             case Precision::VERYLOW:  return 1;

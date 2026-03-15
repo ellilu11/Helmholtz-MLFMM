@@ -16,13 +16,9 @@ namespace FMM {
     constexpr int numDir = 26;
 
     // Types
-    enum class Dir {
-        W, E, S, N, D, U,
-        SW, SE, NW, NE, DW, DE, UW, UE, DS, DN, US, UN,
-        DSW, DSE, DNW, DNE, USW, USE, UNW, UNE
-    };
-
     class Node;
+    using NodeVec = std::vector<std::shared_ptr<Node>>;
+    using NodePair = std::pair<std::shared_ptr<Node>, std::shared_ptr<Node>>;
 
     class Farfield;
     class Nearfield;
@@ -31,8 +27,13 @@ namespace FMM {
     struct Angles;
     struct Tables;
 
-    using NodeVec = std::vector<std::shared_ptr<Node>>;
-    using NodePair = std::pair<std::shared_ptr<Node>, std::shared_ptr<Node>>;
+    using interpPair = std::pair<std::vector<double>, int>;
+
+    enum class Dir {
+        W, E, S, N, D, U,
+        SW, SE, NW, NE, DW, DE, UW, UE, DS, DN, US, UN,
+        DSW, DSE, DNW, DNE, USW, USE, UNW, UNE
+    };
 
     // Global data
     std::vector<Angles> angles; // make Farfield private member

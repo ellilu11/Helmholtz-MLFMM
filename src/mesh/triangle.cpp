@@ -1,8 +1,6 @@
 #include "triangle.h"
 
-int Mesh::Triangle::numQuads;
-std::vector<quadPair<vec3d>> Mesh::Triangle::quadCoeffs;
-// std::vector<quadPair<double>> Mesh::Triangle::linQuads;
+std::vector<Mesh::quadPair> Mesh::Triangle::quadCoeffs;
 
 /* Triangle(iVerts)
  * Construct triangle from global indices of vertices
@@ -12,12 +10,11 @@ Mesh::Triangle::Triangle(const vec3i& iVerts, int iTri)
     : iVerts(iVerts), iTri(iTri)
 {
     auto Xs = getVerts();
-    center = (Xs[0] + Xs[1] + Xs[2]) / 3.0;
-
+    std::array<vec3d, 3> Ds; // edge vectors
     for (int i = 0; i < 3; ++i) Ds[i] = Xs[(i+1)%3] - Xs[i];
 
+    center = (Xs[0] + Xs[1] + Xs[2]) / 3.0;
     nhat = (Ds[0].cross(Ds[1])).normalized();
-
     area = (Ds[0].cross(-Ds[2])).norm() / 2.0;
 
     buildTriQuads();
@@ -37,9 +34,9 @@ void Mesh::Triangle::buildTriQuads() {
         return ws[0]*X0 + ws[1]*X1 + ws[2]*X2;
         };
 
-    triQuads.reserve(numQuads);
+    quads.reserve(quadCoeffs.size());
     for (const auto& [coeffs, weight] : quadCoeffs)
-        triQuads.emplace_back(baryToPos(coeffs), weight);
+        quads.emplace_back(baryToPos(coeffs), weight);
 }
 
 /* buildSelfIntegratedInvR()
@@ -121,7 +118,10 @@ Mesh::Triangle::getIntegratedPlaneWave(const vec3d& kvec) const
 {
     using namespace Math;
 
-    double alpha = kvec.dot(Ds[0]), beta = -kvec.dot(Ds[2]), gamma = alpha-beta;
+    auto [X0, X1, X2] = getVerts();
+    vec3d D0 = X1-X0, D2 = X0-X2;
+
+    double alpha = kvec.dot(D0), beta = -kvec.dot(D2), gamma = alpha-beta;
     double alphasq = alpha*alpha, betasq = beta*beta;
     cmplx expI_alpha = exp(iu*alpha), expI_beta = exp(iu*beta);
     cmplx // TODO: Only compute if gamma != 0
@@ -137,7 +137,7 @@ Mesh::Triangle::getIntegratedPlaneWave(const vec3d& kvec) const
             f2 = (fzero(alpha) ? iu/6.0 :
                 (expI_alpha*(alphasq + 2.0*iu*alpha - 2.0) + 2.0) / (2.0*alpha*alphasq));
         scaRad = -f1_alpha;
-        vecRad = -iu*f2 * (Ds[0] - Ds[2]);
+        vecRad = -iu*f2 * (D0 - D2);
         // radVec = -f1_alpha * (Xs[0] - Xnc[iTri]) - iu*f2 * (Ds[0] - Ds[2]);
     } else {
         cmplx
@@ -145,7 +145,7 @@ Mesh::Triangle::getIntegratedPlaneWave(const vec3d& kvec) const
             I1 = iu * (I0 + f1_alpha),
             I2 = -iu * (I0 + f1_beta);
         scaRad = I0;
-        vecRad = (I1*Ds[0] - I2*Ds[2]) / gamma;
+        vecRad = (I1*D0 - I2*D2) / gamma;
         // radVec = I0 * (Xs[0] - Xnc[iTri]) + (I1*Ds[0] - I2*Ds[2]) / gamma;
     }
 
@@ -170,7 +170,7 @@ Mesh::Triangle::getIntegratedInvR(const vec3d& obs, bool doNumeric) const
     const vec3d& R = proj(obs);
 
     if (doNumeric) {
-        for (const auto& [node, weight] : triQuads) {
+        for (const auto& [node, weight] : quads) {
             const double dr = (obs-node).norm();
             scaRad += weight / dr;
             vecRad -= weight * (R-proj(node)) / dr;
@@ -221,7 +221,7 @@ double Mesh::Triangle::getSingularEFIE(
 
     double rad = 0.0;
     size_t iObs = 0;
-    for (const auto& [obs, obsWeight] : triQuads) {
+    for (const auto& [obs, obsWeight] : quads) {
         vec3d obsProj = srcTri.proj(obs);
         auto [scaRad, vecRad] = (iTri <= srcTri.iTri ? 
             triPair.integratedInvR[iObs] : triPair.integratedInvR2[iObs]);

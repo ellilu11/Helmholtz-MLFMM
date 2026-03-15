@@ -23,15 +23,14 @@ Mesh::RWG::RWG(const vec4i& idx4, size_t iSrc)
 vec3cd Mesh::RWG::getIntegratedPlaneWave(const vec3d& kvec, bool doNumeric) const {
     using namespace Math;
 
-    auto Xnc = getVertsNC();
     vec3cd rad = vec3cd::Zero();
     int iTri = 0;
 
     if (doNumeric) {
-        for (const auto& tri : getTris()) {
-            for (const auto& [node, weight] : tri.triQuads)
+        for (const auto& [tri, vert] : getTrisAndVerts()) {
+            for (const auto& [node, weight] : tri.quads)
                 rad += weight * exp(iu*kvec.dot(node))
-                        * (node - Xnc[iTri])
+                        * (node - vert)
                         * sign(iTri);
             ++iTri;
         }
@@ -39,11 +38,11 @@ vec3cd Mesh::RWG::getIntegratedPlaneWave(const vec3d& kvec, bool doNumeric) cons
         return leng * rad;
     }
 
-    for (const auto& tri : getTris()) {
+    for (const auto& [tri, vert] : getTrisAndVerts()) {
         const vec3d& X0 = tri.getVerts()[0];
         const auto& [scaRad, vecRad] = tri.getIntegratedPlaneWave(kvec);
         rad += exp(iu*kvec.dot(X0)) // TODO: Address warning
-                * (scaRad * (X0 - Xnc[iTri]) + vecRad) 
+                * (scaRad * (X0 - vert) + vecRad) 
                 * sign(iTri++);
     }
 
