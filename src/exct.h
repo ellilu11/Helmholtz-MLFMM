@@ -32,6 +32,7 @@ namespace Exct {
     std::shared_ptr<PlaneWave> importPlaneWaves(const std::filesystem::path&);
 }
 
+// TODO: Use importLines
 std::shared_ptr<Exct::PlaneWave> 
     Exct::importPlaneWaves(const std::filesystem::path& fpath)
 {

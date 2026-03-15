@@ -24,10 +24,6 @@ namespace Mesh {
     double rootLeng;
 
     // Functions
-    void importVertices(const std::filesystem::path&);
-
-    void importTriangles(const std::filesystem::path&);
-
     void buildRootCoords();
 
     SrcVec importRWGs(

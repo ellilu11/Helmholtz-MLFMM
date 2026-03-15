@@ -1,6 +1,5 @@
 #pragma once
 
-#include <cctype>
 #include "fileio.h"
 #include "phys.h"
 

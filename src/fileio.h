@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cctype>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
@@ -39,17 +40,21 @@ std::ifstream& operator>>(std::ifstream& is, T& val) {
     return is;
 }
 
-template <typename T>
-void importLines(const std::filesystem::path& path, std::vector<T>& vec) {
+template <typename Tin, typename Tout>
+void importLines(const std::filesystem::path& path, std::vector<Tout>& vec) {
     std::ifstream file(path);
     if (!file) throw std::runtime_error("Unable to find file");
     std::string line;
 
+    size_t idx = 0;
     while (std::getline(file, line)) {
         std::istringstream iss(line);
-        T ele;
+        Tin ele;
 
-        if (iss >> ele) vec.emplace_back(ele);
+        if (iss >> ele) {
+            if constexpr (std::is_same_v<Tin, Tout>) vec.push_back(ele);
+            else vec.emplace_back(ele, idx++);
+        }
         else throw std::runtime_error("Unable to parse line");
     }
 }

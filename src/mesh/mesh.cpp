@@ -1,35 +1,7 @@
 #include "rwg.h"
 #include "triangle.h"
 
-void Mesh::importVertices(const std::filesystem::path& path) {
-    std::ifstream file(path);
-    if (!file) throw std::runtime_error("Unable to find file");
-    std::string line;
-
-    while (std::getline(file, line)) {
-        std::istringstream iss(line);
-        vec3d vertex;
-
-        if (iss >> vertex) glVerts.push_back(vertex);
-        else throw std::runtime_error("Unable to parse line");
-    }
-}
-
-void Mesh::importTriangles(const std::filesystem::path& path) {
-    std::ifstream file(path);
-    std::string line;
-    if (!file) throw std::runtime_error("Unable to find file");
-
-    int iTri = 0;
-    while (std::getline(file, line)) {
-        std::istringstream iss(line);
-        vec3i iVerts;
-
-        if (iss >> iVerts) glTris.emplace_back(iVerts, iTri++);
-        else throw std::runtime_error("Unable to parse line");
-    }
-}
-
+// TODO: Use importLines
 SrcVec Mesh::importRWGs(
     const std::filesystem::path& path, std::shared_ptr<Exct::PlaneWave> Einc)
 {
@@ -75,11 +47,9 @@ SrcVec Mesh::importMesh(
 
     Triangle::buildQuadCoeffs(config.quadPrec);
 
-    importVertices(path/"vertices.txt");
-
+    importLines<vec3d>(path/"vertices.txt", glVerts);
+    importLines<vec3i>(path/"faces.txt", glTris);
     buildRootCoords();
-
-    importTriangles(path/"faces.txt");
 
     return importRWGs(path/"rwgs.txt", std::move(Einc));
 }
