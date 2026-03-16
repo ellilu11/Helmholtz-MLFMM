@@ -17,8 +17,8 @@ GMRES::GMRES(
       vsin(vecXcd::Zero(maxIter)),
       EPS(EPS), maxIter(maxIter)
 {
-    constexpr double dropTol = 1.0E-3; // TODO: Tune this parameter
-    constexpr int fillFact = 10; // TODO: Tune this parameter
+    constexpr double dropTol = 5.0E-4; // TODO: Tune this parameter
+    constexpr int fillFact = 20; // TODO: Tune this parameter
     buildILU(dropTol, fillFact);
 
     lvec = ilu.solve(lvec); // apply M^(-1) to lvec
