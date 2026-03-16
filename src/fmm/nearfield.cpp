@@ -1,5 +1,5 @@
 #include "nearfield.h"
-#include "../mesh/trimoments.h"
+#include "../mesh/tripairs.h"
 
 FMM::Nearfield::Nearfield(size_t nsrcs)
     : nearMat(nsrcs, nsrcs)
@@ -10,11 +10,9 @@ FMM::Nearfield::Nearfield(size_t nsrcs)
     findNodePairs();
     buildTriPairs();
 
-    Mesh::glTriMoments = Mesh::TriMoments(Mesh::glTriPairs.size());
-
     buildNearMatrix();
+    Mesh::glPairsToIdx.clear();
     Mesh::glTriPairs.clear();
-    Mesh::glTriMoments.clear();
 
     Time duration_ms = Clock::now() - start;
     std::cout << " in " << duration_ms.count() << " ms\n\n";
@@ -44,6 +42,8 @@ void FMM::Nearfield::findNodePairs() {
  * and populate Mesh::glTriPairs
  */
 void FMM::Nearfield::buildTriPairs() {
+    size_t iPair = 0;
+
     for (const auto& [leaf, srcLeaf] : selfPairs) {
         assert(leaf == srcLeaf);
         const auto& iTris = leaf->iTris;
@@ -53,7 +53,7 @@ void FMM::Nearfield::buildTriPairs() {
                 if (iTri0 > iTri1) continue;
 
                 pair2i pair(iTri0, iTri1);
-                Mesh::glTriPairs.emplace(pair, Mesh::TriPair(pair));
+                Mesh::glPairsToIdx.emplace(pair, iPair++);
             }
     }
 
@@ -63,9 +63,11 @@ void FMM::Nearfield::buildTriPairs() {
         for (auto iTri0 : iTris0)
             for (auto iTri1 : iTris1) {
                 pair2i pair = std::minmax(iTri0, iTri1);
-                Mesh::glTriPairs.emplace(pair, Mesh::TriPair(pair));
+                Mesh::glPairsToIdx.emplace(pair, iPair++);
             }
     }
+
+    Mesh::glTriPairs = Mesh::TriPairs();
 }
 
 /* getNearCapacity()

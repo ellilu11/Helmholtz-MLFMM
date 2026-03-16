@@ -16,7 +16,7 @@
 #include "mesh/mesh.cpp"
 #include "mesh/rwg.cpp"
 #include "mesh/triangle.cpp"
-#include "mesh/trimoments.cpp"
+#include "mesh/tripairs.cpp"
 #include "mesh/triquads.cpp"
 //#include "mesh/submesh/bc.cpp"
 //#include "mesh/submesh/srcrwg.cpp"

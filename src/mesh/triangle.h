@@ -4,8 +4,7 @@
 #include "mesh.h"
 
 class Mesh::Triangle {
-    friend class TriPair;
-    friend class TriMoments;
+    friend class TriPairs;
     friend class RWG;
 
 public:
@@ -26,10 +25,10 @@ public:
     std::pair<double, vec3d> getIntegratedInvRcubed(const vec3d&, bool = false) const;
 
     double getSingularEFIE(
-        const Triangle&, const TriPair&, const vec3d&, const vec3d&) const;
+        const Triangle&, const vec3d&, const vec3d&, size_t) const;
 
     double getSingularMFIE(
-        const Triangle&, const TriPair&, const vec3d&, const vec3d&) const;
+        const Triangle&, const vec3d&, const vec3d&, size_t) const;
 
     // cmplx getSurfaceCurrent() const;
 
@@ -57,6 +56,7 @@ public:
 
 private:
     static std::vector<quadPair> quadCoeffs;
+    static int numQuads;
 
     // Integral quantities
     std::vector<quadPair> quads; // triangle quadrature nodes and weights

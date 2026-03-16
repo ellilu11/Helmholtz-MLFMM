@@ -5,7 +5,7 @@
  * prec : precision level
  */
 void Mesh::Triangle::buildQuadCoeffs(Precision prec) {
-    size_t numQuads = getNumQuads(prec);
+    numQuads = getNumQuads(prec);
     quadCoeffs.reserve(numQuads);
 
     switch (prec) {

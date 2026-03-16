@@ -11,23 +11,19 @@ namespace Mesh {
     // Types
     class Triangle;
     class RWG;
-    struct TriPair;
-    struct TriMoments;
     struct TriToRWG;
 
     using quadPair = std::pair<vec3d, double>;
     using MomentsEFIE = std::tuple<cmplx, vec3cd, vec3cd, cmplx>;
     using MomentsMFIE = std::tuple<cmplx, vec3cd, vec3cd, vec3cd, cmplx>;
+    using intRads = std::vector<std::pair<double, vec3d>>;
 
     // Global data
     std::vector<vec3d> glVerts;   // list of vertices (including fine)
     std::vector<Triangle> glTris; // list of triangles (including fine)
-    PairHashMap<TriPair> glTriPairs; // nearfield triangle pairs
-    std::vector<MomentsEFIE> glMomentsEFIE;
-    std::vector<MomentsMFIE> glMomentsMFIE;
-    std::vector<MomentsMFIE> glMomentsMFIE2; // symmetric case
-
-    std::vector<TriToRWG> triToRWGs; // coarse triangle to RWG mappings
+    PairHashMap<size_t> glPairsToIdx; // map from triangle pair to index in glTriPairs
+    
+    // std::vector<TriToRWG> triToRWGs; // coarse triangle to RWG mappings
 
     vec3d rootCenter; 
     double rootLeng;
