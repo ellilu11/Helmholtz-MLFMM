@@ -22,8 +22,13 @@ public:
 
     cmplx getVoltage() override {
         using namespace Exct;
-        return -Einc->amplitude * exp(iu*Einc->wavevec.dot(pos))
-            * pol.dot(Einc->pol);
+
+        cmplx voltage = 0.0;
+        for (const auto& Einc : Eincs)
+            voltage -= Einc->amplitude * exp(iu*Einc->wavevec.dot(pos))
+                * pol.dot(Einc->pol);
+
+        return voltage;
     }
 
     vec3d getCenter() const override { return pos; }

@@ -18,19 +18,24 @@ Mesh::RWG::RWG(const vec4i& idx4, size_t iSrc)
 }
 
 /* getVoltage()
- * Return voltage of this RWG due to incident plane wave
+ * Return voltage of this RWG due to superposition of incident plane waves
  */
 cmplx Mesh::RWG::getVoltage() {
     using namespace Exct;
 
-    auto [inc, incNormal] = getIntegratedPlaneWave(Einc->wavevec);
+    cmplx voltage = 0.0;
+    for (const auto& Einc : Eincs) {
+        auto [inc, incNormal] = getIntegratedPlaneWave(Einc->wavevec);
 
-    // (1-alpha) * eta * H_inc = (1-alpha) * khat x E_inc
-    vec3d polE = config.alpha * Einc->pol;
-    vec3d polH = (1.0 - config.alpha) * Einc->wavehat.cross(Einc->pol);
+        // (1-alpha) * eta * H_inc = (1-alpha) * khat x E_inc
+        vec3d polE = config.alpha * Einc->pol;
+        vec3d polH = (1.0 - config.alpha) * Einc->wavehat.cross(Einc->pol);
 
-    // inc . (nhat x polH) = polH . (inc x nhat) = -polH . (nhat x inc) = -polH . incNormal
-    return -Einc->amplitude * (polE.dot(inc) - polH.dot(incNormal));
+        // inc . (nhat x polH) = polH . (inc x nhat) = -polH . (nhat x inc) = -polH . incNormal
+        voltage -= Einc->amplitude * (polE.dot(inc) - polH.dot(incNormal));
+    }
+
+    return voltage;
 }
 
 /* getIntegratedPlaneWave(kvec, doNumeric)

@@ -50,13 +50,13 @@ void mainLoop(const SrcVec& srcs, bool doFMM, bool doIter = true) {
 }
 
 int main() {
-    Exct::importPlaneWaves("config/pwave.txt");
+    importVec<vec3d>("config/pwave.txt", Exct::Eincs);
     auto srcs = Mesh::importMesh(
         "config/rwg/sph_r5.0/sph_r5.0_n"+std::to_string(config.nsrcs));
     //auto srcs = Mesh::importMesh(
     //    "config/rwg/rect/rect_g"+config.lengStr+"_n"+std::to_string(config.nsrcs));
 
-    constexpr bool doIter = true;
+    constexpr bool doIter = false;
     switch (config.mode) {
         case Mode::FMM: mainLoop(srcs, true); break;
         case Mode::DIR: mainLoop(srcs, false, doIter); break;

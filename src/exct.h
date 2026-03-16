@@ -3,6 +3,7 @@
 extern const Config config;
 
 namespace Exct {
+
     struct PlaneWave {
         PlaneWave()
             : pol(vec3d{ 1,0,0 }), 
@@ -33,26 +34,7 @@ namespace Exct {
         double amplitude;   // amplitude
     };
 
-    std::shared_ptr<Exct::PlaneWave> Einc; // incident plane wave
-
-    void importPlaneWaves(const std::filesystem::path&);
-}
-
-// TODO: Use importLines
-void Exct::importPlaneWaves(const std::filesystem::path& fpath)
-{
-    std::ifstream inFile(fpath);
-    if (!inFile) throw std::runtime_error("Unable to find file");
-
-    std::string line;
-    std::getline(inFile, line);
-    std::istringstream iss(line);
-
-    vec3d pol, wavehat;
-    double amplitude;
-    if (iss >> pol >> wavehat >> amplitude)
-        Einc = std::make_shared<Exct::PlaneWave>(pol, wavehat, amplitude);
-    else
-        throw std::runtime_error("Unable to parse line");
+    using PlaneWaves = std::vector<std::unique_ptr<PlaneWave>>;
+    PlaneWaves Eincs; // incident plane waves
 }
 
