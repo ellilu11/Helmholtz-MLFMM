@@ -31,7 +31,7 @@ void mainLoop(const SrcVec& srcs, bool doFMM, bool doIter = true) {
     std::unique_ptr<Solver> solver;
     if (doFMM || (!doFMM && doIter))
         solver = std::make_unique<GMRES>(srcs, std::move(nf),
-            std::move(ff), root, 1.0E-6, nsrcs);
+            std::move(ff), root, 1.0E-6, 1000);
     else 
         solver = std::make_unique<Direct>(srcs, std::move(nf));
 
@@ -41,20 +41,20 @@ void mainLoop(const SrcVec& srcs, bool doFMM, bool doIter = true) {
     std::cout << " " + method + " total elapsed time : " << duration_ms.count() << " ms\n\n";
 
     // ==================== Compute scattered field ============= //
-    //Mesh::getScattered(srcs,
-    //    "out/ff/px_k1.0z_r5.0_"+ieStr,
-    //    (doFMM ? "ff_n" : "ffDir_n")+std::to_string(nsrcs)+".txt", 200);
     Mesh::getScattered(srcs,
-        "out/ff/px_k1.0z_plate",
-        std::string(doFMM ? "ff_g" : "ffDir_g")+config.lengStr+".txt", 100);
+        "out/ff/px_k1.0z_r5.0_"+ieStr,
+        (doFMM ? "ff_n" : "ffDir_n")+std::to_string(nsrcs)+".txt", 200);
+    //Mesh::getScattered(srcs,
+    //    "out/ff/px_k1.0z_plate",
+    //    std::string(doFMM ? "ff_g" : "ffDir_g")+config.lengStr+".txt", 100);
 }
 
 int main() {
     Exct::importPlaneWaves("config/pwave.txt");
-    //auto srcs = Mesh::importMesh(
-    //    "config/rwg/sph_r5.0/sph_r5.0_n"+std::to_string(config.nsrcs));
     auto srcs = Mesh::importMesh(
-        "config/rwg/rect/rect_g"+config.lengStr+"_n"+std::to_string(config.nsrcs));
+        "config/rwg/sph_r5.0/sph_r5.0_n"+std::to_string(config.nsrcs));
+    //auto srcs = Mesh::importMesh(
+    //    "config/rwg/rect/rect_g"+config.lengStr+"_n"+std::to_string(config.nsrcs));
 
     constexpr bool doIter = true;
     switch (config.mode) {

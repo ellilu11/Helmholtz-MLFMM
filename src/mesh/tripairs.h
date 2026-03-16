@@ -24,7 +24,7 @@ namespace Mesh {
 
         void buildIntegratedInvRcubed();
 
-        std::pair<Triangle, Triangle> getTriPair(pair2i iTris) const {
+        static std::pair<Triangle, Triangle> getTriPair(pair2i iTris) {
             return { glTris[iTris.first], glTris[iTris.second] };
         }
 
@@ -40,6 +40,8 @@ namespace Mesh {
         std::vector<intRads> intsInvRcubed2; // symmetric case
 
         std::vector<int> nCommons;  // number of common vertices
+
+    private:
         size_t nPair; // number of triangle pairs
     };
 
