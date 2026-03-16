@@ -11,7 +11,7 @@ namespace Mesh {
 
         TriPairs(size_t);
 
-        void clear();
+        void clear() { *this = {}; }
 
     private:
         void buildNumCommon();

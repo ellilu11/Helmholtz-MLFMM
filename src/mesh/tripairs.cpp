@@ -174,16 +174,6 @@ void Mesh::TriPairs::buildIntegratedInvRcubed() {
     }
 }
 
-void Mesh::TriPairs::clear() {
-    momentsEFIE.clear();
-    momentsMFIE.clear();
-    momentsMFIE2.clear();
-    intsInvR.clear();
-    intsInvR2.clear();
-    intsInvRcubed.clear();
-    intsInvRcubed2.clear();
-}
-
 /*
 void Mesh::TriPairs::buildMomentsInvR() {
     const auto& [obsTri, srcTri] = getTriPair();

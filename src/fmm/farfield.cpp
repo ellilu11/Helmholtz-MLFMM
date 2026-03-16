@@ -66,12 +66,13 @@ void FMM::Farfield::buildRadPats(const std::shared_ptr<FMM::Node>& node) {
     const Angles& angles_lvl = angles[node->level];
     size_t nDir = angles_lvl.getNumDirs();
 
-    node->radPats.resize(node->srcs.size());
-    node->recPatsH.resize(node->srcs.size());
-    size_t iSrc = 0;
+    size_t nSrc = node->srcs.size(), iSrc = 0;
+    node->radPats.resize(nSrc);
+    if (config.ie != IE::EFIE) node->recPatsH.resize(nSrc); 
+
     for (const auto& src : node->srcs) {
         Coeffs radPat(nDir);
-        Coeffs recPatH(nDir);
+        Coeffs recPatH(nDir); // TODO: Don't resize to nDir if EFIE
 
         for (int iDir = 0; iDir < nDir; ++iDir) {
             vec3d kvec = angles_lvl.khat[iDir] * config.k;
@@ -79,11 +80,18 @@ void FMM::Farfield::buildRadPats(const std::shared_ptr<FMM::Node>& node) {
 
             auto [rad, radNormal] = src->getRadsAlongDir(node->center, kvec);
             radPat.setCoeffAlongDir(toThPh * rad, iDir);
-            recPatH.setCoeffAlongDir(toThPh * iu * (kvec.cross(radNormal).conjugate()), iDir);
+
+            if (config.ie == IE::EFIE) continue;
+            
+            recPatH.setCoeffAlongDir(
+                toThPh * iu * (kvec.cross(radNormal).conjugate()), 
+                iDir);
         }
 
         node->radPats[iSrc] = std::move(radPat);
-        node->recPatsH[iSrc] = std::move(recPatH);
+        if (config.ie != IE::EFIE) 
+            node->recPatsH[iSrc] = std::move(recPatH);
+
         ++iSrc;
     }
 }
@@ -275,12 +283,25 @@ void FMM::Farfield::evalFarSols(const std::shared_ptr<FMM::Node>& node) {
 
     size_t iObs = 0;
     for (const auto& obs : node->srcs) {
-        cmplx intRadE = getIntRad(node->radPats[iObs]);
-        cmplx intRadH = getIntRad(node->recPatsH[iObs]);
-
-        Solver::rvec[obs->getIdx()] += 4.0 * PI * // cancel extra factor of 1/(4pi)
-            (config.C_efie * intRadE + config.C_mfie * intRadH);
-
+        switch (config.ie) {
+            case IE::EFIE: {
+                cmplx intRadE = getIntRad(node->radPats[iObs]);
+                Solver::rvec[obs->getIdx()] += 4.0 * PI * config.C_efie * intRadE;
+                break;
+            }
+            case IE::MFIE: {
+                cmplx intRadH = getIntRad(node->recPatsH[iObs]);
+                Solver::rvec[obs->getIdx()] += 4.0 * PI * config.C_mfie * intRadH;
+                break;
+            }
+            case IE::CFIE: {
+                cmplx intRadE = getIntRad(node->radPats[iObs]);
+                cmplx intRadH = getIntRad(node->recPatsH[iObs]);
+                Solver::rvec[obs->getIdx()] += 
+                    4.0 * PI * (config.C_efie * intRadE + config.C_mfie * intRadH);
+                break;
+            }
+        }
         ++iObs;
     }
 }
