@@ -1,7 +1,7 @@
 #include "tripairs.h"
 
-Mesh::TriPairs::TriPairs() :
-    nPair(glPairsToIdx.size())
+Mesh::TriPairs::TriPairs(size_t nPair) :
+    nPair(nPair)
 {
     assert(nPair > 0);
     buildNumCommon();

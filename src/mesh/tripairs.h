@@ -7,7 +7,9 @@ namespace Mesh {
     struct Mesh::TriPairs {
 
     public:
-        TriPairs();
+        TriPairs() = default;
+
+        TriPairs(size_t);
 
         void clear();
 

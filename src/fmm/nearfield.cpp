@@ -67,7 +67,7 @@ void FMM::Nearfield::buildTriPairs() {
             }
     }
 
-    Mesh::glTriPairs = Mesh::TriPairs();
+    Mesh::glTriPairs = Mesh::TriPairs(iPair);
 }
 
 /* getNearCapacity()
