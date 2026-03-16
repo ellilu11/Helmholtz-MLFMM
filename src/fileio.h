@@ -53,25 +53,25 @@ void importVec(const std::filesystem::path& path, std::vector<Tout>& vec) {
     size_t idx = 0;
     while (std::getline(file, line)) {
         std::istringstream iss(line);
-        Tin ele, ele1;
-        double ele2;
+        Tin arg, arg1;
+        double arg2;
 
         // PlaneWave
         if constexpr (std::is_same_v<Tout, std::unique_ptr<Exct::PlaneWave>>) {
-            if (iss >> ele >> ele1 >> ele2)
-                vec.push_back(std::make_unique<Exct::PlaneWave>(ele, ele1, ele2));
+            if (iss >> arg >> arg1 >> arg2)
+                vec.push_back(std::make_unique<Exct::PlaneWave>(arg, arg1, arg2));
             else throw std::runtime_error("Unable to parse line");
-        } else if (iss >> ele) {
+        } else if (iss >> arg) {
             // Vertices
             if constexpr (std::is_same_v<Tin, Tout>)
-                vec.push_back(ele);
+                vec.push_back(arg);
             // Sources
             else if constexpr (std::is_same_v<Tout, std::shared_ptr<Source>>)
-                vec.push_back(std::make_shared<Mesh::RWG>(ele, idx++));
-            // TODO: Handle Exct::PlaneWave and other source types
+                vec.push_back(std::make_shared<Mesh::RWG>(arg, idx++));
+                // vec.push_back(std::make_shared<Dipole>(arg, arg1, idx++));
         // Triangles
             else
-                vec.emplace_back(ele, idx++);
+                vec.emplace_back(arg, idx++);
         } else throw std::runtime_error("Unable to parse line");
     }
 }

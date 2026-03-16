@@ -21,11 +21,7 @@ public:
         dXs = Math::getINodeDistVecs();
     }
 
-    static void clearDists() {
-        dists.clear();
-        rhats.clear();
-        dXs.clear();
-    }
+
 
 private:
     std::vector<interpPair> getInterpTheta(int, int);

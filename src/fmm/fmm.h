@@ -24,8 +24,7 @@ namespace FMM {
     class Nearfield;
 
     struct Coeffs;
-    struct Angles;
-    struct Tables;
+    struct Level;
 
     using interpPair = std::pair<std::vector<double>, int>;
 
@@ -36,9 +35,6 @@ namespace FMM {
     };
 
     // Global data
-    // TODO: Merge into "levels" and make Farfield private member
-    std::vector<Angles> angles;
-    std::vector<Tables> tables;
 
     NodeVec glLeaves;
     std::vector<NodePair> glNonNearPairs;
@@ -48,8 +44,6 @@ namespace FMM {
 
     // Functions
     void reset() {
-        angles.clear(); 
-        tables.clear(); 
         glLeaves.clear(); 
         glNonNearPairs.clear();
         numNodes = 0;
