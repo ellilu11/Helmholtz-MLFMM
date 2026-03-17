@@ -53,7 +53,8 @@ Mesh::RWG::getIntegratedPlaneWave(const vec3d& kvec, bool doNumeric) const {
                 vec3cd nodeRad = 
                     weight * exp(iu*kvec.dot(node)) * (node - vert) * Math::sign(iTri);
                 rad += nodeRad;
-                radNormal += tri.nhat.cross(nodeRad).conjugate();
+                if (config.ie != IE::EFIE) 
+                    radNormal += tri.nhat.cross(nodeRad).conjugate();
             }
             ++iTri;
         }
@@ -68,7 +69,8 @@ Mesh::RWG::getIntegratedPlaneWave(const vec3d& kvec, bool doNumeric) const {
             exp(iu*kvec.dot(X0)) * (scaRad * (X0 - vert) + vecRad) * Math::sign(iTri++);
 
         rad += triRad;
-        radNormal += tri.nhat.cross(triRad).conjugate(); // double check sign and conjugation!
+        if (config.ie != IE::EFIE)
+            radNormal += tri.nhat.cross(triRad).conjugate(); // double check sign and conjugation!
     }
 
     assert(!std::isnan(rad.norm()));

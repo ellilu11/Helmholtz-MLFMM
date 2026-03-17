@@ -44,22 +44,22 @@ void mainLoop(const SrcVec& srcs, bool doFMM, bool doIter = true) {
     //Mesh::getScattered(srcs,
     //    "out/ff/px_k1.0z_r5.0_"+ieStr,
     //    (doFMM ? "ff_n" : "ffDir_n")+std::to_string(nsrcs)+".txt", 200);
-    Mesh::getScattered(srcs,
-        "out/ff/py_k1.0x_plate",
-        std::string(doFMM ? "ff_g" : "ffDir_g")+config.lengStr+".txt", 100);
     //Mesh::getScattered(srcs,
-    //    "out/ff/py_k193.33x_plate",
-    //    std::string(doFMM ? "ff_g" : "ffDir_g")+config.lengStr+".txt", 400);
+    //    "out/ff/py_k1.0x_plate",
+    //    std::string(doFMM ? "ff_g" : "ffDir_g")+config.lengStr+".txt", 100);
+    Mesh::getScattered(srcs,
+        "out/ff/px_k1.0z_almond_"+ieStr,
+        std::string(doFMM ? "ff" : "ffDir")+".txt", 100);
 }
 
 int main() {
     importVec<vec3d>("config/pwave.txt", Exct::Eincs);
     //auto srcs = Mesh::importMesh(
     //    "config/rwg/sph_r5.0/sph_r5.0_n"+std::to_string(config.nsrcs));
-    auto srcs = Mesh::importMesh(
-        "config/rwg/rect/rect_g"+config.lengStr+"_n"+std::to_string(config.nsrcs));
     //auto srcs = Mesh::importMesh(
-    //    "config/rwg/rect/rect_wl0.03_n"+std::to_string(config.nsrcs));
+    //    "config/rwg/rect/rect_g"+config.lengStr+"_n"+std::to_string(config.nsrcs));
+    auto srcs = Mesh::importMesh(
+        "config/rwg/almond/almond_n"+std::to_string(config.nsrcs));
 
     constexpr bool doIter = true;
     switch (config.mode) {

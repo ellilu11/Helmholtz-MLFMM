@@ -19,7 +19,7 @@ Mesh::Triangle::Triangle(const vec3i& iVerts, int iTri)
     area = (Ds[0].cross(-Ds[2])).norm() / 2.0;
 
     buildTriQuads();
-    // reverseOrient();
+    reverseOrient();
     // buildSelfIntegratedInvR();
 }
 
