@@ -4,17 +4,21 @@
 FMM::Nearfield::Nearfield(size_t nsrcs)
     : nearMat(nsrcs, nsrcs)
 {
-    std::cout << " Building nearfield matrix...     ";
+    std::cout << " Building triangle pairs...       ";
     auto start = Clock::now();
 
     findNodePairs();
     buildTriPairs();
 
+    Time duration_ms = Clock::now() - start;
+    std::cout << " in " << duration_ms.count() << " ms\n\n";
+
+    std::cout << " Building nearfield matrix...     ";
     buildNearMatrix();
     Mesh::glPairsToIdx.clear();
     Mesh::glTriPairs.clear();
 
-    Time duration_ms = Clock::now() - start;
+    duration_ms = Clock::now() - start;
     std::cout << " in " << duration_ms.count() << " ms\n\n";
 }
 
