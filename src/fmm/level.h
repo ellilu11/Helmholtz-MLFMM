@@ -10,17 +10,18 @@ class FMM::Level {
 public:
     Level() = default;
 
-    Level(int level) 
-        : level(level)
+    Level(int level) : level(level)
     {
         buildAngularSamples();
         buildAngularMatrices();
         buildTranslationTable();
     }
 
-    void buildAngularSamples();
-
-    void buildAngularMatrices();
+    void buildInterpTables(const Level& srcLevel) {
+        assert(level < maxLevel);
+        buildInterpTheta(srcLevel);
+        buildInterpPhi(srcLevel);
+    }
 
     static void buildDists() {
         dists = Math::getINodeDistances();
@@ -32,12 +33,6 @@ public:
         dists.clear();
         rhats.clear();
         dXs.clear();
-    }
-
-    void buildInterpTables(const Level& srcLevel) {
-        assert(level < maxLevel);
-        interpTheta = getInterpTheta(srcLevel);
-        interpPhi = getInterpPhi(srcLevel);
     }
 
     pair2i getNumAngles() const {
@@ -57,9 +52,13 @@ public:
     }
 
 private:
-    std::vector<interpPair> getInterpTheta(const Level&);
+    void buildAngularSamples();
 
-    std::vector<interpPair> getInterpPhi(const Level&);
+    void buildAngularMatrices();
+
+    void buildInterpTheta(const Level&);
+
+    void buildInterpPhi(const Level&);
 
     Map<std::vector<cmplx>> getAlpha();
 

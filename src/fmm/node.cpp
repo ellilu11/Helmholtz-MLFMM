@@ -15,7 +15,7 @@ FMM::Node::Node(
     nodeLeng(base == nullptr ? Mesh::rootLeng : base->nodeLeng/2.0),
     center(base == nullptr ? Mesh::rootCenter :
         base->center + nodeLeng/2.0 * Math::idx2pm(branchIdx)),
-    level(base == nullptr ? 0 : base->level + 1)
+    lvl(base == nullptr ? 0 : base->lvl + 1)
 {
     if (isRoot()) std::cout << " Building FMM tree...\n";
 
@@ -25,7 +25,7 @@ FMM::Node::Node(
         for (const auto& src : srcs) src->setIdx(glSrcIdx++);
 
         // Update maxLevel if needed
-        maxLevel = std::max(level, maxLevel);
+        maxLevel = std::max(lvl, maxLevel);
     }
     else subdivide();
 

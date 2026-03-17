@@ -20,13 +20,13 @@ void FMM::Farfield::buildLevels() {
     Level::buildDists();
 
     levels.reserve(maxLevel+1);
-    for (int level = 0; level <= maxLevel; ++level)
-        levels.emplace_back(level);
+    for (int lvl = 0; lvl <= maxLevel; ++lvl)
+        levels.emplace_back(lvl);
     
     Level::clearDists();
 
-    for (int level = 0; level < maxLevel; ++level)
-        levels[level].buildInterpTables(levels[level+1]);
+    for (int lvl = 0; lvl < maxLevel; ++lvl)
+        levels[lvl].buildInterpTables(levels[lvl+1]);
 
     Time duration_ms = Clock::now() - start;
     std::cout << " in " << duration_ms.count() << " ms\n\n";
@@ -51,7 +51,7 @@ void FMM::Farfield::buildGlRadPats() {
  * number of directions at each level
  */
 void FMM::Farfield::resizeCoeffs(const std::shared_ptr<FMM::Node>& node) {
-    size_t nDir = levels[node->level].getNumDirs();
+    size_t nDir = levels[node->lvl].getNumDirs();
     node->coeffs.resize(nDir);
     node->localCoeffs.resize(nDir);
 
@@ -64,8 +64,8 @@ void FMM::Farfield::resizeCoeffs(const std::shared_ptr<FMM::Node>& node) {
  */
 void FMM::Farfield::buildRadPats(const std::shared_ptr<FMM::Node>& node) {
     if (node->isSrcless()) return;
-    const Level& fmmLevel = levels[node->level];
-    size_t nDir = fmmLevel.getNumDirs();
+    const Level& level = levels[node->lvl];
+    size_t nDir = level.getNumDirs();
 
     size_t nSrc = node->srcs.size(), iSrc = 0;
     node->radPats.resize(nSrc);
@@ -76,8 +76,8 @@ void FMM::Farfield::buildRadPats(const std::shared_ptr<FMM::Node>& node) {
         Coeffs recPatH(nDir); // TODO: Don't resize to nDir if EFIE
 
         for (int iDir = 0; iDir < nDir; ++iDir) {
-            vec3d kvec = fmmLevel.khat[iDir] * config.k;
-            const mat23d& toThPh = fmmLevel.toThPh[iDir];
+            vec3d kvec = level.khat[iDir] * config.k;
+            const mat23d& toThPh = level.toThPh[iDir];
 
             auto [rad, radNormal] = src->getRadsAlongDir(node->center, kvec);
             radPat.setCoeffAlongDir(toThPh * rad, iDir);
@@ -108,7 +108,7 @@ void FMM::Farfield::buildMpoleCoeffs(const std::shared_ptr<FMM::Node>& node) {
 
     auto start = Clock::now();
 
-    size_t nDir = levels[node->level].getNumDirs();
+    size_t nDir = levels[node->lvl].getNumDirs();
     Eigen::Map<arrXcd> coeffsTheta(coeffs.theta.data(), nDir);
     Eigen::Map<arrXcd> coeffsPhi(coeffs.phi.data(), nDir);
 
@@ -131,8 +131,8 @@ void FMM::Farfield::buildMpoleCoeffs(const std::shared_ptr<FMM::Node>& node) {
  */
 void FMM::Farfield::mergeMpoleCoeffs(const std::shared_ptr<FMM::Node>& node) {
     int order = config.interpOrder;
-    int level = node->level;
-    size_t mDir = levels[level+1].getNumDirs();
+    int lvl = node->lvl;
+    size_t mDir = levels[lvl+1].getNumDirs();
 
     node->coeffs.fillZero();
 
@@ -150,7 +150,7 @@ void FMM::Farfield::mergeMpoleCoeffs(const std::shared_ptr<FMM::Node>& node) {
 
         Coeffs shiftedCoeffs(mDir);
         for (int iDir = 0; iDir < mDir; ++iDir) {
-            const vec3d& kvec = levels[level+1].khat[iDir] * config.k;
+            const vec3d& kvec = levels[lvl+1].khat[iDir] * config.k;
             cmplx shift = exp(iu*kvec.dot(dX));
 
             shiftedCoeffs.theta[iDir] = shift * branchCoeffs.theta[iDir];
@@ -158,7 +158,7 @@ void FMM::Farfield::mergeMpoleCoeffs(const std::shared_ptr<FMM::Node>& node) {
         }
 
         // Interpolate shifted coeffs to this node's angular grid
-        addInterpCoeffs(shiftedCoeffs, node->coeffs, level+1, level);
+        addInterpCoeffs(shiftedCoeffs, node->coeffs, lvl+1, lvl);
 
         t.M2M += Clock::now() - start;
     }
@@ -176,7 +176,7 @@ void FMM::Farfield::translateCoeffs(const std::shared_ptr<FMM::Node>& node) {
     size_t nDir = localCoeffs.size();
 
     // Translate mpole coeffs into local coeffs
-    const VecHashMap<arrXcd>& transl = levels[node->level].transl;
+    const VecHashMap<arrXcd>& transl = levels[node->lvl].transl;
     Eigen::Map<arrXcd> localTheta(localCoeffs.theta.data(), nDir);
     Eigen::Map<arrXcd> localPhi(localCoeffs.phi.data(), nDir);
 
@@ -192,13 +192,13 @@ void FMM::Farfield::translateCoeffs(const std::shared_ptr<FMM::Node>& node) {
     }
 
     // Apply integration weights
-    const Level& fmmLevel = levels[node->level];
-    auto [nth, nph] = fmmLevel.getNumAngles();
+    const Level& level = levels[node->lvl];
+    auto [nth, nph] = level.getNumAngles();
     double phiWeight = 2.0*PI / static_cast<double>(nph);
 
     size_t iDir = 0;
     for (int ith = 0; ith < nth; ++ith) {
-        double thetaWeight = fmmLevel.weights[ith];
+        double thetaWeight = level.weights[ith];
 
         for (int iph = 0; iph < nph; ++iph) {
             localCoeffs.theta[iDir] *= thetaWeight * phiWeight;
@@ -215,9 +215,9 @@ void FMM::Farfield::translateCoeffs(const std::shared_ptr<FMM::Node>& node) {
 FMM::Coeffs FMM::Farfield::getShiftedLocalCoeffs(
     FMM::Node* node, int branchIdx) const 
 {
-    int level = node->level;
-    size_t mDir = levels[level].getNumDirs();
-    size_t nDir = levels[level+1].getNumDirs();
+    int lvl = node->lvl;
+    size_t mDir = levels[lvl].getNumDirs();
+    size_t nDir = levels[lvl+1].getNumDirs();
 
     Coeffs outCoeffs(nDir);
     if (node->iList.empty()) return outCoeffs;
@@ -227,7 +227,7 @@ FMM::Coeffs FMM::Farfield::getShiftedLocalCoeffs(
 
     Coeffs shiftedCoeffs(mDir);
     for (int iDir = 0; iDir < mDir; ++iDir) {
-        vec3d kvec = levels[level].khat[iDir] * config.k;
+        vec3d kvec = levels[lvl].khat[iDir] * config.k;
         cmplx shift = exp(iu*kvec.dot(dX));
 
         shiftedCoeffs.theta[iDir] = shift * node->localCoeffs.theta[iDir];
@@ -235,7 +235,7 @@ FMM::Coeffs FMM::Farfield::getShiftedLocalCoeffs(
     }
 
     // Anterpolate shifted coeffs to branch's angular grid
-    addAnterpCoeffs(shiftedCoeffs, outCoeffs, level, level+1);
+    addAnterpCoeffs(shiftedCoeffs, outCoeffs, lvl, lvl+1);
 
     return outCoeffs;
 }
@@ -267,11 +267,11 @@ void FMM::Farfield::buildLocalCoeffs(const std::shared_ptr<FMM::Node>& node) {
  * (L2T) Evaluate sols from local expansion due to far nodes
  */
 void FMM::Farfield::evalFarSols(const std::shared_ptr<FMM::Node>& node) {
-    int level = node->level;
-    if (node->isSrcless() || level <= 1) return;
+    int lvl = node->lvl;
+    if (node->isSrcless() || lvl <= 1) return;
 
     double k = config.k;
-    size_t nDir = levels[level].getNumDirs();
+    size_t nDir = levels[lvl].getNumDirs();
     Eigen::Map<arrXcd> localTheta(node->localCoeffs.theta.data(), nDir);
     Eigen::Map<arrXcd> localPhi(node->localCoeffs.phi.data(), nDir);
 

@@ -57,20 +57,17 @@ void FMM::Level::buildAngularMatrices() {
     }
 }
 
-/* getInterpTheta(srcLvl, tgtLvl)
- * Return interpolation pairs for interpolating from finer level to this level over theta
+/* buildInterpTheta(srcLvl, tgtLvl)
+ * Build interpolation pairs for interpolating from finer level to this level over theta
  * Each pair contains interpolation coefficients and index of nearest source theta
  */
-std::vector<FMM::interpPair> FMM::Level::getInterpTheta(const Level& srcLevel)
-{
+void FMM::Level::buildInterpTheta(const Level& srcLevel) {
     int order = config.interpOrder;
 
     const auto& srcThetas = srcLevel.thetas;
     int mth = srcThetas.size(), nth = thetas.size();
 
-    std::vector<interpPair> interpPairs;
-    interpPairs.reserve(nth);
-
+    interpTheta.reserve(nth);
     for (size_t jth = 0; jth < nth; ++jth) {
         double tgtTheta = thetas[jth];
 
@@ -96,26 +93,21 @@ std::vector<FMM::interpPair> FMM::Level::getInterpTheta(const Level& srcLevel)
         for (int k = 0; k < 2*order; ++k)
             coeffs[k] = Math::evalLagrangeBasis(tgtTheta, interpThetas, k);
 
-        interpPairs.emplace_back(coeffs, nearIdx);
+        interpTheta.emplace_back(coeffs, nearIdx);
     }
-
-    return interpPairs;
 }
 
-/* getInterpPhi(srcLvl, tgtLvl)
- * Return interpolation pairs for interpolating from finer level to this level over phi
+/* buildInterpPhi(srcLvl, tgtLvl)
+ * Build interpolation pairs for interpolating from finer level to this level over phi
  * Each pair contains interpolation coefficients and index of nearest source phi
  */
-std::vector<FMM::interpPair> FMM::Level::getInterpPhi(const Level& srcLevel)
-{
+void FMM::Level::buildInterpPhi(const Level& srcLevel) {
     int order = config.interpOrder;
 
     const auto& srcPhis = srcLevel.phis;
     int mph = srcPhis.size(), nph = phis.size();
 
-    std::vector<interpPair> interpPairs;
-    interpPairs.reserve(nph);
-
+    interpPhi.reserve(nph);
     for (size_t jph = 0; jph < nph; ++jph) {
         double tgtPhi = phis[jph];
 
@@ -130,10 +122,8 @@ std::vector<FMM::interpPair> FMM::Level::getInterpPhi(const Level& srcLevel)
         for (int k = 0; k < 2*order; ++k)
             coeffs[k] = Math::evalLagrangeBasis(tgtPhi, interpPhis, k);
 
-        interpPairs.emplace_back(coeffs, nearIdx);
+        interpPhi.emplace_back(coeffs, nearIdx);
     }
-
-    return interpPairs;
 }
 
 /* getAlpha()

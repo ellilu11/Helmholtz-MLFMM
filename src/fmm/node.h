@@ -64,5 +64,5 @@ private:
     Node* const base;
     const double nodeLeng; // declare before center!
     const vec3d center;
-    const int level;
+    const int lvl;
 };
