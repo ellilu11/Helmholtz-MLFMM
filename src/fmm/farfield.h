@@ -30,7 +30,10 @@ private:
 
     void evalFarSols(const std::shared_ptr<Node>&);
 
-    static void addInterpCoeffs(const Coeffs&, Coeffs&, int, int);
+    void addInterpCoeffs(const Coeffs&, Coeffs&, int, int) const;
 
-    static void addAnterpCoeffs(const Coeffs&, Coeffs&, int, int);
+    void addAnterpCoeffs(const Coeffs&, Coeffs&, int, int) const;
+
+private:
+    std::vector<Level> levels;
 };

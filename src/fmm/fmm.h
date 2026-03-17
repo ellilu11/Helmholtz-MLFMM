@@ -35,7 +35,6 @@ namespace FMM {
     };
 
     // Global data
-
     NodeVec glLeaves;
     std::vector<NodePair> glNonNearPairs;
     inline int numNodes = 0;

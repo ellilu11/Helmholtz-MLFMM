@@ -2,6 +2,7 @@
 
 #include "../maps.h"
 #include "../math.h"
+#include "../mesh/mesh.h"
 #include "fmm.h"
 
 class FMM::Level {
@@ -9,11 +10,12 @@ class FMM::Level {
 public:
     Level() = default;
 
-    Level(int level)
+    Level(int level) 
         : level(level)
     {
         buildAngularSamples();
         buildAngularMatrices();
+        buildTranslationTable();
     }
 
     void buildAngularSamples();
@@ -32,13 +34,10 @@ public:
         dXs.clear();
     }
 
-    void buildTables(int maxLevel) {
-        if (level < maxLevel) {
-            interpTheta = getInterpTheta(level+1, level);
-            interpPhi = getInterpPhi(level+1, level);
-        }
-            
-        buildTranslationTable();
+    void buildInterpTables(const Level& srcLevel) {
+        assert(level < maxLevel);
+        interpTheta = getInterpTheta(srcLevel);
+        interpPhi = getInterpPhi(srcLevel);
     }
 
     pair2i getNumAngles() const {
@@ -58,11 +57,11 @@ public:
     }
 
 private:
-    std::vector<interpPair> getInterpTheta(int, int);
+    std::vector<interpPair> getInterpTheta(const Level&);
 
-    std::vector<interpPair> getInterpPhi(int, int);
+    std::vector<interpPair> getInterpPhi(const Level&);
 
-    Map<vecXcd> getAlpha();
+    Map<std::vector<cmplx>> getAlpha();
 
     HashMap<interpPair> getInterpPsi();
 
@@ -71,7 +70,7 @@ private:
 public:
     static std::vector<double> dists;
     static std::vector<vec3d> rhats;
-    static std::array<vec3d, 316> dXs;
+    static std::vector<vec3d> dXs;
 
     // M2M interpolation tables
     std::vector<interpPair> interpTheta;

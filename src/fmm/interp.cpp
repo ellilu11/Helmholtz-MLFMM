@@ -6,17 +6,17 @@
  * Interpolation is done in two steps: first over theta, then over phi
  */
 void FMM::Farfield::addInterpCoeffs(
-    const Coeffs& inCoeffs, Coeffs& outCoeffs, int srcLvl, int tgtLvl)
+    const Coeffs& inCoeffs, Coeffs& outCoeffs, int srcLvl, int tgtLvl) const
 {
     int order = config.interpOrder;
 
-    auto [mth, mph] = angles[srcLvl].getNumAngles();
-    auto [nth, nph] = angles[tgtLvl].getNumAngles();
+    auto [mth, mph] = levels[srcLvl].getNumAngles();
+    auto [nth, nph] = levels[tgtLvl].getNumAngles();
     assert(!(mph%2)); // mph needs to be even
 
     int tblLvl = std::min(srcLvl, tgtLvl);
-    const auto& interpTheta = tables[tblLvl].interpTheta;
-    const auto& interpPhi = tables[tblLvl].interpPhi;
+    const auto& interpTheta = levels[tblLvl].interpTheta;
+    const auto& interpPhi = levels[tblLvl].interpPhi;
 
     // Interpolate over theta
     Coeffs innerCoeffs(nth*mph);
@@ -67,17 +67,17 @@ void FMM::Farfield::addInterpCoeffs(
  * Anterpolation is done in two steps: first over phi, then over theta
  */
 void FMM::Farfield::addAnterpCoeffs(
-    const Coeffs& inCoeffs, Coeffs& outCoeffs, int srcLvl, int tgtLvl)
+    const Coeffs& inCoeffs, Coeffs& outCoeffs, int srcLvl, int tgtLvl) const
 {
     int order = config.interpOrder;
 
-    auto [mth, mph] = angles[srcLvl].getNumAngles();
-    auto [nth, nph] = angles[tgtLvl].getNumAngles();
+    auto [mth, mph] = levels[srcLvl].getNumAngles();
+    auto [nth, nph] = levels[tgtLvl].getNumAngles();
     assert(!(nph%2)); // nph needs to be even
 
     const int tblLvl = std::min(srcLvl, tgtLvl);
-    const auto& interpTheta = tables[tblLvl].interpTheta;
-    const auto& interpPhi = tables[tblLvl].interpPhi;
+    const auto& interpTheta = levels[tblLvl].interpTheta;
+    const auto& interpPhi = levels[tblLvl].interpPhi;
 
     // Anterpolate over extended phi
     Coeffs innerCoeffs(mth*nph);

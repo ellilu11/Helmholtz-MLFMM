@@ -56,7 +56,7 @@ int main() {
     //auto srcs = Mesh::importMesh(
     //    "config/rwg/rect/rect_g"+config.lengStr+"_n"+std::to_string(config.nsrcs));
 
-    constexpr bool doIter = false;
+    constexpr bool doIter = true;
     switch (config.mode) {
         case Mode::FMM: mainLoop(srcs, true); break;
         case Mode::DIR: mainLoop(srcs, false, doIter); break;

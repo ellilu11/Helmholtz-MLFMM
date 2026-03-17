@@ -4,10 +4,9 @@
 #include <numeric>
 #include <queue>
 
-#include "angles.h"
 #include "coeffs.h"
 #include "fmm.h"
-#include "tables.h"
+#include "level.h"
 #include "../source.h"
 
 class FMM::Node : public std::enable_shared_from_this<Node> {

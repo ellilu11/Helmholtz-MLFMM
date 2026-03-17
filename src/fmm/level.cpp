@@ -2,7 +2,7 @@
 
 std::vector<double> FMM::Level::dists;
 std::vector<vec3d> FMM::Level::rhats;
-std::array<vec3d, 316> FMM::Level::dXs;
+std::vector<vec3d> FMM::Level::dXs;
 
 void FMM::Level::buildAngularSamples()
 {
@@ -57,19 +57,22 @@ void FMM::Level::buildAngularMatrices() {
     }
 }
 
-std::vector<interpPair> FMM::Level::getInterpTheta(int srcLvl, int tgtLvl)
+/* getInterpTheta(srcLvl, tgtLvl)
+ * Return interpolation pairs for interpolating from finer level to this level over theta
+ * Each pair contains interpolation coefficients and index of nearest source theta
+ */
+std::vector<FMM::interpPair> FMM::Level::getInterpTheta(const Level& srcLevel)
 {
     int order = config.interpOrder;
 
-    const std::vector<double>&
-        srcThetas = fmmLevels[srcLvl].thetas, tgtThetas = fmmLevels[tgtLvl].thetas;
-    int mth = srcThetas.size(), nth = tgtThetas.size();
+    const auto& srcThetas = srcLevel.thetas;
+    int mth = srcThetas.size(), nth = thetas.size();
 
     std::vector<interpPair> interpPairs;
     interpPairs.reserve(nth);
 
     for (size_t jth = 0; jth < nth; ++jth) {
-        double tgtTheta = tgtThetas[jth];
+        double tgtTheta = thetas[jth];
 
         int nearIdx = Math::getNearGLNodeIdx(tgtTheta, mth, 0.0, PI);
 
@@ -89,7 +92,7 @@ std::vector<interpPair> FMM::Level::getInterpTheta(int srcLvl, int tgtLvl)
             interpThetas[k] = srcTheta;
         }
 
-        vecXd coeffs(2*order);
+        std::vector<double> coeffs(2*order);
         for (int k = 0; k < 2*order; ++k)
             coeffs[k] = Math::evalLagrangeBasis(tgtTheta, interpThetas, k);
 
@@ -99,19 +102,22 @@ std::vector<interpPair> FMM::Level::getInterpTheta(int srcLvl, int tgtLvl)
     return interpPairs;
 }
 
-std::vector<interpPair> FMM::Level::getInterpPhi(int srcLvl, int tgtLvl)
+/* getInterpPhi(srcLvl, tgtLvl)
+ * Return interpolation pairs for interpolating from finer level to this level over phi
+ * Each pair contains interpolation coefficients and index of nearest source phi
+ */
+std::vector<FMM::interpPair> FMM::Level::getInterpPhi(const Level& srcLevel)
 {
     int order = config.interpOrder;
 
-    const std::vector<double>&
-        srcPhis = fmmLevels[srcLvl].phis, tgtPhis = fmmLevels[tgtLvl].phis;
-    int mph = srcPhis.size(), nph = tgtPhis.size();
+    const auto& srcPhis = srcLevel.phis;
+    int mph = srcPhis.size(), nph = phis.size();
 
     std::vector<interpPair> interpPairs;
     interpPairs.reserve(nph);
 
     for (size_t jph = 0; jph < nph; ++jph) {
-        double tgtPhi = tgtPhis[jph];
+        double tgtPhi = phis[jph];
 
         int nearIdx = std::floor(mph * tgtPhi / (2.0*PI));
 
@@ -120,7 +126,7 @@ std::vector<interpPair> FMM::Level::getInterpPhi(int srcLvl, int tgtLvl)
         for (int iph = nearIdx+1-order, k = 0; iph <= nearIdx+order; ++iph, ++k)
             interpPhis[k] = 2.0*PI*iph/static_cast<double>(mph);
 
-        vecXd coeffs(2*order);
+        std::vector<double> coeffs(2*order);
         for (int k = 0; k < 2*order; ++k)
             coeffs[k] = Math::evalLagrangeBasis(tgtPhi, interpPhis, k);
 
@@ -130,28 +136,32 @@ std::vector<interpPair> FMM::Level::getInterpPhi(int srcLvl, int tgtLvl)
     return interpPairs;
 }
 
-Map<vecXcd> FMM::Level::getAlpha() {
+/* getAlpha()
+ * Return translation coefficients for each distance between interacting nodes
+ * Each entry contains the coefficients for interpolating over the distance
+ */
+Map<std::vector<cmplx>> FMM::Level::getAlpha() {
     using namespace Math;
 
     int nth = thetas.size();
     int nps = std::floor(config.overInterp*(nth-1));
-    double nodeLeng = config.rootLeng / pow(2.0, level);
+    double nodeLeng = Mesh::rootLeng / pow(2.0, level);
 
-    Map<vecXcd> alpha;
+    Map<std::vector<cmplx>> alpha;
     for (const auto& dist : dists) {
-        double kr = k * dist * nodeLeng;
+        double kr = config.k * dist * nodeLeng;
 
-        vecXcd transl_dist(nps);
+        std::vector<cmplx> transl_dist(nps);
         for (int ips = 0; ips < nps; ++ips) {
             double xi = cos(PI*ips/static_cast<double>(nps-1));
             cmplx coeff = 0.0;
 
             for (int l = 0; l <= L; ++l)
                 coeff += powI(l) * (2.0*l+1.0)
-                * sphericalHankel1(kr, l)
-                * legendreP(xi, l).first;
+                    * sphericalHankel1(kr, l)
+                    * legendreP(xi, l).first;
 
-            transl_dist[ips] = iu * k / (4.0*PI) * coeff;
+            transl_dist[ips] = iu * config.k / (4.0*PI) * coeff;
         }
 
         alpha.emplace(dist, transl_dist);
@@ -161,18 +171,21 @@ Map<vecXcd> FMM::Level::getAlpha() {
     return alpha;
 };
 
-HashMap<interpPair> FMM::Level::getInterpPsi() {
+/* getInterpPsi()
+ * Return interpolation pairs for interpolating over psi = acos(khat.dot(rhat))
+ * Each pair contains interpolation coefficients and index of nearest source psi
+ */
+HashMap<FMM::interpPair> FMM::Level::getInterpPsi() {
     int order = config.interpOrder;
 
     // Find all unique psi = acos(khat.dot(rhat))
-    const auto [nth, nph] = getNumAngles();
-    int nDir = nth*nph;
-
+    auto [nth, nph] = getNumAngles();
+    size_t nDir = nth*nph;
     std::vector<double> psis(nDir*rhats.size());
 
     size_t m = 0;
     for (size_t iDir = 0; iDir < nDir; ++iDir) {
-        const auto& khat = this->khat[iDir];
+        vec3d khat = this->khat[iDir];
 
         for (const auto& rhat : rhats)
             psis[m++] = acos(khat.dot(rhat));
@@ -195,7 +208,7 @@ HashMap<interpPair> FMM::Level::getInterpPsi() {
             psis[k] = PI*ips/static_cast<double>(nps-1);
 
         // CONSIDER: Barycentric coordinates
-        vecXd coeffs(2*order);
+        std::vector<double> coeffs(2*order);
         for (size_t k = 0; k < 2*order; ++k)
             coeffs[k] = Math::evalLagrangeBasis(psi, psis, k);
 
@@ -213,17 +226,15 @@ void FMM::Level::buildTranslationTable() {
     const auto& alphas = getAlpha();
     const auto& interpPsis = getInterpPsi();
 
-    const auto [nth, nph] = getNumAngles();
-    int nDir = nth*nph;
-
+    auto [nth, nph] = getNumAngles();
+    size_t nDir = nth*nph;
     int nps = std::floor(config.overInterp*(nth-1));
 
     transl.reserve(dXs.size());
     for (const auto& dX : dXs) {
         double r = dX.norm();
-        const auto& rhat = dX / r;
-
-        const auto& alpha_dX = alphas.at(r);
+        vec3d rhat = dX / r;
+        auto alpha_dX = alphas.at(r);
 
         arrXcd transl_dX(nDir);
         for (int iDir = 0; iDir < nDir; ++iDir) {
