@@ -63,9 +63,9 @@ private:
     void buildTranslationTable();
 
 public:
-    static std::vector<double> dists;
-    static std::vector<vec3d> rhats;
-    static std::vector<vec3d> dXs;
+    static std::vector<double> dists; // unique distances between interacting nodes
+    static std::vector<vec3d> rhats;  // unique unit distance vectors between interacting nodes
+    static std::vector<vec3d> dXs;    // unique distance vectors between interacting nodes
 
     // M2M interpolation tables
     std::vector<interpPair> interpTheta;
@@ -84,5 +84,6 @@ public:
     std::vector<double> phis;    // phi samples
     int L;                       // M2L series truncation number
 
+private:
     int level; // level of this FMM level, with root at level 0
 };

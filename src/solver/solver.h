@@ -12,6 +12,11 @@ public:
 
     static void printSols(const std::string&, const vecXcd&);
 
+    static void printScattered(
+        const SrcVec& srcs, const std::filesystem::path&, const std::string&, int);
+
+    // static void printSurfCurrents();
+
 public:
     static vecXcd lvec;
     static vecXcd rvec;

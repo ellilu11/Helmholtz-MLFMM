@@ -4,36 +4,7 @@ std::vector<double> FMM::Level::dists;
 std::vector<vec3d> FMM::Level::rhats;
 std::vector<vec3d> FMM::Level::dXs;
 
-void FMM::Level::buildDists() {
-    dXs.resize(316);
-
-    size_t idx = 0;
-    for (double dz = -3; dz <= 3; ++dz)
-        for (double dy = -3; dy <= 3; ++dy)
-            for (double dx = -3; dx <= 3; ++dx) {
-                vec3d dvec = { dx, dy, dz };
-                double dist = dvec.norm();
-
-                // Check if dvec is a valid translation vector (i.e. not a neighbor)
-                if (dvec.lpNorm<Eigen::Infinity>() > 1.0) {
-                    dists.push_back(dist);
-                    rhats.push_back(dvec/dist);
-                    dXs[idx++] = dvec;
-                }
-            }
-
-    // Every dX found is unique, but some dists and rhats may be duplicated
-    std::sort(dists.begin(), dists.end());
-    dists.erase(std::unique(dists.begin(), dists.end()), dists.end());
-
-    std::sort(rhats.begin(), rhats.end(), Math::vecLessThan);
-    rhats.erase(
-        std::unique(rhats.begin(), rhats.end(), Math::vecEquals),
-        rhats.end());
-}
-
-void FMM::Level::buildAngularSamples()
-{
+void FMM::Level::buildAngularSamples() {
     double nodeLeng = Mesh::rootLeng / pow(2.0, level);
 
     // Use excess bandwidth formula
@@ -152,6 +123,36 @@ void FMM::Level::buildInterpPhi(const Level& srcLevel) {
 
         interpPhi.emplace_back(coeffs, nearIdx);
     }
+}
+
+void FMM::Level::buildDists() {
+    dXs.resize(316);
+
+    size_t idx = 0;
+    for (double dz = -3; dz <= 3; ++dz)
+        for (double dy = -3; dy <= 3; ++dy)
+            for (double dx = -3; dx <= 3; ++dx) {
+                vec3d dvec = { dx, dy, dz };
+                double dist = dvec.norm();
+
+                // Check if dvec is a valid translation vector (not a neighbor)
+                if (dvec.lpNorm<Eigen::Infinity>() > 1.0) {
+                    dists.push_back(dist);
+                    rhats.push_back(dvec/dist);
+                    dXs[idx++] = dvec;
+                }
+            }
+    assert(idx == dXs.size());
+
+    // Every dX is unique, but some dists and rhats may be duplicated
+    std::sort(dists.begin(), dists.end());
+    dists.erase(std::unique(dists.begin(), dists.end()), dists.end());
+    assert(dists.size() == 15);
+
+    std::sort(rhats.begin(), rhats.end(), Math::vecLessThan);
+    rhats.erase(
+        std::unique(rhats.begin(), rhats.end(), Math::vecEquals),
+        rhats.end());
 }
 
 /* getAlpha()

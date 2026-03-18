@@ -33,9 +33,5 @@ namespace Mesh {
 
     SrcVec importMesh(const std::filesystem::path&);
 
-    void getScattered(const SrcVec&, const std::filesystem::path&, const std::string&, int);
-
-    // void getSurfCurr();
-
     void printNormals(const std::string&);
 }
