@@ -18,7 +18,7 @@ public:
     static vecXcd currents;
 
 protected:
-    std::shared_ptr<FMM::Nearfield> nf;
+    std::unique_ptr<FMM::Nearfield> nf;
     int numSrcs;
 };
 

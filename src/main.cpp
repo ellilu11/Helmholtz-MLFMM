@@ -31,7 +31,7 @@ void mainLoop(const SrcVec& srcs, bool doFMM, bool doIter = true) {
     std::unique_ptr<Solver> solver;
     if (doFMM || (!doFMM && doIter))
         solver = std::make_unique<GMRES>(srcs, std::move(nf),
-            std::move(ff), root, 1.0E-6, 1000);
+            std::move(ff), root, 1.0E-6, 500);
     else 
         solver = std::make_unique<Direct>(srcs, std::move(nf));
 
@@ -48,7 +48,7 @@ void mainLoop(const SrcVec& srcs, bool doFMM, bool doIter = true) {
     //    "out/ff/py_k1.0x_plate",
     //    std::string(doFMM ? "ff_g" : "ffDir_g")+config.lengStr+".txt", 100);
     Mesh::getScattered(srcs,
-        "out/ff/px_k1.0z_almond_"+ieStr,
+        "out/ff/py_k146.6z_almond_"+ieStr,
         std::string(doFMM ? "ff" : "ffDir")+".txt", 100);
 }
 

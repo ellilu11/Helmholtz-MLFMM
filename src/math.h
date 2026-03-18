@@ -9,7 +9,7 @@ constexpr cmplx iu(0, 1);
 const double PI = std::acos(-1.0);
 
 namespace Math {
-    constexpr double FEPS = 1.0E-6; // floating point error tolerance
+    constexpr double FEPS = 1.0E-12; // floating point error tolerance
 
     inline size_t bools2Idx(const vec3i& x) noexcept {
         return x[0] + 2 * x[1] + 4 * x[2];
@@ -149,12 +149,6 @@ namespace Math {
     double evalTrigBasis(const double, const std::vector<double>&, const int);
 
     cmplx sphericalHankel1(double, int);
-
-    std::vector<double> getINodeDistances();
-
-    std::vector<vec3d> getINodeDistVecs();
-
-    std::vector<vec3d> getINodeDirections();
 
     void buildPermutations(vec3d&, std::vector<vec3d>&, int);
 }

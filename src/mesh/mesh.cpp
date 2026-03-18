@@ -13,7 +13,7 @@ SrcVec Mesh::importMesh(const std::filesystem::path& path)
     importVec<vec4i>(path/"rwgs.txt", rwgs);
 
     buildRootCoords();
-    // printNormals("out/nhats.txt");
+    printNormals("out/nhats.txt");
 
     return rwgs;
 }
@@ -74,8 +74,12 @@ void Mesh::getScattered(
 void Mesh::printNormals(const std::string& fname) {
     std::ofstream file(fname);
     file << std::setprecision(15) << std::scientific;
-    for (const auto& tri : glTris)
-        file << tri.getCenter() << ' ' << tri.getNormal()
-            << ' ' << tri.getCenter().dot(tri.getNormal())
+    for (const auto& tri : glTris) {
+        vec3d center = tri.getCenter();
+        vec3d nhat = tri.getNormal();
+        file << center[0] << ' ' << center[1] << ' ' << center[2] << ' ' 
+            << nhat[0] << ' ' << nhat[1] << ' ' << nhat[2] << ' '
+            << center.dot(nhat)
             << '\n';
+    }
 }

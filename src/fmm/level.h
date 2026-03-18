@@ -23,11 +23,7 @@ public:
         buildInterpPhi(srcLevel);
     }
 
-    static void buildDists() {
-        dists = Math::getINodeDistances();
-        rhats = Math::getINodeDirections();
-        dXs = Math::getINodeDistVecs();
-    }
+    static void buildDists();
 
     static void clearDists() {
         dists.clear();
