@@ -149,7 +149,7 @@ cmplx Mesh::RWG::getIntegratedMFIE(const std::shared_ptr<Source> src) const {
 
             // Integrate 1/R term (numeric-analytic)
             if (glTriPairs.nCommons[iPair] >= nCommonThres)
-                pairRad -= // minus sign since 1.0+0.5*k*k*r2 was added to gradG in MFIE moments
+                pairRad -= // double check sign!
                     obsTri.getSingularMFIE(srcTri, vobs, vsrc, iPair);
 
             intRad += pairRad * Math::sign(iObs) * Math::sign(iSrc);

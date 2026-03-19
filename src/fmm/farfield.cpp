@@ -181,6 +181,8 @@ void FMM::Farfield::translateCoeffs(const std::shared_ptr<FMM::Node>& node) {
     Eigen::Map<arrXcd> localPhi(localCoeffs.phi.data(), nDir);
 
     for (const auto& srcNode : node->iList) {
+        assert(!srcNode->isSrcless());
+
         vec3d dX = node->center - srcNode->center;
         arrXcd transl_dX = transl.at(dX/node->nodeLeng);
 
@@ -245,6 +247,8 @@ FMM::Coeffs FMM::Farfield::getShiftedLocalCoeffs(
  * (L2L) Shift base local coeffs to center and add to local coeffs
  */
 void FMM::Farfield::buildLocalCoeffs(const std::shared_ptr<FMM::Node>& node) {
+    if (node->isSrcless()) return;
+
     if (!node->isRoot()) {
         // M2L
         auto start = Clock::now();
