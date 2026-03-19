@@ -9,7 +9,10 @@ constexpr cmplx iu(0, 1);
 const double PI = std::acos(-1.0);
 
 namespace Math {
-    constexpr double FEPS = 1.0E-12; // floating point error tolerance
+    // TODO: Smaller scatterers require smaller FEPS
+    // But too small a FEPS causes numerical instability in some cases
+    // Make into a config param
+    constexpr double FEPS = 1.0E-6; // floating point error tolerance
 
     inline size_t bools2Idx(const vec3i& x) noexcept {
         return x[0] + 2 * x[1] + 4 * x[2];

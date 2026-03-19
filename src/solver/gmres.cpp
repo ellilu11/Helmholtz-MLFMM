@@ -17,11 +17,12 @@ GMRES::GMRES(
       vsin(vecXcd::Zero(maxIter)),
       EPS(EPS), maxIter(maxIter)
 {
-    constexpr double dropTol = 1.0E-3; // TODO: Tune this parameter
-    constexpr int fillFact = 10; // TODO: Tune this parameter
-    buildILU(dropTol, fillFact);
+    doILU = !this->root->isLeaf() && maxIter;
+    if (doILU) {
+        buildILU(config.iluTol, config.iluFactor);
+        lvec = ilu.solve(lvec); // apply M^(-1) to lvec
+    }
 
-    lvec = ilu.solve(lvec); // apply M^(-1) to lvec
     g0 = lvec.norm();   // store g0 for use later
     gvec[0] = g0;       // store g0 as first entry of gvec
     lvec.normalize();   
@@ -49,15 +50,15 @@ void GMRES::buildILU(double dropTol, int fillFact) {
  * Then apply preconditioner M^(-1) to rvec
  */
 void GMRES::updateRvec(int k) {
-    // Main FMM loop: upward pass, downward pass, evaluate sols
+    // FMM main loop: upward pass, downward pass, evaluate sols
     if (!root->isLeaf()) {
-        ff->mergeMpoleCoeffs(root);
+        ff->buildMpoleCoeffs(root, true);
         ff->buildLocalCoeffs(root);
         ff->evaluateSols();
     }
     nf->evaluateSols();
 
-    rvec = ilu.solve(rvec); // apply M^(-1) to rvec = Z * lvec
+    if (doILU) rvec = ilu.solve(rvec); // apply M^(-1) to rvec = Z * lvec
 }
 
 /* iterateArnoldi()

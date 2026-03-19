@@ -69,7 +69,7 @@ void importVec(const std::filesystem::path& path, std::vector<Tout>& vec) {
             else if constexpr (std::is_same_v<Tout, std::shared_ptr<Source>>)
                 vec.push_back(std::make_shared<Mesh::RWG>(arg, idx++));
                 // vec.push_back(std::make_shared<Dipole>(arg, arg1, idx++));
-        // Triangles
+            // Triangles
             else
                 vec.emplace_back(arg, idx++);
         } else throw std::runtime_error("Unable to parse line");

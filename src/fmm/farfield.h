@@ -9,7 +9,7 @@ public:
 
     void buildMpoleCoeffs(const std::shared_ptr<Node>&);
 
-    void mergeMpoleCoeffs(const std::shared_ptr<Node>&);
+    void buildMpoleCoeffs(const std::shared_ptr<Node>&, bool);
 
     void buildLocalCoeffs(const std::shared_ptr<Node>&);
 

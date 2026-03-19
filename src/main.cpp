@@ -41,25 +41,16 @@ void mainLoop(const SrcVec& srcs, bool doFMM, bool doIter = true) {
     std::cout << " " + method + " total elapsed time : " << duration_ms.count() << " ms\n\n";
 
     // ==================== Compute scattered field ============= //
-    //Solver::printScattered(srcs,
-    //    "out/ff/px_k1.0z_r5.0_"+ieStr,
-    //    (doFMM ? "ff_n" : "ffDir_n")+std::to_string(nsrcs)+".txt", 200);
-    Solver::printScattered(srcs,
-        "out/ff/py_k1.0x_plate",
-        std::string(doFMM ? "ff_g" : "ffDir_g")+config.lengStr+".txt", 100);
-    //Solver::printScattered(srcs,
-    //    "out/ff/py_k146.6z_almond_"+ieStr,
-    //    std::string(doFMM ? "ff" : "ffDir")+".txt", 100);
+    Solver::printScattered(srcs, "out/ff/sph/px_k1.0z_r5.0_"+ieStr, (doFMM ? "ff_n" : "ffDir_n")+std::to_string(nsrcs)+".txt", 200);
+    // Solver::printScattered(srcs, "out/ff/plate/py_k1.0x_plate", std::string(doFMM ? "ff_g" : "ffDir_g")+config.lengStr+".txt", 100);
+    //Solver::printScattered(srcs, "out/ff/almond/py_k146.6z_almond_"+ieStr, std::string(doFMM ? "ff" : "ffDir")+".txt", 100);
 }
 
 int main() {
     importVec<vec3d>("config/pwave.txt", Exct::Eincs);
-    //auto srcs = Mesh::importMesh(
-    //    "config/rwg/sph_r5.0/sph_r5.0_n"+std::to_string(config.nsrcs));
-    auto srcs = Mesh::importMesh(
-        "config/rwg/rect/rect_g"+config.lengStr+"_n"+std::to_string(config.nsrcs));
-    //auto srcs = Mesh::importMesh(
-    //    "config/rwg/almond/almond_n"+std::to_string(config.nsrcs));
+    auto srcs = Mesh::importMesh("config/rwg/sph_r5.0/sph_r5.0_n"+std::to_string(config.nsrcs));
+    // auto srcs = Mesh::importMesh("config/rwg/rect/rect_g"+config.lengStr+"_n"+std::to_string(config.nsrcs));
+    //auto srcs = Mesh::importMesh("config/rwg/almond/almond_n"+std::to_string(config.nsrcs));
 
     constexpr bool doIter = true;
     switch (config.mode) {

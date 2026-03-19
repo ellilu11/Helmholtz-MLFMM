@@ -26,9 +26,9 @@ public:
     static void buildDists();
 
     static void clearDists() {
-        dists.clear();
-        rhats.clear();
-        dXs.clear();
+        dists = std::vector<double>();
+        rhats = std::vector<vec3d>();
+        dXs = std::vector<vec3d>();
     }
 
     pair2i getNumAngles() const {
@@ -82,8 +82,8 @@ public:
     std::vector<double> thetas;  // theta samples
     std::vector<double> weights; // weights of theta samples
     std::vector<double> phis;    // phi samples
-    int L;                       // M2L series truncation number
 
 private:
+    int L;     // M2L series truncation number
     int level; // level of this FMM level, with root at level 0
 };

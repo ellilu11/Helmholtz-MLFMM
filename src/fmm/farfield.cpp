@@ -126,10 +126,10 @@ void FMM::Farfield::buildMpoleCoeffs(const std::shared_ptr<FMM::Node>& node) {
     t.S2M += Clock::now() - start;
 }
 
-/* mergeMpoleCoeffs()
+/* buildMpoleCoeffs(node, isStem = true)
  * (M2M) Build mpole coeffs by merging branch mpole coeffs
  */
-void FMM::Farfield::mergeMpoleCoeffs(const std::shared_ptr<FMM::Node>& node) {
+void FMM::Farfield::buildMpoleCoeffs(const std::shared_ptr<FMM::Node>& node, bool isStem) {
     int order = config.interpOrder;
     int lvl = node->lvl;
     size_t mDir = levels[lvl+1].getNumDirs();
@@ -140,7 +140,7 @@ void FMM::Farfield::mergeMpoleCoeffs(const std::shared_ptr<FMM::Node>& node) {
         if (branch->isSrcless()) continue;
 
         if (branch->isLeaf()) buildMpoleCoeffs(branch);
-        else mergeMpoleCoeffs(branch);
+        else buildMpoleCoeffs(branch, true);
         const Coeffs& branchCoeffs = branch->coeffs;
 
         auto start = Clock::now();
@@ -194,6 +194,7 @@ void FMM::Farfield::translateCoeffs(const std::shared_ptr<FMM::Node>& node) {
     }
 
     // Apply integration weights
+    // TODO: Absorb weights into translation table
     const Level& level = levels[node->lvl];
     auto [nth, nph] = level.getNumAngles();
     double phiWeight = 2.0*PI / static_cast<double>(nph);

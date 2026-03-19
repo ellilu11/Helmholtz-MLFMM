@@ -39,6 +39,7 @@ private:
 
     double EPS;
     int maxIter;
+    bool doILU;
 };
 
 

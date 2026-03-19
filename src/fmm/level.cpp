@@ -257,7 +257,7 @@ void FMM::Level::buildTranslationTable() {
 
         arrXcd transl_dX(nDir);
         for (int iDir = 0; iDir < nDir; ++iDir) {
-            const auto& khat = this->khat[iDir];
+            vec3d khat = this->khat[iDir];
             double psi = acos(khat.dot(rhat));
             const auto [interpPsi, nearIdx] = interpPsis.at(psi);
 
