@@ -21,10 +21,15 @@ void getDigit(std::istringstream& iss, char ch) {
 
 template <typename T>
 std::ifstream& operator>>(std::ifstream& is, T& val) {
+
     std::string line;
     if (std::getline(is, line)) {
-        std::istringstream iss(line);
+        // TODO: Skip lines with no numeric characters
+        //if (!std::any_of(line.begin(), line.end(),
+        //    [](unsigned char c) { return std::isdigit(c); }))
+        //    break;
 
+        std::istringstream iss(line);
         char ch = '\0';
         getDigit(iss, ch);
 

@@ -8,10 +8,9 @@ public:
     GMRES(const SrcVec& srcs,
         std::unique_ptr<FMM::Nearfield>,
         std::unique_ptr<FMM::Farfield>,
-        std::shared_ptr<FMM::Node>,
-        double, int);
+        std::shared_ptr<FMM::Node>);
 
-    void buildILU(double, int);
+    void buildILU();
 
     void updateRvec(int);
 
@@ -37,8 +36,6 @@ private:
     vecXcd vcos;
     vecXcd vsin;
 
-    double EPS;
-    int maxIter;
     bool doILU;
 };
 

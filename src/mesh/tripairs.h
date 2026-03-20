@@ -13,6 +13,10 @@ namespace Mesh {
 
         void clear() { *this = {}; }
 
+        static std::pair<Triangle, Triangle> getTriPair(pair2i iTris) {
+            return { glTris[iTris.first], glTris[iTris.second] };
+        }
+
     private:
         void buildNumCommon();
 
@@ -23,10 +27,6 @@ namespace Mesh {
         void buildIntegratedInvR();
 
         void buildIntegratedInvRcubed();
-
-        static std::pair<Triangle, Triangle> getTriPair(pair2i iTris) {
-            return { glTris[iTris.first], glTris[iTris.second] };
-        }
 
     public:
         std::vector<MomentsEFIE> momentsEFIE;

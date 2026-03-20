@@ -4,6 +4,10 @@ std::vector<double> FMM::Level::dists;
 std::vector<vec3d> FMM::Level::rhats;
 std::vector<vec3d> FMM::Level::dXs;
 
+/* buildAngularSamples()
+ * Build angular samples for this level and compute M2L series truncation number L
+ * Use excess bandwidth formula to determine number of angular samples
+ */
 void FMM::Level::buildAngularSamples() {
     double nodeLeng = Mesh::rootLeng / pow(2.0, level);
 
@@ -32,6 +36,9 @@ void FMM::Level::buildAngularSamples() {
     // std::cout << "   (" << level << "," << thetas.size() << "," << phis.size() << ")\n";
 }
 
+/* buildAngularMatrices()
+ * Build angular matrices for this level
+ */
 void FMM::Level::buildAngularMatrices() {
     auto [nth, nph] = getNumAngles();
     size_t nDirs = nth*nph;
@@ -125,6 +132,9 @@ void FMM::Level::buildInterpPhi(const Level& srcLevel) {
     }
 }
 
+/* buildDists()
+ * Build unique distances and unit distance vectors between interacting nodes
+ */
 void FMM::Level::buildDists() {
     dXs.resize(316);
 
@@ -239,6 +249,10 @@ HashMap<FMM::interpPair> FMM::Level::getInterpPsi() {
     return interpPairs;
 }
 
+/* buildTranslationTable()
+ * Build translation table for this level
+ * Each entry contains coefficients for translating between interacting nodes separated by dX
+ */
 void FMM::Level::buildTranslationTable() {
     int order = config.interpOrder;
 

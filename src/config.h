@@ -49,7 +49,7 @@ struct Config {
         std::ifstream is(fileName);
         is >> mode >> quadPrec >> alpha >> k >> nsrcs 
            >> maxNodeSrcs >> digits >> interpOrder >> overInterp
-           >> iluTol >> iluFactor
+           >> epsIter >> maxIter >> iluTol >> iluFactor
            >> eleng;
 
         if (alpha < 0.0 || alpha > 1.0)
@@ -70,7 +70,6 @@ struct Config {
         std::cout << "   Mode:            " << getModeStr(mode) << '\n';
         std::cout << "   IE (alpha):      " << getIEStr(ie) << " (" << alpha << ")\n";
         std::cout << "   Wavenumber:      " << k << " /m\n";
-        std::cout << "   # Sources:       " << nsrcs << '\n';
         std::cout << "   Max in node:     " << maxNodeSrcs << '\n';
         std::cout << "   Digit precision: " << digits << '\n';
         std::cout << "   Interp order:    " << interpOrder << '\n';
@@ -83,25 +82,27 @@ struct Config {
     // General
     Mode mode;          // FMM, direct, or FMM+direct
     Precision quadPrec; // Triangle quadrature precision
+    double alpha;       // CFIE weight
     double k;           // Wavenumber
-    // double lerr;     // Length error tolerance for nearfield
-    int nsrcs;          // Number of sources
+    // double leps;     // TODO: Length error tolerance for nearfield
+    int nsrcs;          // # sources (for file I/O only)
 
     // FMM
-    int maxNodeSrcs;    // Max number of sources in leaf
+    int maxNodeSrcs;    // Max # sources in leaf
     int digits;         // Digit precision
     int interpOrder;    // Interpolation order
     double overInterp;  // Translation operator angular oversampling factor
 
-    // CFIE
-    double alpha;       // CFIE mixing parameter
-    IE ie;              // Integral equation type (from alpha)
-    cmplx C_efie;       // EFIE constant
-    cmplx C_mfie;       // MFIE constant
-
-    // ILU
+    // GMRES
+    double epsIter;     // Error tolerance for GMRES
+    int maxIter;        // Max GMRES iterations (0 for one MVM)
     double iluTol;      // Drop tolerance for ILU preconditioner
     int iluFactor;      // Fill factor for ILU preconditioner
+
+    // CFIE (from alpha)
+    IE ie;              // Integral equation type
+    cmplx C_efie;       // -eta * alpha * ik
+    cmplx C_mfie;       // eta * (1-alpha)
 
     // Elctrical length (for file I/O)
     double eleng;

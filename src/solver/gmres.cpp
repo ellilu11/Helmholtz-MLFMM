@@ -7,19 +7,17 @@ GMRES::GMRES(
     const SrcVec& srcs,
     std::unique_ptr<FMM::Nearfield> nf,
     std::unique_ptr<FMM::Farfield> ff,
-    std::shared_ptr<FMM::Node> root,
-    double EPS, int maxIter)
+    std::shared_ptr<FMM::Node> root)
     : Solver(srcs, std::move(nf)),
       ff(std::move(ff)), root(std::move(root)),
       Qmat(matXcd(numSrcs, 1)),
-      gvec(vecXcd::Zero(maxIter+1)),
-      vcos(vecXcd::Zero(maxIter)),
-      vsin(vecXcd::Zero(maxIter)),
-      EPS(EPS), maxIter(maxIter)
+      gvec(vecXcd::Zero(config.maxIter+1)),
+      vcos(vecXcd::Zero(config.maxIter)),
+      vsin(vecXcd::Zero(config.maxIter))
 {
-    doILU = !this->root->isLeaf() && maxIter;
+    doILU = !this->root->isLeaf() && config.maxIter;
     if (doILU) {
-        buildILU(config.iluTol, config.iluFactor);
+        buildILU();
         lvec = ilu.solve(lvec); // apply M^(-1) to lvec
     }
 
@@ -32,9 +30,9 @@ GMRES::GMRES(
 /* buildILU()
  * Build ILU decomposition of nearfield matrix for use as preconditioner
  */
-void GMRES::buildILU(double dropTol, int fillFact) {
-    ilu.setDroptol(dropTol);
-    ilu.setFillfactor(fillFact);
+void GMRES::buildILU() {
+    ilu.setDroptol(config.iluTol);
+    ilu.setFillfactor(config.iluFactor);
 
     std::cout << " Building preconditioner...       ";
     auto start = Clock::now();
@@ -131,7 +129,7 @@ void GMRES::updateGvec(int k) {
  */
 void GMRES::solve(const std::string& fname) {
     // If maxIter = 0, just do one MVM and print rvec
-    if (!maxIter) {
+    if (!config.maxIter) {
         updateRvec(0);
         printSols(fname, rvec);
         std::cout << '\n';
@@ -149,7 +147,7 @@ void GMRES::solve(const std::string& fname) {
         iterateArnoldi(iter);
         updateGvec(iter);
         rvec = vecXcd::Zero(numSrcs); // reset rvec for next iteration
-    } while (abs(gvec[++iter])/g0 > EPS && iter < maxIter); // careful
+    } while (abs(gvec[++iter])/g0 > config.epsIter && iter < config.maxIter); // careful
 
     Time duration_ms = Clock::now() - start;
     std::cout << " in " << duration_ms.count() << " ms\n";

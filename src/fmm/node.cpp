@@ -133,9 +133,9 @@ void FMM::Node::buildLists() {
         branch->buildLists();
 
     if (isRoot()) {
-        std::cout << "   # Nodes: " << numNodes << '\n';
-        std::cout << "   # Leaves: " << glLeaves.size() << '\n';
-        std::cout << "   Max node level: " << maxLevel << "\n\n";
+        std::cout << "   # Nodes:         " << numNodes << '\n';
+        std::cout << "   # Leaves:        " << glLeaves.size() << '\n';
+        std::cout << "   Max node level:  " << maxLevel << "\n\n";
     }
 }
 
