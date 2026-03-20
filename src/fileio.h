@@ -18,31 +18,6 @@ void getDigit(std::istringstream& iss, char ch) {
     }
 }
 
-template <typename T>
-std::ifstream& operator>>(std::ifstream& is, T& val) {
-    std::string line;
-    if (std::getline(is, line)) {
-        std::istringstream iss(line);
-
-        char ch = '\0';
-        getDigit(iss, ch);
-
-        if constexpr (std::is_enum_v<T>) {
-            typename std::underlying_type<T>::type eval;
-
-            while (iss >> eval) {
-                val = static_cast<T>(eval);
-                getDigit(iss, ch);
-            }
-
-        } else
-            while (iss >> val)
-                getDigit(iss, ch);
-    }
-
-    return is;
-}
-
 template <typename Tin, typename Tout>
 void importVec(const std::filesystem::path& path, std::vector<Tout>& vec) {
     std::ifstream file(path);

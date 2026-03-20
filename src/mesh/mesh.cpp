@@ -13,6 +13,11 @@ SrcVec Mesh::importMesh(const std::filesystem::path& path)
     importVec<vec4i>(path/"rwgs.txt", rwgs);
 
     buildRootCoords();
+    printNormals("out/nhats.txt");
+
+    std::cout << "   # Sources:       " << rwgs.size() << '\n';
+    std::cout << "   Root length:     " << rootLeng << " m\n";
+    std::cout << "   Root center:     " << rootCenter << "\n\n";
 
     return rwgs;
 }
@@ -29,8 +34,6 @@ void Mesh::buildRootCoords() {
     rootCenter = 0.5*(maxVert + minVert);
     rootLeng = (maxVert - minVert).lpNorm<Eigen::Infinity>() 
         * (1.0 + 1e-3); // add wiggle room
-    std::cout << "   Root center: " << rootCenter << '\n';
-    std::cout << "   Root length: " << rootLeng << " m\n\n";
 }
 
 void Mesh::getScattered(

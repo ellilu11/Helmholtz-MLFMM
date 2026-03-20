@@ -9,7 +9,6 @@ extern const Config config("config/config.txt");
 
 void mainLoop(const SrcVec& srcs, bool doFMM, bool doIter = true) {
     size_t nsrcs = srcs.size();
-    std::string method = doFMM ? "FMM" : "Direct";
 
     // ==================== Build nodes ========================= //
     auto start = Clock::now();
@@ -35,24 +34,20 @@ void mainLoop(const SrcVec& srcs, bool doFMM, bool doIter = true) {
     solver->solve(doFMM ? "sol.txt" : "solDir.txt");
 
     Time duration_ms = Clock::now() - start;
-    std::cout << " " + method + " total elapsed time : " << duration_ms.count() << " ms\n\n";
+    std::cout << " " + std::string(doFMM ? "FMM" : "Direct") + " total elapsed time : " 
+        << duration_ms.count() << " ms\n\n";
 
     // ==================== Compute scattered field ============= //
-    //Mesh::getScattered(srcs,
-    //    "out/ff/px_k1.0z_r5.0_efie",
-    //    (doFMM ? "ff_n" : "ffDir_n")+std::to_string(nsrcs)+".txt", 200);
-    Mesh::getScattered(srcs,
-        "out/ff/px_k1.0z_plate",
-        std::string(doFMM ? "ff_g" : "ffDir_g")+config.lengStr+".txt", 100);
+    // Mesh::getScattered(srcs, "out/ff/px_k1.0z_r5.0_efie", (doFMM ? "ff_n" : "ffDir_n")+std::to_string(nsrcs)+".txt", 200);
+    // Mesh::getScattered(srcs, "out/ff/px_k1.0z_plate", std::string(doFMM ? "ff_g" : "ffDir_g")+config.lengStr+".txt", 100);
+    Mesh::getScattered(srcs, "out/ff/almond/py_k146.6z_almond_efie", std::string(doFMM ? "ff" : "ffDir")+".txt", 100);
 }
 
 int main() {
     Exct::importPlaneWaves("config/pwave.txt");
-    //auto srcs = Mesh::importMesh(
-    //    "config/rwg/sph_r5.0/sph_r5.0_n"+std::to_string(config.nsrcs));
-    auto srcs = Mesh::importMesh(
-        "config/rwg/rect/rect_g"+config.lengStr+"_n"+std::to_string(config.nsrcs));
-    // Mesh::printNormals("out/nhats.txt");
+    // auto srcs = Mesh::importMesh("config/rwg/sph_r5.0/sph_r5.0_n"+std::to_string(config.nsrcs));
+    // auto srcs = Mesh::importMesh("config/rwg/rect/rect_g"+config.lengStr+"_n"+std::to_string(config.nsrcs));
+    auto srcs = Mesh::importMesh("config/rwg/almond/almond_n"+std::to_string(config.nsrcs));
 
     constexpr bool doIter = true;
     switch (config.mode) {

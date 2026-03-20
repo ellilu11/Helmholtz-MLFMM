@@ -3,6 +3,7 @@
 
 #pragma once
 
+#include "config.cpp"
 #include "math.cpp"
 #include "solver/gmres.cpp"
 #include "solver/solver.cpp"
