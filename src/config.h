@@ -45,47 +45,17 @@ size_t getNumQuads(Precision prec) {
 
 struct Config {
     Config() = default;
-    Config(const std::string& fileName) {
-        std::ifstream is(fileName);
-        is >> mode >> quadPrec >> alpha >> k >> nsrcs 
-           >> maxNodeSrcs >> digits >> interpOrder >> overInterp
-           >> epsIter >> maxIter >> iluTol >> iluFactor
-           >> eleng;
-
-        if (alpha < 0.0 || alpha > 1.0)
-            throw std::runtime_error("Alpha must be in [0,1]");
-        ie = (alpha == 0.0) ? IE::MFIE : (alpha == 1.0) ? IE::EFIE : IE::CFIE;
-        C_efie = -Phys::eta * alpha * iu * k;
-        C_mfie = Phys::eta * (1.0 - alpha);
-
-        std::ostringstream ss;
-        ss << std::fixed << std::setprecision(2) << eleng;
-        lengStr = ss.str();
-        
-        std::cout << " *************************** \n";
-        std::cout << " ***** Helmholtz-MLFMM ***** \n";
-        std::cout << " *************************** \n";
-
-        std::cout << std::fixed << std::setprecision(3);
-        std::cout << "   Mode:            " << getModeStr(mode) << '\n';
-        std::cout << "   IE (alpha):      " << getIEStr(ie) << " (" << alpha << ")\n";
-        std::cout << "   Wavenumber:      " << k << " /m\n";
-        std::cout << "   Max in node:     " << maxNodeSrcs << '\n';
-        std::cout << "   Digit precision: " << digits << '\n';
-        std::cout << "   Interp order:    " << interpOrder << '\n';
-        std::cout << "   Overinterp:      " << overInterp << '\n';
-        std::cout << "   Tri quad rule:   " << getNumQuads(quadPrec) << "-point\n";
-        std::cout << "   ILU drop tol:    " << iluTol << '\n';
-        std::cout << "   ILU fill factor: " << iluFactor << "\n\n";
-    }
+    
+    Config(const std::filesystem::path&);
+    
+    static std::array<double,14> importConfig(const std::filesystem::path&);
 
     // General
     Mode mode;          // FMM, direct, or FMM+direct
     Precision quadPrec; // Triangle quadrature precision
-    double alpha;       // CFIE weight
+    double alpha;       // CFIE parameter
     double k;           // Wavenumber
     // double leps;     // TODO: Length error tolerance for nearfield
-    int nsrcs;          // # sources (for file I/O only)
 
     // FMM
     int maxNodeSrcs;    // Max # sources in leaf
@@ -104,7 +74,8 @@ struct Config {
     cmplx C_efie;       // -eta * alpha * ik
     cmplx C_mfie;       // eta * (1-alpha)
 
-    // Elctrical length (for file I/O)
+    // File I/O
+    int nsrcs;          
     double eleng;
     std::string lengStr;
 };

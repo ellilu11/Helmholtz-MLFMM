@@ -9,10 +9,6 @@ extern const Config config("config/config.txt");
 
 void mainLoop(const SrcVec& srcs, bool doFMM, bool doIter = true) {
     size_t nsrcs = srcs.size();
-    std::string method = doFMM ? "FMM" : "Direct";
-
-    std::string ieStr = getIEStr(config.ie);
-    std::transform(ieStr.begin(), ieStr.end(), ieStr.begin(), ::tolower);
 
     // ==================== Build nodes ========================= //
     auto start = Clock::now();
@@ -37,9 +33,12 @@ void mainLoop(const SrcVec& srcs, bool doFMM, bool doIter = true) {
     solver->solve(doFMM ? "sol.txt" : "solDir.txt");
 
     Time duration_ms = Clock::now() - start;
-    std::cout << " " + method + " total elapsed time : " << duration_ms.count() << " ms\n\n";
+    std::cout << " " + std::string(doFMM ? "FMM" : "Direct") + " total elapsed time : "
+        << duration_ms.count() << " ms\n\n";
 
     // ==================== Compute scattered field ============= //
+    std::string ieStr = getIEStr(config.ie);
+    std::transform(ieStr.begin(), ieStr.end(), ieStr.begin(), ::tolower);
     // Solver::printScattered(srcs, "out/ff/sph/px_k1.0z_r5.0_"+ieStr, (doFMM ? "ff_n" : "ffDir_n")+std::to_string(nsrcs)+".txt", 200);
     // Solver::printScattered(srcs, "out/ff/plate/py_k1.0x_plate", std::string(doFMM ? "ff_g" : "ffDir_g")+config.lengStr+".txt", 100);
     Solver::printScattered(srcs, "out/ff/almond/py_k146.6z_almond_"+ieStr, std::string(doFMM ? "ff" : "ffDir")+".txt", 100);

@@ -5,12 +5,12 @@
 #include "../mesh/mesh.h"
 #include "fmm.h"
 
-class FMM::Level {
+struct FMM::Level {
 
 public:
     Level() = default;
 
-    Level(int level) : level(level)
+    Level(int lvl) : lvl(lvl)
     {
         buildAngularSamples();
         buildAngularMatrices();
@@ -82,8 +82,6 @@ public:
     std::vector<double> thetas;  // theta samples
     std::vector<double> weights; // weights of theta samples
     std::vector<double> phis;    // phi samples
-
-private:
     int L;     // M2L series truncation number
-    int level; // level of this FMM level, with root at level 0
+    int lvl;   // level of this FMM level, with root at level 0
 };

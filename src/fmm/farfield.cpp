@@ -29,7 +29,15 @@ void FMM::Farfield::buildLevels() {
         levels[lvl].buildInterpTables(levels[lvl+1]);
 
     Time duration_ms = Clock::now() - start;
-    std::cout << " in " << duration_ms.count() << " ms\n\n";
+    std::cout << " in " << duration_ms.count() << " ms\n";
+
+    /* Print number of angular samples at each level
+    for (const auto& level : levels)
+        std::cout << "   (" << level.lvl << "," 
+            << level.thetas.size() << "," << level.phis.size() << ")\n";
+    */
+
+    std::cout << '\n';
 }
 
 /* buildGlRadPats()

@@ -19,36 +19,6 @@ void getDigit(std::istringstream& iss, char ch) {
     }
 }
 
-template <typename T>
-std::ifstream& operator>>(std::ifstream& is, T& val) {
-
-    std::string line;
-    if (std::getline(is, line)) {
-        // TODO: Skip lines with no numeric characters
-        //if (!std::any_of(line.begin(), line.end(),
-        //    [](unsigned char c) { return std::isdigit(c); }))
-        //    break;
-
-        std::istringstream iss(line);
-        char ch = '\0';
-        getDigit(iss, ch);
-
-        if constexpr (std::is_enum_v<T>) {
-            typename std::underlying_type<T>::type eval;
-
-            while (iss >> eval) {
-                val = static_cast<T>(eval);
-                getDigit(iss, ch);
-            }
-
-        } else
-            while (iss >> val)
-                getDigit(iss, ch);
-    }
-
-    return is;
-}
-
 template <typename Tin, typename Tout>
 void importVec(const std::filesystem::path& path, std::vector<Tout>& vec) {
     std::ifstream file(path);
@@ -61,7 +31,7 @@ void importVec(const std::filesystem::path& path, std::vector<Tout>& vec) {
         Tin arg, arg1;
         double arg2;
 
-        // PlaneWave
+        // Plane waves
         if constexpr (std::is_same_v<Tout, std::unique_ptr<Exct::PlaneWave>>) {
             if (iss >> arg >> arg1 >> arg2)
                 vec.push_back(std::make_unique<Exct::PlaneWave>(arg, arg1, arg2));

@@ -201,7 +201,7 @@ double Mesh::RWG::getIntegratedMass(const std::shared_ptr<Source> src) const {
     }
 
     assert(!std::isnan(mass));
-    // PUZZLE: Why plus sign here?
+    // Puzzle: Why plus sign here?
     return 0.5 * leng * srcRWG->leng * mass; // factor of 1/2 = Omega/(4pi)
 }
 

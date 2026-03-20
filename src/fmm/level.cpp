@@ -9,7 +9,7 @@ std::vector<vec3d> FMM::Level::dXs;
  * Use excess bandwidth formula to determine number of angular samples
  */
 void FMM::Level::buildAngularSamples() {
-    double nodeLeng = Mesh::rootLeng / pow(2.0, level);
+    double nodeLeng = Mesh::rootLeng / pow(2.0, lvl);
 
     // Use excess bandwidth formula
     int tau = ceil((1.73*config.k*nodeLeng +
@@ -32,8 +32,6 @@ void FMM::Level::buildAngularSamples() {
 
     for (int iph = 0; iph < nph; ++iph)
         phis[iph] = 2.0*PI*iph/static_cast<double>(nph);
-
-    // std::cout << "   (" << level << "," << thetas.size() << "," << phis.size() << ")\n";
 }
 
 /* buildAngularMatrices()
@@ -174,7 +172,7 @@ Map<std::vector<cmplx>> FMM::Level::getAlpha() {
 
     int nth = thetas.size();
     int nps = std::floor(config.overInterp*(nth-1));
-    double nodeLeng = Mesh::rootLeng / pow(2.0, level);
+    double nodeLeng = Mesh::rootLeng / pow(2.0, lvl);
 
     Map<std::vector<cmplx>> alpha;
     for (const auto& dist : dists) {
