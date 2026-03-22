@@ -80,10 +80,10 @@ Mesh::RWG::getIntegratedPlaneWave(const vec3d& kvec, bool doNumeric) const {
 /* getIntegratedEFIE(src)
  * Return the electric field due to src tested with this RWG
  */
-cmplx Mesh::RWG::getIntegratedEFIE(const std::shared_ptr<Source> src) const {
+cmplx Mesh::RWG::getIntegratedEFIE(const std::shared_ptr<Source> src, double k) const {
     if (config.ie == IE::MFIE) return 0.0;
     const auto srcRWG = dynamic_pointer_cast<RWG>(src);
-    double k2 = config.k * config.k;
+    double k2 = k*k;
     
     cmplx intRad = 0.0;
 
@@ -124,7 +124,7 @@ cmplx Mesh::RWG::getIntegratedEFIE(const std::shared_ptr<Source> src) const {
 /* getIntegratedMFIE(src)
  * Return the magnetic field due to src tested with this RWG
  */
-cmplx Mesh::RWG::getIntegratedMFIE(const std::shared_ptr<Source> src) const {
+cmplx Mesh::RWG::getIntegratedMFIE(const std::shared_ptr<Source> src, double k) const {
     if (config.ie == IE::EFIE) return 0.0;
     const auto srcRWG = dynamic_pointer_cast<RWG>(src);
 

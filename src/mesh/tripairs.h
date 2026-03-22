@@ -9,7 +9,7 @@ namespace Mesh {
     public:
         TriPairs() = default;
 
-        TriPairs(size_t);
+        TriPairs(size_t, double);
 
         void clear() { *this = {}; }
 
@@ -43,6 +43,7 @@ namespace Mesh {
 
     private:
         size_t nPair; // number of triangle pairs
+        double k; // wavenumber
     };
 
     TriPairs glTriPairs; // triangle pairs data

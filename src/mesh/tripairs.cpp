@@ -1,7 +1,7 @@
 #include "tripairs.h"
 
-Mesh::TriPairs::TriPairs(size_t nPair) :
-    nPair(nPair)
+Mesh::TriPairs::TriPairs(size_t nPair, double k) :
+    nPair(nPair), k(k)
 {
     assert(nPair > 0);
     buildNumCommon();
@@ -47,7 +47,6 @@ void Mesh::TriPairs::buildNumCommon() {
  */
 void Mesh::TriPairs::buildMomentsEFIE() {
     momentsEFIE.resize(nPair);
-    double k = config.k;
 
     for (const auto& [iTris, iPair] : glPairsToIdx) {
         auto& [m00, m10, m01, m11] = momentsEFIE[iPair];
@@ -82,7 +81,7 @@ void Mesh::TriPairs::buildMomentsEFIE() {
 void Mesh::TriPairs::buildMomentsMFIE() {
     momentsMFIE.resize(nPair);
     momentsMFIE2.resize(nPair);
-    double k = config.k, k2 = k*k;
+    double k2 = k*k;
 
     for (const auto& [iTris, iPair] : glPairsToIdx) {
         auto& [m000, m001, m10, m01, m11] = momentsMFIE[iPair];
@@ -173,6 +172,49 @@ void Mesh::TriPairs::buildIntegratedInvRcubed() {
             intInvR2.emplace_back(obsTri.getIntegratedInvRcubed(src));
     }
 }
+
+/*
+void Mesh::TriPair::buildMomentsTMFIE() {
+    momentsMFIE_T = { vec3cd::Zero(), vec3cd::Zero(), vec3cd::Zero(), 0.0 };
+    auto& [m00, m10, m01, m11] = momentsMFIE_T;
+    const auto& [obsTri, srcTri] = getTriPair();
+    double k = config.k, k2 = k*k;
+    vec3d nhat = obsTri.nhat;
+
+    for (const auto& [obs, obsWeight] : obsTri.quads) {
+        // For common triangles, use -1/2 J term
+        if (nCommon == 3) {
+            // since numerical integration only cancels one RWG's 1/(2A) factor
+            double weight = obsWeight / (4.0*obsTri.area);
+            vec3d nhat_X_obs = obsTri.nhat.cross(obs);
+            m00 -= obsTri.nhat * weight;
+            m10 -= -nhat_X_obs * weight;
+            m01 -= nhat_X_obs * weight;
+            continue;
+        }
+
+        for (const auto& [src, srcWeight] : srcTri.quads) {
+            const vec3d& R = obs-src;
+            double r = R.norm(), r2 = r*r, r3 = r*r2;
+            assert(!Math::fzero(r));
+
+            vec3cd gradG = R / r3 * obsWeight*srcWeight; // T-MFIE
+
+            if (nCommon == 2)
+                gradG = gradG * ((-1.0+iu*k*r)*exp(iu*k*r) + 0.5*k2*r2 + 1.0); // double check signs
+            else if (nCommon < 2)
+                gradG = gradG * (-1.0+iu*k*r)*exp(iu*k*r);
+
+            vec3cd obs_X_gradG = obs.cross(gradG).conjugate();
+            vec3cd gradG_X_src = gradG.cross(src).conjugate();
+            // minus signs from flipping J x gradG to gradG x J
+            m00 -= gradG;
+            m10 -= obs_X_gradG;
+            m01 -= gradG_X_src;
+            m11 -= obs.dot(gradG_X_src);
+        }
+    }
+}*/
 
 /*
 void Mesh::TriPairs::buildMomentsInvR() {

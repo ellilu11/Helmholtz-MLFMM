@@ -31,9 +31,9 @@ public:
 
     virtual vec3cd getFarAlongDir(const vec3d&) const = 0;
 
-    virtual cmplx getIntegratedEFIE(const std::shared_ptr<Source>) const = 0;
+    virtual cmplx getIntegratedEFIE(const std::shared_ptr<Source>, double) const = 0;
 
-    virtual cmplx getIntegratedMFIE(const std::shared_ptr<Source>) const = 0;
+    virtual cmplx getIntegratedMFIE(const std::shared_ptr<Source>, double) const = 0;
 
     virtual double getIntegratedMass(const std::shared_ptr<Source>) const = 0;
 

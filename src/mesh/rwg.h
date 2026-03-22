@@ -12,9 +12,9 @@ public:
 
     std::pair<vec3cd,vec3cd> getIntegratedPlaneWave(const vec3d&, bool = 0) const;
 
-    cmplx getIntegratedEFIE(const std::shared_ptr<Source>) const override;
+    cmplx getIntegratedEFIE(const std::shared_ptr<Source>, double) const override;
 
-    cmplx getIntegratedMFIE(const std::shared_ptr<Source>) const override;
+    cmplx getIntegratedMFIE(const std::shared_ptr<Source>, double) const override;
 
     double getIntegratedMass(const std::shared_ptr<Source>) const override;
 

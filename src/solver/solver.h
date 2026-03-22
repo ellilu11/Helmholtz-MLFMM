@@ -24,7 +24,7 @@ public:
 
 protected:
     std::unique_ptr<FMM::Nearfield> nf;
-    int nsols; // number of unknowns (= nsrcs for PEC)
+    int nsols; // number of unknowns (= nsrcs for PEC, 2*nsrcs for dielectric)
 };
 
 
