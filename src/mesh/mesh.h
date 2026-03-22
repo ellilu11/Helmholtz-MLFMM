@@ -34,4 +34,8 @@ namespace Mesh {
     SrcVec importMesh(const std::filesystem::path&);
 
     void printNormals(const std::string&);
+
+    inline bool lzero(double x) { 
+        return Math::fzero(x, config.leps);
+    };
 }

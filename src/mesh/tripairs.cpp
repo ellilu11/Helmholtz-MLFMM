@@ -49,7 +49,7 @@ void Mesh::TriPairs::buildMomentsEFIE() {
     momentsEFIE.resize(nPair);
     double k = config.k;
 
-    for (const auto& [iTris, iPair]: glPairsToIdx) {
+    for (const auto& [iTris, iPair] : glPairsToIdx) {
         auto& [m00, m10, m01, m11] = momentsEFIE[iPair];
         int nCommon = nCommons[iPair];
 
@@ -61,9 +61,9 @@ void Mesh::TriPairs::buildMomentsEFIE() {
 
                 cmplx G = obsWeight*srcWeight / (4.0*PI); // apply 1/(4pi) factor
                 if (nCommon >= nCommonThres)
-                    G *= (Math::fzero(r) ? iu*k : (exp(iu*k*r)-1.0) / r);
+                    G *= (lzero(r) ? iu*k : (exp(iu*k*r)-1.0) / r);
                 else {
-                    assert(!Math::fzero(r));
+                    assert(!lzero(r));
                     G *= exp(iu*k*r) / r;
                 }
 
@@ -100,7 +100,7 @@ void Mesh::TriPairs::buildMomentsMFIE() {
             for (const auto& [src, srcWeight] : srcTri.quads) {
                 const vec3d& R = obs-src;
                 double r = R.norm(), r2 = r*r, r3 = r*r2;
-                assert(!Math::fzero(r));
+                assert(!lzero(r));
 
                 vec3cd gradG = obsWeight*srcWeight * R / (4.0*PI*r3); // apply 1/(4pi) factor
 

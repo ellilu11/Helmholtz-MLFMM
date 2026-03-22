@@ -125,10 +125,7 @@ double Mesh::Triangle::getDoubleSelfIntegratedInvR(const vec3d& vobs, const vec3
  * and the vector part is the integral of (r' - center) * exp(i kvec . r')
  */
 std::pair<cmplx, vec3cd>
-Mesh::Triangle::getIntegratedPlaneWave(const vec3d& kvec) const
-{
-    using namespace Math;
-
+Mesh::Triangle::getIntegratedPlaneWave(const vec3d& kvec) const {
     auto [X0, X1, X2] = getVerts();
     vec3d D0 = X1-X0, D2 = X0-X2;
 
@@ -136,16 +133,17 @@ Mesh::Triangle::getIntegratedPlaneWave(const vec3d& kvec) const
     double alphasq = alpha*alpha, betasq = beta*beta;
     cmplx expI_alpha = exp(iu*alpha), expI_beta = exp(iu*beta);
     cmplx // TODO: Only compute if gamma != 0
-        f0_alpha = (fzero(alpha) ? -iu : (1.0 - expI_alpha) / alpha),
-        f0_beta = (fzero(beta) ? -iu : (1.0 - expI_beta) / beta);
+        f0_alpha = (lzero(alpha) ? -iu : (1.0 - expI_alpha) / alpha),
+        f0_beta = (lzero(beta) ? -iu : (1.0 - expI_beta) / beta);
     cmplx
-        f1_alpha = (fzero(alpha) ? -0.5 : (1.0 - (1.0 - iu*alpha) * expI_alpha) / alphasq),
-        f1_beta = (fzero(beta) ? -0.5 : (1.0 - (1.0 - iu*beta) * expI_beta) / betasq);
+        f1_alpha = (lzero(alpha) ? -0.5 : (1.0 - (1.0 - iu*alpha) * expI_alpha) / alphasq),
+        f1_beta = (lzero(beta) ? -0.5 : (1.0 - (1.0 - iu*beta) * expI_beta) / betasq);
 
-    cmplx scaRad; vec3cd vecRad;
-    if (fzero(gamma)) {
+    cmplx scaRad; 
+    vec3cd vecRad;
+    if (lzero(gamma)) {
         cmplx
-            f2 = (fzero(alpha) ? iu/6.0 :
+            f2 = (lzero(alpha) ? iu/6.0 :
                 (expI_alpha*(alphasq + 2.0*iu*alpha - 2.0) + 2.0) / (2.0*alpha*alphasq));
         scaRad = -f1_alpha;
         vecRad = -iu*f2 * (D0 - D2);
@@ -174,8 +172,6 @@ Mesh::Triangle::getIntegratedPlaneWave(const vec3d& kvec) const
 std::pair<double, vec3d>
 Mesh::Triangle::getIntegratedInvR(const vec3d& obs, bool doNumeric) const
 {
-    using namespace Math;
-
     double scaRad = 0.0;
     vec3d vecRad = vec3d::Zero();
     const vec3d& R = proj(obs);
@@ -205,12 +201,12 @@ Mesh::Triangle::getIntegratedInvR(const vec3d& obs, bool doNumeric) const
 
         const vec3d& P = P0 - l0*lhat;
         double p = P.norm(), p0 = P0.norm(), p1 = P1.norm();
-        const vec3d& phat = (fzero(p) ? vec3d::Zero() : P.normalized());
+        const vec3d& phat = (lzero(p) ? vec3d::Zero() : P.normalized());
 
         double rsq = p*p + dsq, r0 = std::sqrt(p0*p0 + dsq), r1 = std::sqrt(p1*p1 + dsq);
   
         double f2 = 
-            (fzero(r0+l0) || fzero(r1+l1) ?  // use && ?
+            (lzero(r0+l0) || lzero(r1+l1) ?  // use && ?
                 std::log(l0/l1) :
                 std::log((r1+l1)/(r0+l0)));
 
@@ -235,8 +231,6 @@ Mesh::Triangle::getIntegratedInvR(const vec3d& obs, bool doNumeric) const
 std::pair<double, vec3d>
 Mesh::Triangle::getIntegratedInvRcubed(const vec3d& obs, bool doNumeric) const
 {
-    using namespace Math;
-
     double scaRad3 = 0.0;
     vec3d vecRad3 = vec3d::Zero();
     const vec3d& obsProj = proj(obs);
@@ -267,16 +261,16 @@ Mesh::Triangle::getIntegratedInvRcubed(const vec3d& obs, bool doNumeric) const
         const vec3d& P = P0 - l0*lhat;
         double p = P.norm(), p0 = P0.norm(), p1 = P1.norm();
 
-        const vec3d& phat = (fzero(p) ? vec3d::Zero() : P.normalized());
+        const vec3d& phat = (lzero(p) ? vec3d::Zero() : P.normalized());
 
         double rsq = p*p + dsq, r0 = std::sqrt(p0*p0 + dsq), r1 = std::sqrt(p1*p1 + dsq);
 
         scaRad3 -= phat.dot(uhat) *
-            (fzero(d) ?
-                (fzero(p) ? 0.0 : l1/(p*r1) - l0/(p*r0)) :
+            (lzero(d) ?
+                (lzero(p) ? 0.0 : l1/(p*r1) - l0/(p*r0)) :
                 (atan2(d*l1, p*r1) - atan2(d*l0, p*r0) + atan2(l0, p) - atan2(l1, p)) / d);
         vecRad3 -= uhat *
-            (fzero(r0+l0) || fzero(r1+l1) ?  // use && ?
+            (lzero(r0+l0) || lzero(r1+l1) ?  // use && ?
                 std::log(l0/l1) :
                 std::log((r1+l1)/(r0+l0)));
     }
@@ -348,25 +342,3 @@ double Mesh::Triangle::getSingularMFIE(
 
     return rad / (4.0*PI); // apply factor of 1/(4pi)
 }
-
-/* getSurfaceCurrent()
- * Get the surface current on this triangle by summing contributions from adjacent RWGs
- * Use the center of the triangle as the evaluation point for the RWG function
-cmplx Mesh::Triangle::getSurfaceCurrent() const {
-    auto triToRWG = triToRWGs[iTri];
-
-    cmplx J = 0.0;
-    for (int i = 0; i < 3; ++i) {
-        int iRWG = triToRWG.iRWGs[i];
-        int isMinus = triToRWG.isMinus[i];
-        auto rwg = glSrcs[iRWG];
-        const auto& Xnc = rwg->getVertsNC();
-
-        double rwgFunc =
-            Math::sign(isMinus) * rwg->leng / (2.0*area) * (center - Xnc[isMinus]);
-
-        J += Solver::currents[iRWG];
-    }
-    return J;
-}
-*/

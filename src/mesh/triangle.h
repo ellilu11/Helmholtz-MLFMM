@@ -30,8 +30,6 @@ public:
     double getSingularMFIE(
         const Triangle&, const vec3d&, const vec3d&, size_t) const;
 
-    // cmplx getSurfaceCurrent() const;
-
     void buildTriQuads();
 
     static void refineVertices();

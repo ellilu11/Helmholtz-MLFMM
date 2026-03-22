@@ -9,14 +9,7 @@ constexpr cmplx iu(0, 1);
 const double PI = std::acos(-1.0);
 
 namespace Math {
-    // TODO: Smaller scatterers require smaller FEPS
-    // But too small a FEPS causes numerical instability in some cases
-    // Make into a config param
-    constexpr double FEPS = 1.0E-12; // floating point error tolerance
-
-    inline size_t bools2Idx(const vec3i& x) noexcept {
-        return x[0] + 2 * x[1] + 4 * x[2];
-    }
+    constexpr double FEPS = 1.0E-6; // generic floating point error tolerance
 
     inline double sign(int k) noexcept {
         return k % 2 ? -1.0 : 1.0;
@@ -31,16 +24,8 @@ namespace Math {
         }
     }
 
-    inline double factorial(double n) noexcept {
-        return n == 0 ? 1 : n * factorial(n-1);
-    }
-
-    inline bool fzero(double x) noexcept {
-        return fabs(x) < FEPS;
-    }
-
-    inline bool fequals(double x, double y) noexcept {
-        return fabs(x-y) < FEPS;
+    inline bool fzero(double x, double eps = FEPS) noexcept {
+        return fabs(x) < eps;
     }
 
     inline bool fless(double x, double y) noexcept {
@@ -49,8 +34,6 @@ namespace Math {
     }
 
     inline bool vecEquals(const vec3d& X, const vec3d& Y) noexcept {
-    // inline bool vecEquals(const vec3d& X, const vec3d& Y, double EPS2 = FEPS*FEPS) noexcept {
-        // return ((X-Y).norm()) < FEPS;
         return ((X-Y).squaredNorm()) < FEPS*FEPS;
     };
 
@@ -64,6 +47,14 @@ namespace Math {
         return X[2] < Y[2];
     };
 
+    inline vec3d fromSph(const vec3d& R) noexcept {
+        auto r = R[0], th = R[1], ph = R[2];
+        return r * vec3d(
+            sin(th) * cos(ph),
+            sin(th) * sin(ph),
+            cos(th));
+    }
+
     inline vec3d toSph(const vec3d& X) noexcept {
         auto x = X[0], y = X[1], z = X[2], r = X.norm();
         assert(r != 0);
@@ -74,22 +65,6 @@ namespace Math {
             };
 
         return vec3d(r, std::acos(z/r), toPhi(x, y));
-    }
-
-    inline vec3d fromSph(const vec3d& R) noexcept {
-        auto r = R[0], th = R[1], ph = R[2];
-        return r * vec3d(
-            sin(th) * cos(ph),
-            sin(th) * sin(ph),
-            cos(th));
-    }
-
-    inline vec3d fromCyl(const vec3d& S) noexcept {
-        auto r = S[0], ph = S[1], z = S[2];
-        return vec3d(
-            r * cos(ph),
-            r * sin(ph),
-            z);
     }
 
     inline mat23d toThPh(double th, double ph) noexcept {
@@ -144,12 +119,11 @@ namespace Math {
     std::pair<std::vector<double>, std::vector<double>> gaussLegendre(
         int, double = -1.0, double = 1.0, double = 1.0E-12);
 
-    int getNearGLNodeIdx(
-        const double, const int, const double, const double);
+    int getNearGLNodeIdx(double, int, double, double);
 
-    double evalLagrangeBasis(const double, const std::vector<double>&, const int);
+    double evalLagrangeBasis(double, const std::vector<double>&, int);
 
-    double evalTrigBasis(const double, const std::vector<double>&, const int);
+    double evalTrigBasis(double, const std::vector<double>&, int);
 
     cmplx sphericalHankel1(double, int);
 

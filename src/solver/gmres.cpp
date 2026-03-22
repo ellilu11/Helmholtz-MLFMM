@@ -10,7 +10,7 @@ GMRES::GMRES(
     std::shared_ptr<FMM::Node> root)
     : Solver(srcs, std::move(nf)),
       ff(std::move(ff)), root(std::move(root)),
-      Qmat(matXcd(numSrcs, 1)),
+      Qmat(matXcd(nsols, 1)),
       gvec(vecXcd::Zero(config.maxIter+1)),
       vcos(vecXcd::Zero(config.maxIter)),
       vsin(vecXcd::Zero(config.maxIter))
@@ -80,7 +80,7 @@ void GMRES::iterateArnoldi(int k) {
     lvec = rvec / hcol[k+1]; // .normalized();
 
     // Store new lvec as new column of Qmat
-    Qmat.conservativeResize(numSrcs, k+2);
+    Qmat.conservativeResize(nsols, k+2);
     Qmat.col(k+1) = lvec;
 
     // Store new hcol as new column of Hmat
@@ -146,7 +146,7 @@ void GMRES::solve(const std::string& fname) {
         updateRvec(iter);
         iterateArnoldi(iter);
         updateGvec(iter);
-        rvec = vecXcd::Zero(numSrcs); // reset rvec for next iteration
+        rvec = vecXcd::Zero(nsols); // reset rvec for next iteration
     } while (abs(gvec[++iter])/g0 > config.epsIter && iter < config.maxIter); // careful
 
     Time duration_ms = Clock::now() - start;

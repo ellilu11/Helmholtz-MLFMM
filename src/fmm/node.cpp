@@ -36,10 +36,14 @@ FMM::Node::Node(
  * Subdivide node into 8 branches and assign srcs to branches
  */
 void FMM::Node::subdivide() {
+    auto bools2Idx = [](const vec3i& bools) {
+        return bools[0] + 2*bools[1] + 4*bools[2];
+    };
+
     // Assign every src to a branch based on src center relative to node center
     std::array<SrcVec, 8> branchSrcs;
     for (const auto& src : srcs) {
-        size_t idx = Math::bools2Idx(src->getCenter() > center);
+        size_t idx = bools2Idx(src->getCenter() > center);
         branchSrcs[idx].push_back(src);
     }
 

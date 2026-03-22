@@ -41,7 +41,7 @@ void mainLoop(const SrcVec& srcs, bool doFMM, bool doIter = true) {
     std::transform(ieStr.begin(), ieStr.end(), ieStr.begin(), ::tolower);
     // Solver::printScattered(srcs, "out/ff/sph/px_k1.0z_r5.0_"+ieStr, (doFMM ? "ff_n" : "ffDir_n")+std::to_string(nsrcs)+".txt", 200);
     // Solver::printScattered(srcs, "out/ff/plate/py_k1.0x_plate", std::string(doFMM ? "ff_g" : "ffDir_g")+config.lengStr+".txt", 100);
-    Solver::printScattered(srcs, "out/ff/almond/py_k146.6z_almond_"+ieStr, std::string(doFMM ? "ff" : "ffDir")+".txt", 100);
+    Solver::printScattered(srcs, "out/ff/almond/py_k146.6z_almond_"+ieStr, std::string(doFMM ? "ff" : "ffDir")+".txt", 500);
 }
 
 int main() {

@@ -24,7 +24,7 @@ public:
 
 protected:
     std::unique_ptr<FMM::Nearfield> nf;
-    int numSrcs;
+    int nsols; // number of unknowns (= nsrcs for PEC)
 };
 
 

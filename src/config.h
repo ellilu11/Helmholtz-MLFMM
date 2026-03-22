@@ -9,53 +9,19 @@ enum class IE { EFIE, MFIE, CFIE };
 
 enum class Precision { VERYLOW, LOW, MEDLOW, MEDIUM, MEDHIGH, HIGH, VERYHIGH};
 
-std::string getModeStr(Mode mode) {
-    return [&]() {
-        switch (mode) {
-            case Mode::FMM:    return "FMM";
-            case Mode::DIR:    return "DIRECT";
-            case Mode::FMMDIR: return "FMM+DIRECT";
-        };
-        } ();
-}
-
-std::string getIEStr(IE ie) {
-    return [&]() {
-        switch (ie) {
-            case IE::EFIE: return "EFIE";
-            case IE::MFIE: return "MFIE";
-            case IE::CFIE: return "CFIE";
-        };
-        } ();
-}
-
-size_t getNumQuads(Precision prec) {
-    return [&]() {
-        switch (prec) {
-            case Precision::VERYLOW:  return 1;
-            case Precision::LOW:      return 3;
-            case Precision::MEDLOW:   return 4;
-            case Precision::MEDIUM:   return 6;
-            case Precision::MEDHIGH:  return 7;
-            case Precision::HIGH:     return 12;
-            case Precision::VERYHIGH: return 13;
-        };
-    } ();
-}
-
 struct Config {
     Config() = default;
     
     Config(const std::filesystem::path&);
     
-    static std::array<double,14> importConfig(const std::filesystem::path&);
+    static std::array<double, 15> importConfig(const std::filesystem::path&);
 
     // General
     Mode mode;          // FMM, direct, or FMM+direct
     Precision quadPrec; // Triangle quadrature precision
     double alpha;       // CFIE parameter
     double k;           // Wavenumber
-    // double leps;     // TODO: Length error tolerance for nearfield
+    double leps;        // Length error tolerance for nearfield
 
     // FMM
     int maxNodeSrcs;    // Max # sources in leaf

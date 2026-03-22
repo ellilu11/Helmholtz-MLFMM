@@ -50,9 +50,11 @@ pair2d Math::legendreP(double x, int n) {
     * nodes   : Gauss-Legendre nodes
     * weights : Gauss-Legendre weights
     */
-std::pair<std::vector<double>, std::vector<double>> Math::gaussLegendre(int l, double a, double b, double EPS) {
-    const double leng = b - a;
-    const double mid = (a + b)/2.0;
+std::pair<std::vector<double>, std::vector<double>> 
+Math::gaussLegendre(int l, double a, double b, double EPS) 
+{
+    double leng = b - a;
+    double mid = (a + b)/2.0;
     assert(leng > 0);
 
     std::vector<double> nodes(l);
@@ -100,7 +102,7 @@ std::pair<std::vector<double>, std::vector<double>> Math::gaussLegendre(int l, d
 * idx : Index of nearest/less Gauss-Legendre node
 */
 int Math::getNearGLNodeIdx(
-    const double xi, const int m, const double a = -1.0, const double b = 1.0) {
+    double xi, int m, double a = -1.0, double b = 1.0) {
 
     double leng = b - a;
     double mid = (a + b)/2.0;
@@ -123,7 +125,7 @@ int Math::getNearGLNodeIdx(
 * k  : index of basis function \in {0,1,...,order}
 */
 double Math::evalLagrangeBasis(
-    const double x, const std::vector<double>& xs, const int k) {
+    double x, const std::vector<double>& xs, int k) {
 
     // assert(k < xs.size());
 
@@ -146,7 +148,7 @@ double Math::evalLagrangeBasis(
 * k  : index of basis function \in {0,1,...,N-1}
 */
 double Math::evalTrigBasis(
-    const double x, const std::vector<double>& xs, const int k) {
+    double x, const std::vector<double>& xs, int k) {
 
     const int N = xs.size();
     assert(k <= N-1);
@@ -183,10 +185,14 @@ cmplx Math::sphericalHankel1(double x, int n) { // TODO: Double check
     return H1_n;
 }
 
-void Math::buildPermutations(
-    vec3d& xs, std::vector<vec3d>& permutes, 
-    int idx0) {
-
+/* buildPermutations(xs, permutes, idx0)
+ * Recursively build all permutations of the vector xs and store in permutes
+ * xs : input vector to permute
+ * permutes : vector of all permutations of xs
+ * idx0 : index of first element to permute (initially 0)
+ */
+void Math::buildPermutations(vec3d& xs, std::vector<vec3d>& permutes, int idx0) 
+{
     if (idx0 == 3) {
         permutes.push_back(xs);
         return;

@@ -99,7 +99,7 @@ cmplx Mesh::RWG::getIntegratedEFIE(const std::shared_ptr<Source> src) const {
             vec3d v1 = (obsTri.iTri <= srcTri.iTri) ? vsrc : vobs;
             cmplx pairRad = m11 - v1.dot(m10) - v0.dot(m01) + (v0.dot(v1) - 4.0/k2)*m00;
 
-            // Integrate 1/R term (numeric-analytic)
+            // Integrate singular term (numeric-analytic)
             // Average obs-src and src-obs to preserve symmetry
             if (glTriPairs.nCommons[iPair] >= nCommonThres)
                 pairRad += (
@@ -147,7 +147,7 @@ cmplx Mesh::RWG::getIntegratedMFIE(const std::shared_ptr<Source> src) const {
             cmplx pairRad = m11 - vsrc.dot(m10) - vobs.dot(m01) + 
                 (vobs.dot(vsrc))*m000 + obsTri.nhat.dot(vsrc)*vobs.dot(m001);
 
-            // Integrate 1/R term (numeric-analytic)
+            // Integrate singular terms (numeric-analytic)
             if (glTriPairs.nCommons[iPair] >= nCommonThres)
                 pairRad += // double check sign!
                     obsTri.getSingularMFIE(srcTri, vobs, vsrc, iPair);
@@ -163,6 +163,9 @@ cmplx Mesh::RWG::getIntegratedMFIE(const std::shared_ptr<Source> src) const {
     return leng * srcRWG->leng * intRad;
 }
 
+/* getIntegratedMass(src)
+ * Return the mass matrix entry for this RWG and src
+ */
 double Mesh::RWG::getIntegratedMass(const std::shared_ptr<Source> src) const {
     if (config.ie == IE::EFIE) return 0.0;
     const auto srcRWG = dynamic_pointer_cast<RWG>(src);
@@ -255,7 +258,7 @@ cmplx Mesh::RWG::getIntegratedMFIE(const std::shared_ptr<Source> src) const {
                 for (const auto& [src, srcWeight] : srcTri.quads) {
                     vec3d R = obs-src;
                     double r = R.norm(), r2 = r*r, r3 = r*r2;
-                    assert(!Math::fzero(r));
+                    assert(!lzero(r));
 
                     vec3cd gradG = obsWeight*srcWeight * R / (4.0*PI*r3);
                     if (triPair.nCommon >= nCommonThres)
