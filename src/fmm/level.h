@@ -18,7 +18,7 @@ public:
     }
 
     void buildInterpTables(const Level& srcLevel) {
-        assert(level < maxLevel);
+        assert(lvl < maxLevel);
         buildInterpTheta(srcLevel);
         buildInterpPhi(srcLevel);
     }
@@ -63,10 +63,6 @@ private:
     void buildTranslationTable();
 
 public:
-    static std::vector<double> dists; // unique distances between interacting nodes
-    static std::vector<vec3d> rhats;  // unique unit distance vectors between interacting nodes
-    static std::vector<vec3d> dXs;    // unique distance vectors between interacting nodes
-
     // M2M interpolation tables
     std::vector<interpPair> interpTheta;
     std::vector<interpPair> interpPhi;
@@ -82,6 +78,12 @@ public:
     std::vector<double> thetas;  // theta samples
     std::vector<double> weights; // weights of theta samples
     std::vector<double> phis;    // phi samples
+
+private:
+    static std::vector<double> dists; // unique distances between interacting nodes
+    static std::vector<vec3d> rhats;  // unique unit distance vectors between interacting nodes
+    static std::vector<vec3d> dXs;    // unique distance vectors between interacting nodes
+
     int L;     // M2L series truncation number
     int lvl;   // level of this FMM level, with root at level 0
 };

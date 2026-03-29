@@ -1,4 +1,6 @@
 #include "solver.h"
+#include "../mesh/rwg.h"
+#include "../mesh/triangle.h"
 
 vecXcd Solver::currents;
 vecXcd Solver::lvec;
@@ -11,16 +13,9 @@ Solver::Solver(const SrcVec& srcs, std::unique_ptr<FMM::Nearfield> nf)
     lvec = vecXcd::Zero(nsols);
     rvec = vecXcd::Zero(nsols);
 
-    // Sort sources by srcIdx to preserve ordering of Zmat, lvec, rvec, and currents
-    SrcVec sortedSrcs = srcs;
-    std::sort(sortedSrcs.begin(), sortedSrcs.end(),
-        [](std::shared_ptr<Source> src0, std::shared_ptr<Source> src1)
-        { return src0->getIdx() < src1->getIdx(); }
-    );
-
     // lvec = r = ZI - w = -w assuming I = 0 initially
-    std::transform(sortedSrcs.begin(), sortedSrcs.end(), lvec.data(),
-        [](const std::shared_ptr<Source>& src) { return -src->getVoltage(); });
+    for (const auto& src : srcs)
+        lvec[src->getIdx()] = -src->getVoltage();
 };
 
 void Solver::printSols(const std::string& fname, const vecXcd& sols) {
@@ -46,12 +41,13 @@ void Solver::printScattered(const SrcVec& srcs,
 
     std::cout << " Computing scattered farfield...\n";
 
+    double E0 = Exct::Eincs[0]->amplitude;
     double k = config.k, k2 = k*k;
     double rcsSum = 0.0;
-    for (int ith = 0; ith < 2*nangles; ++ith) { // 2*nth to cover great circle
-        double theta0 = (ith+0.5)*PI/static_cast<double>(nangles); // in [0, 2*pi]
-        double theta = (theta0 < PI) ? theta0 : 2*PI - theta0; // fold back to [0, pi]
-        double phi = (theta0 < PI) ? 0.0 : PI; // fold back to [0, 2pi]
+    for (int ith = 0; ith < nangles; ++ith) { // 2*nth to cover great circle
+        double alpha = (ith+0.5)*PI/static_cast<double>(nangles); // in [0, 2*pi]
+        double theta = (alpha < PI) ? alpha : 2*PI - alpha; // fold back to [0, pi]
+        double phi = (alpha < PI) ? 0.0 : PI; // fold back to [0, 2pi]
         assert(theta >= 0.0 && theta <= PI);
     //for (int iph = 0; iph < nangles; ++iph) {
     //    double theta = PI / 2.0;
@@ -64,18 +60,18 @@ void Solver::printScattered(const SrcVec& srcs,
             dirFar += currents[src->getIdx()] * src->getFarAlongDir(k*rhat);
 
         // Get theta and phi components of scattered far field
-        vec2cd far = iu*k*Phys::eta * Math::toThPh(theta, phi) * dirFar;
-        double rcs = 4.0*PI/k2 * far.squaredNorm();
+        mat23d toThPh = Math::toThPh(theta, phi);
+        vec2cd far = iu*k*Phys::eta * toThPh * dirFar;
+        double rcs = 4.0*PI * far.squaredNorm() / (E0*E0);
 
         // Get V or H component of scattered far field
-        //cmplx far = iu*k*Phys::eta * dirFar[0];
+        //cmplx far = iu*k*Phys::eta * dirFar[1];
         //double rcs = 4.0*PI/k2 * std::norm(far); 
 
         rcsSum += rcs;
 
-        farfile << rcs << '\n'; // squared magnitude of theta and phi components
-        thfile << theta0 << ' ' << theta << ' ' << phi << '\n';
-        // thfile << phi << ' ' << theta << ' ' << phi << '\n';
+        farfile << rcs << '\n'; 
+        thfile << alpha << ' ' << theta << ' ' << phi << '\n';
     }
 
     std::cout << "   Mean RCS: "
@@ -84,23 +80,28 @@ void Solver::printScattered(const SrcVec& srcs,
 }
 
 /* printSurfCurrents()
- * Get the surface current on this triangle by summing contributions from adjacent RWGs
+ * Get the surface current at every triangle by summing contributions from adjacent RWGs
  * Use the center of the triangle as the evaluation point for the RWG function
-cmplx Solver::printSurfCurrents() const {
-    auto triToRWG = triToRWGs[iTri];
+ */
+void Solver::printSurfCurrents(const SrcVec& srcs,
+    const std::filesystem::path& dir, const std::string& fname) 
+{
+    makeDir(dir);
+    std::ofstream outfile(dir/fname);
 
-    cmplx J = 0.0;
-    for (int i = 0; i < 3; ++i) {
-        int iRWG = triToRWG.iRWGs[i];
-        int isMinus = triToRWG.isMinus[i];
-        auto rwg = glSrcs[iRWG];
-        const auto& Xnc = rwg->getVertsNC();
+    for (const auto& tri : Mesh::glTris) {
+        vec3cd J = vec3cd::Zero();
+        vec3d center = tri.getCenter();
+        const auto& triToRWG = Mesh::glTriToRWGs[tri.getIdx()];
 
-        double rwgFunc =
-            Math::sign(isMinus) * rwg->leng / (2.0*area) * (center - Xnc[isMinus]);
+        for (int i = 0; i < 3; ++i) {
+            auto [iSrc, isMinus] = triToRWG[i];
+            auto rwg = dynamic_pointer_cast<Mesh::RWG>(srcs[iSrc]);
 
-        J += Solver::currents[iRWG];
+            J += currents[iSrc] * rwg->evaluate(center, isMinus);
+        }
+
+        std::cout << center[0] << ' ' << center[1] << ' ' << center[2] << ' ' 
+            << J.norm() << '\n';
     }
-    return J;
 }
-*/

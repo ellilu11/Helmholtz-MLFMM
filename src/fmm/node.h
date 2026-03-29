@@ -16,7 +16,7 @@ class FMM::Node : public std::enable_shared_from_this<Node> {
 public:
     Node(const SrcVec&, const int, Node* const, bool);
 
-    void buildLists();
+    void postProcess();
 
     bool isRoot() const { return base == nullptr; }
 

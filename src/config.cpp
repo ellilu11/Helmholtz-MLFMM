@@ -83,8 +83,8 @@ Config::Config(const std::filesystem::path& fileName) {
     std::cout << "   ILU fill factor: " << iluFactor << "\n\n";
 }
 
-std::array<double, 15> Config::importConfig(const std::filesystem::path& path) {
-    std::array<double, 15> arr;
+std::array<double, 16> Config::importConfig(const std::filesystem::path& path) {
+    std::array<double, 16> arr;
     std::ifstream file(path);
     std::string line;
     size_t i = 0;

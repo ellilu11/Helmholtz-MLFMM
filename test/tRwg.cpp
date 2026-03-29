@@ -268,7 +268,7 @@ int main() {
 
     bool isRootLeaf = nsrcs <= config.maxNodeSrcs;
     auto root = std::make_shared<FMM::Node>(srcs, 0, nullptr, isRootLeaf);
-    root->buildLists();
+    root->postProcess();
 
     // ==================== Build nearfield ===================== //
     auto nf = std::make_unique<FMM::Nearfield>(nsrcs);

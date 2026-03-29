@@ -10,6 +10,7 @@ SrcVec Mesh::importMesh(const std::filesystem::path& path)
     SrcVec rwgs;
     importVec<vec3d>(path/"vertices.txt", glVerts);
     importVec<vec3i>(path/"faces.txt", glTris);
+    glTriToRWGs.resize(glTris.size());
     importVec<vec4i>(path/"rwgs.txt", rwgs);
 
     buildRootCoords();

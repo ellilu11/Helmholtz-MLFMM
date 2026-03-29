@@ -8,6 +8,8 @@ class Mesh::RWG : public Source {
 public:
     RWG(const vec4i&, size_t);
 
+    void buildTriToRWG();
+
     cmplx getVoltage() override;
 
     std::pair<vec3cd,vec3cd> getIntegratedPlaneWave(const vec3d&, bool = 0) const;
@@ -37,12 +39,21 @@ public:
                  std::make_pair(glTris[iTris[1]], glVerts[iVertsNC[1]]) };
     }
 
+    double getLeng() const { return leng; }
+
     vec3d getCenter() const {
         auto [v0, v1] = getVertsC();
         return (v0 + v1) / 2.0;
     }
 
-    double getLeng() const { return leng; }
+    /* evaluate(X, isMinus)
+     * Evaluate RWG basis function at X on the triangle specified by isMinus
+     * isMinus = 0 for plus triangle, 1 for minus triangle
+     */
+    vec3d evaluate(const vec3d& X, bool isMinus) const {
+        return Math::sign(isMinus) * leng / (2.0 * getTris()[isMinus].area)
+            * (X - getVertsNC()[isMinus]);
+    }
 
     std::pair<vec3cd,vec3cd> getRadsAlongDir(const vec3d& X, const vec3d& kvec) const override {
         cmplx exp = std::exp(iu*kvec.dot(X)) / (4.0*PI); // apply factor of 1/(4pi)
