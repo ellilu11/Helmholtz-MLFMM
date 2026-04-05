@@ -15,8 +15,6 @@ Mesh::RWG::RWG(const vec4i& idx4, size_t iSrc)
         for (const auto& iVert : tris[i].iVerts)
             if (iVert != iVertsC[0] && iVert != iVertsC[1])
                 iVertsNC[i] = iVert;
-
-    buildTriToRWG();
 }
 
 /* buildTriToRWG()
@@ -226,33 +224,6 @@ double Mesh::RWG::getIntegratedMass(const std::shared_ptr<Source> src) const {
     // Puzzle: Why plus sign here?
     return 0.5 * leng * srcRWG->leng * mass; // factor of 1/2 = Omega/(4pi)
 }
-
-/* Using inc . (nhat x polH) directly
-void Mesh::RWG::buildVoltage() {
-    vec3d kvec = Einc->wavevec;
-    vec3d polE = config.alpha * Einc->pol;
-    vec3d polH = (1.0 - config.alpha) * Einc->pol; // Einc->wavehat.cross(Einc->pol);
-
-    vec3cd inc = vec3cd::Zero();
-    cmplx voltH = 0.0;
-    int iTri = 0;
-    for (const auto& [tri, vert] : getTrisAndVerts()) {
-        vec3d X0 = tri.getVerts()[0];
-        const auto& [scaRad, vecRad] = tri.getIntegratedPlaneWave(kvec);
-
-        vec3cd triRad =
-            exp(iu*kvec.dot(X0)) * (scaRad * (X0 - vert) + vecRad) * Math::sign(iTri++);
-
-        inc += triRad;
-        voltH += tri.nhat.cross(polH).dot(triRad); // Hermitian dot!
-    }
-
-    inc *= leng;
-    voltH *= leng;
-
-    voltage = -Einc->amplitude * (polE.dot(inc) + voltH);
-}
-*/
 
 /* Debug version, no precomputed moments
 cmplx Mesh::RWG::getIntegratedMFIE(const std::shared_ptr<Source> src) const {

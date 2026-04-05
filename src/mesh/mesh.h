@@ -27,9 +27,11 @@ namespace Mesh {
     double rootLeng;
 
     // Functions
+    SrcVec importMesh(const std::filesystem::path&);
+
     void buildRootCoords();
 
-    SrcVec importMesh(const std::filesystem::path&);
+    void printRadius();
 
     void printNormals(const std::string&);
 

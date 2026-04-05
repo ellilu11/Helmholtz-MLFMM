@@ -44,34 +44,28 @@ void Solver::printScattered(const SrcVec& srcs,
     double E0 = Exct::Eincs[0]->amplitude;
     double k = config.k, k2 = k*k;
     double rcsSum = 0.0;
-    for (int ith = 0; ith < nangles; ++ith) { // 2*nth to cover great circle
-        double alpha = (ith+0.5)*PI/static_cast<double>(nangles); // in [0, 2*pi]
-        double theta = (alpha < PI) ? alpha : 2*PI - alpha; // fold back to [0, pi]
-        double phi = (alpha < PI) ? 0.0 : PI; // fold back to [0, 2pi]
-        assert(theta >= 0.0 && theta <= PI);
-    //for (int iph = 0; iph < nangles; ++iph) {
-    //    double theta = PI / 2.0;
-    //    double phi = (iph+0.5)*PI/static_cast<double>(nangles); // in [0, pi]
+    //for (int ith = 0; ith < nangles; ++ith) { // 2*nth to cover great circle
+    //    double alpha = (ith+0.5)*PI/static_cast<double>(nangles); // in [0, 2*pi]
+    //    double theta = (alpha < PI) ? alpha : 2*PI - alpha; // fold back to [0, pi]
+    //    double phi = (alpha < PI) ? 0.0 : PI; // fold back to [0, 2pi]
+    //    assert(theta >= 0.0 && theta <= PI);
+    for (int iph = 0; iph < nangles; ++iph) {
+        double theta = PI / 2.0;
+        double phi = (iph+0.5)*PI/static_cast<double>(nangles); // in [0, pi]
 
         vec3d rhat = Math::fromSph(vec3d(1.0, theta, phi));
-
         vec3cd dirFar = vec3cd::Zero();
         for (const auto& src : srcs)
             dirFar += currents[src->getIdx()] * src->getFarAlongDir(k*rhat);
 
         // Get theta and phi components of scattered far field
-        mat23d toThPh = Math::toThPh(theta, phi);
-        vec2cd far = iu*k*Phys::eta * toThPh * dirFar;
+        vec2cd far = iu*k*Phys::eta * Math::toThPh(theta, phi) * dirFar;
         double rcs = 4.0*PI * far.squaredNorm() / (E0*E0);
 
-        // Get V or H component of scattered far field
-        //cmplx far = iu*k*Phys::eta * dirFar[1];
-        //double rcs = 4.0*PI/k2 * std::norm(far); 
-
         rcsSum += rcs;
-
         farfile << rcs << '\n'; 
-        thfile << alpha << ' ' << theta << ' ' << phi << '\n';
+        // thfile << alpha << ' ' << theta << ' ' << phi << '\n';
+        thfile << phi << ' ' << phi << ' ' << theta << '\n';
     }
 
     std::cout << "   Mean RCS: "
