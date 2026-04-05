@@ -125,10 +125,9 @@ int Math::getNearGLNodeIdx(
 * k  : index of basis function \in {0,1,...,order}
 */
 double Math::evalLagrangeBasis(
-    double x, const std::vector<double>& xs, int k) {
-
-    // assert(k < xs.size());
-
+    double x, const std::vector<double>& xs, int k) 
+{
+    assert(k < xs.size());
     double product = 1.0;
 
     for (int j = 0; j < xs.size(); ++j) {
@@ -150,11 +149,11 @@ double Math::evalLagrangeBasis(
 double Math::evalTrigBasis(
     double x, const std::vector<double>& xs, int k) {
 
-    const int N = xs.size();
+    int N = xs.size();
     assert(k <= N-1);
 
-    const double diff = x - xs[k];
-    const double denom =
+    double diff = x - xs[k];
+    double denom =
         N%2 ? N*sin(diff/2.0) : N*tan(diff/2.0);
 
     return denom ?

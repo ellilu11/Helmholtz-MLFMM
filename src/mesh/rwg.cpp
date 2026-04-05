@@ -17,6 +17,19 @@ Mesh::RWG::RWG(const vec4i& idx4, size_t iSrc)
                 iVertsNC[i] = iVert;
 }
 
+/* buildTriToRWG()
+ * Build mapping from triangles to RWG
+ */
+void Mesh::RWG::buildTriToRWG() {
+    for (int i = 0; i < 2; ++i) {
+        int iTri = iTris[i];
+        auto& triToRWG = glTriToRWGs[iTri];
+
+        triToRWG.emplace_back(iSrc, i);
+        assert(triToRWG.size() <= 3);
+    }
+}
+
 /* getVoltage()
  * Return voltage of this RWG due to superposition of incident plane waves
  */
@@ -41,8 +54,9 @@ cmplx Mesh::RWG::getVoltage() {
 /* getIntegratedPlaneWave(kvec, doNumeric)
  * Return integral of exp(i kvec . r'} * f(r') dr' at this RWG
  */
-std::pair<vec3cd,vec3cd> 
-Mesh::RWG::getIntegratedPlaneWave(const vec3d& kvec, bool doNumeric) const {
+std::pair<vec3cd,vec3cd> Mesh::RWG::getIntegratedPlaneWave(
+    const vec3d& kvec, bool doNumeric) const 
+{
     vec3cd rad = vec3cd::Zero();
     vec3cd radNormal = vec3cd::Zero();
     int iTri = 0;
@@ -66,11 +80,13 @@ Mesh::RWG::getIntegratedPlaneWave(const vec3d& kvec, bool doNumeric) const {
         const auto& [scaRad, vecRad] = tri.getIntegratedPlaneWave(kvec);
 
         vec3cd triRad = 
-            exp(iu*kvec.dot(X0)) * (scaRad * (X0 - vert) + vecRad) * Math::sign(iTri++);
+            exp(iu*kvec.dot(X0)) * (scaRad * (X0 - vert) + vecRad) * Math::sign(iTri);
 
         rad += triRad;
         if (config.ie != IE::EFIE)
             radNormal += tri.nhat.cross(triRad).conjugate(); // double check sign and conjugation!
+
+        ++iTri;
     }
 
     assert(!std::isnan(rad.norm()));
@@ -93,6 +109,7 @@ cmplx Mesh::RWG::getIntegratedEFIE(const std::shared_ptr<Source> src, double k) 
         int iSrc = 0;
         for (const auto& [srcTri, vsrc] : srcRWG->getTrisAndVerts() ) {
             size_t iPair = glPairsToIdx.at(std::minmax(obsTri.iTri, srcTri.iTri));
+            int nCommon = glTriPairs.nCommons[iPair];
 
             const auto& [m00, m10, m01, m11] = glTriPairs.momentsEFIE[iPair];
             vec3d v0 = (obsTri.iTri <= srcTri.iTri) ? vobs : vsrc;
@@ -101,13 +118,13 @@ cmplx Mesh::RWG::getIntegratedEFIE(const std::shared_ptr<Source> src, double k) 
 
             // Integrate singular term (numeric-analytic)
             // Average obs-src and src-obs to preserve symmetry
-            if (glTriPairs.nCommons[iPair] >= nCommonThres)
+            if (nCommon >= nCommonThres)
                 pairRad += (
                     obsTri.getSingularEFIE(srcTri, vobs, vsrc, iPair) +
                     srcTri.getSingularEFIE(obsTri, vsrc, vobs, iPair)) / 2.0;
 
             // For common triangles, integrate 1/R term (full-analytic)
-            //if (triPair.nCommon == 3)
+            // if (nCommon == 3)
             //    pairRad += obsTri.getDoubleSelfIntegratedInvR(vobs, vsrc);
 
             intRad += pairRad * Math::sign(iSrc) * Math::sign(iObs);
@@ -207,33 +224,6 @@ double Mesh::RWG::getIntegratedMass(const std::shared_ptr<Source> src) const {
     // Puzzle: Why plus sign here?
     return 0.5 * leng * srcRWG->leng * mass; // factor of 1/2 = Omega/(4pi)
 }
-
-/* Using inc . (nhat x polH) directly
-void Mesh::RWG::buildVoltage() {
-    vec3d kvec = Einc->wavevec;
-    vec3d polE = config.alpha * Einc->pol;
-    vec3d polH = (1.0 - config.alpha) * Einc->pol; // Einc->wavehat.cross(Einc->pol);
-
-    vec3cd inc = vec3cd::Zero();
-    cmplx voltH = 0.0;
-    int iTri = 0;
-    for (const auto& [tri, vert] : getTrisAndVerts()) {
-        vec3d X0 = tri.getVerts()[0];
-        const auto& [scaRad, vecRad] = tri.getIntegratedPlaneWave(kvec);
-
-        vec3cd triRad =
-            exp(iu*kvec.dot(X0)) * (scaRad * (X0 - vert) + vecRad) * Math::sign(iTri++);
-
-        inc += triRad;
-        voltH += tri.nhat.cross(polH).dot(triRad); // Hermitian dot!
-    }
-
-    inc *= leng;
-    voltH *= leng;
-
-    voltage = -Einc->amplitude * (polE.dot(inc) + voltH);
-}
-*/
 
 /* Debug version, no precomputed moments
 cmplx Mesh::RWG::getIntegratedMFIE(const std::shared_ptr<Source> src) const {

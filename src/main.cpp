@@ -15,7 +15,7 @@ void mainLoop(const SrcVec& srcs, bool doFMM, bool doIter = true) {
 
     bool isRootLeaf = nsrcs <= config.maxNodeSrcs || !doFMM;
     auto root = std::make_shared<FMM::Node>(srcs, 0, nullptr, isRootLeaf);
-    root->buildLists();
+    root->postProcess();
    
     // ==================== Build nearfield ===================== //
     auto nf = std::make_unique<FMM::Nearfield>(nsrcs);
@@ -40,7 +40,7 @@ void mainLoop(const SrcVec& srcs, bool doFMM, bool doIter = true) {
     std::string ieStr = getIEStr(config.ie);
     std::transform(ieStr.begin(), ieStr.end(), ieStr.begin(), ::tolower);
     // Solver::printScattered(srcs, "out/ff/sph/px_k1.0z_r5.0_"+ieStr, (doFMM ? "ff_n" : "ffDir_n")+std::to_string(nsrcs)+".txt", 200);
-    // Solver::printScattered(srcs, "out/ff/plate/py_k1.0x_plate", std::string(doFMM ? "ff_g" : "ffDir_g")+config.lengStr+".txt", 100);
+    // Solver::printScattered(srcs, "out/ff/plate/px_k1.0z_plate", std::string(doFMM ? "ff_g" : "ffDir_g")+config.lengStr+".txt", 100);
     Solver::printScattered(srcs, "out/ff/almond/py_k146.6z_almond_"+ieStr, std::string(doFMM ? "ff" : "ffDir")+".txt", 500);
 }
 
@@ -52,8 +52,12 @@ int main() {
 
     constexpr bool doIter = true;
     switch (config.mode) {
-        case Mode::FMM: mainLoop(srcs, true); break;
-        case Mode::DIR: mainLoop(srcs, false, doIter); break;
+        case Mode::FMM: 
+            mainLoop(srcs, true); 
+            break;
+        case Mode::DIR: 
+            mainLoop(srcs, false, doIter); 
+            break;
         case Mode::FMMDIR: {
             mainLoop(srcs, true);
             FMM::reset();

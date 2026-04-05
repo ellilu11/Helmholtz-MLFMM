@@ -14,7 +14,7 @@ struct Config {
     
     Config(const std::filesystem::path&);
     
-    static std::array<double, 15> importConfig(const std::filesystem::path&);
+    static std::array<double, 16> importConfig(const std::filesystem::path&);
 
     // General
     Mode mode;          // FMM, direct, or FMM+direct

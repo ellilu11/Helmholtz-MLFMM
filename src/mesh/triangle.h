@@ -52,6 +52,8 @@ public:
 
     vec3d getNormal() const { return nhat; }
 
+    double getArea() const { return area; }
+
 private:
     static std::vector<quadPair> quadCoeffs;
     static int numQuads;
@@ -67,9 +69,4 @@ private:
     vec3i iVerts;   // indices of vertices
     // int iCenter; // index of center
     const int iTri; // index in glTris
-};
-
-struct Mesh::TriToRWG {
-    std::vector<int> iRWGs; // indices of RWGs containing this triangle
-    std::vector<int> isMinus; // whether this triangle is positive or negative in each RWG
 };

@@ -17,6 +17,7 @@ Mesh::Triangle::Triangle(const vec3i& iVerts, int iTri)
     center = (Xs[0] + Xs[1] + Xs[2]) / 3.0;
     nhat = (Ds[0].cross(Ds[1])).normalized();
     area = (Ds[0].cross(-Ds[2])).norm() / 2.0;
+    assert(area > 0.0);
 
     buildTriQuads();
     reverseOrient();
@@ -45,6 +46,7 @@ void Mesh::Triangle::buildTriQuads() {
  */
 void Mesh::Triangle::reverseOrient() {
     if ((center-rootCenter).dot(nhat) < 0.0) {
+        std::cout << "   Reversing normals of triangle " << iTri << '\n';
         nhat *= -1.0;
         std::swap(this->iVerts[0], this->iVerts[2]); // Swap verts per right-hand rule
     }
@@ -248,7 +250,7 @@ Mesh::Triangle::getIntegratedInvRcubed(const vec3d& obs, bool doNumeric) const
     double d = std::fabs(nhat.dot(obs-Xs[0])), dsq = d*d;
 
     std::array<vec3d, 3> Ps =
-    { proj(Xs[0])-obsProj, proj(Xs[1])-obsProj, proj(Xs[2])-obsProj };
+        { proj(Xs[0])-obsProj, proj(Xs[1])-obsProj, proj(Xs[2])-obsProj };
 
     for (int i = 0; i < 3; ++i) {
         const vec3d& P0 = Ps[i];

@@ -61,7 +61,7 @@ void FMM::Level::buildAngularMatrices() {
     }
 }
 
-/* buildInterpTheta(srcLvl, tgtLvl)
+/* buildInterpTheta(srcLevel)
  * Build interpolation pairs for interpolating from finer level to this level over theta
  * Each pair contains interpolation coefficients and index of nearest source theta
  */
@@ -101,7 +101,7 @@ void FMM::Level::buildInterpTheta(const Level& srcLevel) {
     }
 }
 
-/* buildInterpPhi(srcLvl, tgtLvl)
+/* buildInterpPhi(srcLevel)
  * Build interpolation pairs for interpolating from finer level to this level over phi
  * Each pair contains interpolation coefficients and index of nearest source phi
  */

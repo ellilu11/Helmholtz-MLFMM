@@ -4,24 +4,12 @@
 FMM::Nearfield::Nearfield(size_t nsrcs)
     : nearMat(nsrcs, nsrcs)
 {
-    std::cout << " Building triangle moments...     ";
-    auto start = Clock::now();
-
     findNodePairs();
     buildTriPairs();
-
-    Time duration_ms = Clock::now() - start;
-    std::cout << " in " << duration_ms.count() << " ms\n\n";
-
-    std::cout << " Building nearfield matrix...     ";
-    start = Clock::now();
 
     buildNearMatrix();
     Mesh::glPairsToIdx = {};
     Mesh::glTriPairs.clear();
-
-    duration_ms = Clock::now() - start;
-    std::cout << " in " << duration_ms.count() << " ms\n\n";
 }
 
 /* findNodePairs()
@@ -48,6 +36,9 @@ void FMM::Nearfield::findNodePairs() {
  * and populate Mesh::glTriPairs
  */
 void FMM::Nearfield::buildTriPairs() {
+    std::cout << " Building triangle moments...     ";
+    auto start = Clock::now();
+
     size_t iPair = 0;
 
     for (const auto& [leaf, srcLeaf] : selfPairs) {
@@ -73,7 +64,10 @@ void FMM::Nearfield::buildTriPairs() {
             }
     }
 
-    Mesh::glTriPairs = Mesh::TriPairs(iPair, config.k);
+    Mesh::glTriPairs = Mesh::TriPairs(iPair);
+
+    Time duration_ms = Clock::now() - start;
+    std::cout << " in " << duration_ms.count() << " ms\n\n";
 }
 
 /* getNearCapacity()
@@ -102,6 +96,9 @@ size_t FMM::Nearfield::getNearCapacity() {
  * between sources in each node pair and adding to nearMat
  */
 void FMM::Nearfield::buildNearMatrix() {
+    std::cout << " Building nearfield matrix...     ";
+    auto start = Clock::now();
+
     std::vector<Eigen::Triplet<cmplx>> trips;
     trips.reserve(getNearCapacity());
 
@@ -158,6 +155,9 @@ void FMM::Nearfield::buildNearMatrix() {
 
     nearMat.setFromTriplets(trips.begin(), trips.end());
     nearMat.makeCompressed();
+
+    Time duration_ms = Clock::now() - start;
+    std::cout << " in " << duration_ms.count() << " ms\n\n";
 }
 
 /* evaluateSols()
